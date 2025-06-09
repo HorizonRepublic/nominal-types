@@ -6,10 +6,14 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v3
         with:
-          github-token: ${{ secrets.SECRET_TOKEN }}
+          token: ${{ github.token }}
       - uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          github-token: ${{ secrets.SECRET_TOKEN }}
+          github-token: ${{ github.token }}

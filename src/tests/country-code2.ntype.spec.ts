@@ -1,5 +1,6 @@
 import { Validate, validateSync } from "class-validator";
 import { CountryCode2 } from "../types/country-code2.ntype";
+import { CountryName, CountryNumber } from "../types";
 
 describe(CountryCode2.name, () => {
   it("should create a nominal type class with the correct name", () => {
@@ -35,14 +36,18 @@ describe(CountryCode2.name, () => {
     const instance = new CountryCode2("DE");
     const expectedName = "Germany";
 
-    expect(instance.toName().isIdentical(expectedName)).toBe(true);
+    const name = instance.toName();
+    expect(name).toBeInstanceOf(CountryName);
+    expect(name.isIdentical(expectedName)).toBe(true);
   });
 
   it("should convert to country number correctly", () => {
     const instance = new CountryCode2("DE");
     const expectedNumber = "276";
 
-    expect(instance.toNumber().isIdentical(expectedNumber)).toBe(true);
+    const number = instance.toNumber();
+    expect(number).toBeInstanceOf(CountryNumber);
+    expect(number.isIdentical(expectedNumber)).toBe(true);
   });
 
   it("should validate dto", () => {

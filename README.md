@@ -1,6 +1,14 @@
 # @horizon-republic/nominal-types
 
-Value types that validate once, at the boundary, and stay distinct everywhere after.
+Runtime-validated nominal types for TypeScript.
+
+An email address, a UUID and a username are all `string` to the compiler. Nothing stops you from passing one where another is expected, and every function that receives one has to decide whether to check it again.
+
+Here each of them is a class. You validate a value once, when it comes in, by constructing it. After that the compiler won't let you mix it up with other strings, and code that receives an `Email` knows it already holds a valid address.
+
+Types can have their own methods, such as `email.domain` or `uuid.timestamp`. They work with any library that accepts [Standard Schema](https://standardschema.dev), and a NestJS pipe validates route parameters with them. Validation runs on [ArkType](https://arktype.io); constructing an `Email` takes about 100 ns.
+
+## Example
 
 ```ts
 import { Email, Uuid } from '@horizon-republic/nominal-types';
@@ -47,6 +55,11 @@ new Email('not an address'); // throws NominalError
   - [isNominalType()](#isnominaltype)
   - [Types](#types)
 - [How it works](#how-it-works)
+  - [Classes rather than brands](#classes-rather-than-brands)
+  - [Validated once](#validated-once)
+  - [Nominal at compile time](#nominal-at-compile-time)
+  - [One identity across copies](#one-identity-across-copies)
+  - [Performance](#performance)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -86,7 +99,7 @@ new OrderNumber('42');
 // NominalError: OrderNumber: must be matched by ^ORD-\d{8}$ (was "42")
 ```
 
-From then on the instance travels through your code as proof. A function that takes an `OrderNumber` gets a valid one, and the compiler refuses a plain string, or a different nominal type that happens to wrap a string as well:
+A function that takes an `OrderNumber` can rely on it being valid. The compiler won't accept a plain string there, or another nominal type that also wraps a string:
 
 ```ts
 const ship = (order: OrderNumber): string => `shipping ${order.value}`;
@@ -95,7 +108,7 @@ ship(order); // fine
 ship('ORD-20261007'); // compile error
 ```
 
-Instances serialise to their value, so they go into JSON and template strings as they are:
+JSON and template strings get the bare value:
 
 ```ts
 JSON.stringify({ order }); // '{"order":"ORD-20261007"}'
@@ -120,7 +133,7 @@ The name brands the type at compile time and identifies it at runtime, so keep i
 
 ### Adding behaviour
 
-The class is yours to extend. Getters and methods read `this.value`, which holds the validated value:
+Add getters and methods to the class. They read `this.value`, the validated value:
 
 ```ts
 export class OrderNumber extends Nominal('OrderNumber', type(/^ORD-\d{8}$/u)) {
@@ -152,7 +165,7 @@ new OrderNumber('ORD-20261007') instanceof ExpressOrderNumber; // false
 express.year; // 9000: behaviour is inherited
 ```
 
-The callback receives the parent's schema, so ArkType methods such as `and` and `narrow` are at hand.
+The callback receives the parent's schema, so you can call ArkType methods such as `and` or `narrow` on it.
 
 ### Changing the rules of a built-in type
 
@@ -175,7 +188,7 @@ The schema is built once, when the class is defined, so a subclass that changes 
 
 ### Validating untrusted input
 
-`new` throws, which suits values your own code produces. For input that may well be wrong, such as a request, use `parse()`: it returns the instance or the issues and never throws.
+`new` throws, which suits values your own code produces. For input that might be wrong, such as a request body, use `parse()`: it returns the instance or the issues and never throws.
 
 ```ts
 const result = Email.parse(input);
@@ -195,11 +208,11 @@ if (Email.is(value)) {
 }
 ```
 
-An instance is accepted as it is: `Email.parse(email)` returns the same object without validating it again, which keeps nested and repeated checks cheap.
+`Email.parse(email)` returns the same object without validating it again, so checking a value you already built costs almost nothing.
 
 ### Using a schema from another library
 
-Any schema that implements [Standard Schema](https://standardschema.dev) and answers synchronously can define a type, a Zod schema as well as an ArkType one:
+Any schema that supports [Standard Schema](https://standardschema.dev) and answers synchronously can define a type, a Zod schema as well as an ArkType one:
 
 ```ts
 import { z } from 'zod';
@@ -212,7 +225,7 @@ Issues come back as plain `{ message, path }` objects whichever library produced
 
 ### Embedding types in other validators
 
-Every nominal type class is itself a Standard Schema through its static `~standard`. Frameworks that call `~standard` take the class directly, among them NestJS 12 through `@Body({ schema: Email })`.
+Every nominal type class is itself a Standard Schema through its static `~standard`. Libraries that call `~standard` take the class directly, NestJS 12's `@Body({ schema: Email })` among them.
 
 Libraries that parse definitions treat a class as a function of their own, so give them the plain schema object `standard()` returns. In ArkType:
 
@@ -232,7 +245,7 @@ email instanceof Email; // true
 
 ### Generating JSON Schema
 
-Types built on a schema that can describe itself, ArkType ones included, implement [Standard JSON Schema](https://standardschema.dev):
+A type built on a schema that can describe itself, as ArkType schemas can, also produces JSON Schema through [Standard JSON Schema](https://standardschema.dev):
 
 ```ts
 Uuid['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
@@ -245,7 +258,9 @@ A type whose schema cannot describe itself throws when asked.
 
 `@horizon-republic/nominal-types/adapters/nest` provides `NominalPipe` for Nest 11 and 12. `@nestjs/common` is an optional peer dependency, so the core installs nothing from Nest.
 
-**Every parameter at once.** Bind the pipe globally and declare parameters with a nominal type. Nest reflects the type from the handler signature, and the pipe turns the value into an instance:
+#### Every parameter at once
+
+Bind the pipe globally and declare parameters with a nominal type. Nest reflects the type from the handler signature, and the pipe turns the value into an instance:
 
 ```ts
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
@@ -265,14 +280,18 @@ export class UsersController {
 
 Arguments declared with any other type pass through untouched, so the global pipe sits safely next to other pipes. It relies on `emitDecoratorMetadata`, which Nest projects enable anyway.
 
-**One parameter.** Pass the type explicitly, whatever the parameter is declared as:
+#### One parameter
+
+Pass the type explicitly, whatever the parameter is declared as:
 
 ```ts
 @Get()
 search(@Query('email', new NominalPipe(Email)) email: Email) {}
 ```
 
-**Errors.** A rejected value fails the request with a 400 in the shape of Nest's own Standard Schema pipe:
+#### Errors
+
+A rejected value fails the request with a 400 in the shape of Nest's own Standard Schema pipe:
 
 ```json
 { "statusCode": 400, "error": "Bad Request", "message": ["id: must be a UUID (was \"nope\")"] }
@@ -290,7 +309,9 @@ new NominalPipe(Email, {
 });
 ```
 
-Nest runs no pipes on `@Headers()`, so header values are validated in the handler, with `parse()`.
+#### Headers
+
+Nest runs no pipes on `@Headers()`, so validate header values in the handler with `parse()`.
 
 ## Built-in types
 
@@ -313,7 +334,7 @@ const email = new Email('Jane.Doe+news@Example.com');
 | `canonical()`          | lowered and without a tag                  | `jane.doe@example.com`            |
 | `isSameMailbox(other)` | whether both reach one mailbox             | `true` for `jane.doe@EXAMPLE.com` |
 
-`canonical()` is for telling whether two addresses belong to one person, in a unique index for example, while `equals()` compares exactly. Provider rules beyond that, such as Gmail ignoring dots, are left to you. The pattern and the fragments it is built from are static fields: `Email.pattern`, `Email.atom`, `Email.label` and `Email.topLevel`.
+Use `canonical()` to tell whether two addresses belong to one person, say for a unique index; `equals()` compares exactly. Provider rules such as Gmail ignoring dots are up to you. `Email.pattern` and the fragments it's built from, `Email.atom`, `Email.label` and `Email.topLevel`, are static fields.
 
 ### Uuid
 
@@ -408,7 +429,7 @@ Thrown by `new` for a rejected value. Extends `TypeError`.
 isNominalType(value): value is AnyNominalType
 ```
 
-Whether a value is a nominal type class, including one loaded from another copy of this package. Adapters use it to recognise a type in framework metadata.
+Whether a value is a nominal type class, including one loaded from another copy of this package. Adapters use it to spot a nominal type among the parameter types NestJS and similar libraries reflect.
 
 ### Types
 
@@ -426,15 +447,25 @@ Whether a value is a nominal type class, including one loaded from another copy 
 
 ## How it works
 
-**Classes rather than brands.** A branded string is a compile-time agreement: a cast breaks it, and it carries no behaviour. A class instance exists only if its constructor accepted the value, carries methods such as `email.mailbox`, and keeps its identity through generic code. The price is one small object per value.
+### Classes rather than brands
 
-**Validate once.** The constructor is the only place a value is checked. After that the instance is the evidence: passing it to a function, storing it in another object or handing it to `parse()` again costs no validation.
+A branded string exists only in the compiler: a cast gets around it, and it has no methods. Instances are only ever built from values their constructor accepted. They have methods such as `email.mailbox` and keep their identity through generic code. The price is one small object per value.
 
-**Nominal at compile time.** Each type carries a phantom brand keyed by its name, so two types that wrap a string do not mix. A refined type carries its parent's key and its own, which makes it assignable to the parent and not the other way round.
+### Validated once
 
-**One identity across copies.** An application can load this package twice, once as ES modules and once as CommonJS. Each type marks its instances with a key from `Symbol.for`, and `instanceof` checks that key, so one copy recognises an instance the other built.
+The constructor is the only place a value is checked. Holding an instance means holding a valid value, so passing it on, storing it or handing it to `parse()` again costs no validation.
 
-**Performance.** Measured on an Apple M4 Pro with Node.js 25.3, after warm-up, one value at a time:
+### Nominal at compile time
+
+Each type has a phantom brand keyed by its name, so two types that wrap a string do not mix. A refined type has its parent's key and its own, which makes it assignable to the parent and not the other way round.
+
+### One identity across copies
+
+An application can load this package twice, once as ES modules and once as CommonJS. Each type marks its instances with a key from `Symbol.for`, and `instanceof` checks that key, so one copy recognises an instance the other built.
+
+### Performance
+
+Measured on an Apple M4 Pro with Node.js 25.3, after warm-up, one value at a time:
 
 | Operation                             | Time   |
 | ------------------------------------- | ------ |

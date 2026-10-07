@@ -96,7 +96,7 @@ JSON.stringify({ order }); // '{"order":"ORD-20261007"}'
 
 **Reference**
 
-- [Built-in types](docs/reference/built-in-types.md): `Email`, `Uuid`, `Url` and `HttpUrl`.
+- [Built-in types](docs/reference/built-in-types.md): the base types for strings, numbers, big integers and booleans, and the types under them, from `Email` to `Uint64`.
 - [API](docs/reference/api.md): every function, member and type the package exports.
 
 **Explanation**

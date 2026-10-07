@@ -44,12 +44,16 @@ describe('PatternSchema', () => {
     });
 
     it.each([
-      [42, 'number'],
+      [42, '42'],
+      [-0, '-0'],
+      [Number.NaN, 'NaN'],
+      [true, 'true'],
+      [Symbol('code'), 'symbol'],
       [null, 'object'],
       [undefined, 'undefined'],
       [{ value: 'C-001' }, 'object'],
       [['C-001'], 'object'],
-    ])('reports %j as not a string', (input, kind) => {
+    ])('reports %s as not a string', (input, kind) => {
       expect(issuesOf(Code.parse(input))).toStrictEqual([
         { message: `must be a string (was ${kind})` },
       ]);

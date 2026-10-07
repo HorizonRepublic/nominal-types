@@ -1,9 +1,8 @@
-import type { NominalSchema, NominalType } from '../core/contracts.ts';
-import { Nominal } from '../core/nominal.ts';
-import { matching } from '../core/pattern-schema.ts';
-import { textRule } from './text-rule.ts';
+import type { NominalSchema, SubtypeOf } from '../../core/contracts.ts';
+import { matching } from '../../core/pattern-schema.ts';
+import { AnyString } from './any-string.ts';
 
-const UuidBase: NominalType<'Uuid', NominalSchema<string, string>> = Nominal('Uuid', textRule);
+const UuidBase: SubtypeOf<typeof AnyString, 'Uuid'> = AnyString.subtype('Uuid');
 
 /**
  * A UUID in its canonical 8-4-4-4-12 text form, any version from 1 to 8 plus the nil and max

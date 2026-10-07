@@ -33,12 +33,12 @@ A Standard Schema and Standard JSON Schema for the strings `pattern` matches. No
 
 ## Instance members
 
-| Member          | Description                              |
-| --------------- | ---------------------------------------- |
-| `value`         | The validated value                      |
-| `equals(other)` | Same type and same value                 |
-| `toJSON()`      | The value, so `JSON.stringify` writes it |
-| `toString()`    | The value as a string                    |
+| Member          | Description                                                                   |
+| --------------- | ----------------------------------------------------------------------------- |
+| `value`         | The validated value                                                           |
+| `equals(other)` | Same type and same value                                                      |
+| `toJSON()`      | The value, so `JSON.stringify` writes it; `AnyBigInt` writes a decimal string |
+| `toString()`    | The value as a string                                                         |
 
 ## NominalError
 
@@ -65,6 +65,10 @@ isNominalType(value): value is AnyNominalType
 ```
 
 Whether a value is a nominal type class, including one loaded from another copy of this package. Adapters use it to spot a nominal type among the parameter types NestJS and similar libraries reflect.
+
+## Built-in types
+
+The base types `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean` and the types under them are classes with the members above; see [Built-in types](built-in-types.md) for each one.
 
 ## Types
 

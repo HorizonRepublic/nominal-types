@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { HttpUrl, NominalError, Url } from '../../src/index.ts';
-import { valueOf } from '../support/results.ts';
+import { HttpUrl, NominalError, Url } from '../../../src/index.ts';
+import { valueOf } from '../../support/results.ts';
 
 describe('Url', () => {
   it.each(['https://example.com/a?b=1#c', 'mailto:jane@example.com', 'http://localhost:3000'])(

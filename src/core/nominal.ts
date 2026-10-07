@@ -22,6 +22,7 @@ import { NominalError } from './nominal-error.ts';
 import { PatternSchema } from './pattern-schema.ts';
 import { Rejection } from './rejection.ts';
 import type { StandardProps, StandardSchema } from './standard-schema.ts';
+import { withoutImpliedString } from './string-rule.ts';
 
 const namespace = '@horizon-republic/nominal-types';
 const effectiveSchemas = new WeakMap<object, NominalSchema>();
@@ -43,7 +44,7 @@ const effectiveSchemaOf = (target: typeof NominalRoot): NominalSchema => {
   if (cached !== undefined) {
     return cached;
   }
-  const rules = rulesOf(NominalRoot, target);
+  const rules = withoutImpliedString(rulesOf(NominalRoot, target));
   const [only] = rules;
   const schema = rules.length === 1 && only !== undefined ? only : new ChainSchema(rules);
   effectiveSchemas.set(target, schema);

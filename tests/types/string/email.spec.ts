@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Email, matching, NominalError } from '../../src/index.ts';
+import { Email, matching, NominalError } from '../../../src/index.ts';
 
 describe('Email', () => {
   it.each([

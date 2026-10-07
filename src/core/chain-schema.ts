@@ -93,7 +93,7 @@ const stepOf = (rule: NominalSchema): Step | undefined => {
   }
   if (rule instanceof PredicateSchema) {
     return {
-      accepts: (value) => rule.check(value),
+      accepts: rule.check,
       issues: (value) => predicateIssues(rule, value),
     };
   }

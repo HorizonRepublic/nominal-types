@@ -75,7 +75,7 @@ describe('Subtypes', () => {
 
     it('cannot loosen the parent rule', () => {
       class Lenient extends Sku {
-        public static override readonly schema = type(/^SKU-\d{4,6}$/u);
+        public static override readonly rule = type(/^SKU-\d{4,6}$/u);
       }
 
       expect(() => new Lenient('SKU-123456')).toThrow(NominalError);

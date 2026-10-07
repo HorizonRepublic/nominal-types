@@ -40,13 +40,13 @@ export class Email extends EmailBase {
    *
    * @remarks
    * The schema is built from it once, when the class is defined, so a subclass that changes the
-   * pattern overrides `schema` as well.
+   * pattern overrides `rule` as well.
    *
    * @example
    * ```ts
    * class CompanyEmail extends Email {
    *   static override readonly pattern = /^[a-z.]+@example\.com$/u;
-   *   static override readonly schema = matching(CompanyEmail.pattern);
+   *   static override readonly rule = matching(CompanyEmail.pattern);
    * }
    * ```
    */
@@ -55,7 +55,7 @@ export class Email extends EmailBase {
     'u',
   );
 
-  public static override readonly schema: NominalSchema<string, string> = matching(
+  public static override readonly rule: NominalSchema<string, string> = matching(
     this.pattern,
     'an email address',
   );

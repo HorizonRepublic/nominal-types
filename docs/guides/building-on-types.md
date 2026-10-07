@@ -111,13 +111,13 @@ export class TrackedOrderNumber extends OrderNumber {
 }
 ```
 
-You can also add a rule with `static schema`. It is checked when you call `new` on the subclass:
+You can also add a rule with `static rule`. It is checked when you call `new` on the subclass:
 
 ```ts
 import { matching } from '@horizon-republic/nominal-types';
 
 export class RecentOrderNumber extends OrderNumber {
-  static override readonly schema = matching(/^ORD-202/u, 'an order from the 2020s');
+  static override readonly rule = matching(/^ORD-202/u, 'an order from the 2020s');
 }
 
 new RecentOrderNumber('ORD-19990101'); // throws NominalError

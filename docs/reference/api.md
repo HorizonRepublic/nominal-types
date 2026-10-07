@@ -60,12 +60,12 @@ isNominalType(value): value is AnyNominalType
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `new Type(input)`           | Checks `input` and creates an instance. Throws `NominalError` if it's invalid.                                                           |
 | `Type.parse(input)`         | Returns `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                                                                 |
-| `Type.is(value)`            | `true` if `value` is an instance of the type.                                                                                            |
+| `value instanceof Type`     | `true` if `value` is an instance of the type, also one created by another copy of the package.                                           |
 | `Type.subtype(name, rule?)` | A new, narrower type. See [subtypes](../guides/building-on-types.md#adding-a-stricter-rule).                                             |
 | `Type.variant(name, rule)`  | A sibling type with a different rule. See [variants](../guides/building-on-types.md#accepting-different-values-with-the-same-behaviour). |
 | `Type.standardSchema()`     | The type as a plain Standard Schema object.                                                                                              |
 | `Type['~standard']`         | The Standard Schema and Standard JSON Schema interface.                                                                                  |
-| `Type.schema`               | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `standardSchema()`.              |
+| `Type.rule`                 | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `standardSchema()`.              |
 | `Type.typeName`             | The type's name.                                                                                                                         |
 
 What `parse()` does with different inputs:

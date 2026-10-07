@@ -22,12 +22,12 @@ if (result.ok) {
 
 Passing an existing `Email` to `Email.parse()` is fine. It returns the same object without checking it again.
 
-## Using is()
+## Using instanceof
 
-To ask whether a value is already an `Email`, use `is()`. It checks the type and creates nothing:
+To ask whether a value is already an `Email`, use `instanceof`. It also works for an `Email` created by another copy of the package:
 
 ```ts
-if (Email.is(value)) {
+if (value instanceof Email) {
   value.domain; // value is an Email here
 }
 ```

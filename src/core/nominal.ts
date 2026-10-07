@@ -26,8 +26,8 @@ import { withoutImpliedString } from './string-rule.ts';
 
 const namespace = '@horizon-republic/nominal-types';
 const effectiveSchemas = new WeakMap<object, NominalSchema>();
-const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 const standardSchemas = new WeakMap<object, StandardSchema<unknown, NominalRoot>>();
+const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
 let pendingTarget: object | undefined;
 let pendingInput: unknown;
@@ -77,7 +77,7 @@ const converterOf = (target: typeof NominalRoot): StandardJSONSchemaV1.Converter
 
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
-  declare public static readonly schema: NominalSchema;
+  declare public static readonly rule: NominalSchema;
   public readonly value: unknown;
 
   public constructor(input: unknown) {
@@ -138,10 +138,6 @@ class NominalRoot {
     }
     remember(this, input, value);
     return { ok: true, value: new this(input) };
-  }
-
-  public static is(this: typeof NominalRoot, value: unknown): value is NominalRoot {
-    return value instanceof this;
   }
 
   public static standardSchema(this: typeof NominalRoot): StandardSchema<unknown, NominalRoot> {
@@ -208,7 +204,7 @@ const derive = (
   Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
   if (rule !== undefined) {
-    Object.defineProperty(derived, 'schema', { value: rule });
+    Object.defineProperty(derived, 'rule', { value: rule });
   }
   return derived;
 };
@@ -232,7 +228,7 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  * @remarks
  * Extend the result to add behaviour. The name brands the type at compile time and identifies it
  * at runtime across ESM and CommonJS copies of this package, so it has to be unique among the
- * nominal types one application loads. A subclass that overrides `schema` stays the same type;
+ * nominal types one application loads. A subclass that overrides `rule` stays the same type;
  * `subtype` makes a distinct one. A regular expression stands for `matching(pattern)`.
  *
  * @example

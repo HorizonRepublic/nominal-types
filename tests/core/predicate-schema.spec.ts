@@ -22,7 +22,7 @@ describe('PredicateSchema', () => {
 
   it('builds an instance for a value the guard approves', () => {
     expect(new EvenNumber(4).value).toBe(4);
-    expect(EvenNumber.schema).toBeInstanceOf(PredicateSchema);
+    expect(EvenNumber.rule).toBeInstanceOf(PredicateSchema);
   });
 
   it.each([3, 2.5, Number.NaN, '4', null, undefined, Number.POSITIVE_INFINITY])(

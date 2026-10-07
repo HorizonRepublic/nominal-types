@@ -20,12 +20,12 @@ export class Uuid extends UuidBase {
    * Case is spelled out in the character classes rather than with the `i` flag, because JSON Schema
    * patterns carry no flags and the generated schema has to accept what the type accepts. The
    * schema is built from it once, when the class is defined, so a subclass that changes the pattern
-   * overrides `schema` as well.
+   * overrides `rule` as well.
    */
   public static readonly pattern: RegExp =
     /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
 
-  public static override readonly schema: NominalSchema<string, string> = matching(
+  public static override readonly rule: NominalSchema<string, string> = matching(
     this.pattern,
     'a UUID',
   );

@@ -118,6 +118,25 @@ find(): AccountDto {
 
 > **Warning:** with `ClassSerializerInterceptor`, a nominal instance in a property without `@NominalField()` comes out as `{ "value": "jane@example.com" }`. Decorate every such property.
 
+## Choosing what a property is written as
+
+To write something other than the value, pass `serialize`. It gets the instance, or the list for a `schemaOf(...).array()` property, and returns what goes out:
+
+```ts
+export class ContactDto {
+  @NominalField(Email, { serialize: (email) => email.canonical().value })
+  email!: Email; // 'Jane.Doe+news@Example.com' goes out as 'jane.doe@example.com'
+
+  @NominalField(schemaOf(Uuid).array(), { serialize: (ids) => ids.map((id) => id.canonical().value) })
+  teams!: readonly Uuid[];
+}
+```
+
+What to know:
+
+- `serialize` runs only through `ClassSerializerInterceptor` or `instanceToPlain`. Without them, Nest uses `JSON.stringify`, which always writes the value.
+- A missing value (`undefined` or `null`) is written as it is, without calling `serialize`.
+
 ## Changing the message
 
 The second argument takes class-validator's own options, such as `message` or `groups`:

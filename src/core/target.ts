@@ -9,6 +9,17 @@ import type { TypeSchema } from './type-schema.ts';
 export type NominalTarget = AnyNominalType | TypeSchema<unknown, unknown>;
 
 /**
+ * The value a target produces: an instance of a nominal type, or what a `schemaOf()` schema gives,
+ * such as a list of instances.
+ */
+export type TargetValue<Target extends NominalTarget> =
+  Target extends TypeSchema<unknown, infer Output>
+    ? Output
+    : Target extends AnyNominalType
+      ? Target['prototype']
+      : never;
+
+/**
  * Internal: whether a value is a nominal type or a `schemaOf()` schema, also from another copy of
  * this package.
  */

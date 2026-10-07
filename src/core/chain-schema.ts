@@ -4,6 +4,8 @@ import type { NominalSchema } from './contracts.ts';
 import { PatternSchema, patternIssues } from './pattern-schema.ts';
 import { PredicateSchema, predicateIssues } from './predicate-schema.ts';
 import { Rejection } from './rejection.ts';
+import { runners } from './runner.ts';
+import { withoutUri } from './schema-text.ts';
 import type { StandardProps } from './standard-schema.ts';
 
 const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
@@ -18,8 +20,8 @@ const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
  * Runs a schema and returns the accepted value itself, or a `Rejection` carrying plain issues.
  *
  * @remarks
- * Internal. Patterns and chains are run directly, so an accepted value allocates nothing on the
- * way; any other schema goes through its Standard Schema `validate`, which has to answer
+ * Internal. Patterns, chains and schemas built by `schemaOf()` are run directly, so an accepted
+ * value allocates nothing on the way; any other schema goes through its Standard Schema `validate`, which has to answer
  * synchronously.
  *
  * @throws TypeError when a schema answers with a Promise.
@@ -50,15 +52,16 @@ export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
     }
     return value;
   }
+  const runner = runners.get(schema);
+  if (runner !== undefined) {
+    return runner(input);
+  }
   const result = schema['~standard'].validate(input);
   if (result instanceof Promise) {
     throw new TypeError('asynchronous schemas are not supported');
   }
   return result.issues === undefined ? result.value : new Rejection(result.issues.map(plainIssue));
 };
-
-const withoutUri = (schema: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
 
 const describeAll = (
   rules: readonly NominalSchema[],

@@ -31,6 +31,18 @@ Each type carries a hidden brand with its name. That is why the compiler keeps `
 
 A subtype carries its parent's brand and its own. So a subtype fits where the parent is expected, and not the other way round.
 
+## Which layer checks what
+
+A request passes through three layers of checks. This package covers the last one:
+
+| Layer     | Checks                                                       | Done by                              |
+| --------- | ------------------------------------------------------------ | ------------------------------------ |
+| Transport | the size of the body, the URL and the headers                | Fastify, Express, Node.js            |
+| Structure | which fields exist, which are required, lists and their size | a DTO library, ArkType, Zod and such |
+| Value     | whether a value is really an `Email`, and what it can do     | nominal types                        |
+
+`schemaOf()` with `array()`, `optional()` and `nullable()` is the small bridge between structure and value. It exists for the places that take a single schema, such as a NestJS parameter, and for validators that can't hold a nominal type themselves. Objects, unions and converting strings to numbers are left to the structure layer.
+
 ## One identity across copies
 
 An application can load this package twice: once through `import` and once through `require`. Each copy has its own classes.

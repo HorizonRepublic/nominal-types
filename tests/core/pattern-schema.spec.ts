@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { matching, Nominal, NominalError, PatternSchema } from '../../src/index.ts';
+import { matching, Nominal, NominalError, PatternSchema, schemaOf } from '../../src/index.ts';
 import { issuesOf, outputOf, thrownBy, valueOf } from '../support/results.ts';
 
 class Code extends Nominal('PatternCode', /^C-\d{3}$/u) {}
@@ -91,9 +91,7 @@ describe('PatternSchema', () => {
     });
 
     it('embeds into an ArkType object', () => {
-      expect(type({ code: Code.standardSchema() }).assert({ code: 'C-001' }).code).toBeInstanceOf(
-        Code,
-      );
+      expect(type({ code: schemaOf(Code) }).assert({ code: 'C-001' }).code).toBeInstanceOf(Code);
     });
   });
 

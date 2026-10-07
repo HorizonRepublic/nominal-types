@@ -25,13 +25,13 @@ For NestJS 11 and 12 there is also `NominalPipe`, which needs no `schema` option
 
 ## ArkType and other schema builders
 
-Libraries such as ArkType treat a class as something of their own. Pass `Type.standardSchema()` instead, which returns a plain schema object:
+Libraries such as ArkType treat a class as something of their own. Pass `schemaOf(Type)` instead, which returns a plain schema object:
 
 ```ts
 import { type } from 'arktype';
-import { Email, Uuid } from '@horizon-republic/nominal-types';
+import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
 
-const invitation = type({ email: Email.standardSchema(), team: Uuid.standardSchema() });
+const invitation = type({ email: schemaOf(Email), team: schemaOf(Uuid) });
 
 const { email } = invitation.assert({
   email: 'jane@example.com',

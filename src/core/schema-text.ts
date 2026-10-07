@@ -24,6 +24,12 @@ export const describeValue = (value: unknown): string => {
 };
 
 /**
+ * A JSON Schema body without its `$schema`, for nesting it inside another schema.
+ */
+export const withoutUri = (schema: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
+
+/**
  * Puts the `$schema` of the requested target in front of a JSON Schema body.
  *
  * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.

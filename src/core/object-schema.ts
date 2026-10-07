@@ -11,14 +11,23 @@ import { objectMark } from './object-members.ts';
 import { objectShape } from './object-shape.ts';
 import type { ObjectField } from './object-shape.ts';
 import { Rejection } from './rejection.ts';
+import { textFormOf } from './text-form.ts';
 import { instanceParserFor } from './type-functions.ts';
-import { TypeSchema } from './type-schema.ts';
+import { schemaOf, TypeSchema } from './type-schema.ts';
 
 /**
  * The fields of an object schema: each key to a nominal type, a `schemaOf()` or `objectOf()`
  * schema, or any synchronous Standard Schema.
  */
 export type ObjectFields = Readonly<Record<string, ConstraintField>>;
+
+/**
+ * What an object schema read from strings accepts: each field's input, or a string, any of them
+ * possibly missing, as in `process.env`; the schema reports the ones it needs.
+ */
+export type TextInput<Input> = {
+  readonly [Key in keyof Input]?: Input[Key] | string | undefined;
+};
 
 type Simplify<Shape> = { [Key in keyof Shape]: Shape[Key] };
 
@@ -79,23 +88,23 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * The names of the fields, in the order they were declared.
    */
   public readonly keys: readonly string[];
-  readonly #fields: readonly ObjectField[];
+  readonly #source: ObjectFields;
   readonly #constraints: readonly AnyConstraint[];
+  readonly #strict: boolean;
 
   /**
-   * Internal: built by `objectOf()` and `strict()`.
+   * Internal: built by `objectOf()`, `strict()` and `fromEnv()`.
    */
-  public constructor(
-    fields: readonly ObjectField[],
-    constraints: readonly AnyConstraint[],
-    strict: boolean,
-  ) {
+  public constructor(source: ObjectFields, constraints: readonly AnyConstraint[], strict: boolean) {
+    const fields = fieldsOf(source);
+
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     super(objectShape(fields, constraints, strict) as never);
     this.keys = fields.map(({ key }) => key);
-    this.#fields = fields;
+    this.#source = source;
     this.#constraints = constraints;
+    this.#strict = strict;
     Object.defineProperty(this, objectMark, { value: true });
   }
 
@@ -103,7 +112,41 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * This schema, refusing keys it doesn't declare instead of dropping them.
    */
   public strict(): ObjectSchema<Input, Output> {
-    return new ObjectSchema(this.#fields, this.#constraints, true);
+    return new ObjectSchema(this.#source, this.#constraints, true);
+  }
+
+  /**
+   * This schema, reading each field of a nominal type with a text form from a string: numbers,
+   * booleans, big integers and strings. For configuration read from environment variables, and
+   * any other record of strings, such as query parameters.
+   *
+   * @remarks
+   * Fields of other kinds, such as `schemaOf()` and `objectOf()` schemas, are kept as they are;
+   * give them `fromString()` yourself where they read text. Undeclared keys are dropped, so the
+   * whole `process.env` can be passed.
+   *
+   * @example
+   * ```ts
+   * export class Config extends Nominal(
+   *   'app.Config',
+   *   objectOf({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv(),
+   * ) {}
+   *
+   * export const config = new Config(process.env);
+   * config.PORT; // Port, from the text '3000'
+   * ```
+   */
+  public fromEnv(): ObjectSchema<TextInput<Input>, Output> {
+    const fields = Object.fromEntries(
+      Object.entries(this.#source).map(([key, field]) => [
+        key,
+        isNominalType(field) && textFormOf(field) !== undefined
+          ? schemaOf(field).fromString()
+          : field,
+      ]),
+    );
+
+    return new ObjectSchema(fields, this.#constraints, this.#strict);
   }
 }
 
@@ -143,4 +186,4 @@ export const objectOf = <const Fields extends ObjectFields>(
   fields: Fields,
   ...constraints: AnyConstraint[]
 ): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>> =>
-  new ObjectSchema(fieldsOf(fields), constraints, false);
+  new ObjectSchema(fields, constraints, false);

@@ -129,7 +129,7 @@ export class TypeSchema<Input, Output> {
 
     if (form === undefined) {
       throw new TypeError(
-        'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable()',
+        'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an objectOf() schema, call fromEnv()',
       );
     }
 

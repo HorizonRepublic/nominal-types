@@ -35,7 +35,7 @@ export type {
   ConstraintVerdict,
 } from './core/constraint-types.ts';
 export { isObjectSchema, ObjectSchema, objectOf } from './core/object-schema.ts';
-export type { ObjectFields, ObjectInput, ObjectValue } from './core/object-schema.ts';
+export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
 export { schemaOf, TypeSchema } from './core/type-schema.ts';
 export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';

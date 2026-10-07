@@ -27,30 +27,46 @@ Values that are already not strings, like `8080`, are checked as they are.
 
 ## Describing a config
 
-A small helper reads one environment variable and stops the app with a clear message if it's wrong:
+Describe the whole configuration with `objectOf()`, read its fields from text with `fromEnv()`, and make a type of it:
 
 ```ts
-import { AnyBoolean, HttpUrl, schemaOf, Uint16 } from '@horizon-republic/nominal-types';
-import type { TypeSchema } from '@horizon-republic/nominal-types';
+import {
+  AnyBoolean,
+  HttpUrl,
+  Nominal,
+  objectOf,
+  schemaOf,
+  Uint16,
+} from '@horizon-republic/nominal-types';
 
-export class Port extends Uint16.subtype('Port') {}
+export class Port extends Uint16.subtype('app.Port') {}
 
-const env = <Value>(name: string, schema: TypeSchema<unknown, Value>): Value => {
-  const result = schema.parse(process.env[name]);
-  if (!result.ok) {
-    throw new Error(`${name}: ${result.issues.map((issue) => issue.message).join(', ')}`);
-  }
-  return result.value;
-};
+export class Config extends Nominal(
+  'app.Config',
+  objectOf({
+    PORT: Port,
+    API_URL: HttpUrl,
+    DEBUG: schemaOf(AnyBoolean).fromString().optional(),
+  }).fromEnv(),
+) {}
 
-export const config = {
-  port: env('PORT', schemaOf(Port).fromString()),
-  apiUrl: env('API_URL', schemaOf(HttpUrl)),
-  debug: env('DEBUG', schemaOf(AnyBoolean).fromString().optional())?.value ?? false,
-};
+export const config = new Config(process.env);
+
+config.PORT; // Port, read from the text '3000'
+config.API_URL; // HttpUrl
 ```
 
-With `PORT=80a`, the app stops with `PORT: must be a number (was "80a")`. A missing `DEBUG` is fine, because its schema is `.optional()`.
+What `fromEnv()` does:
+
+- Each field of a nominal type with a text form is read from a string: numbers, booleans, big integers and strings.
+- Variables the schema doesn't list are dropped, so passing the whole `process.env` is fine.
+- Fields of other schemas are kept as they are. For an optional one, give it `fromString()` yourself, as `DEBUG` above.
+
+When something is wrong, `new Config(process.env)` throws one `NominalError` listing every variable:
+
+```
+app.Config: PORT: must be a number (was "80a"); API_URL: must be a URL (was undefined)
+```
 
 ## Reading lists
 

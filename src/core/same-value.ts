@@ -13,3 +13,14 @@ export const sameValue = (left: unknown, right: unknown): boolean =>
     left.every((item: unknown, index) =>
       hasEquals(item) ? item.equals(right[index]) : sameValue(item, right[index]),
     ));
+
+/**
+ * Internal: whether two instances belong to one line of types, where one is an instance of the
+ * other's type: a type and its subtype, or a class and one that extends it. Siblings and
+ * variants are not.
+ */
+export const inOneLine = (left: object, right: unknown): right is object =>
+  typeof right === 'object' &&
+  right !== null &&
+  (right instanceof left.constructor ||
+    (typeof right.constructor === 'function' && left instanceof right.constructor));

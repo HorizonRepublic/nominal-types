@@ -29,7 +29,7 @@ Keep in mind:
 
 - Use the `u` flag and no other. Other flags are refused.
 - To ignore case, list both cases, like `[A-Fa-f]`, instead of the `i` flag.
-- Give each type a unique name. The name identifies the type at runtime.
+- Give each type a unique name. The name identifies the type at runtime, and declaring two different types with one name prints a warning.
 
 ## Declaring with a type guard
 

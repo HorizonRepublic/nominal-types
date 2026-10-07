@@ -1,3 +1,5 @@
+import { shared } from './shared.ts';
+
 /**
  * Internal: how a type reads its value from text, as an environment variable or a query string
  * carries it. Returns `undefined` for text that doesn't look like a value, which then goes to the
@@ -5,7 +7,7 @@
  */
 export type TextForm = (text: string) => unknown;
 
-const forms = new WeakMap<object, TextForm>();
+const forms = shared.textForms;
 
 /**
  * Internal: gives a type and every type under it a text form.

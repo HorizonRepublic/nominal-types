@@ -12,7 +12,11 @@ AnyString                     any string
 │   └── HttpUrl
 ├── CountryCode               ISO 3166-1, such as US
 ├── CurrencyCode              ISO 4217, such as EUR
-└── LanguageTag               BCP 47, such as en-US
+├── LanguageTag               BCP 47, such as en-US
+├── MediaType                 text/html; charset=utf-8
+├── HexColor                  #1e90ff
+├── Base64                    bytes as text, + and / with = padding
+└── Base64Url                 bytes as text, - and _ without padding
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
@@ -40,12 +44,12 @@ AnyBigInt                     any integer, as a bigint
 AnyBoolean                    true or false
 ```
 
-| Page                      | Types                                                                                        |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| [Strings](string.md)      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `LanguageTag` |
-| [Numbers](number.md)      | `AnyNumber` and the 17 types under it                                                        |
-| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                               |
-| [Booleans](boolean.md)    | `AnyBoolean`                                                                                 |
+| Page                      | Types                                                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Strings](string.md)      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url` |
+| [Numbers](number.md)      | `AnyNumber` and the 17 types under it                                                                                                        |
+| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                                                                               |
+| [Booleans](boolean.md)    | `AnyBoolean`                                                                                                                                 |
 
 ## Which built-in type do I pick?
 
@@ -57,6 +61,10 @@ AnyBoolean                    true or false
 | a country                            | `CountryCode`                                           | ISO codes such as `US`, upper case only         |
 | a currency                           | `CurrencyCode`                                          | ISO codes such as `EUR`, with `minorUnits`      |
 | a language or locale                 | `LanguageTag`                                           | tags such as `en-US`, any case                  |
+| a `Content-Type`, the type of a file | `MediaType`                                             | `essence` and `parameters` read it for you      |
+| a color from a color picker          | `HexColor`                                              | `#` required; channels as numbers               |
+| a file or a key inside JSON          | `Base64`                                                | `toBytes()` gives the bytes                     |
+| a part of a token or of a URL        | `Base64Url`                                             | `-` and `_`, no `=` padding                     |
 | free text                            | `AnyString`                                             | any string, `''` included                       |
 | a count of items, such as a quantity | `PositiveInteger`                                       | 1 and up                                        |
 | an amount in cents, an index         | `NonNegativeInteger`                                    | 0 and up                                        |

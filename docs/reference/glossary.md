@@ -7,6 +7,7 @@ The terms these pages use, in alphabetical order.
 | adapter                     | An optional part of the package that connects nominal types to one library, such as Zod or MikroORM. Each has its own entry point. See [Adapters](adapters/README.md). |
 | aggregate                   | In domain-driven design, a group of entities changed together as one unit, such as an order and its lines.                                                             |
 | another copy of the package | The package loaded twice in one application, such as once with `import` and once with `require`. Types, instances and schemas from both copies work together.          |
+| base64                      | Bytes written as text: letters, digits, two more characters and `=` at the end, such as `aGVsbG8=` for `hello`. Base64url uses `-` and `_`, without `=`.               |
 | base type                   | One of the roots `AnyString`, `AnyNumber`, `AnyBigInt`, `AnyBoolean`. Types under them have a text form.                                                               |
 | BCP 47                      | The standard for language tags such as `en-US`: a language, then an optional script, region and other parts, joined by `-`.                                            |
 | boundary                    | A place where data enters your code, such as an HTTP request, an environment variable or a database row.                                                               |
@@ -30,6 +31,7 @@ The terms these pages use, in alphabetical order.
 | level                       | One step in a line of types, such as `Integer` in `AnyNumber` › `FiniteNumber` › `Integer`.                                                                            |
 | line of types               | A type with the types above and below it. Instances of one line compare with `equals()`. Siblings and variants are in other lines.                                     |
 | minor units                 | How many digits an amount of a currency has after the decimal point: 2 for the euro (cents), 0 for the yen.                                                            |
+| media type                  | The kind of content of a body or a file, such as `application/json`, sent in the `Content-Type` header. Also called a MIME type.                                       |
 | morph                       | In ArkType, a step that turns the checked value into another value.                                                                                                    |
 | nominal type                | A type told apart by its name, not its shape. `Email` and `Uuid` both wrap a string but don't mix.                                                                     |
 | object schema               | What `objectOf()` returns: a schema for an object whose fields are checked by their own schemas.                                                                       |

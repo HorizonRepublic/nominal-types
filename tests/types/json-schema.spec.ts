@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import * as library from '../../src/index.ts';
-import { Email, isNominalType, LanguageTag, Uuid } from '../../src/index.ts';
+import {
+  Base64,
+  Base64Url,
+  Email,
+  HexColor,
+  isNominalType,
+  LanguageTag,
+  MediaType,
+  Uuid,
+} from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
 
@@ -52,6 +61,14 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
     ['en', 'EN-us', 'zh-Hant-TW', 'de-CH-1996', 'en-u-ca-gregory', 'en-t-zh', 'en-x-a'],
     ['en_US', 'french', 'i-klingon', 'zh-yue', 'x-private', 'en-', 'abcdefghi'],
   ],
+  [
+    MediaType,
+    ['text/plain', 'Image/SVG+XML', 'text/plain ;\tcharset="utf-8"', 'a/b;x="\\"";y="é"'],
+    ['*/*', 'text/plain;', 'text/plain;charset', 'text/plain ', 'a/b;x="ā"', 'a/b;x="'],
+  ],
+  [HexColor, ['#fff', '#FFF8', '#1e90ff', '#1E90FF80'], ['fff', '#ff', '#fffff', '#fffffffff']],
+  [Base64, ['', 'Zg==', 'Zm8=', 'Zm9v', '+/+/'], ['QR==', 'QUJ=', 'Zg', 'Zg=', '====', '-_-_']],
+  [Base64Url, ['', 'Zg', 'Zm8', 'Zm9v', '-_-_'], ['QR', 'QUJ', 'Zg==', 'Q', '+/+/']],
 ];
 
 describe('JSON Schema patterns', () => {

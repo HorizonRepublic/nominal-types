@@ -53,6 +53,8 @@ See also: [How to get a JSON Schema for a type](../guides/api-docs/json-schema.m
 
 For `openapi-3.0`, a rule from a library that doesn't write OpenAPI 3.0, such as ArkType, is described as for `draft-07`, without `$schema`.
 
+OpenAPI 3.0 has no `contentEncoding`. For `openapi-3.0`, `contentEncoding: 'base64'` becomes `format: 'byte'`, and any other `contentEncoding` is left out.
+
 ## A type's schema
 
 | Part          | Rule                                                                            |

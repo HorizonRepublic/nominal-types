@@ -12,8 +12,24 @@ const schemaUris: Readonly<Record<string, string | undefined>> = {
 export const withoutUri = (schema: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
 
+/**
+ * Internal: a JSON Schema body in the keywords of OpenAPI 3.0, which has no `contentEncoding` and
+ * writes base64 text as `format: 'byte'` instead.
+ */
+export const withOpenApiEncoding = (body: Record<string, unknown>): Record<string, unknown> => {
+  if (body['contentEncoding'] === undefined) {
+    return body;
+  }
+
+  const { contentEncoding, ...rest } = body;
+
+  return contentEncoding === 'base64' && rest['format'] === undefined
+    ? { ...rest, format: 'byte' }
+    : rest;
+};
+
 const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
-  const { examples, ...rest } = body;
+  const { examples, ...rest } = withOpenApiEncoding(body);
 
   return Array.isArray(examples) && examples.length > 0 ? { ...rest, example: examples[0] } : rest;
 };
@@ -22,7 +38,8 @@ const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
  * Puts the `$schema` of the requested target in front of a JSON Schema body.
  *
  * @remarks
- * OpenAPI 3.0 has no `examples` keyword on a schema, so the first one becomes its `example`.
+ * OpenAPI 3.0 has no `examples` keyword on a schema, so the first one becomes its `example`, and
+ * no `contentEncoding`, so base64 text becomes `format: 'byte'`.
  *
  * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.
  */

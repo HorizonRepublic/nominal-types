@@ -28,6 +28,23 @@ describe('JSON Schema for OpenAPI 3.0', () => {
     expect(Sku['~standard'].jsonSchema.input(openApi)).toMatchObject({ example: 'ABC-1234' });
   });
 
+  it.each([
+    ['Base64', { contentEncoding: 'base64' }, { format: 'byte' }],
+    ['Binary', { contentEncoding: 'base64', format: 'binary' }, { format: 'binary' }],
+    ['Base32', { contentEncoding: 'base32' }, {}],
+  ])('writes the encoding of %s without contentEncoding', (name, json, written) => {
+    const rule = matching(/^[A-Z]*$/u, 'encoded text', json);
+    const Encoded = AnyString.subtype(`openapi.${name}`, rule);
+
+    for (const schema of [
+      rule['~standard'].jsonSchema.input(openApi),
+      Encoded['~standard'].jsonSchema.input(openApi),
+    ]) {
+      expect(schema).not.toHaveProperty('contentEncoding');
+      expect(schema['format']).toBe(Reflect.get(written, 'format'));
+    }
+  });
+
   it('names the type whose rule has no JSON Schema, on every target', () => {
     const Even = Nominal(
       'openapi.Even',

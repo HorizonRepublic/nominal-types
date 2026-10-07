@@ -168,15 +168,19 @@ export interface NominalType<
   readonly typeName: Name;
   readonly rule: Schema;
   readonly '~standard': StandardProps<InputOf<Schema>, Instance>;
-  subtype<Type extends AnyNominalType, const SubtypeName extends string>(
+  subtype<
+    Type extends AnyNominalType,
+    const SubtypeName extends string,
+    Value extends ValueOf<Type['rule']> = ValueOf<Type['rule']>,
+  >(
     this: Type,
     name: SubtypeName,
     constraint?:
-      | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
+      | NominalSchema<ValueOf<Type['rule']>, Value>
       | (ValueOf<Type['rule']> extends string ? RegExp : never)
       | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
     options?: NominalOptions,
-  ): SubtypeOf<Type, SubtypeName>;
+  ): SubtypeOf<Type, SubtypeName, Value>;
   variant<Type extends AnyNominalType, const VariantName extends string>(
     this: Type,
     name: VariantName,
@@ -189,15 +193,29 @@ export interface NominalType<
 }
 
 /**
+ * An instance whose value a rule narrowed, such as `oneOf()` under `AnyString`, typed with the
+ * narrower value.
+ */
+export type Narrowed<Instance extends NominalInstance<string, unknown>, Value> = [
+  Instance['value'],
+] extends [Immutable<Value>]
+  ? Instance
+  : Instance & { readonly value: Immutable<Value> };
+
+/**
  * The class `subtype` returns: the parent's rules and behaviour, an optional rule of its own, and a
  * brand of its own on top of the parent's.
+ *
+ * @remarks
+ * A rule that narrows the value, such as `oneOf()`, narrows `value` on the instance too.
  */
-export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit<
-  Parent,
-  'prototype' | 'typeName'
-> & {
-  new (input: InputOf<Parent['rule']>): Parent['prototype'] & Branded<Brand<Name>>;
-  readonly prototype: Parent['prototype'] & Branded<Brand<Name>>;
+export type SubtypeOf<
+  Parent extends AnyNominalType,
+  Name extends string,
+  Value = ValueOf<Parent['rule']>,
+> = Omit<Parent, 'prototype' | 'typeName'> & {
+  new (input: InputOf<Parent['rule']>): Narrowed<Parent['prototype'], Value> & Branded<Brand<Name>>;
+  readonly prototype: Narrowed<Parent['prototype'], Value> & Branded<Brand<Name>>;
   readonly typeName: Name;
 };
 

@@ -1,8 +1,9 @@
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
+import { sensitiveSlot } from './hierarchy.ts';
 import { forTarget, withoutUri } from './json-target.ts';
 import { describeValue } from './messages.ts';
-import { isNominalType } from './nominal.ts';
+import { isNominalType, ownTypes } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
@@ -89,15 +90,18 @@ export class TypeSchema<Input, Output> {
    *
    * @remarks
    * The number of items is checked before any item, so an array that is too long costs nothing
-   * more. Every item is checked, and each issue carries the item's index in its path.
+   * more. Every item is checked, and each issue carries the item's index in its path. With
+   * `unique: true`, an item equal to an earlier one is refused once every item is valid, compared
+   * as `equals()` compares them, and the issue carries the index of the repeat.
    *
-   * @throws TypeError when the options are not whole numbers from 0 up, mix `length` with `min`
-   * or `max`, or put `min` above `max`.
+   * @throws TypeError when the counts are not whole numbers from 0 up, `length` is mixed with `min`
+   * or `max`, `min` is above `max`, or `unique` is not a boolean.
    *
    * @example
    * ```ts
    * schemaOf(Url).array({ max: 10 });
    * schemaOf(UserId).array({ length: 3 });
+   * schemaOf(Uuid).array({ unique: true });
    * ```
    */
   public array(options: ArrayOptions = {}): TypeSchema<readonly Input[], readonly Output[]> {
@@ -193,6 +197,8 @@ export const schemaOf = <Type extends AnyNominalType>(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       run: construct as (input: unknown) => Type['prototype'] | Rejection,
       describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
+      // A type from another copy of the package keeps whether it is sensitive to itself.
+      sensitive: !ownTypes.isOwn(type) || Reflect.get(type, sensitiveSlot) === true,
     },
     { textForm: textFormOf(type) },
   );

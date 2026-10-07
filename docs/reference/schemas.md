@@ -6,7 +6,7 @@ The functions that build schemas from nominal types: lists, optional values, obj
 | ------------------------------------- | ------------------------------------------------------------------------------------------- |
 | [`schemaOf()`](#schemaof)             | A type as a plain schema object, the start of a chain                                       |
 | [`TypeSchema`](#typeschema)           | What `schemaOf()` returns: `parse()`, `array()`, `fromString()`, `optional()`, `nullable()` |
-| [`ArrayOptions`](#arrayoptions)       | How many items `array()` accepts                                                            |
+| [`ArrayOptions`](#arrayoptions)       | How many items `array()` accepts, and whether they may repeat                               |
 | [`objectOf()`](#objectof)             | A schema for an object whose fields are checked by their own schemas                        |
 | [`ObjectSchema`](#objectschema)       | What `objectOf()` returns: `strict()`, `fromEnv()`, `keys`                                  |
 | [`constraint()`](#constraint)         | A rule across fields of an object                                                           |
@@ -97,23 +97,24 @@ email.parse('jane'); // { ok: false, issues: [{ message: 'must be an email addre
 schema.array(options?: ArrayOptions): TypeSchema<readonly Input[], readonly Output[]>
 ```
 
-| Parameter | Type                            | Description                                                                        |
-| --------- | ------------------------------- | ---------------------------------------------------------------------------------- |
-| `options` | [`ArrayOptions`](#arrayoptions) | Optional. How many items the array may hold. Without it, any number, `0` included. |
+| Parameter | Type                            | Description                                                                                                                      |
+| --------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `options` | [`ArrayOptions`](#arrayoptions) | Optional. How many items the array may hold, and whether they may repeat. Without it, any number, `0` included, repeats allowed. |
 
 Returns: a schema for an array. Its value is a new array of what the item schema gives, read-only by type. A nominal type built on it freezes the array.
 
-The count is checked before any item. Then every item is checked, and every issue carries the item's index at the start of its `path`.
+The count is checked before any item. Then every item is checked, and every issue carries the item's index at the start of its `path`. With `unique: true`, repeats are looked for last, once every item is valid.
 
 Messages:
 
-| Case              | Message                                      |
-| ----------------- | -------------------------------------------- |
-| not an array      | `must be an array (was "0190f1c2-…")`        |
-| wrong exact count | `must have 3 items (was 0)`                  |
-| too few           | `must have at least 1 item (was 0)`          |
-| too many          | `must have at most 1 item (was 2)`           |
-| a bad item        | the item's message, with its index in `path` |
+| Case              | Message                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| not an array      | `must be an array (was "0190f1c2-…")`                                       |
+| wrong exact count | `must have 3 items (was 0)`                                                 |
+| too few           | `must have at least 1 item (was 0)`                                         |
+| too many          | `must have at most 1 item (was 2)`                                          |
+| a bad item        | the item's message, with its index in `path`                                |
+| a repeated item   | `must not repeat an item (was "a")`, with the index of the repeat in `path` |
 
 Throws: a `TypeError` for invalid options. See [`ArrayOptions`](#arrayoptions).
 
@@ -207,14 +208,31 @@ interface ArrayOptions {
   readonly length?: number;
   readonly min?: number;
   readonly max?: number;
+  readonly unique?: boolean;
 }
 ```
 
-| Option   | Meaning                  | Default  |
-| -------- | ------------------------ | -------- |
-| `length` | exactly this many items  | none     |
-| `min`    | at least this many items | `0`      |
-| `max`    | at most this many items  | no limit |
+| Option   | Meaning                                        | Default  |
+| -------- | ---------------------------------------------- | -------- |
+| `length` | exactly this many items                        | none     |
+| `min`    | at least this many items                       | `0`      |
+| `max`    | at most this many items                        | no limit |
+| `unique` | `true` refuses an item equal to an earlier one | `false`  |
+
+With `unique: true`, two items are equal when [`equals()`](type-members.md#equals) says so. So two `Uuid` items that differ only in case are equal. Items without `equals()`, such as `null`, are equal when they are the same value. Objects from `objectOf()` are equal when every field is equal.
+
+Each repeat is reported with its own index. The first time a value appears is not reported. A [sensitive type](errors-and-messages.md#sensitive-types) leaves the value out of the message.
+
+Example:
+
+```ts
+import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+
+const ids = schemaOf(Uuid).array({ unique: true });
+
+ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F']); // { ok: false, issues: [{ message: 'must not repeat an item (was "0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F")', path: [1] }] }
+schemaOf(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example.com']); // { ok: false, issues: [{ message: 'must not repeat an item (was a string of 16 characters)', path: [1] }] }
+```
 
 `array()` throws a `TypeError` for options it can't use:
 
@@ -223,6 +241,7 @@ interface ArrayOptions {
 | not a whole number from 0 up          | `array(): min must be a whole number from 0 up (was -1)` |
 | `length` together with `min` or `max` | `array(): pass either length or min and max, not both`   |
 | `min` greater than `max`              | `array(): min (5) is greater than max (1)`               |
+| `unique` that is not a boolean        | `array(): unique must be true or false (was yes)`        |
 
 ## objectOf()
 

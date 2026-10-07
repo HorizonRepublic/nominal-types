@@ -26,7 +26,8 @@ import { asRule } from './pattern-schema.ts';
 import { nothingPending, takePending } from './pending.ts';
 import { registerType } from './registry.ts';
 import { Rejection } from './rejection.ts';
-import { inOneLine, sameValue } from './same-value.ts';
+import { equalityKeySlot, inOneLine, noKey, sameValue } from './same-value.ts';
+import type { EqualityKey } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { describeType, rulesRunnerOf, runType } from './type-rules.ts';
@@ -148,6 +149,13 @@ class NominalRoot {
     );
   }
 }
+
+const rootEqualityKey: EqualityKey = {
+  equals: Reflect.get(NominalRoot.prototype, 'equals'),
+  key: ({ value }) => (typeof value === 'object' && value !== null ? noKey : value),
+};
+
+Object.defineProperty(NominalRoot.prototype, equalityKeySlot, { value: rootEqualityKey });
 
 const isOwnType = (value: unknown): value is typeof NominalRoot =>
   typeof value === 'function' && Object.prototype.isPrototypeOf.call(NominalRoot, value);

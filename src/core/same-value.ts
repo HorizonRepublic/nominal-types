@@ -3,7 +3,11 @@ import { isPlainRecord } from './frozen.ts';
 const hasEquals = (value: unknown): value is { equals: (other: unknown) => boolean } =>
   typeof value === 'object' && value !== null && typeof Reflect.get(value, 'equals') === 'function';
 
-const sameItem = (left: unknown, right: unknown): boolean =>
+/**
+ * Internal: whether two items are the same: by the left one's `equals` when it has one, by
+ * `sameValue` otherwise.
+ */
+export const sameItem = (left: unknown, right: unknown): boolean =>
   hasEquals(left) ? left.equals(right) : sameValue(left, right);
 
 const sameRecord = (
@@ -48,3 +52,35 @@ export const inOneLine = (left: object, right: unknown): right is object =>
   right !== null &&
   (right instanceof left.constructor ||
     (typeof right.constructor === 'function' && left instanceof right.constructor));
+
+/**
+ * Internal: a nominal instance as a key function reads it.
+ */
+export interface Keyed {
+  readonly value: unknown;
+}
+
+/**
+ * Internal: how the instances of a type are told apart quickly: their `equals`, and a key that is
+ * the same for any two instances `equals` finds the same; `noKey` where the value has none.
+ *
+ * @remarks
+ * It sits on a prototype under a `Symbol.for` key, beside the `equals` it was written for, so a
+ * class that overrides `equals` without a key of its own is compared item by item instead.
+ */
+export interface EqualityKey {
+  readonly equals: unknown;
+  readonly key: (item: Keyed) => unknown;
+}
+
+/**
+ * Internal: where a prototype keeps its `EqualityKey`.
+ */
+export const equalityKeySlot: unique symbol = Symbol.for(
+  '@horizon-republic/nominal-types/equality-key',
+);
+
+/**
+ * Internal: what `EqualityKey.key` returns for a value it can't key, such as an object.
+ */
+export const noKey: unique symbol = Symbol.for('@horizon-republic/nominal-types/no-key');

@@ -34,19 +34,20 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 
 ## Type classes and instances
 
-| Type                                   | Description                                                                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `NominalType<Name, Schema, Instance?>` | A class returned by `Nominal()`.                                                                              |
-| `SubtypeOf<Parent, Name>`              | A class returned by `subtype()`.                                                                              |
-| `VariantOf<Source, Name>`              | A class returned by `variant()`.                                                                              |
-| `VariantInstance<Source, Name>`        | An instance of a variant: the methods of `Source`, a brand of its own.                                        |
-| `AnyNominalType`                       | Any nominal type class, for code that takes types in general.                                                 |
-| `NominalInstance<Name, Value>`         | What every instance offers: `value`, `equals()`, `toJSON()`, `toString()`.                                    |
-| `ObjectInstance<Name, Input, Value>`   | An instance of a type built on `objectOf()`: a getter per field and `copyWith()`.                             |
-| `ObjectCopy<Input>`                    | The `copyWith()` method alone.                                                                                |
-| `ObjectRule<Input, Value>`             | What `Nominal()` needs of an `objectOf()` schema to add getters: `keys` and `strict()`.                       |
-| `NominalOptions`                       | The options of `Nominal()`, `subtype()` and `variant()`. See [`NominalOptions`](declaring.md#nominaloptions). |
-| `Immutable<Value>`                     | `Value` with its plain objects and arrays read-only all the way down. The type of `value`.                    |
+| Type                                   | Description                                                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `NominalType<Name, Schema, Instance?>` | A class returned by `Nominal()`.                                                                                  |
+| `SubtypeOf<Parent, Name, Value?>`      | A class returned by `subtype()`. `Value` is the value its rule gives, such as `'draft' \| 'paid'` from `oneOf()`. |
+| `Narrowed<Instance, Value>`            | `Instance` with `value` of the narrower type `Value`, as a subtype with `oneOf()` has.                            |
+| `VariantOf<Source, Name>`              | A class returned by `variant()`.                                                                                  |
+| `VariantInstance<Source, Name>`        | An instance of a variant: the methods of `Source`, a brand of its own.                                            |
+| `AnyNominalType`                       | Any nominal type class, for code that takes types in general.                                                     |
+| `NominalInstance<Name, Value>`         | What every instance offers: `value`, `equals()`, `toJSON()`, `toString()`.                                        |
+| `ObjectInstance<Name, Input, Value>`   | An instance of a type built on `objectOf()`: a getter per field and `copyWith()`.                                 |
+| `ObjectCopy<Input>`                    | The `copyWith()` method alone.                                                                                    |
+| `ObjectRule<Input, Value>`             | What `Nominal()` needs of an `objectOf()` schema to add getters: `keys` and `strict()`.                           |
+| `NominalOptions`                       | The options of `Nominal()`, `subtype()` and `variant()`. See [`NominalOptions`](declaring.md#nominaloptions).     |
+| `Immutable<Value>`                     | `Value` with its plain objects and arrays read-only all the way down. The type of `value`.                        |
 
 ## Brands
 
@@ -66,6 +67,8 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 | `NominalSchema<Input, Value>`   | What `Nominal()`, `subtype()` and `variant()` take as a rule: a Standard Schema that answers synchronously.                  |
 | `PatternSchema`                 | The class `matching()` returns. See [`PatternSchema` and `PredicateSchema`](declaring.md#patternschema-and-predicateschema). |
 | `PredicateSchema<Value>`        | The class `satisfying()` returns.                                                                                            |
+| `OneOfSchema<Value>`            | The class `oneOf()` returns. See [`OneOfSchema`](declaring.md#oneofschema).                                                  |
+| `OneOfValue`                    | What `oneOf()` takes: `string \| number \| boolean \| null`.                                                                 |
 | `TypeSchema<Input, Output>`     | The class `schemaOf()` returns. See [`TypeSchema`](schemas.md#typeschema).                                                   |
 | `ArrayOptions`                  | The options of `array()`. See [`ArrayOptions`](schemas.md#arrayoptions).                                                     |
 | `NominalTarget`                 | A nominal type or a `schemaOf()` schema: what adapters take.                                                                 |

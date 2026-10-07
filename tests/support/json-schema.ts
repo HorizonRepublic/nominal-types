@@ -1,3 +1,53 @@
+const sameJson = (left: unknown, right: unknown): boolean => {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((item: unknown, index) => sameJson(item, right[index]))
+    );
+  }
+
+  if (typeof left === 'object' && left !== null && typeof right === 'object' && right !== null) {
+    const keys = Object.keys(left);
+
+    return (
+      keys.length === Object.keys(right).length &&
+      keys.every(
+        (key) =>
+          Object.hasOwn(right, key) && sameJson(Reflect.get(left, key), Reflect.get(right, key)),
+      )
+    );
+  }
+
+  // JSON numbers are compared by value, so 0 and -0 are one number.
+  return left === right;
+};
+
+const satisfiesArray = (keyword: (name: string) => unknown, value: unknown): boolean => {
+  if (keyword('type') === 'array' && !Array.isArray(value)) {
+    return false;
+  }
+
+  if (!Array.isArray(value)) {
+    return true;
+  }
+
+  const items = keyword('items');
+  const minItems = keyword('minItems');
+  const maxItems = keyword('maxItems');
+
+  return (
+    value.every((item: unknown) => satisfiesSchema(items, item)) &&
+    (typeof minItems !== 'number' || value.length >= minItems) &&
+    (typeof maxItems !== 'number' || value.length <= maxItems) &&
+    (keyword('uniqueItems') !== true ||
+      value.every((item: unknown, index) =>
+        value.slice(0, index).every((earlier: unknown) => !sameJson(earlier, item)),
+      ))
+  );
+};
+
 /**
  * A JSON Schema checker for the keywords the built-in types emit, so tests can hold a type's
  * runtime rule against the schema it describes itself with.
@@ -8,6 +58,16 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
   }
 
   const keyword = (name: string): unknown => Reflect.get(schema, name);
+  const listed = keyword('enum');
+
+  if (Array.isArray(listed) && !listed.some((item: unknown) => sameJson(item, value))) {
+    return false;
+  }
+
+  if (!satisfiesArray(keyword, value)) {
+    return false;
+  }
+
   const parts = keyword('allOf');
 
   if (Array.isArray(parts) && !parts.every((part: unknown) => satisfiesSchema(part, value))) {

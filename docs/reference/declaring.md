@@ -10,7 +10,9 @@ The functions and methods that declare a nominal type, and the rules a type chec
 | [`NominalOptions`](#nominaloptions)                                         | Options of `Nominal()`, `subtype()`, `variant()`            |
 | [`matching()`](#matching)                                                   | A rule from a regular expression                            |
 | [`satisfying()`](#satisfying)                                               | A rule from a type guard                                    |
+| [`oneOf()`](#oneof)                                                         | A rule for a fixed set of values                            |
 | [`PatternSchema` and `PredicateSchema`](#patternschema-and-predicateschema) | What `matching()` and `satisfying()` return                 |
+| [`OneOfSchema`](#oneofschema)                                               | What `oneOf()` returns                                      |
 | [`isNominalType()`](#isnominaltype)                                         | Tells a nominal type class from other values                |
 | [Type names](#type-names)                                                   | What a name may hold, and what happens to a name used twice |
 | [Rules from other libraries](#rules-from-other-libraries)                   | How a Zod, Valibot or ArkType schema runs as a rule         |
@@ -33,7 +35,7 @@ Declares a type with no parent. It returns a class to extend.
 `rule` can be:
 
 - a `RegExp`, which stands for `matching(pattern)`;
-- the result of [`matching()`](#matching) or [`satisfying()`](#satisfying);
+- the result of [`matching()`](#matching), [`satisfying()`](#satisfying) or [`oneOf()`](#oneof);
 - a schema from [`objectOf()`](schemas.md#objectof) or [`schemaOf()`](schemas.md#schemaof), such as `schemaOf(Uuid).array()`;
 - a [`constraint()`](schemas.md#constraint);
 - any [Standard Schema](glossary.md) that answers synchronously, such as a Zod, Valibot or ArkType schema.
@@ -94,6 +96,8 @@ Returns: a class with the parent's rules, then its own rule. Its instances have 
 An instance of the subtype is also an instance of the parent. It fits wherever the parent is expected. A parent instance doesn't fit where the subtype is expected.
 
 Without `rule`, the subtype accepts the same values as its parent. It is still a new type.
+
+A rule that allows fewer values, such as [`oneOf()`](#oneof), also narrows the type of `value`. Under `AnyString`, `oneOf('draft', 'paid')` gives `value` the type `'draft' | 'paid'`.
 
 Throws: a `TypeError` for an invalid name or a `RegExp` flag, as [`Nominal()`](#nominal) does.
 
@@ -274,6 +278,82 @@ new PackSize(3); // throws NominalError: shop.PackSize: must be an even number (
 
 See also: [How to declare a type](../guides/core/declare-a-type.md), [JSON Schema](json-schema.md).
 
+## oneOf()
+
+```ts
+oneOf(...values): OneOfSchema<Value>
+```
+
+A rule for a fixed set of values, such as the states of an order.
+
+| Parameter | Type                                                       | Description                            |
+| --------- | ---------------------------------------------------------- | -------------------------------------- |
+| `values`  | strings, finite numbers, booleans or `null` (`OneOfValue`) | The accepted values, each listed once. |
+
+Returns: a [`OneOfSchema`](#oneofschema). The type of the value is the union of the listed values, such as `'draft' | 'paid'`.
+
+A value passes when it is `===` to a listed value. Case counts, and the string `'1'` is not the number `1`.
+
+Messages:
+
+| Case             | Message                                                         |
+| ---------------- | --------------------------------------------------------------- |
+| several values   | `must be one of "draft", "paid" (was "lost")`                   |
+| a single value   | `must be "admin" (was "user")`                                  |
+| a sensitive type | `must be one of "draft", "paid" (was a string of 4 characters)` |
+
+Its JSON Schema is `{ type, enum, description }`. `type` is there only when all values are of one kind: `string`, `integer`, `number` or `boolean`.
+
+Throws:
+
+| Case                                                   | Error                                                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| no values                                              | `TypeError: oneOf(): list at least one value`                                           |
+| a value listed twice                                   | `TypeError: oneOf(): "S" is listed twice`                                               |
+| a bigint, `NaN`, an infinity, `undefined` or an object | `TypeError: oneOf(): values must be strings, finite numbers, booleans or null (was 1n)` |
+
+Bigints are refused because JSON has no bigint. For a fixed set of big integers, use [`satisfying()`](#satisfying) under `AnyBigInt`.
+
+Example:
+
+```ts
+import { AnyNumber, AnyString, oneOf } from '@horizon-republic/nominal-types';
+
+class OrderStatus extends AnyString.subtype('shop.OrderStatus', oneOf('draft', 'paid', 'shipped')) {}
+class Rating extends AnyNumber.subtype('shop.Rating', oneOf(1, 2, 3, 4, 5)) {}
+
+new OrderStatus('paid').value; // 'paid', of type 'draft' | 'paid' | 'shipped'
+new OrderStatus('Paid'); // throws NominalError: shop.OrderStatus: must be one of "draft", "paid", "shipped" (was "Paid")
+new Rating(5).value; // 5, of type 1 | 2 | 3 | 4 | 5
+```
+
+`oneOf()` doesn't take a TypeScript `enum` object, since a numeric enum also holds its member names. Pass the values instead:
+
+```ts
+import { AnyNumber, AnyString, oneOf } from '@horizon-republic/nominal-types';
+
+enum Size {
+  Small = 'S',
+  Large = 'L',
+}
+
+enum Priority {
+  Low = 0,
+  High = 1,
+}
+
+class ShirtSize extends AnyString.subtype('shop.ShirtSize', oneOf(...Object.values(Size))) {}
+class TaskPriority extends AnyNumber.subtype('shop.TaskPriority', oneOf(Priority.Low, Priority.High)) {}
+
+new ShirtSize(Size.Small).value; // 'S'
+Object.values(Priority); // ['Low', 'High', 0, 1]
+TaskPriority.parse('Low'); // { ok: false, issues: [{ message: 'must be a number (was "Low")' }] }
+```
+
+`Object.values()` fits a string enum only. For a numeric enum, list its members.
+
+See also: [How to declare a type](../guides/core/declare-a-type.md#declare-a-type-for-a-fixed-set-of-values), [JSON Schema](json-schema.md).
+
 ## PatternSchema and PredicateSchema
 
 The classes that `matching()` and `satisfying()` return. Both are Standard Schemas and Standard JSON Schemas. Create them through the functions, not with `new`.
@@ -301,6 +381,32 @@ sku.messageFor('abc'); // 'must be a SKU (was "abc")'
 sku.messageFor(42); // 'must be a string (was 42)'
 even.messageFor(3); // 'must be an even number (was 3)'
 sku['~standard'].validate('abc'); // { issues: [{ message: 'must be a SKU (was "abc")' }] }
+```
+
+## OneOfSchema
+
+The class `oneOf()` returns. It is a Standard Schema and a Standard JSON Schema. Create it through `oneOf()`, not with `new`.
+
+| Member              | Description                                                          |
+| ------------------- | -------------------------------------------------------------------- |
+| `accepts(value)`    | `true` if the value is listed. A plain function you can pass around. |
+| `messageFor(value)` | The message for a rejected value.                                    |
+| `issuesFor(value)`  | The issues for a rejected value: `[{ message }]`.                    |
+| `values`            | The listed values, in the order given, frozen.                       |
+| `description`       | `one of "S", "M", "L"`, or the value alone when only one is listed.  |
+| `['~standard']`     | The Standard Schema interface: `validate` and `jsonSchema`.          |
+
+Example:
+
+```ts
+import { oneOf } from '@horizon-republic/nominal-types';
+
+const size = oneOf('S', 'M', 'L');
+
+size.accepts('M'); // true
+size.values; // ['S', 'M', 'L']
+size.messageFor('XL'); // 'must be one of "S", "M", "L" (was "XL")'
+size['~standard'].validate('XL'); // { issues: [{ message: 'must be one of "S", "M", "L" (was "XL")' }] }
 ```
 
 ## isNominalType()

@@ -57,15 +57,26 @@ OpenAPI 3.0 has no `contentEncoding`. For `openapi-3.0`, `contentEncoding: 'base
 
 ## A type's schema
 
-| Part          | Rule                                                                            |
-| ------------- | ------------------------------------------------------------------------------- |
-| `title`       | The type name, such as `shop.Sku`, unless the rule sets its own `title`.        |
-| one rule      | The rule's schema, at the top level.                                            |
-| several rules | An `allOf`, one entry per rule, from the top of the line of types down.         |
-| `description` | The description given to `matching()` or `satisfying()`.                        |
-| examples      | Gathered from all the rules. Only the examples the whole type accepts are kept. |
+| Part          | Rule                                                                               |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `title`       | The type name, such as `shop.Sku`, unless the rule sets its own `title`.           |
+| one rule      | The rule's schema, at the top level.                                               |
+| several rules | An `allOf`, one entry per rule, from the top of the line of types down.            |
+| `description` | The description given to `matching()` or `satisfying()`, or the list of `oneOf()`. |
+| examples      | Gathered from all the rules. Only the examples the whole type accepts are kept.    |
 
-The string check of `AnyString` is left out when the next rule checks for a string itself. So a subtype of `AnyString` made from a pattern has one rule.
+The string check of `AnyString` is left out when the next rule checks for a string itself. So a subtype of `AnyString` made from a pattern, or from `oneOf()` with strings only, has one rule.
+
+A rule from `oneOf()` is described by `enum`:
+
+```ts
+import { AnyString, oneOf } from '@horizon-republic/nominal-types';
+
+class OrderStatus extends AnyString.subtype('shop.OrderStatus', oneOf('draft', 'paid', 'shipped')) {}
+
+OrderStatus['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
+// { title: 'shop.OrderStatus', type: 'string', enum: ['draft', 'paid', 'shipped'], description: 'one of "draft", "paid", "shipped"' }
+```
 
 Example of several rules:
 
@@ -104,17 +115,17 @@ ToySku['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 
 ## Schemas built from types
 
-| Schema                         | JSON Schema                                                                                           |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `schemaOf(T)`                  | the same as `T`                                                                                       |
-| `.array(options)`              | `{ type: 'array', items, minItems, maxItems }`; `minItems` only above 0, `maxItems` only with a limit |
-| `.optional()`                  | the same as the inner schema; an `objectOf()` leaves the field out of `required`                      |
-| `.nullable()`                  | `{ anyOf: [inner, { type: 'null' }] }`; for `openapi-3.0`, the inner schema with `nullable: true`     |
-| `.fromString()`                | the same as the inner schema: it describes the value, not the text                                    |
-| `objectOf(fields)`             | `{ type: 'object', properties, required }`, each field by its own schema                              |
-| `.strict()`                    | adds `additionalProperties: false` on the input side too                                              |
-| a nominal type on `objectOf()` | the object schema with the type name as `title`                                                       |
-| `constraint(fields, check)`    | `{ type: 'object', properties, required }` of the listed fields; `check` is not described             |
+| Schema                         | JSON Schema                                                                                                                                                      |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaOf(T)`                  | the same as `T`                                                                                                                                                  |
+| `.array(options)`              | `{ type: 'array', items, minItems, maxItems, uniqueItems }`; `minItems` only above 0, `maxItems` only with a limit, `uniqueItems: true` only with `unique: true` |
+| `.optional()`                  | the same as the inner schema; an `objectOf()` leaves the field out of `required`                                                                                 |
+| `.nullable()`                  | `{ anyOf: [inner, { type: 'null' }] }`; for `openapi-3.0`, the inner schema with `nullable: true`                                                                |
+| `.fromString()`                | the same as the inner schema: it describes the value, not the text                                                                                               |
+| `objectOf(fields)`             | `{ type: 'object', properties, required }`, each field by its own schema                                                                                         |
+| `.strict()`                    | adds `additionalProperties: false` on the input side too                                                                                                         |
+| a nominal type on `objectOf()` | the object schema with the type name as `title`                                                                                                                  |
+| `constraint(fields, check)`    | `{ type: 'object', properties, required }` of the listed fields; `check` is not described                                                                        |
 
 `required` lists the fields whose schema doesn't accept `undefined`.
 
@@ -138,11 +149,12 @@ Invite['~standard'].jsonSchema.output({ target: 'openapi-3.0' });
 
 JSON Schema can't express every rule. Then the schema accepts more than the type, and the type rejects the rest at runtime.
 
-| Type                       | What the schema leaves out                                                       |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `Float32`                  | exactness as a 32-bit float; the schema is `{ type: 'number', format: 'float' }` |
-| `Int64`, `Uint64`          | the range; the schema limits the length of the string only                       |
-| a rule from `satisfying()` | whatever the guard checks beyond the `json` you give                             |
-| a constraint               | the `check` function                                                             |
+| Type                                | What the schema leaves out                                                        |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `Float32`                           | exactness as a 32-bit float; the schema is `{ type: 'number', format: 'float' }`  |
+| `Int64`, `Uint64`                   | the range; the schema limits the length of the string only                        |
+| a rule from `satisfying()`          | whatever the guard checks beyond the `json` you give                              |
+| a constraint                        | the `check` function                                                              |
+| `array({ unique: true })` of `Uuid` | that items differing only in case repeat; `uniqueItems` compares the text exactly |
 
 [← Reference](README.md)

@@ -6,6 +6,7 @@ export type {
   BrandsOf,
   Immutable,
   InputOf,
+  Narrowed,
   NominalInstance,
   NominalOptions,
   NominalSchema,
@@ -24,6 +25,8 @@ export { NominalError } from './core/nominal-error.ts';
 export { hideValues } from './core/hidden-values.ts';
 export { matching, PatternSchema } from './core/pattern-schema.ts';
 export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
+export { oneOf, OneOfSchema } from './core/one-of.ts';
+export type { OneOfValue } from './core/one-of.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
 export { isConstraint, Constraint, constraint } from './core/constraint.ts';
 export type {

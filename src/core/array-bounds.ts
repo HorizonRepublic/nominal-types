@@ -1,10 +1,15 @@
 /**
- * How many items `array()` accepts: an exact `length`, or a `min`, a `max` or both.
+ * What `array()` accepts: how many items, as an exact `length` or a `min`, a `max` or both, and
+ * whether an item may repeat.
  */
 export interface ArrayOptions {
   readonly length?: number;
   readonly min?: number;
   readonly max?: number;
+  /**
+   * Refuses an item equal to an earlier one, compared as `equals()` compares them.
+   */
+  readonly unique?: boolean;
 }
 
 const isCount = (value: unknown): value is number =>
@@ -15,8 +20,8 @@ const items = (count: number): string => (count === 1 ? '1 item' : `${count} ite
 /**
  * Internal: the lowest and highest count `options` allow.
  *
- * @throws TypeError for options that are not whole numbers from 0 up, mix `length` with `min` or
- * `max`, or put `min` above `max`.
+ * @throws TypeError for counts that are not whole numbers from 0 up, `length` mixed with `min` or
+ * `max`, `min` above `max`, or a `unique` that is not a boolean.
  */
 export const boundsOf = (options: ArrayOptions): { readonly min: number; readonly max: number } => {
   const { length, min, max } = options;
@@ -27,6 +32,10 @@ export const boundsOf = (options: ArrayOptions): { readonly min: number; readonl
         `array(): ${name} must be a whole number from 0 up (was ${String(value)})`,
       );
     }
+  }
+
+  if (options.unique !== undefined && typeof options.unique !== 'boolean') {
+    throw new TypeError(`array(): unique must be true or false (was ${String(options.unique)})`);
   }
 
   if (length !== undefined && (min !== undefined || max !== undefined)) {

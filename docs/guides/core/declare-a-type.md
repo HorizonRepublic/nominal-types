@@ -76,6 +76,51 @@ The guard only sees values that passed `NonNegativeInteger`, so it doesn't check
 
 The third argument is the JSON Schema of the same rule, used in [generated JSON Schema](../api-docs/json-schema.md). It is optional. Without it, asking the type for its JSON Schema, as Swagger does, throws a `TypeError`.
 
+## Declare a type for a fixed set of values
+
+Pass the values to `oneOf()`:
+
+```ts
+import { AnyString, oneOf } from '@horizon-republic/nominal-types';
+
+export class OrderStatus extends AnyString.subtype(
+  'shop.OrderStatus',
+  oneOf('draft', 'paid', 'shipped'),
+) {}
+
+new OrderStatus('paid').value; // 'paid'
+OrderStatus.parse('Paid'); // { ok: false, issues: [{ message: 'must be one of "draft", "paid", "shipped" (was "Paid")' }] }
+```
+
+The type of `value` lists the values: `'draft' | 'paid' | 'shipped'`.
+
+`oneOf()` takes strings, numbers, booleans and `null`. Start from `AnyString` for strings and from `AnyNumber` for numbers. Case counts, and `'1'` is not `1`.
+
+To use a TypeScript `enum`, pass its values. For a string enum, spread `Object.values()`. For a numeric enum, list the members, since `Object.values()` also returns their names:
+
+```ts
+import { AnyNumber, AnyString, oneOf } from '@horizon-republic/nominal-types';
+
+enum Size {
+  Small = 'S',
+  Large = 'L',
+}
+
+enum Priority {
+  Low = 0,
+  High = 1,
+}
+
+export class ShirtSize extends AnyString.subtype('shop.ShirtSize', oneOf(...Object.values(Size))) {}
+export class TaskPriority extends AnyNumber.subtype(
+  'shop.TaskPriority',
+  oneOf(Priority.Low, Priority.High),
+) {}
+
+new ShirtSize(Size.Large).value; // 'L'
+new TaskPriority(Priority.High).value; // 1
+```
+
 ## Declare a type with a schema from another library
 
 Pass a Zod, Valibot or ArkType schema as the rule:
@@ -132,7 +177,7 @@ sku.next().value; // 'ABC-0042'
 
 ## See also
 
-- [Declaring types](../../reference/declaring.md): `subtype()`, `Nominal()`, `matching()`, `satisfying()` and the name rules.
+- [Declaring types](../../reference/declaring.md): `subtype()`, `Nominal()`, `matching()`, `satisfying()`, `oneOf()` and the name rules.
 - [How to make a stricter type or a variant](build-on-a-type.md)
 - [What a nominal type is](../../explanation/nominal-types.md)
 

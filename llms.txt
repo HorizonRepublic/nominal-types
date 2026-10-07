@@ -73,15 +73,16 @@ All from `@horizon-republic/nominal-types`.
 
 ### Declaring types
 
-- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `matching()`, `satisfying()`, `objectOf()`, `constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean }`.
-- `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first.
+- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `matching()`, `satisfying()`, `oneOf()`, `objectOf()`, `constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean }`.
+- `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first. A rule that narrows the value, such as `oneOf()`, narrows the type of `value` too.
 - `Type.variant(name, rule, options?)` makes a sibling: the same methods, its own rule in place of the source's, and the two don't mix.
 - `matching(pattern, description?, json?)` builds a rule from a regular expression. `description` completes "must be …" in messages. `json` adds JSON Schema keywords such as `format` or `examples`. Returns a `PatternSchema`.
 - `satisfying(guard, description, json?)` builds a rule from a type guard `(value: unknown) => value is T`. Without `json` the type can't describe itself as JSON Schema. Returns a `PredicateSchema`.
+- `oneOf(...values)` builds a rule for a fixed set of strings, finite numbers, booleans or `null`, compared with `===`. Returns a `OneOfSchema` (`values`, `accepts`); its values are `OneOfValue`. The value type is the union of the listed literals. Message `must be one of "draft", "paid" (was "lost")`, or `must be "admin" (was "user")` for one value. JSON Schema `{ type?, enum }`. An empty list, a repeated value, a bigint, `NaN`, an infinity or an object throws `TypeError`. It takes no enum object: spread `Object.values()` of a string enum, list the members of a numeric one.
 - `isNominalType(value)` tells whether a value is a nominal type class, also from another copy of the package.
 
 ```ts
-import { AnyString, matching, Nominal, PositiveInteger, satisfying } from '@horizon-republic/nominal-types';
+import { AnyString, matching, Nominal, oneOf, PositiveInteger, satisfying } from '@horizon-republic/nominal-types';
 
 export class Sku extends AnyString.subtype('shop.Sku', matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['TEA-0042'] })) {
   public get category(): string {
@@ -93,9 +94,12 @@ export class Quantity extends PositiveInteger.subtype('shop.Quantity', satisfyin
 
 export class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
+export class OrderStatus extends AnyString.subtype('shop.OrderStatus', oneOf('draft', 'paid', 'shipped')) {}
+
 new Sku('TEA-0042').category; // 'TEA'
 Quantity.parse(100); // { ok: false, issues: [{ message: 'must be at most 99 (was 100)' }] }
 Password.parse('short'); // { ok: false, issues: [{ message: 'must be matched by ^.{12,}$ (was a string of 5 characters)' }] }
+new OrderStatus('paid').value; // 'paid', typed 'draft' | 'paid' | 'shipped'
 ```
 
 ### Static members of a type
@@ -127,7 +131,7 @@ A field of an `objectOf()` type can't be named `value`, `equals`, `copyWith`, `t
 
 ### Schemas
 
-- `schemaOf(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max? }`, `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `schemaOf()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
+- `schemaOf(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `schemaOf()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
 - `objectOf(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, a `schemaOf()` schema, another `objectOf()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string and makes every field optional in the input type, so `new Config(process.env)` compiles. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
 - `constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
 - `isObjectSchema(value)`, `isConstraint(value)` tell those apart.
@@ -196,7 +200,7 @@ config.PORT.value; // 3000 for PORT=3000
 
 ### TypeScript types
 
-`ValueOf<Schema>` (the value a schema gives: `type CreateBooking = ValueOf<typeof CreateBooking>`), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`.
+`ValueOf<Schema>` (the value a schema gives: `type CreateBooking = ValueOf<typeof CreateBooking>`), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?>`, `Narrowed<Instance, Value>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
 
 ## Built-in types
 

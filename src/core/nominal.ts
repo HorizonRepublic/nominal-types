@@ -21,12 +21,11 @@ import {
 import { NominalError } from './nominal-error.ts';
 import { PatternSchema } from './pattern-schema.ts';
 import { Rejection } from './rejection.ts';
-import type { StandardProps, StandardSchema } from './standard-schema.ts';
+import type { StandardProps } from './standard-schema.ts';
 import { withoutImpliedString } from './string-rule.ts';
 
 const namespace = '@horizon-republic/nominal-types';
 const effectiveSchemas = new WeakMap<object, NominalSchema>();
-const standardSchemas = new WeakMap<object, StandardSchema<unknown, NominalRoot>>();
 const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
 let pendingTarget: object | undefined;
@@ -124,30 +123,10 @@ class NominalRoot {
   }
 
   public static parse(this: typeof NominalRoot, input: unknown): Parsed<NominalRoot> {
-    if (typeof input === 'object' && input !== null) {
-      if (input instanceof this) {
-        return { ok: true, value: input };
-      }
-      if (descendsFrom(NominalRoot, this, input) || isVariantPair(NominalRoot, this, input)) {
-        return this.parse(Reflect.get(input, 'value'));
-      }
-    }
-    const value = run(this, input);
-    if (value instanceof Rejection) {
-      return { ok: false, issues: value.issues };
-    }
-    remember(this, input, value);
-    return { ok: true, value: new this(input) };
-  }
-
-  public static standardSchema(this: typeof NominalRoot): StandardSchema<unknown, NominalRoot> {
-    const cached = standardSchemas.get(this);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const schema: StandardSchema<unknown, NominalRoot> = { '~standard': this['~standard'] };
-    standardSchemas.set(this, schema);
-    return schema;
+    const result = constructOwn(this, input);
+    return result instanceof Rejection
+      ? { ok: false, issues: result.issues }
+      : { ok: true, value: result };
   }
 
   public static subtype(
@@ -176,7 +155,7 @@ class NominalRoot {
     return (
       other instanceof NominalRoot &&
       Reflect.get(other.constructor, 'typeName') === Reflect.get(this.constructor, 'typeName') &&
-      Object.is(other.value, this.value)
+      sameValue(other.value, this.value)
     );
   }
 
@@ -188,6 +167,54 @@ class NominalRoot {
     return String(this.value);
   }
 }
+
+const hasEquals = (value: unknown): value is { equals: (other: unknown) => boolean } =>
+  typeof value === 'object' && value !== null && typeof Reflect.get(value, 'equals') === 'function';
+
+const sameValue = (left: unknown, right: unknown): boolean =>
+  Object.is(left, right) ||
+  (Array.isArray(left) &&
+    Array.isArray(right) &&
+    left.length === right.length &&
+    left.every((item: unknown, index) =>
+      hasEquals(item) ? item.equals(right[index]) : sameValue(item, right[index]),
+    ));
+
+const isOwnType = (value: unknown): value is typeof NominalRoot =>
+  typeof value === 'function' && Object.prototype.isPrototypeOf.call(NominalRoot, value);
+
+const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot | Rejection => {
+  if (typeof input === 'object' && input !== null) {
+    if (input instanceof target) {
+      return input;
+    }
+    if (descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)) {
+      return constructOwn(target, Reflect.get(input, 'value'));
+    }
+  }
+  const value = run(target, input);
+  if (value instanceof Rejection) {
+    return value;
+  }
+  remember(target, input, value);
+  return new target(input);
+};
+
+/**
+ * Internal: the instance `target` makes of `input`, or a `Rejection`, with nothing else allocated
+ * on the way.
+ *
+ * @remarks
+ * Returns an instance of the target as it is, and checks an instance of a related type by its
+ * value. A type from another copy of the package goes through its own `parse`.
+ */
+export const construct = (target: AnyNominalType, input: unknown): unknown => {
+  if (isOwnType(target)) {
+    return constructOwn(target, input);
+  }
+  const parsed = target.parse(input);
+  return parsed.ok ? parsed.value : new Rejection(parsed.issues);
+};
 
 const derive = (
   parent: typeof NominalRoot,

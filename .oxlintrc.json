@@ -152,7 +152,8 @@
             "allow": ["reflect-metadata"]
           }
         ],
-        "public-docs/require-jsdoc": "off"
+        "public-docs/require-jsdoc": "off",
+        "unicorn/no-useless-undefined": ["error", { "checkArguments": false }]
       }
     },
     {

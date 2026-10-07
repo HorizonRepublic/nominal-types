@@ -16,6 +16,8 @@ export { NominalError } from './core/nominal-error.ts';
 export { matching, PatternSchema } from './core/pattern-schema.ts';
 export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
+export { schemaOf, TypeSchema } from './core/type-schema.ts';
+export type { ArrayOptions } from './core/type-schema.ts';
 export { AnyBigInt } from './types/bigint/any-bigint.ts';
 export { AnyNumber } from './types/number/any-number.ts';
 export { AnyBoolean } from './types/boolean/any-boolean.ts';

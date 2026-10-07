@@ -46,6 +46,53 @@ A rule for values that a type guard accepts.
 | `description` | Ends the message `must be …`.                                                                 |
 | `jsonSchema`  | Optional. The JSON Schema of the rule. Without it, asking for JSON Schema throws `TypeError`. |
 
+### schemaOf()
+
+```ts
+schemaOf(Type): TypeSchema
+```
+
+A nominal type as a plain Standard Schema object. Throws `TypeError` if `Type` is not a nominal type. See [How to validate arrays and optional values](../guides/arrays-and-optional.md).
+
+| Member of `TypeSchema` | Returns                                                          |
+| ---------------------- | ---------------------------------------------------------------- |
+| `parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw. |
+| `array(options?)`      | A schema for a frozen array of values this schema accepts.       |
+| `optional()`           | A schema that also accepts `undefined`.                          |
+| `nullable()`           | A schema that also accepts `null`.                               |
+| `['~standard']`        | The Standard Schema and Standard JSON Schema interface.          |
+
+Every method returns a new schema and leaves the old one as it is.
+
+Options of `array()`:
+
+| Option   | Meaning                  |
+| -------- | ------------------------ |
+| `length` | exactly this many items  |
+| `min`    | at least this many items |
+| `max`    | at most this many items  |
+
+Each option must be a whole number from 0 up. `length` can't be combined with `min` or `max`, and `min` can't be greater than `max`. Otherwise `array()` throws `TypeError`.
+
+How each schema is described as JSON Schema:
+
+| Schema        | JSON Schema                                                                            |
+| ------------- | -------------------------------------------------------------------------------------- |
+| `schemaOf(T)` | the same as `T`                                                                        |
+| `.array()`    | `{ type: 'array', items, minItems, maxItems }`                                         |
+| `.optional()` | the same as the inner schema; leave the property out of `required`                     |
+| `.nullable()` | `{ anyOf: [inner, { type: 'null' }] }`; for `openapi-3.0`, inner with `nullable: true` |
+
+Messages of `array()`:
+
+| Case              | Message                                      |
+| ----------------- | -------------------------------------------- |
+| not an array      | `must be an array (was 42)`                  |
+| wrong exact count | `must have 3 items (was 2)`                  |
+| too few           | `must have at least 1 item (was 0)`          |
+| too many          | `must have at most 10 items (was 11)`        |
+| a bad item        | the item's message, with its index in `path` |
+
 ### isNominalType()
 
 ```ts
@@ -63,9 +110,8 @@ isNominalType(value): value is AnyNominalType
 | `value instanceof Type`     | `true` if `value` is an instance of the type, also one created by another copy of the package.                                           |
 | `Type.subtype(name, rule?)` | A new, narrower type. See [subtypes](../guides/building-on-types.md#adding-a-stricter-rule).                                             |
 | `Type.variant(name, rule)`  | A sibling type with a different rule. See [variants](../guides/building-on-types.md#accepting-different-values-with-the-same-behaviour). |
-| `Type.standardSchema()`     | The type as a plain Standard Schema object.                                                                                              |
 | `Type['~standard']`         | The Standard Schema and Standard JSON Schema interface.                                                                                  |
-| `Type.rule`                 | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `standardSchema()`.              |
+| `Type.rule`                 | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `schemaOf(Type)`.                |
 | `Type.typeName`             | The type's name.                                                                                                                         |
 
 What `parse()` does with different inputs:
@@ -132,19 +178,20 @@ Notes:
 
 ## Types
 
-| Type                                  | Description                                                     |
-| ------------------------------------- | --------------------------------------------------------------- |
-| `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                 |
-| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                 |
-| `VariantOf<Source, Name>`             | A class returned by `variant()`                                 |
-| `VariantInstance<Source, Name>`       | An instance of a variant                                        |
-| `AnyNominalType`                      | Any nominal type class                                          |
-| `NominalInstance<Name, Value>`        | What every instance offers                                      |
-| `NominalSchema<Input, Value>`         | What `Nominal()`, `subtype()` and `variant()` accept as a rule  |
-| `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return              |
-| `Parsed<Instance>`                    | The result of `parse()`                                         |
-| `Brand<Name>`                         | The compile-time marker that keeps types apart                  |
-| `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                        |
-| `StandardProps` / `StandardSchema`    | The shape of `~standard` and of what `standardSchema()` returns |
+| Type                                  | Description                                                    |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                |
+| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                |
+| `VariantOf<Source, Name>`             | A class returned by `variant()`                                |
+| `VariantInstance<Source, Name>`       | An instance of a variant                                       |
+| `AnyNominalType`                      | Any nominal type class                                         |
+| `NominalInstance<Name, Value>`        | What every instance offers                                     |
+| `NominalSchema<Input, Value>`         | What `Nominal()`, `subtype()` and `variant()` accept as a rule |
+| `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return             |
+| `Parsed<Instance>`                    | The result of `parse()`                                        |
+| `Brand<Name>`                         | The compile-time marker that keeps types apart                 |
+| `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                       |
+| `TypeSchema` / `ArrayOptions`         | What `schemaOf()` returns, and the options of `array()`        |
+| `StandardProps` / `StandardSchema`    | The shape of `~standard` and of a plain schema object          |
 
 [← Reference](README.md)

@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { Nominal } from '../../src/index.ts';
+import { Nominal, schemaOf } from '../../src/index.ts';
 import { Sku } from '../support/fixtures.ts';
 import { handWritten, issuesOf, outputOf, stringOnly } from '../support/results.ts';
 
@@ -21,12 +21,8 @@ describe('Standard Schema', () => {
       expect(schema).toMatchObject({ type: 'string', pattern: '^SKU-\\d{4}$' });
     });
 
-    it('hands out the same schema object on every call', () => {
-      expect(Sku.standardSchema()).toBe(Sku.standardSchema());
-    });
-
     it('embeds into an ArkType object and yields instances', () => {
-      const order = type({ sku: Sku.standardSchema() });
+      const order = type({ sku: schemaOf(Sku) });
 
       expect(order.assert({ sku: 'SKU-0003' }).sku).toBeInstanceOf(Sku);
     });

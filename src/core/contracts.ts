@@ -1,6 +1,6 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { StandardProps, StandardSchema } from './standard-schema.ts';
+import type { StandardProps } from './standard-schema.ts';
 
 declare const brand: unique symbol;
 
@@ -68,17 +68,6 @@ export interface AnyNominalType {
   readonly rule: NominalSchema;
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
   parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
-  /**
-   * The whole type as a plain Standard Schema object, for libraries that treat a class as a
-   * definition of their own, such as ArkType.
-   *
-   * @remarks
-   * Not to be confused with `rule`, which is only the rule of one level. The object is created
-   * once per type and returned on every call.
-   */
-  standardSchema<Type extends AnyNominalType>(
-    this: Type,
-  ): StandardSchema<InputOf<Type['rule']>, Type['prototype']>;
 }
 
 /**
@@ -88,7 +77,7 @@ export interface AnyNominalType {
  * @remarks
  * The class is a Standard Schema and a Standard JSON Schema through its static `~standard`, so
  * consumers that call `~standard` accept the class itself. Consumers that parse definitions treat
- * any function as their own construct, and take the plain object `standardSchema()` returns instead.
+ * any function as their own construct, and take the plain object `schemaOf(Type)` returns instead.
  */
 export interface NominalType<
   Name extends string,

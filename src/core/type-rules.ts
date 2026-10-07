@@ -1,13 +1,13 @@
 import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 
 import { ChainSchema } from './chain-schema.ts';
-import { compileSteps } from './compile.ts';
+import { compileRun } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
 import { rulesOf } from './hierarchy.ts';
-import { planOf } from './plan.ts';
+import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
-import { runSchema } from './run-schema.ts';
+import { foreignRunner } from './run-schema.ts';
 import { withoutImpliedString } from './string-rule.ts';
 
 /**
@@ -33,37 +33,18 @@ const effectiveSchemaOf = (root: object, target: TypeClass): NominalSchema => {
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 
-const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
-  const plan = planOf(withoutImpliedString(rulesOf(root, target)));
-  if (plan !== undefined) {
-    const failing = compileSteps(plan);
-    return (input) => {
-      const index = failing(input);
-      if (index === -1) {
-        return input;
-      }
-      return new Rejection(plan[index]?.issues(input) ?? []);
-    };
-  }
-  const schema = effectiveSchemaOf(root, target);
-  return (input) => {
-    try {
-      return runSchema(schema, input);
-    } catch (error) {
-      throw new TypeError(
-        `${target.typeName}: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      );
-    }
-  };
-};
+const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) =>
+  compileRun(
+    stepsOf(withoutImpliedString(rulesOf(root, target)), (rule) => ({
+      convert: foreignRunner(rule, target.typeName),
+    })),
+  );
 
 /**
  * Internal: runs every rule of a type on a value, returning the value or a `Rejection`.
  *
  * @remarks
- * A type whose rules are all patterns and type guards runs one check generated for it; any other
- * type runs its rules through `validate`.
+ * Each type runs one function generated for its rules, rules from other libraries included.
  *
  * @throws TypeError naming the type when a rule fails to run, such as an asynchronous schema.
  */

@@ -1,32 +1,49 @@
 import { describe, expect, it } from 'vitest';
 
-import { compileSteps } from '../../src/core/compile.ts';
-import type { Step } from '../../src/core/plan.ts';
+import { compileRun } from '../../src/core/compile.ts';
+import type { ConvertStep, Step } from '../../src/core/plan.ts';
+import { Rejection } from '../../src/core/rejection.ts';
 
-const step = (accepts: (value: unknown) => boolean): Step => ({ accepts, issues: () => [] });
+const check = (name: string, accepts: (value: unknown) => boolean): Step => ({
+  accepts,
+  issues: () => [{ message: name }],
+});
+
+const trim: ConvertStep = {
+  convert: (value) =>
+    typeof value === 'string' ? value.trim() : new Rejection([{ message: 'not text' }]),
+};
 
 const steps = [
-  step((value) => typeof value === 'number'),
-  step((value) => Number.isInteger(value)),
-  step((value) => typeof value === 'number' && value > 0),
+  check('a string', (value) => typeof value === 'string'),
+  trim,
+  check('not empty', (value) => value !== ''),
 ];
+
+const outcome = (result: unknown): unknown =>
+  result instanceof Rejection ? result.issues : result;
 
 describe.each([
   ['generated', true],
   ['looped', false],
-])('a %s plan', (_, generate) => {
-  const failing = compileSteps(steps, generate);
+])('a %s run', (_, generate) => {
+  const run = compileRun(steps, generate);
 
   it.each([
-    [3, -1],
-    ['3', 0],
-    [1.5, 1],
-    [-2, 2],
-  ])('answers %s with the index %d', (value, index) => {
-    expect(failing(value)).toBe(index);
+    ['  abc  ', 'abc'],
+    [42, [{ message: 'a string' }]],
+    ['   ', [{ message: 'not empty' }]],
+  ])('answers %j with %j', (input, expected) => {
+    expect(outcome(run(input))).toStrictEqual(expected);
   });
 
-  it('accepts anything with no steps', () => {
-    expect(compileSteps([], generate)('anything')).toBe(-1);
+  it('stops at a mapping step that rejects', () => {
+    expect(outcome(compileRun([trim, check('never', () => false)], generate)(1))).toStrictEqual([
+      { message: 'not text' },
+    ]);
+  });
+
+  it('returns the value with no steps', () => {
+    expect(compileRun([], generate)('anything')).toBe('anything');
   });
 });

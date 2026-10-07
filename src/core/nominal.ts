@@ -1,13 +1,14 @@
 import { brandCheck } from './compile.ts';
 import type {
   AnyNominalType,
+  ObjectInstance,
+  ObjectRule,
   InputOf,
   NominalSchema,
   NominalType,
   Parsed,
   ValueOf,
 } from './contracts.ts';
-import { fingerprintOf } from './fingerprint.ts';
 import {
   brandKeySlot,
   descendsFrom,
@@ -18,14 +19,15 @@ import {
 } from './hierarchy.ts';
 import { jsonText } from './messages.ts';
 import { NominalError } from './nominal-error.ts';
+import { defineObjectMembers, objectKeysOf } from './object-members.ts';
 import { asRule } from './pattern-schema.ts';
-import { remember, nothingPending, takePending } from './pending.ts';
+import { nothingPending, takePending } from './pending.ts';
 import { registerType } from './registry.ts';
 import { Rejection } from './rejection.ts';
 import { inOneLine, sameValue } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import { describeType, onlyChecks, rulesRunnerOf, runType } from './type-rules.ts';
+import { describeType, rulesRunnerOf, runType } from './type-rules.ts';
 import { parserFor } from './value-parser.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
@@ -166,57 +168,14 @@ const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot |
 };
 
 /**
- * Internal: a function that makes instances of `target`, chosen once: straight to the constructor
- * for a type of this copy of the package, through `parse` for one from another copy.
+ * Internal: the parts of this module the type functions build on, for `type-functions.ts`.
  */
-export const constructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
-  if (isOwnType(target)) {
-    return (input) => constructOwn(target, input);
-  }
-
-  return (input) => {
-    const parsed = target.parse(input);
-
-    return parsed.ok ? parsed.value : new Rejection(parsed.issues);
-  };
-};
-
-/**
- * Internal: a function that checks a value against `target` without making an instance: a
- * `Rejection`, or anything else when the value is accepted.
- */
-export const checkerFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
-  if (!isOwnType(target)) {
-    return constructorFor(target);
-  }
-
-  const run = rulesRunnerOf(NominalRoot, target);
-
-  return (input) =>
-    typeof input === 'object' && input !== null ? constructOwn(target, input) : run(input);
-};
-
-/**
- * Internal: a function that makes instances of `target` from values a checker of it accepted, and
- * skips checking a primitive again where the type's rules only check.
- */
-export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
-  const build = constructorFor(target);
-
-  if (!isOwnType(target) || !onlyChecks(NominalRoot, target)) {
-    return build;
-  }
-
-  return function buildInstance(input: unknown): unknown {
-    if (typeof input === 'object' && input !== null) {
-      return build(input);
-    }
-
-    remember(target, input, input);
-
-    return new target(input);
-  };
-};
+export const ownTypes: {
+  readonly root: typeof NominalRoot;
+  readonly isOwn: (value: unknown) => value is typeof NominalRoot;
+  readonly construct: (target: typeof NominalRoot, input: unknown) => NominalRoot | Rejection;
+  readonly parserOf: (target: typeof NominalRoot) => (input: unknown) => NominalRoot | Rejection;
+} = { root: NominalRoot, isOwn: isOwnType, construct: constructOwn, parserOf: valueParserOf };
 
 const derive = (
   parent: typeof NominalRoot,
@@ -237,13 +196,15 @@ const derive = (
 
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
+
+    const keys = objectKeysOf(rule);
+
+    if (keys !== undefined) {
+      defineObjectMembers(derived.prototype, keys);
+    }
   }
 
-  registerType(
-    name,
-    derived,
-    `${parent.typeName}|${String(base === parent)}|${fingerprintOf(rule)}`,
-  );
+  registerType(name, derived, { parent: parent.typeName, base: base === parent, rule });
 
   return derived;
 };
@@ -283,6 +244,10 @@ export function Nominal<const Name extends string>(
   name: Name,
   pattern: RegExp,
 ): NominalType<Name, NominalSchema<string, string>>;
+export function Nominal<const Name extends string, Input, Value extends object>(
+  name: Name,
+  schema: ObjectRule<Input, Value>,
+): NominalType<Name, NominalSchema<Input, Value>, ObjectInstance<Name, Input, Value>>;
 export function Nominal<const Name extends string, Schema extends NominalSchema>(
   name: Name,
   schema: Schema,

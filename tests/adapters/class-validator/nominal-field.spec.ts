@@ -65,7 +65,7 @@ describe('NominalField', () => {
     expect(errors).toStrictEqual([]);
     expect(value.contact).toBeInstanceOf(Email);
     expect(value.items[0]).toBeInstanceOf(Uuid);
-    expect(Object.isFrozen(value.items)).toBe(true);
+    expect(Object.isFrozen(value.items)).toBe(false);
     expect(value.backup).toBeUndefined();
     expect(value.replyTo).toBeNull();
     expect(value.billing.email).toBeInstanceOf(Email);

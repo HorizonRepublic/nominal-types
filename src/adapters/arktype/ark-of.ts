@@ -3,8 +3,8 @@ import type { Out, Type } from 'arktype';
 
 import type { AnyNominalType, InputOf } from '../../core/contracts.ts';
 import { issueText } from '../../core/issue-text.ts';
-import { checkerFor } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
+import { checkerFor } from '../../core/type-functions.ts';
 import { typeIdOf, typeKey } from './registry.ts';
 
 /**

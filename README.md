@@ -114,6 +114,18 @@ A subtype adds a rule and fits wherever its parent is expected:
 export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
 ```
 
+### Objects are checked field by field
+
+`objectOf()` checks an object of nominal fields, with no other library, as fast as Zod gives plain values:
+
+```ts
+import { Email, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+
+export const CreateOrder = objectOf({ email: Email, quantity: PositiveInteger });
+
+CreateOrder.parse(body); // { ok: true, value: { email: Email, quantity: PositiveInteger } }
+```
+
 ### Rules can span fields
 
 A constraint checks fields of an object against each other, like a `CHECK` constraint in SQL:

@@ -49,6 +49,33 @@ export class Occupancy extends Nominal(
 
 An `Occupancy` that breaks the rule can't be built, so the domain code never checks it again.
 
+## Value objects of several fields
+
+A value object often has more than one field: an amount and its currency, a stay with its guests and capacity. Build it on `objectOf()`, with the invariant as a constraint:
+
+```ts
+import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+
+export class Stay extends Nominal(
+  'booking.Stay',
+  objectOf(
+    { guests: PositiveInteger, capacity: PositiveInteger },
+    constraint(
+      { guests: PositiveInteger, capacity: PositiveInteger },
+      ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
+      { path: 'guests' },
+    ),
+  ),
+) {}
+
+const stay = new Stay({ guests: 2, capacity: 3 });
+
+stay.guests; // PositiveInteger
+stay.copyWith({ guests: 3 }); // a new Stay, checked; stay itself never changes
+```
+
+`copyWith()` is how a value object changes in DDD: it never changes in place, and every new value is checked against the same invariant.
+
 ## Bounded contexts and names
 
 Each part of a system, a bounded context, has its own meaning for a word. An `Email` in billing may accept only company addresses, while an `Email` in accounts accepts any.

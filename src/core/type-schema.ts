@@ -2,7 +2,7 @@ import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
 import { forTarget, withoutUri } from './json-target.ts';
 import { describeValue } from './messages.ts';
-import { constructorFor, isNominalType } from './nominal.ts';
+import { isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
@@ -12,6 +12,7 @@ import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { textFormOf } from './text-form.ts';
 import type { TextForm } from './text-form.ts';
+import { constructorFor } from './type-functions.ts';
 
 const { arraySchemas } = shared;
 
@@ -84,7 +85,7 @@ export class TypeSchema<Input, Output> {
   }
 
   /**
-   * An array of values this schema accepts, frozen so it stays valid.
+   * A new array of values this schema accepts, read-only by type.
    *
    * @remarks
    * The number of items is checked before any item, so an array that is too long costs nothing

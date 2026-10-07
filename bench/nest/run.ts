@@ -35,6 +35,7 @@ const rows: ReadonlyArray<readonly [string, number]> = [
   ['arktype', 0],
   ['valibot', 0],
   ['zod', 0],
+  ['nominal-types objectOf()', 0],
   ['nominal-types + ArkType adapter', 0],
   ['nominal-types + ArkType, schemaOf()', 0],
   ['class-validator', 0],

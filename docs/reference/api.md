@@ -61,7 +61,7 @@ A nominal type as a plain Standard Schema object. Throws `TypeError` if `Type` i
 | Member of `TypeSchema` | Returns                                                                                   |
 | ---------------------- | ----------------------------------------------------------------------------------------- |
 | `parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                          |
-| `array(options?)`      | A schema for a frozen array of values this schema accepts.                                |
+| `array(options?)`      | A schema for a new array of values this schema accepts, read-only by type.                |
 | `fromString()`         | A schema that reads a string as a number or boolean first. Only right after `schemaOf()`. |
 | `optional()`           | A schema that also accepts `undefined`.                                                   |
 | `nullable()`           | A schema that also accepts `null`.                                                        |
@@ -97,6 +97,49 @@ Messages of `array()`:
 | too few           | `must have at least 1 item (was 0)`          |
 | too many          | `must have at most 10 items (was 11)`        |
 | a bad item        | the item's message, with its index in `path` |
+
+### objectOf()
+
+```ts
+objectOf(fields, ...constraints): ObjectSchema
+```
+
+A schema for an object whose fields are checked by their own schemas. See [How to check an object with objectOf()](../guides/objects.md).
+
+| Parameter     | Description                                                                                                                |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `fields`      | An object that maps each key to a nominal type, a `schemaOf()` or `objectOf()` schema, or any synchronous Standard Schema. |
+| `constraints` | Optional. [Constraints](#constraint) that run once every field is valid.                                                   |
+
+What it does with an input:
+
+1. It refuses anything that isn't a plain object: `must be an object (was "x")`.
+2. It checks every field and collects every issue, with the field's key at the start of its `path`.
+3. A field whose schema accepts `undefined` may be missing; it is left out of the result.
+4. Keys it doesn't declare are dropped. With `strict()`, each is an issue: `is not allowed`.
+5. It runs the constraints.
+6. It returns a new object, read-only by type. The input is left as it was.
+
+`ObjectSchema` is a `TypeSchema`, so `array()`, `optional()` and `nullable()` work on it, as do `parse()` and `~standard`. It adds:
+
+| Member     | Description                                                        |
+| ---------- | ------------------------------------------------------------------ |
+| `strict()` | The same schema, refusing undeclared keys instead of dropping them |
+| `keys`     | The field names, in the order they were declared                   |
+
+Its JSON Schema is `{ type: 'object', properties, required }`. The output side, and the input side of a strict schema, add `additionalProperties: false`.
+
+A field named `__proto__` throws a `TypeError`.
+
+Given to `Nominal()`, it makes a class whose instances have a getter for each field and `copyWith()`. See [Instance members](#instance-members).
+
+### isObjectSchema()
+
+```ts
+isObjectSchema(value): value is ObjectSchema
+```
+
+`true` if `value` was made by `objectOf()`, also in another copy of the package.
 
 ### constraint()
 
@@ -185,6 +228,15 @@ An instance stands for its value where JavaScript needs a plain value:
 | `` `${email}` `` | the value as text                            | JSON text, `{"start":1}` |
 
 Compare the fields of an object value through `value`: `range.value.end > range.value.start`.
+
+A type built on `objectOf()` adds to its instances:
+
+| Member              | Description                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| a getter per field  | `stay.guests` reads `stay.value.guests`                                                                     |
+| `copyWith(changes)` | A new instance with the given fields changed and the others kept, checked like `new`; throws `NominalError` |
+
+Its fields can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`; `Nominal()` throws a `TypeError` for them.
 
 When an object value is frozen, the input stays yours: the type copies it first. An input that is already frozen all the way down is kept without a copy.
 

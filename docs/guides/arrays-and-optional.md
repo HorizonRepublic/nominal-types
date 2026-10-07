@@ -38,7 +38,7 @@ if (result.ok) {
 What you get:
 
 - every item is checked, and each issue has the item's index in `path`;
-- the result is a frozen array, so nobody can add an invalid item later.
+- the result is a new array, read-only by its type. A nominal type built on it, such as `Nominal('Podium', schemaOf(UserId).array())`, freezes it.
 
 ## Limiting the number of items
 

@@ -1,6 +1,8 @@
 import {
+  AnyString,
   Email,
   NonNegativeInteger,
+  objectOf,
   PositiveInteger,
   schemaOf,
   Uuid,
@@ -63,6 +65,31 @@ export const nominalWithArkAdapter = arkSchema(
     }).array(),
   }),
 );
+
+const nonEmpty = AnyString.subtype('nest.NonEmpty', /^./u);
+const status = AnyString.subtype('nest.OrderStatus', /^(?:new|paid|shipped)$/u);
+const currency = AnyString.subtype('nest.Currency', /^(?:UAH|EUR|USD)$/u);
+
+export const nominalObjectOf = objectOf({
+  exportId: Uuid,
+  customers: objectOf({
+    id: Uuid,
+    email: Email,
+    name: nonEmpty,
+    addresses: objectOf({ country: CountryCode, postcode: Postcode, line: nonEmpty }).array(),
+  }).array(),
+  orders: objectOf({
+    id: Uuid,
+    customerId: Uuid,
+    status,
+    items: objectOf({
+      sku: Sku,
+      quantity: PositiveInteger,
+      price: objectOf({ amountMinor: NonNegativeInteger, currency }),
+    }).array(),
+    tags: schemaOf(AnyString).array(),
+  }).array(),
+});
 
 export const arkType = type({
   exportId: 'string.uuid',

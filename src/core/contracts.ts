@@ -1,5 +1,6 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
+import type { AnyConstraint } from './constraint-types.ts';
 import type { StandardProps } from './standard-schema.ts';
 
 declare const brand: unique symbol;
@@ -12,6 +13,14 @@ declare const brand: unique symbol;
  * extends: it is assignable to its parent, while the parent is not assignable to it.
  */
 export type Brand<Name extends string> = Readonly<Record<Name, true>>;
+
+/**
+ * The phantom part of an instance that holds its brand, as a named type, so declaration files can
+ * spell out the instance of a type declared without a class of its own.
+ */
+export interface Branded<Names> {
+  readonly [brand]: Names;
+}
 
 /**
  * The schema a nominal type validates with: any Standard Schema whose `validate` answers
@@ -90,6 +99,34 @@ export interface NominalInstance<Name extends string, Value> {
 }
 
 /**
+ * What `Nominal()` needs to know of an `objectOf()` schema to give the type its fields.
+ */
+export interface ObjectRule<Input, Value> extends NominalSchema<Input, Value> {
+  readonly keys: readonly string[];
+  strict(): ObjectRule<Input, Value>;
+}
+
+/**
+ * An instance of a type built on `objectOf()`: a getter for each field, and `copyWith()`, which
+ * returns a checked copy with some fields changed.
+ */
+export type ObjectInstance<Name extends string, Input, Value> = NominalInstance<Name, Value> &
+  Value &
+  ObjectCopy<Input>;
+
+/**
+ * The copy method of an instance of a type built on `objectOf()`.
+ */
+export interface ObjectCopy<Input> {
+  /**
+   * A new instance with these fields changed and the others kept, checked like `new`.
+   *
+   * @throws NominalError when the changed value breaks a rule.
+   */
+  copyWith(changes: Partial<Input>): this;
+}
+
+/**
  * Any nominal type class, for code that accepts nominal types generically, such as adapters.
  */
 export interface AnyNominalType {
@@ -124,14 +161,16 @@ export interface NominalType<
     name: SubtypeName,
     constraint?:
       | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
-      | (ValueOf<Type['rule']> extends string ? RegExp : never),
+      | (ValueOf<Type['rule']> extends string ? RegExp : never)
+      | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
   ): SubtypeOf<Type, SubtypeName>;
   variant<Type extends AnyNominalType, const VariantName extends string>(
     this: Type,
     name: VariantName,
     rule:
       | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
-      | (ValueOf<Type['rule']> extends string ? RegExp : never),
+      | (ValueOf<Type['rule']> extends string ? RegExp : never)
+      | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
   ): VariantOf<Type, VariantName>;
 }
 
@@ -143,20 +182,28 @@ export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit
   Parent,
   'prototype' | 'typeName'
 > & {
-  new (input: InputOf<Parent['rule']>): Parent['prototype'] & { readonly [brand]: Brand<Name> };
-  readonly prototype: Parent['prototype'] & { readonly [brand]: Brand<Name> };
+  new (input: InputOf<Parent['rule']>): Parent['prototype'] & Branded<Brand<Name>>;
+  readonly prototype: Parent['prototype'] & Branded<Brand<Name>>;
   readonly typeName: Name;
 };
 
 /**
  * An instance of a variant: the behaviour of the type it was made from, without that type's brand.
  */
-export type VariantInstance<Source extends AnyNominalType, Name extends string> = Omit<
-  Source['prototype'],
-  typeof brand
-> & {
-  readonly [brand]: Omit<Source['prototype'][typeof brand], Source['typeName']> & Brand<Name>;
-};
+export type VariantInstance<Source extends AnyNominalType, Name extends string> = Unbranded<
+  Source['prototype']
+> &
+  Branded<Omit<BrandsOf<Source['prototype']>, Source['typeName']> & Brand<Name>>;
+
+/**
+ * An instance without its brand, named so declaration files can spell out a variant.
+ */
+export type Unbranded<Instance> = Omit<Instance, typeof brand>;
+
+/**
+ * The brand names an instance carries, named so declaration files can spell out a variant.
+ */
+export type BrandsOf<Instance extends Branded<unknown>> = Instance[typeof brand];
 
 /**
  * The class `variant` returns: the behaviour of its source, the rules above the source's level,

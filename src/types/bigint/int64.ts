@@ -1,16 +1,13 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { AnyBigInt } from './any-bigint.ts';
+import { bigintRule } from './bigint-rule.ts';
 
 const lowest = -(2n ** 63n);
 const highest = 2n ** 63n - 1n;
 
-const inRange = (value: unknown): value is bigint =>
-  typeof value === 'bigint' && value >= lowest && value <= highest;
-
 const Int64Base: SubtypeOf<typeof AnyBigInt, 'Int64'> = AnyBigInt.subtype(
   'Int64',
-  satisfying(inRange, 'a signed 64-bit integer', {
+  bigintRule('a signed 64-bit integer', (value) => value >= lowest && value <= highest, {
     type: 'string',
     format: 'int64',
     maxLength: 20,

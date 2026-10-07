@@ -1,12 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
-
-const isPositive = (value: unknown): value is number => typeof value === 'number' && value > 0;
+import { numberRule } from './number-rule.ts';
 
 const PositiveNumberBase: SubtypeOf<typeof FiniteNumber, 'PositiveNumber'> = FiniteNumber.subtype(
   'PositiveNumber',
-  satisfying(isPositive, 'a positive number', { type: 'number', exclusiveMinimum: 0 }),
+  numberRule('a positive number', (value) => value > 0, { type: 'number', exclusiveMinimum: 0 }),
 );
 
 /**

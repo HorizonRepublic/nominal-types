@@ -1,12 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { AnyBigInt } from './any-bigint.ts';
-
-const isNegative = (value: unknown): value is bigint => typeof value === 'bigint' && value < 0n;
+import { bigintRule } from './bigint-rule.ts';
 
 const NegativeBigIntBase: SubtypeOf<typeof AnyBigInt, 'NegativeBigInt'> = AnyBigInt.subtype(
   'NegativeBigInt',
-  satisfying(isNegative, 'a negative integer', {
+  bigintRule('a negative integer', (value) => value < 0n, {
     type: 'string',
     pattern: '^-[1-9]\\d*$',
     examples: ['-9007199254740993'],

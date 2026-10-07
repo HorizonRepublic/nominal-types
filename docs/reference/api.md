@@ -181,20 +181,20 @@ Notes:
 
 ## Types
 
-| Type                                  | Description                                                    |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                |
-| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                |
-| `VariantOf<Source, Name>`             | A class returned by `variant()`                                |
-| `VariantInstance<Source, Name>`       | An instance of a variant                                       |
-| `AnyNominalType`                      | Any nominal type class                                         |
-| `NominalInstance<Name, Value>`        | What every instance offers                                     |
-| `NominalSchema<Input, Value>`         | What `Nominal()`, `subtype()` and `variant()` accept as a rule |
-| `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return             |
-| `Parsed<Instance>`                    | The result of `parse()`                                        |
-| `Brand<Name>`                         | The compile-time marker that keeps types apart                 |
-| `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                       |
-| `TypeSchema` / `ArrayOptions`         | What `schemaOf()` returns, and the options of `array()`        |
-| `StandardProps` / `StandardSchema`    | The shape of `~standard` and of a plain schema object          |
+| Type                                  | Description                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                                                        |
+| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                                                        |
+| `VariantOf<Source, Name>`             | A class returned by `variant()`                                                                        |
+| `VariantInstance<Source, Name>`       | An instance of a variant                                                                               |
+| `AnyNominalType`                      | Any nominal type class                                                                                 |
+| `NominalInstance<Name, Value>`        | What every instance offers                                                                             |
+| `NominalSchema<Input, Value>`         | What `Nominal()`, `subtype()` and `variant()` accept as a rule                                         |
+| `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return; both have `accepts(value)` and `messageFor(value)` |
+| `Parsed<Instance>`                    | The result of `parse()`                                                                                |
+| `Brand<Name>`                         | The compile-time marker that keeps types apart                                                         |
+| `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                                                               |
+| `TypeSchema` / `ArrayOptions`         | What `schemaOf()` returns, and the options of `array()`                                                |
+| `StandardProps` / `StandardSchema`    | The shape of `~standard` and of a plain schema object                                                  |
 
 [← Reference](README.md)

@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
+import { issueText } from '../../core/issue-text.ts';
 import { isNominalType } from '../../core/nominal.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
 import type { NominalTarget } from '../../core/target.ts';
@@ -34,18 +35,11 @@ export interface NominalPipeOptions {
   readonly fromString?: boolean;
 }
 
-const describeIssue = (issue: StandardSchemaV1.Issue, metadata: ArgumentMetadata): string => {
-  const path = [metadata.data, ...(issue.path ?? [])]
-    .filter((segment) => segment !== undefined)
-    .map((segment) => String(typeof segment === 'object' ? segment.key : segment));
-  return path.length === 0 ? issue.message : `${path.join('.')}: ${issue.message}`;
-};
-
 const badRequest: NominalExceptionFactory = (issues, metadata) =>
   new BadRequestException({
     statusCode: 400,
     error: 'Bad Request',
-    message: issues.map((issue) => describeIssue(issue, metadata)),
+    message: issues.map((issue) => issueText(issue, metadata.data)),
   });
 
 const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => {

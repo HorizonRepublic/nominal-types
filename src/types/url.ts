@@ -1,12 +1,11 @@
-import type { NominalType } from '../core/contracts.ts';
+import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { satisfying } from '../core/predicate-schema.ts';
-import type { PredicateSchema } from '../core/predicate-schema.ts';
 
 const isAbsoluteUrl = (value: unknown): value is string =>
   typeof value === 'string' && URL.canParse(value);
 
-const UrlBase: NominalType<'Url', PredicateSchema<string>> = Nominal(
+const UrlBase: NominalType<'Url', NominalSchema<string, string>> = Nominal(
   'Url',
   satisfying(isAbsoluteUrl, 'a URL', { type: 'string', format: 'uri' }),
 );

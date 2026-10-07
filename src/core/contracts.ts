@@ -96,14 +96,22 @@ export interface NominalType<
   subtype<Type extends AnyNominalType, const SubtypeName extends string>(
     this: Type,
     name: SubtypeName,
-    constraint:
+    constraint?:
       | NominalSchema<ValueOf<Type['schema']>, ValueOf<Type['schema']>>
       | (ValueOf<Type['schema']> extends string ? RegExp : never),
   ): SubtypeOf<Type, SubtypeName>;
+  variant<Type extends AnyNominalType, const VariantName extends string>(
+    this: Type,
+    name: VariantName,
+    rule:
+      | NominalSchema<ValueOf<Type['schema']>, ValueOf<Type['schema']>>
+      | (ValueOf<Type['schema']> extends string ? RegExp : never),
+  ): VariantOf<Type, VariantName>;
 }
 
 /**
- * The class `subtype` returns: the parent type with a stricter schema and a brand of its own.
+ * The class `subtype` returns: the parent's rules and behaviour, an optional rule of its own, and a
+ * brand of its own on top of the parent's.
  */
 export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit<
   Parent,
@@ -111,5 +119,32 @@ export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit
 > & {
   new (input: InputOf<Parent['schema']>): Parent['prototype'] & { readonly [brand]: Brand<Name> };
   readonly prototype: Parent['prototype'] & { readonly [brand]: Brand<Name> };
+  readonly typeName: Name;
+};
+
+/**
+ * An instance of a variant: the behaviour of the type it was made from, without that type's brand.
+ */
+export type VariantInstance<Source extends AnyNominalType, Name extends string> = Omit<
+  Source['prototype'],
+  typeof brand
+> & {
+  readonly [brand]: Omit<Source['prototype'][typeof brand], Source['typeName']> & Brand<Name>;
+};
+
+/**
+ * The class `variant` returns: the behaviour of its source, the rules above the source's level,
+ * its own rule in place of the source's, and a brand of its own that is not the source's.
+ *
+ * @remarks
+ * A variant sits next to its source rather than below it, so neither passes for the other; moving
+ * a value between them goes through `parse`, which checks it against the target's rules.
+ */
+export type VariantOf<Source extends AnyNominalType, Name extends string> = Omit<
+  Source,
+  'prototype' | 'typeName'
+> & {
+  new (input: InputOf<Source['schema']>): VariantInstance<Source, Name>;
+  readonly prototype: VariantInstance<Source, Name>;
   readonly typeName: Name;
 };

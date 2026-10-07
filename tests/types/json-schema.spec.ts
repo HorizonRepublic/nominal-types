@@ -3,13 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { Email, Uuid } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
 
-const patternOf = (nominal: AnyNominalType): RegExp => {
-  const schema = nominal['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
-  const pattern: unknown = schema['pattern'];
-  if (typeof pattern !== 'string') {
+const patternsIn = (schema: unknown): string[] => {
+  if (typeof schema !== 'object' || schema === null) {
+    return [];
+  }
+  const own: unknown = Reflect.get(schema, 'pattern');
+  const parts: unknown = Reflect.get(schema, 'allOf');
+  return [
+    ...(typeof own === 'string' ? [own] : []),
+    ...(Array.isArray(parts) ? parts.flatMap((part: unknown) => patternsIn(part)) : []),
+  ];
+};
+
+const patternOf = (nominal: AnyNominalType): { test: (text: string) => boolean } => {
+  const patterns = patternsIn(nominal['~standard'].jsonSchema.input({ target: 'draft-2020-12' }));
+  if (patterns.length === 0) {
     throw new TypeError(`${nominal.typeName} describes no pattern`);
   }
-  return new RegExp(pattern, 'u');
+  const compiled = patterns.map((pattern) => new RegExp(pattern, 'u'));
+  return { test: (text) => compiled.every((pattern) => pattern.test(text)) };
 };
 
 const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly string[]]> = [

@@ -2,7 +2,7 @@ import { type } from 'arktype';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Nominal, NominalError } from '../../src/index.ts';
-import { FlashSku, LenientSku, PromoSku, Sku } from '../support/fixtures.ts';
+import { FlashSku, LowSku, PromoSku, Sku } from '../support/fixtures.ts';
 import { issuesOf, outputOf, valueOf } from '../support/results.ts';
 
 describe('Subtypes', () => {
@@ -62,16 +62,38 @@ describe('Subtypes', () => {
     });
   });
 
-  describe('overriding the schema in a subclass', () => {
-    it('validates with the subclass schema', () => {
-      expect(new LenientSku('SKU-123456').number).toBe(123_456);
-      expect(() => new Sku('SKU-123456')).toThrow(NominalError);
-      expect(valueOf(LenientSku.parse('SKU-123456'))).toBeInstanceOf(LenientSku);
+  describe('extending a type with a schema of its own', () => {
+    it('adds the subclass rule to the parent rule', () => {
+      expect(new LowSku('SKU-0042').number).toBe(42);
+      expect(issuesOf(LowSku.parse('SKU-9001'))).toStrictEqual([
+        { message: 'must be matched by ^SKU-0 (was "SKU-9001")' },
+      ]);
+      expect(issuesOf(LowSku.parse('nope'))).toStrictEqual([
+        { message: String.raw`must be matched by ^SKU-\d{4}$ (was "nope")` },
+      ]);
     });
 
-    it('stays the same nominal type as the class it extends', () => {
-      expect(new LenientSku('SKU-0001')).toBeInstanceOf(Sku);
-      expect(new Sku('SKU-0001')).toBeInstanceOf(LenientSku);
+    it('cannot loosen the parent rule', () => {
+      class Lenient extends Sku {
+        public static override readonly schema = type(/^SKU-\d{4,6}$/u);
+      }
+
+      expect(() => new Lenient('SKU-123456')).toThrow(NominalError);
+    });
+
+    it('stays the same type in both directions, so a parent instance passes as the subclass', () => {
+      expect(new LowSku('SKU-0001')).toBeInstanceOf(Sku);
+      expect(new Sku('SKU-9001')).toBeInstanceOf(LowSku);
+    });
+  });
+
+  describe('a subtype without a constraint', () => {
+    it('is a new type with exactly the parent rules', () => {
+      class ArchivedSku extends Sku.subtype('ArchivedSku') {}
+
+      expect(new ArchivedSku('SKU-0001')).toBeInstanceOf(Sku);
+      expect(new Sku('SKU-0001')).not.toBeInstanceOf(ArchivedSku);
+      expect(() => new ArchivedSku('nope')).toThrow(NominalError);
     });
   });
 });

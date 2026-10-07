@@ -1,11 +1,9 @@
-import type { NominalType } from '../core/contracts.ts';
+import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { matching } from '../core/pattern-schema.ts';
-import type { PatternSchema } from '../core/pattern-schema.ts';
+import { textRule } from './text-rule.ts';
 
-const declaredBelow = /(?!)/u;
-
-const EmailBase: NominalType<'Email', PatternSchema> = Nominal('Email', matching(declaredBelow));
+const EmailBase: NominalType<'Email', NominalSchema<string, string>> = Nominal('Email', textRule);
 
 /**
  * An email address in the dot-atom form RFC 5322 defines, with plus addressing understood.
@@ -58,7 +56,7 @@ export class Email extends EmailBase {
     'u',
   );
 
-  public static override readonly schema: PatternSchema = matching(
+  public static override readonly schema: NominalSchema<string, string> = matching(
     this.pattern,
     'an email address',
   );

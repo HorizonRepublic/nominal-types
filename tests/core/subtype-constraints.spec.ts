@@ -112,12 +112,8 @@ describe('Subtype constraints', () => {
       expect(FlashSku['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toStrictEqual({
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         allOf: [
-          {
-            allOf: [
-              { type: 'string', pattern: String.raw`^SKU-\d{4}$` },
-              { type: 'string', pattern: '^SKU-9' },
-            ],
-          },
+          { type: 'string', pattern: String.raw`^SKU-\d{4}$` },
+          { type: 'string', pattern: '^SKU-9' },
           { type: 'string', pattern: '^SKU-99' },
         ],
       });

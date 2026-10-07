@@ -35,7 +35,7 @@ new Email('not an address'); // throws NominalError
 - [Guides](#guides)
   - [Declaring a type](#declaring-a-type)
   - [Adding behaviour](#adding-behaviour)
-  - [Refining a type](#refining-a-type)
+  - [Declaring a subtype](#declaring-a-subtype)
   - [Changing the rules of a built-in type](#changing-the-rules-of-a-built-in-type)
   - [Validating untrusted input](#validating-untrusted-input)
   - [Using a schema from another library](#using-a-schema-from-another-library)
@@ -149,12 +149,12 @@ export class OrderNumber extends Nominal('OrderNumber', type(/^ORD-\d{8}$/u)) {
 new OrderNumber('ORD-20261007').year; // 2026
 ```
 
-### Refining a type
+### Declaring a subtype
 
-`refine()` makes a distinct subtype with a stricter schema. A refined instance is still an instance of its parent, while a parent instance is not a refined one, both in the compiler and at runtime:
+`subtype()` declares a distinct type with a stricter schema. An instance of the subtype is still an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:
 
 ```ts
-export class ExpressOrderNumber extends OrderNumber.refine('ExpressOrderNumber', (schema) =>
+export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', (schema) =>
   schema.and(/^ORD-9/u),
 ) {}
 
@@ -195,7 +195,7 @@ new CompanyEmail('jane.doe@example.com').mailbox; // 'jane.doe'
 new CompanyEmail('jane@elsewhere.com'); // throws NominalError
 ```
 
-The schema is built once, when the class is defined, so a subclass that changes `pattern` overrides `schema` along with it. Use `refine()` instead when the result should be a type of its own.
+The schema is built once, when the class is defined, so a subclass that changes `pattern` overrides `schema` along with it. Use `subtype()` instead when the result should be a type of its own.
 
 ### Validating untrusted input
 
@@ -385,7 +385,7 @@ const url = new Url('https://Example.com:8443/a/b?x=1#top');
 
 ### HttpUrl
 
-A `Url` whose scheme is `http` or `https`, refined from `Url`: every `HttpUrl` is a `Url`, while a `Url` is not necessarily an `HttpUrl`.
+A `Url` whose scheme is `http` or `https`, a subtype of `Url`: every `HttpUrl` is a `Url`, while a `Url` is not necessarily an `HttpUrl`.
 
 ```ts
 new HttpUrl('https://example.com'); // fine
@@ -404,16 +404,16 @@ Returns a class to extend. `name` has to be unique within an application; `schem
 
 ### Static members
 
-| Member                      | Description                                                                                                                                 |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new Type(input)`           | Validates and builds an instance; throws `NominalError`                                                                                     |
-| `Type.parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
-| `Type.is(value)`            | Type guard                                                                                                                                  |
-| `Type.refine(name, narrow)` | A distinct subtype validated by `narrow(schema)`                                                                                            |
-| `Type.standard()`           | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
-| `Type['~standard']`         | Standard Schema and Standard JSON Schema properties                                                                                         |
-| `Type.schema`               | The schema the type validates with                                                                                                          |
-| `Type.typeName`             | The name given to `Nominal()`                                                                                                               |
+| Member                       | Description                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`            | Validates and builds an instance; throws `NominalError`                                                                                     |
+| `Type.parse(input)`          | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
+| `Type.is(value)`             | Type guard                                                                                                                                  |
+| `Type.subtype(name, narrow)` | A distinct subtype validated by `narrow(schema)`                                                                                            |
+| `Type.standard()`            | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
+| `Type['~standard']`          | Standard Schema and Standard JSON Schema properties                                                                                         |
+| `Type.schema`                | The schema the type validates with                                                                                                          |
+| `Type.typeName`              | The name given to `Nominal()`                                                                                                               |
 
 ### Instance members
 
@@ -447,7 +447,7 @@ Whether a value is a nominal type class, including one loaded from another copy 
 | Type                                  | Description                                                    |
 | ------------------------------------- | -------------------------------------------------------------- |
 | `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                |
-| `RefinedType<Parent, Name>`           | A class returned by `refine()`                                 |
+| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                |
 | `AnyNominalType`                      | Any nominal type class, for code that accepts them generically |
 | `NominalInstance<Name, Value>`        | What every instance offers                                     |
 | `NominalSchema<Input, Value>`         | What `Nominal()` accepts as a schema                           |
@@ -468,7 +468,7 @@ The constructor is the only place a value is checked. Holding an instance means 
 
 ### Nominal at compile time
 
-Each type has a phantom brand keyed by its name, so two types that wrap a string do not mix. A refined type has its parent's key and its own, which makes it assignable to the parent and not the other way round.
+Each type has a phantom brand keyed by its name, so two types that wrap a string do not mix. A subtype has its parent's key and its own, which makes it assignable to the parent and not the other way round.
 
 ### One identity across copies
 

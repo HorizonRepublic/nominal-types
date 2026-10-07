@@ -8,7 +8,7 @@ declare const brand: unique symbol;
  * The phantom marker that keeps two nominal types apart even when they wrap the same value.
  *
  * @remarks
- * Each name becomes a key, so a refined type carries its own key and every key of the type it
+ * Each name becomes a key, so a subtype carries its own key and every key of the type it
  * refines: it is assignable to its parent, while the parent is not assignable to it.
  */
 export type Brand<Name extends string> = Readonly<Record<Name, true>>;
@@ -93,19 +93,19 @@ export interface NominalType<
   readonly typeName: Name;
   readonly schema: Schema;
   readonly '~standard': StandardProps<InputOf<Schema>, Instance>;
-  refine<Type extends AnyNominalType, const Refined extends string>(
+  subtype<Type extends AnyNominalType, const SubtypeName extends string>(
     this: Type,
-    name: Refined,
-    narrow: (
+    name: SubtypeName,
+    stricter: (
       schema: Type['schema'],
     ) => NominalSchema<InputOf<Type['schema']>, ValueOf<Type['schema']>>,
-  ): RefinedType<Type, Refined>;
+  ): SubtypeOf<Type, SubtypeName>;
 }
 
 /**
  * The class `refine` returns: the parent type with a stricter schema and a brand of its own.
  */
-export type RefinedType<Parent extends AnyNominalType, Name extends string> = Omit<
+export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit<
   Parent,
   'prototype' | 'typeName'
 > & {

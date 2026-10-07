@@ -10,9 +10,9 @@ export class Sku extends Nominal('Sku', type(/^SKU-\d{4}$/u)) {
 
 export class Slug extends Nominal('Slug', type(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)) {}
 
-export class PromoSku extends Sku.refine('PromoSku', (schema) => schema.and(/^SKU-9\d{3}$/u)) {}
+export class PromoSku extends Sku.subtype('PromoSku', (schema) => schema.and(/^SKU-9\d{3}$/u)) {}
 
-export class FlashSku extends PromoSku.refine('FlashSku', (schema) => schema.and(/^SKU-99/u)) {}
+export class FlashSku extends PromoSku.subtype('FlashSku', (schema) => schema.and(/^SKU-99/u)) {}
 
 export class LenientSku extends Sku {
   public static override readonly schema = type(/^SKU-\d{4,6}$/u);

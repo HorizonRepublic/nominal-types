@@ -7,7 +7,7 @@ export type {
   NominalSchema,
   NominalType,
   Parsed,
-  RefinedType,
+  SubtypeOf,
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';

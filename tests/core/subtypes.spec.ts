@@ -6,7 +6,7 @@ import { FlashSku, LenientSku, PromoSku, Sku } from '../support/fixtures.ts';
 import { issuesOf, outputOf, valueOf } from '../support/results.ts';
 
 describe('Subtypes', () => {
-  describe('refine', () => {
+  describe('subtype', () => {
     it('applies the parent schema and the narrower one', () => {
       expect(new PromoSku('SKU-9001').value).toBe('SKU-9001');
       expect(() => new PromoSku('SKU-0001')).toThrow(NominalError);
@@ -19,7 +19,7 @@ describe('Subtypes', () => {
   });
 
   describe('narrowing an instance of a parent type', () => {
-    it('turns a parent instance into the refined type when its value fits', () => {
+    it('turns a parent instance into the subtype when its value fits', () => {
       const sku = new Sku('SKU-9001');
       const promo = valueOf(PromoSku.parse(sku));
 
@@ -55,7 +55,7 @@ describe('Subtypes', () => {
       expect(valueOf(PromoSku.parse(new OtherSku('SKU-9001')))).toBeInstanceOf(PromoSku);
     });
 
-    it('returns an instance of the refined type itself without checking it again', () => {
+    it('returns an instance of the subtype itself without checking it again', () => {
       const promo = new PromoSku('SKU-9001');
 
       expect(valueOf(PromoSku.parse(promo))).toBe(promo);

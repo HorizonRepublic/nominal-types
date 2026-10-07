@@ -1,7 +1,7 @@
-import type { RefinedType } from '../core/contracts.ts';
+import type { SubtypeOf } from '../core/contracts.ts';
 import { Url } from './url.ts';
 
-const HttpUrlBase: RefinedType<typeof Url, 'HttpUrl'> = Url.refine('HttpUrl', (schema) =>
+const HttpUrlBase: SubtypeOf<typeof Url, 'HttpUrl'> = Url.subtype('HttpUrl', (schema) =>
   schema.and(/^https?:\/\//iu).describe('an http or https URL'),
 );
 

@@ -44,13 +44,13 @@ describe('Nominal', () => {
       expect(outputOf(Sku['~standard'].validate(sku))).toBe(sku);
     });
 
-    it('passes a refined instance through its parent type', () => {
+    it('passes a subtype instance through its parent type', () => {
       const promo = new PromoSku('SKU-9001');
 
       expect(valueOf(Sku.parse(promo))).toBe(promo);
     });
 
-    it('rejects a parent instance whose value the refined type does not accept', () => {
+    it('rejects a parent instance whose value the subtype does not accept', () => {
       expect(issuesOf(PromoSku.parse(new Sku('SKU-0001')))).not.toHaveLength(0);
     });
 
@@ -68,7 +68,7 @@ describe('Nominal', () => {
       expect(Sku.is(new Slug('sku'))).toBe(false);
     });
 
-    it('treats a refined instance as its parent, and not the other way round', () => {
+    it('treats a subtype instance as its parent, and not the other way round', () => {
       const promo = new PromoSku('SKU-9001');
 
       expect(promo).toBeInstanceOf(Sku);

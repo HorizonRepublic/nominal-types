@@ -116,12 +116,12 @@ class NominalRoot {
     return schema;
   }
 
-  public static refine(
+  public static subtype(
     this: typeof NominalRoot,
     name: string,
-    narrow: (schema: NominalSchema) => NominalSchema,
+    stricter: (schema: NominalSchema) => NominalSchema,
   ): typeof NominalRoot {
-    return derive(this, name, narrow(this.schema));
+    return derive(this, name, stricter(this.schema));
   }
 
   public equals(other: unknown): boolean {

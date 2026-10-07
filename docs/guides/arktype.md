@@ -169,6 +169,6 @@ The ArkType type itself stays in `CreateOrder.ark`. Called on its own, it checks
 
 ## Without the adapter
 
-`schemaOf(Type)` also works inside ArkType, as in [How to use a type inside another validator](other-validators.md). ArkType runs such a field through a slower path. On a 3 MB document, the adapter checks and builds everything in about 5 ms instead of about 110 ms. See [Performance](../explanation/performance.md#a-large-document).
+`schemaOf(Type)` also works inside ArkType, as in [How to use a type inside another validator](other-validators.md). ArkType runs such a field through a slower path. On a 3 MB document, the adapter checks and builds everything in about 4.5 ms instead of about 110 ms. See [Performance](../explanation/performance.md#a-large-document).
 
 [← Guides](README.md)

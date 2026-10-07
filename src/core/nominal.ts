@@ -25,7 +25,8 @@ import { Rejection } from './rejection.ts';
 import { inOneLine, sameValue } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import { describeType, onlyChecks, runType } from './type-rules.ts';
+import { describeType, onlyChecks, rulesRunnerOf, runType } from './type-rules.ts';
+import { parserFor } from './value-parser.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
@@ -135,6 +136,21 @@ class NominalRoot {
 const isOwnType = (value: unknown): value is typeof NominalRoot =>
   typeof value === 'function' && Object.prototype.isPrototypeOf.call(NominalRoot, value);
 
+const valueParsers = new WeakMap<object, (input: unknown) => NominalRoot | Rejection>();
+
+const valueParserOf = (
+  target: typeof NominalRoot,
+): ((input: unknown) => NominalRoot | Rejection) => {
+  let parser = valueParsers.get(target);
+
+  if (parser === undefined) {
+    parser = parserFor(target, rulesRunnerOf(NominalRoot, target));
+    valueParsers.set(target, parser);
+  }
+
+  return parser;
+};
+
 const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot | Rejection => {
   if (typeof input === 'object' && input !== null) {
     if (input instanceof target) {
@@ -146,15 +162,7 @@ const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot |
     }
   }
 
-  const value = runType(NominalRoot, target, input);
-
-  if (value instanceof Rejection) {
-    return value;
-  }
-
-  remember(target, input, value);
-
-  return new target(input);
+  return valueParserOf(target)(input);
 };
 
 /**
@@ -182,10 +190,10 @@ export const checkerFor = (target: AnyNominalType): ((input: unknown) => unknown
     return constructorFor(target);
   }
 
+  const run = rulesRunnerOf(NominalRoot, target);
+
   return (input) =>
-    typeof input === 'object' && input !== null
-      ? constructOwn(target, input)
-      : runType(NominalRoot, target, input);
+    typeof input === 'object' && input !== null ? constructOwn(target, input) : run(input);
 };
 
 /**

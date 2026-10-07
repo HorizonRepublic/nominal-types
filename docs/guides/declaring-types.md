@@ -89,4 +89,4 @@ order.isExpress; // false
 
 If a method creates a new value of the same kind, return a new instance. Then the result is checked too. For example, `email.withoutTag()` returns an `Email`, not a string.
 
-[← Documentation](../README.md)
+[← Guides](README.md)

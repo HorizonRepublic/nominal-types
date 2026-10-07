@@ -16,4 +16,4 @@
 | Standard Schema | A common interface for validators, [standardschema.dev](https://standardschema.dev). Zod, Valibot and ArkType support it. |
 | JSON Schema     | A JSON format for describing data, used by OpenAPI and many tools.                                                        |
 
-[← Documentation](../README.md)
+[← Reference](README.md)

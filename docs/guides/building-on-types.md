@@ -189,4 +189,4 @@ Rules run from the base type down and stop at the first failure. So put cheap ch
 
 A value that fails the regular expression never reaches the expensive check. [Performance](../explanation/performance.md#how-a-chain-runs) shows how this runs.
 
-[← Documentation](../README.md)
+[← Guides](README.md)

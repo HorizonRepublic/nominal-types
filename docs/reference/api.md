@@ -147,4 +147,4 @@ Notes:
 | `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                        |
 | `StandardProps` / `StandardSchema`    | The shape of `~standard` and of what `standardSchema()` returns |
 
-[← Documentation](../README.md)
+[← Reference](README.md)

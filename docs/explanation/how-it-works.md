@@ -37,4 +37,4 @@ An application can load this package twice: once through `import` and once throu
 
 To keep `instanceof` working anyway, each type marks its instances with a key from `Symbol.for`, which is shared across copies. `instanceof` checks that key, so an `Email` made by one copy is an `Email` for the other.
 
-[← Documentation](../README.md)
+[← Explanation](README.md)

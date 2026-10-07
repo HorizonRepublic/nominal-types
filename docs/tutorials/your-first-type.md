@@ -187,4 +187,4 @@ Where to go next:
 - [How to build on a type](../guides/building-on-types.md) covers all the ways to derive one type from another.
 - [Built-in types](../reference/types/README.md) lists the types you can start from.
 
-[← Documentation](../README.md)
+[← Tutorial](README.md)

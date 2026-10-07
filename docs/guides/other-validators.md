@@ -41,4 +41,10 @@ const { email } = invitation.assert({
 email instanceof Email; // true
 ```
 
-[← Documentation](../README.md)
+## Zod and Valibot
+
+Zod and Valibot only accept their own schemas inside an object schema. A nominal type can't be placed there directly: Zod reports `expected a Zod schema`.
+
+You can still use a Zod or Valibot schema as the rule of a nominal type, as shown in [How to declare a type](declaring-types.md#declaring-with-a-schema-from-another-library).
+
+[← Guides](README.md)

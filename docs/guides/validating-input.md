@@ -32,4 +32,4 @@ if (Email.is(value)) {
 }
 ```
 
-[← Documentation](../README.md)
+[← Guides](README.md)

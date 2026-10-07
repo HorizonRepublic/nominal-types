@@ -57,4 +57,4 @@ JSON Schema can't express every rule. In those cases the schema is looser than t
 
 [Built-in types](../reference/types/README.md) notes each such case.
 
-[← Documentation](../README.md)
+[← Guides](README.md)

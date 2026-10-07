@@ -1,7 +1,6 @@
-import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { Email, NominalError } from '../../src/index.ts';
+import { Email, matching, NominalError } from '../../src/index.ts';
 
 describe('Email', () => {
   it.each([
@@ -68,7 +67,7 @@ describe('Email', () => {
   describe('overriding the pattern', () => {
     class CompanyEmail extends Email {
       public static override readonly pattern = /^[a-z.]+@example\.com$/u;
-      public static override readonly schema = type(CompanyEmail.pattern);
+      public static override readonly schema = matching(CompanyEmail.pattern);
     }
 
     it('validates with the subclass pattern and keeps the behaviour', () => {

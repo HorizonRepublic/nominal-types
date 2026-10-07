@@ -2,6 +2,7 @@ import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/sp
 
 import type { NominalSchema } from './contracts.ts';
 import { PatternSchema, patternIssues } from './pattern-schema.ts';
+import { PredicateSchema, predicateIssues } from './predicate-schema.ts';
 import { Rejection } from './rejection.ts';
 import type { StandardProps } from './standard-schema.ts';
 
@@ -26,6 +27,9 @@ const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
 export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
   if (schema instanceof PatternSchema) {
     return schema.accepts(input) ? input : new Rejection(patternIssues(schema, input));
+  }
+  if (schema instanceof PredicateSchema) {
+    return schema.check(input) ? input : new Rejection(predicateIssues(schema, input));
   }
   if (schema instanceof ChainSchema) {
     const value = runSchema(schema.parent, input);

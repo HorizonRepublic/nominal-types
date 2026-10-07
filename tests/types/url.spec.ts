@@ -69,3 +69,13 @@ describe('narrowing a Url to an HttpUrl', () => {
     expect(HttpUrl.parse(new Url('mailto:jane@example.com')).ok).toBe(false);
   });
 });
+
+describe('Url as JSON Schema', () => {
+  it('describes itself as a URI string', () => {
+    expect(Url['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
+      type: 'string',
+      format: 'uri',
+      description: 'a URL',
+    });
+  });
+});

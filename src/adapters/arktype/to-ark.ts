@@ -8,29 +8,29 @@ import { checkerFor } from '../../core/type-functions.ts';
 import { typeIdOf, typeKey } from './registry.ts';
 
 /**
- * The ArkType node `arkOf()` returns: it takes the type's input, and `arkSchema()` gives an
+ * The ArkType node `toArk()` returns: it takes the type's input, and `fromArk()` gives an
  * instance for it.
  */
-export type ArkOf<Target extends AnyNominalType> = Type<
+export type ArkField<Target extends AnyNominalType> = Type<
   (input: InputOf<Target['rule']>) => Out<Target['prototype']>
 >;
 
 /**
- * A nominal type as a native ArkType node, for fields of an ArkType object that `arkSchema()`
+ * A nominal type as a native ArkType node, for fields of an ArkType object that `fromArk()`
  * turns into instances.
  *
  * @remarks
  * ArkType checks the field on its fast path with the type's own rules and messages, with no morph:
  * a morph costs far more than the check. Called directly, the ArkType object returns the field as
- * it came; `arkSchema()` builds the instances afterwards. Use ArkType's own `.array()`, `'key?'`
+ * it came; `fromArk()` builds the instances afterwards. Use ArkType's own `.array()`, `'key?'`
  * and `.or('null')` around it.
  *
  * @example
  * ```ts
- * const CreateUser = arkSchema(type({ id: arkOf(Uuid), email: arkOf(Email), 'name?': 'string' }));
+ * const CreateUser = fromArk(type({ id: toArk(Uuid), email: toArk(Email), 'name?': 'string' }));
  * ```
  */
-export const arkOf = <Target extends AnyNominalType>(target: Target): ArkOf<Target> => {
+export const toArk = <Target extends AnyNominalType>(target: Target): ArkField<Target> => {
   const check = checkerFor(target);
 
   const problem = (error: { readonly data: unknown }): string => {
@@ -52,7 +52,7 @@ export const arkOf = <Target extends AnyNominalType>(target: Target): ArkOf<Targ
     .narrow((value) => !(check(value) instanceof Rejection))
     .configure(meta);
 
-  // The node's output is what arkSchema() builds from it; the type says so for inference.
+  // The node's output is what fromArk() builds from it; the type says so for inference.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  return node as unknown as ArkOf<Target>;
+  return node as unknown as ArkField<Target>;
 };

@@ -50,15 +50,15 @@ A nominal type works with other libraries in three ways: as a library's field ty
 
 | Library                                                         | Fields of its schemas                                                    | Rules for a type      | Guide                                               |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------- | --------------------------------------------------- |
-| [ArkType](https://arktype.io)                                   | yes, with the adapter `arkOf()`, at ArkType's speed                      | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
+| [ArkType](https://arktype.io)                                   | yes, with the adapter `toArk()`, at ArkType's speed                      | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
 | [NestJS](https://nestjs.com) 11, 12                             | parameters, bodies and message payloads, with the adapter `NominalPipe`  | —                     | [NestJS](docs/guides/nestjs.md)                     |
 | [class-validator](https://github.com/typestack/class-validator) | DTO properties, with the adapter `@NominalField()`                       | —                     | [class-validator](docs/guides/class-validator.md)   |
 | [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | full schemas in the document, with the adapter `applyNominalTypes()`     | —                     | [Swagger](docs/guides/swagger.md)                   |
-| [Zod](https://zod.dev) 4                                        | no                                                                       | yes, with JSON Schema | [Declaring a type](docs/guides/declaring-types.md)  |
-| [Valibot](https://valibot.dev)                                  | no                                                                       | yes, no JSON Schema   | [Declaring a type](docs/guides/declaring-types.md)  |
+| [Zod](https://zod.dev) 4                                        | yes, with the adapter `toZod()`                                          | yes, with JSON Schema | [Zod](docs/guides/zod.md)                           |
+| [Valibot](https://valibot.dev)                                  | yes, with the adapter `toValibot()`                                      | yes, no JSON Schema   | [Valibot](docs/guides/valibot.md)                   |
 | any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }` | yes                   | [Other validators](docs/guides/other-validators.md) |
 
-Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, NestJS, class-validator or Swagger is installed or loaded unless you import the adapter.
+Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator or Swagger is installed or loaded unless you import the adapter.
 
 ## Concepts
 

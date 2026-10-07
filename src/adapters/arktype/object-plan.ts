@@ -96,7 +96,7 @@ const indexVerifier =
 /**
  * Internal: the plan for an object node: its fields, its index signature and its constraints.
  *
- * @throws TypeError for more than one index signature holding an `arkOf()` node.
+ * @throws TypeError for more than one index signature holding an `toArk()` node.
  */
 export const objectPlan = (node: JsonNode, planOf: PlanOf): Plan | undefined => {
   const fields = [...fieldsOf(node, 'required', planOf), ...fieldsOf(node, 'optional', planOf)];

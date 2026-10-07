@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { arkOf, arkSchema, arkObject } from '../../../src/adapters/arktype/index.ts';
+import { toArk, fromArk, constrainArk } from '../../../src/adapters/arktype/index.ts';
 import { constraint, Email, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { satisfiesSchema } from '../../support/json-schema.ts';
 
@@ -10,14 +10,14 @@ const withinCapacity = constraint(
   ({ guests, capacity }) => guests <= capacity,
 );
 
-const Booking = arkSchema(
+const Booking = fromArk(
   type({
-    id: arkOf(Uuid),
-    email: type('string.trim').pipe(arkOf(Email)),
-    'backup?': arkOf(Email).or('null'),
+    id: toArk(Uuid),
+    email: type('string.trim').pipe(toArk(Email)),
+    'backup?': toArk(Email).or('null'),
     status: "'new' | 'paid'",
-    stays: arkObject(
-      type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+    stays: constrainArk(
+      type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
       withinCapacity,
     ).array(),
   }),
@@ -37,10 +37,10 @@ const uuidSchema = (target: 'draft-2020-12' | 'openapi-3.0'): unknown => {
   return body;
 };
 
-describe('JSON Schema of arkSchema', () => {
+describe('JSON Schema of fromArk', () => {
   const schema = Booking['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
 
-  it('describes each arkOf() field by its type', () => {
+  it('describes each toArk() field by its type', () => {
     expect(schema).toMatchObject({
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',

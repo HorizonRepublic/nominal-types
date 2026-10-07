@@ -1,6 +1,6 @@
 # How to use a type inside another validator
 
-> For ArkType, the [adapter](arktype.md) is the recommended way. `schemaOf()` fits libraries without an adapter: see [Choosing how to check input](../explanation/choosing-an-approach.md).
+> For ArkType, Zod and Valibot, use their adapters: [ArkType](arktype.md), [Zod](zod.md), [Valibot](valibot.md). `schemaOf()` fits libraries without an adapter: see [Choosing how to check input](../explanation/choosing-an-approach.md).
 
 This guide shows how to put nominal types inside a schema from another library. The library then gives you back instances, such as an `Email`, instead of strings.
 
@@ -44,11 +44,5 @@ const { email } = invitation.assert({
 
 email instanceof Email; // true
 ```
-
-## Zod and Valibot
-
-Zod and Valibot only accept their own schemas inside an object schema. A nominal type can't be placed there directly: Zod reports `expected a Zod schema`.
-
-You can still use a Zod or Valibot schema as the rule of a nominal type, as shown in [How to declare a type](declaring-types.md#declaring-with-a-schema-from-another-library).
 
 [← Guides](README.md)

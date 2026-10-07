@@ -2,7 +2,7 @@ import type { Verify } from './verify.ts';
 
 /**
  * Internal: what happens to one place of a value ArkType accepted: `build` puts instances where
- * `arkOf()` nodes stand, `verify` runs the constraints at and below it.
+ * `toArk()` nodes stand, `verify` runs the constraints at and below it.
  */
 export interface Plan {
   readonly build: (value: unknown) => unknown;

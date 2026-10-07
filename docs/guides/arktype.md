@@ -1,6 +1,6 @@
 # How to use nominal types in ArkType schemas
 
-> This is the recommended way to check objects. For the other ways and when they fit, see [Choosing how to check input](../explanation/choosing-an-approach.md).
+> Recommended when the project already uses ArkType, or needs unions, recursion or transforms. Otherwise, see [Choosing how to check input](../explanation/choosing-an-approach.md).
 
 This guide shows how to check a request body, a message or a config with [ArkType](https://arktype.io) and get nominal instances back, such as an `Email`, at ArkType's own speed.
 
@@ -8,26 +8,26 @@ The helpers come from a separate entry point, `@horizon-republic/nominal-types/a
 
 The adapter has three functions, one for each level:
 
-| Function                    | Wraps                                                                    |
-| --------------------------- | ------------------------------------------------------------------------ |
-| `arkOf(Type)`               | a field: a nominal type as an ArkType node                               |
-| `arkObject(type, ...rules)` | an object, with [constraints](checking-fields-together.md) on its fields |
-| `arkSchema(type, ...rules)` | the whole schema: checks, builds instances, runs the constraints         |
+| Function                       | Wraps                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| `toArk(Type)`                  | a field: a nominal type as an ArkType node                               |
+| `constrainArk(type, ...rules)` | an object, with [constraints](checking-fields-together.md) on its fields |
+| `fromArk(type, ...rules)`      | the whole schema: checks, builds instances, runs the constraints         |
 
 ## Writing a schema
 
-Put `arkOf(Type)` where a field holds a nominal type, then wrap the whole schema in `arkSchema()`:
+Put `toArk(Type)` where a field holds a nominal type, then wrap the whole schema in `fromArk()`:
 
 ```ts
 import { type } from 'arktype';
-import { arkOf, arkSchema } from '@horizon-republic/nominal-types/adapters/arktype';
+import { toArk, fromArk } from '@horizon-republic/nominal-types/adapters/arktype';
 import { Email, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
 
-export const CreateOrder = arkSchema(
+export const CreateOrder = fromArk(
   type({
-    customerId: arkOf(Uuid),
-    email: arkOf(Email),
-    items: type({ sku: 'string', quantity: arkOf(PositiveInteger) }).array(),
+    customerId: toArk(Uuid),
+    email: toArk(Email),
+    items: type({ sku: 'string', quantity: toArk(PositiveInteger) }).array(),
     'note?': 'string',
   }),
 );
@@ -42,7 +42,7 @@ if (result.ok) {
 }
 ```
 
-`arkSchema()` checks the input with ArkType first. Then it builds an instance for every `arkOf()` field, in one pass.
+`fromArk()` checks the input with ArkType first. Then it builds an instance for every `toArk()` field, in one pass.
 
 The messages are the type's own, the same as `Email.parse()` gives.
 
@@ -53,7 +53,7 @@ Give the schema and the type of its value one name, as ArkType itself suggests. 
 ```ts
 import type { ValueOf } from '@horizon-republic/nominal-types';
 
-export const CreateOrder = arkSchema(type({ email: arkOf(Email), quantity: arkOf(PositiveInteger) }));
+export const CreateOrder = fromArk(type({ email: toArk(Email), quantity: toArk(PositiveInteger) }));
 export type CreateOrder = ValueOf<typeof CreateOrder>;
 
 const place = (order: CreateOrder): void => {
@@ -63,38 +63,38 @@ const place = (order: CreateOrder): void => {
 
 ## Optional values, null, lists and unions
 
-Use ArkType's own syntax around `arkOf()`:
+Use ArkType's own syntax around `toArk()`:
 
 | You want                   | Write                                                                               |
 | -------------------------- | ----------------------------------------------------------------------------------- |
-| an optional field          | `'backup?': arkOf(Email)`                                                           |
-| a value or `null`          | `arkOf(Email).or('null')`                                                           |
-| a list                     | `arkOf(Uuid).array()`, with `.atLeastLength(1)`                                     |
-| a tuple                    | `[arkOf(Uuid), arkOf(PositiveInteger)]`                                             |
-| a record                   | `type({ '[string]': arkOf(Email) })`                                                |
-| one type or another        | `arkOf(Email).or(arkOf(Uuid))`                                                      |
-| objects of different kinds | `type({ kind: "'email'", to: arkOf(Email) }).or({ kind: "'id'", to: arkOf(Uuid) })` |
+| an optional field          | `'backup?': toArk(Email)`                                                           |
+| a value or `null`          | `toArk(Email).or('null')`                                                           |
+| a list                     | `toArk(Uuid).array()`, with `.atLeastLength(1)`                                     |
+| a tuple                    | `[toArk(Uuid), toArk(PositiveInteger)]`                                             |
+| a record                   | `type({ '[string]': toArk(Email) })`                                                |
+| one type or another        | `toArk(Email).or(toArk(Uuid))`                                                      |
+| objects of different kinds | `type({ kind: "'email'", to: toArk(Email) }).or({ kind: "'id'", to: toArk(Uuid) })` |
 
-In a union, each branch must be told apart by its type or by a literal field such as `kind`. `arkSchema()` throws a `TypeError` when it can't tell which branch a value took, for example two object branches without a literal field.
+In a union, each branch must be told apart by its type or by a literal field such as `kind`. `fromArk()` throws a `TypeError` when it can't tell which branch a value took, for example two object branches without a literal field.
 
 ## Cleaning a value before the type
 
-ArkType morphs keep working. To trim an address before it's checked, pipe into `arkOf()`:
+ArkType morphs keep working. To trim an address before it's checked, pipe into `toArk()`:
 
 ```ts
-const Invite = arkSchema(type({ email: type('string.trim').pipe(arkOf(Email)) }));
+const Invite = fromArk(type({ email: type('string.trim').pipe(toArk(Email)) }));
 
 Invite.parse({ email: '  jane@example.com ' }); // email: Email('jane@example.com')
 ```
 
-A morph after `arkOf()` is not supported: `arkSchema()` throws a `TypeError`. Put the logic into the type instead.
+A morph after `toArk()` is not supported: `fromArk()` throws a `TypeError`. Put the logic into the type instead.
 
 ## Checking one field against another
 
-Attach [constraints](checking-fields-together.md) to an ArkType object with `arkObject()`. They run on that object wherever it sits, after the instances are built:
+Attach [constraints](checking-fields-together.md) to an ArkType object with `constrainArk()`. They run on that object wherever it sits, after the instances are built:
 
 ```ts
-import { arkObject } from '@horizon-republic/nominal-types/adapters/arktype';
+import { constrainArk } from '@horizon-republic/nominal-types/adapters/arktype';
 import { constraint } from '@horizon-republic/nominal-types';
 
 const withinCapacity = constraint(
@@ -103,18 +103,18 @@ const withinCapacity = constraint(
   { path: 'guests' },
 );
 
-const Stay = arkObject(
-  type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+const Stay = constrainArk(
+  type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
   withinCapacity,
 );
 
-const CreateBooking = arkSchema(type({ hotel: 'string', stays: Stay.array() }));
+const CreateBooking = fromArk(type({ hotel: 'string', stays: Stay.array() }));
 
 CreateBooking.parse({ hotel: 'Lviv', stays: [{ guests: 4, capacity: 3 }] });
 // issues: [{ message: 'must not exceed the capacity', path: ['stays', 0, 'guests'] }]
 ```
 
-For the top object, pass constraints straight to `arkSchema()`: `arkSchema(type({ … }), withinCapacity)`.
+For the top object, pass constraints straight to `fromArk()`: `fromArk(type({ … }), withinCapacity)`.
 
 Constraints run only when ArkType has accepted the whole input.
 
@@ -127,7 +127,7 @@ import { Nominal } from '@horizon-republic/nominal-types';
 
 export class Order extends Nominal(
   'Order',
-  arkSchema(type({ email: arkOf(Email), quantity: arkOf(PositiveInteger) })),
+  fromArk(type({ email: toArk(Email), quantity: toArk(PositiveInteger) })),
 ) {
   public get isBulk(): boolean {
     return this.value.quantity.value > 10;
@@ -140,11 +140,11 @@ order.value.email; // Email
 order.isBulk; // true
 ```
 
-The value is frozen and read through `value`. For a request body that is only taken apart, the plain object from `arkSchema()` is simpler.
+The value is frozen and read through `value`. For a request body that is only taken apart, the plain object from `fromArk()` is simpler.
 
 ## Using the schema elsewhere
 
-The result of `arkSchema()` is a Standard Schema. Anything that reads Standard Schema takes it, such as NestJS 12 with its `StandardSchemaValidationPipe`:
+The result of `fromArk()` is a Standard Schema. Anything that reads Standard Schema takes it, such as NestJS 12 with its `StandardSchemaValidationPipe`:
 
 ```ts
 import { Body, Controller, Post, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -159,7 +159,7 @@ export class OrdersController {
 }
 ```
 
-It also describes itself as JSON Schema, with each `arkOf()` field described by its type: pattern, format, limits and example. The targets are `draft-2020-12`, `draft-07` and `openapi-3.0`:
+It also describes itself as JSON Schema, with each `toArk()` field described by its type: pattern, format, limits and example. The targets are `draft-2020-12`, `draft-07` and `openapi-3.0`:
 
 ```ts
 CreateOrder['~standard'].jsonSchema.input({ target: 'openapi-3.0' });

@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it, vi } from 'vitest';
 
-import { arkOf, arkSchema, arkObject } from '../../../src/adapters/arktype/index.ts';
+import { toArk, fromArk, constrainArk } from '../../../src/adapters/arktype/index.ts';
 import { constraint, PositiveInteger } from '../../../src/index.ts';
 import { issuesOf, valueOf } from '../../support/results.ts';
 
@@ -19,15 +19,15 @@ const atMostTen = constraint(
   },
 );
 
-const Stay = arkObject(
-  type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+const Stay = constrainArk(
+  type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
   withinCapacity,
 );
 
-describe('constraints in arkSchema', () => {
-  it('runs a constraint given to arkSchema on the top object', () => {
-    const Booking = arkSchema(
-      type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+describe('constraints in fromArk', () => {
+  it('runs a constraint given to fromArk on the top object', () => {
+    const Booking = fromArk(
+      type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
       withinCapacity,
     );
 
@@ -40,7 +40,7 @@ describe('constraints in arkSchema', () => {
   });
 
   it('runs a constraint attached inside, with the path from the top', () => {
-    const Booking = arkSchema(type({ stays: Stay.array(), main: Stay }));
+    const Booking = fromArk(type({ stays: Stay.array(), main: Stay }));
 
     expect(
       issuesOf(
@@ -59,7 +59,7 @@ describe('constraints in arkSchema', () => {
   });
 
   it('runs a constraint inside an optional field only when it is present', () => {
-    const Booking = arkSchema(type({ 'extra?': Stay, byRoom: type({ '[string]': Stay }) }));
+    const Booking = fromArk(type({ 'extra?': Stay, byRoom: type({ '[string]': Stay }) }));
 
     expect(Booking.parse({ byRoom: {} }).ok).toBe(true);
     expect(issuesOf(Booking.parse({ extra: { guests: 4, capacity: 1 }, byRoom: {} }))).toHaveLength(
@@ -73,13 +73,13 @@ describe('constraints in arkSchema', () => {
   });
 
   it('runs a constraint inside the matching branch of a union', () => {
-    const Booking = arkSchema(
+    const Booking = fromArk(
       type({
-        room: arkObject(
+        room: constrainArk(
           type({
             kind: "'room'",
-            guests: arkOf(PositiveInteger),
-            capacity: arkOf(PositiveInteger),
+            guests: toArk(PositiveInteger),
+            capacity: toArk(PositiveInteger),
           }),
           withinCapacity,
         ).or({ kind: "'none'" }),
@@ -93,7 +93,7 @@ describe('constraints in arkSchema', () => {
   });
 
   it('runs every constraint and adds those attached twice', () => {
-    const Twice = arkSchema(arkObject(Stay, atMostTen));
+    const Twice = fromArk(constrainArk(Stay, atMostTen));
 
     expect(issuesOf(Twice.parse({ guests: 12, capacity: 11 }))).toStrictEqual([
       { message: 'must not exceed the capacity', path: ['guests'] },
@@ -103,8 +103,8 @@ describe('constraints in arkSchema', () => {
 
   it("doesn't run constraints when ArkType rejects the input", () => {
     const check = vi.fn<() => boolean>(() => true);
-    const Booking = arkSchema(
-      type({ guests: arkOf(PositiveInteger) }),
+    const Booking = fromArk(
+      type({ guests: toArk(PositiveInteger) }),
       constraint({ guests: PositiveInteger }, check),
     );
 
@@ -113,7 +113,7 @@ describe('constraints in arkSchema', () => {
   });
 
   it('checks a listed field that ArkType holds as a plain value against its type', () => {
-    const Booking = arkSchema(type({ guests: 'number', capacity: 'number' }), withinCapacity);
+    const Booking = fromArk(type({ guests: 'number', capacity: 'number' }), withinCapacity);
 
     expect(issuesOf(Booking.parse({ guests: 0, capacity: 3 }))).toStrictEqual([
       { message: 'must be a positive integer (was 0)', path: ['guests'] },
@@ -124,8 +124,8 @@ describe('constraints in arkSchema', () => {
   });
 
   it('refuses to attach constraints to something other than an object', () => {
-    expect(() => arkObject(type('string'), withinCapacity)).toThrow(
-      new TypeError('arkObject: constraints attach to an ArkType object type'),
+    expect(() => constrainArk(type('string'), withinCapacity)).toThrow(
+      new TypeError('constrainArk: constraints attach to an ArkType object type'),
     );
   });
 

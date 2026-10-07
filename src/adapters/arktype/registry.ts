@@ -2,12 +2,12 @@ import type { AnyConstraint } from '../../core/constraint-types.ts';
 import type { AnyNominalType } from '../../core/contracts.ts';
 
 /**
- * Internal: the meta key that marks an ArkType node made by `arkOf()`, holding the id of its type.
+ * Internal: the meta key that marks an ArkType node made by `toArk()`, holding the id of its type.
  */
 export const typeKey = 'x-nominal-type';
 
 /**
- * Internal: the meta key that lists the constraints `arkObject()` attached to an ArkType object.
+ * Internal: the meta key that lists the constraints `constrainArk()` attached to an ArkType object.
  */
 export const constraintsKey = 'x-nominal-constraints';
 
@@ -28,7 +28,7 @@ const isRegistry = (value: unknown): value is ArkRegistry =>
   Reflect.get(value, 'ids') instanceof WeakMap;
 
 /**
- * Internal: what `arkOf()` and `arkObject()` put in ArkType meta refers to these maps, shared by
+ * Internal: what `toArk()` and `constrainArk()` put in ArkType meta refers to these maps, shared by
  * every copy of the adapter, since meta holds only JSON values.
  */
 export const registry: ArkRegistry = isRegistry(existing)

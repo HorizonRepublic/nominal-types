@@ -2,7 +2,7 @@ import { type } from 'arktype';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import type * as adapter from '../../../src/adapters/arktype/index.ts';
-import { arkOf, arkSchema } from '../../../src/adapters/arktype/index.ts';
+import { toArk, fromArk } from '../../../src/adapters/arktype/index.ts';
 import { Email, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { issuesOf, outputOf, valueOf } from '../../support/results.ts';
 
@@ -10,19 +10,19 @@ const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
 const fakeMeta = { description: 'fake', 'x-nominal-type': 'NoSuchType' };
 
-const Profile = arkSchema(
+const Profile = fromArk(
   type({
-    id: arkOf(Uuid),
-    email: arkOf(Email),
-    'backup?': arkOf(Email),
-    manager: arkOf(Uuid).or('null'),
+    id: toArk(Uuid),
+    email: toArk(Email),
+    'backup?': toArk(Email),
+    manager: toArk(Uuid).or('null'),
     name: 'string',
   }),
 );
 
-describe('arkSchema', () => {
+describe('fromArk', () => {
   describe('fields', () => {
-    it('builds an instance for every arkOf() field and keeps the others as they are', () => {
+    it('builds an instance for every toArk() field and keeps the others as they are', () => {
       const value = valueOf(
         Profile.parse({ id, email: 'jane@example.com', manager: null, name: 'J' }),
       );
@@ -95,12 +95,12 @@ describe('arkSchema', () => {
   });
 
   describe('arrays, tuples and records', () => {
-    const Lists = arkSchema(
+    const Lists = fromArk(
       type({
-        ids: arkOf(Uuid).array().atLeastLength(1),
-        pair: [arkOf(Uuid), arkOf(PositiveInteger)],
-        tail: ['string', '...', arkOf(PositiveInteger).array()],
-        byName: type({ '[string]': arkOf(Email) }),
+        ids: toArk(Uuid).array().atLeastLength(1),
+        pair: [toArk(Uuid), toArk(PositiveInteger)],
+        tail: ['string', '...', toArk(PositiveInteger).array()],
+        byName: type({ '[string]': toArk(Email) }),
       }),
     );
     const input = {
@@ -135,10 +135,10 @@ describe('arkSchema', () => {
 
   describe('nesting and unions', () => {
     it('builds instances inside nested objects and arrays of objects', () => {
-      const Order = arkSchema(
+      const Order = fromArk(
         type({
-          customer: { email: arkOf(Email) },
-          items: type({ quantity: arkOf(PositiveInteger) }).array(),
+          customer: { email: toArk(Email) },
+          items: type({ quantity: toArk(PositiveInteger) }).array(),
         }),
       );
       const value = valueOf(
@@ -150,8 +150,8 @@ describe('arkSchema', () => {
     });
 
     it('tells union branches apart by a literal field', () => {
-      const Contact = arkSchema(
-        type({ kind: "'email'", to: arkOf(Email) }).or({ kind: "'id'", to: arkOf(Uuid) }),
+      const Contact = fromArk(
+        type({ kind: "'email'", to: toArk(Email) }).or({ kind: "'id'", to: toArk(Uuid) }),
       );
 
       expect(valueOf(Contact.parse({ kind: 'email', to: 'a@b.co' })).to).toBeInstanceOf(Email);
@@ -159,14 +159,14 @@ describe('arkSchema', () => {
     });
 
     it('tells a nominal branch from a plain one by the type itself', () => {
-      const Reference = arkSchema(type({ ref: arkOf(Uuid).or('number') }));
+      const Reference = fromArk(type({ ref: toArk(Uuid).or('number') }));
 
       expect(valueOf(Reference.parse({ ref: id })).ref).toBeInstanceOf(Uuid);
       expect(valueOf(Reference.parse({ ref: 7 })).ref).toBe(7);
     });
 
-    it('builds the instance after a morph that ends in an arkOf() node', () => {
-      const Invite = arkSchema(type({ email: type('string.trim').pipe(arkOf(Email)) }));
+    it('builds the instance after a morph that ends in an toArk() node', () => {
+      const Invite = fromArk(type({ email: type('string.trim').pipe(toArk(Email)) }));
       const value = valueOf(Invite.parse({ email: '  jane@example.com ' }));
 
       expect(value.email).toBeInstanceOf(Email);
@@ -174,7 +174,7 @@ describe('arkSchema', () => {
     });
 
     it('keeps other morphs of ArkType', () => {
-      const Search = arkSchema(type({ query: 'string.trim', id: arkOf(Uuid) }));
+      const Search = fromArk(type({ query: 'string.trim', id: toArk(Uuid) }));
 
       expect(valueOf(Search.parse({ query: ' a ', id })).query).toBe('a');
     });
@@ -182,7 +182,7 @@ describe('arkSchema', () => {
 
   describe('more places', () => {
     it('builds elements after the rest of a tuple, counted from the end', () => {
-      const Tail = arkSchema(type(['string', '...', arkOf(Uuid).array(), arkOf(PositiveInteger)]));
+      const Tail = fromArk(type(['string', '...', toArk(Uuid).array(), toArk(PositiveInteger)]));
 
       expect(valueOf(Tail.parse(['x', id, id, 3]))).toStrictEqual([
         'x',
@@ -194,24 +194,24 @@ describe('arkSchema', () => {
     });
 
     it('builds a branch that trims before the type, or null', () => {
-      const Invite = arkSchema(type({ email: type('string.trim').pipe(arkOf(Email)).or('null') }));
+      const Invite = fromArk(type({ email: type('string.trim').pipe(toArk(Email)).or('null') }));
 
       expect(valueOf(Invite.parse({ email: ' a@b.co ' })).email).toStrictEqual(new Email('a@b.co'));
       expect(valueOf(Invite.parse({ email: null })).email).toBeNull();
     });
 
     it('tells two nominal types apart in a union', () => {
-      const Reference = arkSchema(type({ to: arkOf(Email).or(arkOf(Uuid)) }));
+      const Reference = fromArk(type({ to: toArk(Email).or(toArk(Uuid)) }));
 
       expect(valueOf(Reference.parse({ to: id })).to).toBeInstanceOf(Uuid);
       expect(valueOf(Reference.parse({ to: 'a@b.co' })).to).toBeInstanceOf(Email);
     });
 
     it('tells a single object or array branch from a nominal one', () => {
-      const Either = arkSchema(
+      const Either = fromArk(
         type({
-          one: arkOf(Email).or(type({ id: arkOf(Uuid) })),
-          many: arkOf(Uuid).or(arkOf(Uuid).array()),
+          one: toArk(Email).or(type({ id: toArk(Uuid) })),
+          many: toArk(Uuid).or(toArk(Uuid).array()),
         }),
       );
       const value = valueOf(Either.parse({ one: { id }, many: [id] }));
@@ -223,7 +223,7 @@ describe('arkSchema', () => {
     it('builds a type from another copy of the adapter too', async () => {
       vi.resetModules();
       const copy: typeof adapter = await import('../../../src/adapters/arktype/index.ts');
-      const Copied = copy.arkSchema(type({ id: arkOf(Uuid) }));
+      const Copied = copy.fromArk(type({ id: toArk(Uuid) }));
 
       expect(valueOf(Copied.parse({ id })).id).toBeInstanceOf(Uuid);
     });
@@ -231,16 +231,16 @@ describe('arkSchema', () => {
 
   describe('places it refuses', () => {
     it.each([
-      ['a morph after an arkOf() node', () => type({ email: arkOf(Email).pipe((email) => email) })],
+      ['a morph after an toArk() node', () => type({ email: toArk(Email).pipe((email) => email) })],
       [
         'a union of objects without a literal field',
-        () => type({ to: arkOf(Email) }).or({ id: arkOf(Uuid) }),
+        () => type({ to: toArk(Email) }).or({ id: toArk(Uuid) }),
       ],
-      ['a union of arrays', () => arkOf(Email).array().or(arkOf(Uuid).array())],
-      ['two index signatures', () => type({ '[string]': arkOf(Email), '[symbol]': arkOf(Uuid) })],
-      ['a type name no arkOf() gave', () => type({ a: type('string').configure(fakeMeta) })],
+      ['a union of arrays', () => toArk(Email).array().or(toArk(Uuid).array())],
+      ['two index signatures', () => type({ '[string]': toArk(Email), '[symbol]': toArk(Uuid) })],
+      ['a type name no toArk() gave', () => type({ a: type('string').configure(fakeMeta) })],
     ])('throws for %s', (_name, build) => {
-      expect(() => arkSchema(build())).toThrow(TypeError);
+      expect(() => fromArk(build())).toThrow(TypeError);
     });
   });
 
@@ -253,7 +253,7 @@ describe('arkSchema', () => {
     expect(Profile['~standard'].vendor).toBe('@horizon-republic/nominal-types');
   });
 
-  it('runs a schema with no arkOf() node like ArkType', () => {
-    expect(valueOf(arkSchema(type({ a: 'string' })).parse({ a: 'x' }))).toStrictEqual({ a: 'x' });
+  it('runs a schema with no toArk() node like ArkType', () => {
+    expect(valueOf(fromArk(type({ a: 'string' })).parse({ a: 'x' }))).toStrictEqual({ a: 'x' });
   });
 });

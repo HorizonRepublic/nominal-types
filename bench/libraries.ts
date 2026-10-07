@@ -70,12 +70,12 @@ const classValidatorOf = (...decorators: PropertyDecorator[]): Check => {
   };
 };
 
-const zodOf =
+const toZod =
   <Out>(schema: z.ZodType<Out>): Check =>
   (input) =>
     schema.safeParse(input);
 
-const valibotOf =
+const toValibot =
   (schema: v.GenericSchema): Check =>
   (input) =>
     v.safeParse(schema, input);
@@ -139,20 +139,20 @@ export const libraries: readonly Library[] = [
   {
     name: 'zod',
     accepted: (result) => field(result, 'success') === true,
-    sku: zodOf(z.string().regex(sku)),
-    uuid: zodOf(z.uuid()),
-    email: zodOf(z.email()),
-    positiveInteger: zodOf(z.number().int().positive()),
-    uuidList: zodOf(z.array(z.uuid())),
+    sku: toZod(z.string().regex(sku)),
+    uuid: toZod(z.uuid()),
+    email: toZod(z.email()),
+    positiveInteger: toZod(z.number().int().positive()),
+    uuidList: toZod(z.array(z.uuid())),
   },
   {
     name: 'valibot',
     accepted: (result) => field(result, 'success') === true,
-    sku: valibotOf(v.pipe(v.string(), v.regex(sku))),
-    uuid: valibotOf(v.pipe(v.string(), v.uuid())),
-    email: valibotOf(v.pipe(v.string(), v.email())),
-    positiveInteger: valibotOf(v.pipe(v.number(), v.integer(), v.minValue(1))),
-    uuidList: valibotOf(v.array(v.pipe(v.string(), v.uuid()))),
+    sku: toValibot(v.pipe(v.string(), v.regex(sku))),
+    uuid: toValibot(v.pipe(v.string(), v.uuid())),
+    email: toValibot(v.pipe(v.string(), v.email())),
+    positiveInteger: toValibot(v.pipe(v.number(), v.integer(), v.minValue(1))),
+    uuidList: toValibot(v.array(v.pipe(v.string(), v.uuid()))),
   },
   {
     name: 'sury',

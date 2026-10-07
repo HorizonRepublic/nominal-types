@@ -26,7 +26,7 @@ export const metaOf = (node: JsonNode, key: string): unknown => {
 };
 
 /**
- * Internal: the type name an `arkOf()` node carries, or `undefined` for any other node.
+ * Internal: the type name an `toArk()` node carries, or `undefined` for any other node.
  */
 export const nominalNameOf = (node: unknown): string | undefined => {
   const name = isJsonNode(node) ? metaOf(node, typeKey) : undefined;
@@ -35,7 +35,7 @@ export const nominalNameOf = (node: unknown): string | undefined => {
 };
 
 /**
- * Internal: whether an `arkOf()` node sits anywhere below a node.
+ * Internal: whether an `toArk()` node sits anywhere below a node.
  */
 export const holdsNominal = (node: unknown): boolean =>
   JSON.stringify(node).includes(`"${typeKey}"`);
@@ -56,11 +56,11 @@ export const isArrayNode = (node: unknown): node is JsonNode =>
   isJsonNode(node) && node['proto'] === 'Array';
 
 /**
- * Internal: the error for an `arkOf()` node in a place whose branch can't be told at runtime.
+ * Internal: the error for an `toArk()` node in a place whose branch can't be told at runtime.
  */
 export const unsupported = (where: string): TypeError =>
   new TypeError(
-    `arkSchema: ${where} holds a nominal type in a form that can't be told apart at runtime; ` +
-      'keep arkOf() nodes in object fields, arrays, tuples, records, nullable and optional values, ' +
+    `fromArk: ${where} holds a nominal type in a form that can't be told apart at runtime; ` +
+      'keep toArk() nodes in object fields, arrays, tuples, records, nullable and optional values, ' +
       'or unions told apart by type or by a literal field',
   );

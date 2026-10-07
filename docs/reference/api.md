@@ -94,6 +94,45 @@ Messages of `array()`:
 | too many          | `must have at most 10 items (was 11)`        |
 | a bad item        | the item's message, with its index in `path` |
 
+### constraint()
+
+```ts
+constraint(fields, check, options?): Constraint
+```
+
+A rule across fields of an object, like a `CHECK` constraint over several columns in SQL. See [How to check one field against another](../guides/checking-fields-together.md).
+
+| Parameter | Description                                                                                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fields`  | An object that maps each field the rule reads to a nominal type, a `schemaOf()` schema or any synchronous Standard Schema.                                         |
+| `check`   | `(values) => true \| false \| string`. Gets the checked values of the listed fields. `true` passes, `false` fails with `message`, a string fails with that string. |
+| `options` | Optional. `path`: the field the issue belongs to, or a path to it. `message`: the message for `false`.                                                             |
+
+What a constraint does with an object:
+
+1. It checks each listed field against its type. A field that fails gives its own issue, with the field's key in `path`, and `check` doesn't run.
+2. It calls `check` with the values: instances for nominal types.
+3. It returns a copy of the object with the checked values in place. Keys that aren't listed pass through unchecked.
+
+A constraint is a Standard Schema and a Standard JSON Schema, so `Nominal()` takes it as a rule. Its JSON Schema is an object with the listed fields in `properties` and the ones that can't be `undefined` in `required`; `check` itself has no JSON Schema form.
+
+Messages:
+
+| Case                                 | Message                                        |
+| ------------------------------------ | ---------------------------------------------- |
+| not an object                        | `must be an object (was "x")`                  |
+| `check` returns `false`, with `path` | `must agree with <other fields>`, or `message` |
+| `check` returns `false`, no `path`   | `<fields> must agree`, or `message`            |
+| `check` returns a string             | the string                                     |
+
+### isConstraint()
+
+```ts
+isConstraint(value): value is Constraint
+```
+
+`true` if `value` was made by `constraint()`, also in another copy of the package.
+
 ### isNominalType()
 
 ```ts
@@ -149,11 +188,11 @@ When an object value is frozen, the input stays yours: the type copies it first.
 
 Thrown by `new` when a value is invalid. It extends `TypeError`.
 
-| Member     | Description                                      |
-| ---------- | ------------------------------------------------ |
-| `typeName` | The name of the type that rejected the value.    |
-| `issues`   | A list of `{ message, path? }` objects.          |
-| `message`  | `'Email: must be an email address (was "nope")'` |
+| Member     | Description                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `typeName` | The name of the type that rejected the value.                                                                                              |
+| `issues`   | A list of `{ message, path? }` objects.                                                                                                    |
+| `message`  | `'Email: must be an email address (was "nope")'`; an issue with a path shows it first: `'Occupancy: guests: must not exceed the capacity'` |
 
 ## Messages
 
@@ -193,21 +232,25 @@ Notes:
 
 ## Types
 
-| Type                                  | Description                                                                                            |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                                                        |
-| `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                                                        |
-| `VariantOf<Source, Name>`             | A class returned by `variant()`                                                                        |
-| `VariantInstance<Source, Name>`       | An instance of a variant                                                                               |
-| `AnyNominalType`                      | Any nominal type class                                                                                 |
-| `NominalInstance<Name, Value>`        | What every instance offers                                                                             |
-| `NominalSchema<Input, Value>`         | What `Nominal()`, `subtype()` and `variant()` accept as a rule                                         |
-| `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return; both have `accepts(value)` and `messageFor(value)` |
-| `Parsed<Instance>`                    | The result of `parse()`                                                                                |
-| `Brand<Name>`                         | The compile-time marker that keeps types apart                                                         |
-| `Immutable<Value>`                    | `Value` with its objects and arrays read-only all the way down                                         |
-| `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                                                               |
-| `TypeSchema` / `ArrayOptions`         | What `schemaOf()` returns, and the options of `array()`                                                |
-| `StandardProps` / `StandardSchema`    | The shape of `~standard` and of a plain schema object                                                  |
+| Type                                                                             | Description                                                                                            |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `NominalType<Name, Schema>`                                                      | A class returned by `Nominal()`                                                                        |
+| `SubtypeOf<Parent, Name>`                                                        | A class returned by `subtype()`                                                                        |
+| `VariantOf<Source, Name>`                                                        | A class returned by `variant()`                                                                        |
+| `VariantInstance<Source, Name>`                                                  | An instance of a variant                                                                               |
+| `AnyNominalType`                                                                 | Any nominal type class                                                                                 |
+| `NominalInstance<Name, Value>`                                                   | What every instance offers                                                                             |
+| `NominalSchema<Input, Value>`                                                    | What `Nominal()`, `subtype()` and `variant()` accept as a rule                                         |
+| `PatternSchema` / `PredicateSchema`                                              | The classes `matching()` and `satisfying()` return; both have `accepts(value)` and `messageFor(value)` |
+| `Parsed<Instance>`                                                               | The result of `parse()`                                                                                |
+| `Brand<Name>`                                                                    | The compile-time marker that keeps types apart                                                         |
+| `Immutable<Value>`                                                               | `Value` with its objects and arrays read-only all the way down                                         |
+| `InputOf<Schema>` / `ValueOf<Schema>`                                            | The input and the value type of a schema                                                               |
+| `TypeSchema` / `ArrayOptions`                                                    | What `schemaOf()` returns, and the options of `array()`                                                |
+| `Constraint<Fields>` / `ConstraintOptions`                                       | What `constraint()` returns, and its options                                                           |
+| `ConstraintField` / `ConstraintValues`                                           | What a field of a constraint can be, and the values `check` receives                                   |
+| `ConstraintInput` / `ConstraintInputs` / `ConstraintValue` / `ConstraintVerdict` | The input of one field and of the object, the value of one field, and what `check` returns             |
+| `NominalTarget` / `TargetValue`                                                  | A nominal type or a `schemaOf()` schema, and the value it gives                                        |
+| `StandardProps` / `StandardSchema`                                               | The shape of `~standard` and of a plain schema object                                                  |
 
 [← Reference](README.md)

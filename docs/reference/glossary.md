@@ -4,7 +4,8 @@
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | nominal type    | A type told apart by its name, not its shape. `Email` and `Uuid` both wrap a string but don't mix.                        |
 | instance        | An object made by `new Email(…)` or `Email.parse(…)`. It always holds a valid value.                                      |
-| value           | What an instance wraps, read through `instance.value`: the string, number, bigint or boolean.                             |
+| value           | What an instance wraps, read through `instance.value`: a string, number, bigint or boolean, or a frozen object or array.  |
+| constraint      | A rule across fields of an object, such as an end that must come after a start. Made with `constraint()`.                 |
 | rule            | What a valid value looks like: a regular expression, a type guard or a schema from another library.                       |
 | type guard      | A function `(value: unknown) => value is T` that returns `true` for a valid value.                                        |
 | issue           | One reason a value was rejected: `{ message, path? }`.                                                                    |

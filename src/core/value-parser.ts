@@ -1,6 +1,6 @@
 import { generateFunction } from './compile.ts';
 import { frozen } from './frozen.ts';
-import { remember } from './pending.ts';
+import { forget, remember } from './pending.ts';
 import { Rejection } from './rejection.ts';
 
 type Parser<Instance> = (input: unknown) => Instance | Rejection;
@@ -15,7 +15,7 @@ export const parserFor = <Instance>(
   generate?: boolean,
 ): Parser<Instance> => {
   const generated = generateFunction(
-    ['Target', 'run', 'Rejection', 'frozen', 'remember'],
+    ['Target', 'run', 'Rejection', 'frozen', 'remember', 'forget'],
     `function parseValue(input) {
       let value = run(input);
       if (typeof value === 'object' && value !== null) {
@@ -23,9 +23,13 @@ export const parserFor = <Instance>(
         value = frozen(value);
       }
       remember(Target, input, value);
-      return new Target(input);
+      try {
+        return new Target(input);
+      } finally {
+        forget();
+      }
     }`,
-    [target, run, Rejection, frozen, remember],
+    [target, run, Rejection, frozen, remember, forget],
     generate,
   );
 
@@ -48,6 +52,10 @@ export const parserFor = <Instance>(
 
     remember(target, input, value);
 
-    return new target(input);
+    try {
+      return new target(input);
+    } finally {
+      forget();
+    }
   };
 };

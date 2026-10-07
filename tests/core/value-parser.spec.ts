@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { takePending } from '../../src/core/pending.ts';
+import { nothingPending, takePending } from '../../src/core/pending.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 import { parserFor } from '../../src/core/value-parser.ts';
 
@@ -40,5 +40,18 @@ describe.each([
     const value: unknown = Reflect.get(parse({ a: [1] }), 'value');
 
     expect(Object.isFrozen(value)).toBe(true);
+  });
+
+  it('empties the slot when the constructor throws', () => {
+    class Broken {
+      public readonly value: unknown;
+
+      public constructor() {
+        throw new Error('broken');
+      }
+    }
+
+    expect(() => parserFor(Broken, run, generate)('C2')).toThrow('broken');
+    expect(takePending(Broken, 'C2')).toBe(nothingPending);
   });
 });

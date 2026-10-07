@@ -29,6 +29,18 @@ The column comes from the type. Each adapter has an option to choose your own.
 
 Your own types get a column the same way, by what they accept. A number type that takes fractions, such as a price from 1 up, gets `double precision`. A type declared with `Nominal()` gets a column by what it accepts: `boolean` for `true`, a number column for `1`, else `text`.
 
+The network types are text with a length limit: `varchar(253)` for `Hostname` and `DomainName`, `varchar(45)` for `IpAddress` and `Ipv6Address`, `varchar(15)` for `Ipv4Address`, `varchar(49)` for `IpPrefix` and `Ipv6Prefix`, `varchar(18)` for `Ipv4Prefix`, `varchar(17)` for `MacAddress`.
+
+PostgreSQL has columns made for addresses. To use one, choose it yourself:
+
+| Type                                      | PostgreSQL column | For example                                     |
+| ----------------------------------------- | ----------------- | ----------------------------------------------- |
+| `IpAddress`, `Ipv4Address`, `Ipv6Address` | `inet`            | `toTypeOrm(IpAddress, { type: 'inet' })`        |
+| `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`    | `cidr`            | `toDrizzle(IpPrefix, { column: 'cidr' })`       |
+| `MacAddress`                              | `macaddr`         | `toMikroOrm(MacAddress, { column: 'macaddr' })` |
+
+PostgreSQL returns these values in its own form: `2001:DB8:0:0:0:0:0:1` comes back as `2001:db8::1`, and `00-00-5E-00-53-01` as `00:00:5e:00:53:01`. The types accept that form, and `equals()` still holds between the two.
+
 A database without a kind of column uses its own. On SQLite, for example, MikroORM writes `text` for `Email` and `Uuid`, and `integer` for `AnyBoolean`. On MySQL, which has no `uuid`, choose `char(36)` for `Uuid`.
 
 ## Writes

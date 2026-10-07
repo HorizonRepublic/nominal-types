@@ -186,7 +186,7 @@ config.PORT.value; // 3000 for PORT=3000
 
 - `NominalError` extends `TypeError`. Members: `typeName`, `issues` (`{ message, path? }[]`), and `message` such as `'nominal.Uuid: must be a UUID (was "x")'`, with a path in front of each issue that has one: `'booking.Stay: guests: must not exceed the capacity'`.
 - Messages read `must be <description> (was <value>)`. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`).
-- A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email` is sensitive.
+- A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email`, `IpAddress` (and the types under it) and `MacAddress` are sensitive.
 - `hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")` and Valibot's `received "x"`.
 - Rules from other libraries keep their own messages.
 
@@ -224,6 +224,13 @@ config.PORT.value; // 3000 for PORT=3000
 | `HexColor` | `nominal.HexColor` | `#` and 3, 4, 6 or 8 hex digits; `red`, `green`, `blue`, `alpha` (0–1), `canonical()` (lowercase 6 or 8 digits); `equals` compares channels | yes |
 | `Base64` | `nominal.Base64` | RFC 4648 §4 base64, `=` padding required, pad bits zero, `''` accepted; `byteLength`, `toBytes()`; JSON Schema `contentEncoding: 'base64'` (`format: 'byte'` for OpenAPI 3.0) | yes |
 | `Base64Url` | `nominal.Base64Url` | RFC 4648 §5 base64url, no padding, pad bits zero, `''` accepted; a sibling of `Base64`; `byteLength`, `toBytes()` | yes |
+| `Hostname` | `nominal.Hostname` | an RFC 1123 host name: LDH labels up to 63, 253 in all, no trailing dot, last label not all digits, `xn--` labels must decode; `labels`, `canonical()` (lowercase), `toUnicode()`, `isSubdomainOf()` (itself included); `equals` ignores case | yes |
+| `DomainName` | `nominal.DomainName` | under `Hostname`: two labels or more, top-level domain of letters or `xn--` | yes |
+| `IpAddress` | `nominal.IpAddress` | IPv4 dotted quad without leading zeros, or any RFC 4291 IPv6 text without zone or brackets; sensitive; `version`, `toBytes()`, `canonical()` (RFC 5952), `isLoopback`, `isPrivate`, `isLinkLocal`, `isMulticast`, `isUnspecified`, `isGlobal` (IANA special-purpose registries; IPv4-mapped answers as its IPv4); `equals` compares the address | yes |
+| `Ipv4Address`, `Ipv6Address` | `nominal.…` | under `IpAddress`, one version; `Ipv6Address.toIpv4()` for `::ffff:…` | yes |
+| `IpPrefix` | `nominal.IpPrefix` | CIDR `address/length` with host bits zero (JSON Schema can't check those); `version`, `address`, `length`, `contains(address or prefix)`, `canonical()`; `equals` compares the network | yes |
+| `Ipv4Prefix`, `Ipv6Prefix` | `nominal.…` | under `IpPrefix`, one version | yes |
+| `MacAddress` | `nominal.MacAddress` | EUI-48: six hex pairs, all `:` or all `-`; sensitive; `toBytes()`, `isMulticast`, `isLocallyAdministered`, `canonical()` (lowercase, colons), `pattern`; `equals` compares bytes | yes |
 | `AnyNumber` | `nominal.AnyNumber` | any number | yes |
 | `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
 | `Float32` | `nominal.Float32` | a 32-bit float | yes |

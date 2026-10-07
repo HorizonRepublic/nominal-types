@@ -13,6 +13,7 @@ The terms these pages use, in alphabetical order.
 | boundary                    | A place where data enters your code, such as an HTTP request, an environment variable or a database row.                                                               |
 | bounded context             | In domain-driven design, a part of a system with its own meaning for its words. A type name such as `billing.Email` names it.                                          |
 | brand                       | The hidden marker that makes the compiler tell types apart.                                                                                                            |
+| CIDR notation               | A way to write a network as an address, a `/` and a prefix length, such as `10.0.0.0/8`: every address whose first 8 bits match. See `IpPrefix`.                       |
 | constraint                  | A rule across fields of an object, such as guests that must not exceed a capacity. Made with `constraint()`.                                                           |
 | `copyWith()`                | The method of an instance built on `objectOf()` that returns a new, checked instance with some fields changed.                                                         |
 | decorator                   | A function written as `@Name()` above a class or property, such as `@NominalField()`. NestJS and class-validator use them.                                             |
@@ -22,8 +23,11 @@ The terms these pages use, in alphabetical order.
 | entry point                 | A path you import from, such as `@horizon-republic/nominal-types/adapters/zod`. The core is `@horizon-republic/nominal-types`.                                         |
 | `fromString()`              | A step that reads a number or boolean from text first, such as `'2'` from a query string.                                                                              |
 | frozen                      | Made read-only with `Object.freeze`. An object or array value of an instance is frozen all the way down.                                                               |
+| host bit                    | In a network written in CIDR notation, a bit after the prefix length. In `10.0.0.0/8` the last 24 bits are host bits. `IpPrefix` needs them to be zero.                |
+| host name                   | The name of a computer on a network, such as `localhost` or `api.example.com`: labels of letters, digits and hyphens, joined by dots.                                  |
 | instance                    | An object made by `new Email(…)` or `Email.parse(…)`. It always holds a valid value.                                                                                   |
 | invariant                   | A rule that always holds for a value, such as a stay's guests never exceeding its capacity.                                                                            |
+| IPv4-mapped address         | An IPv6 address that carries an IPv4 address in its last 32 bits, such as `::ffff:192.0.2.1`. A server that listens on IPv6 can see IPv4 clients this way.             |
 | ISO 3166-1                  | The standard list of country codes. Its two-letter codes, such as `US` and `UA`, are the ones `CountryCode` takes.                                                     |
 | ISO 4217                    | The standard list of three-letter currency codes, such as `EUR` and `JPY`, with their minor units.                                                                     |
 | issue                       | One reason a value was rejected: `{ message, path? }`.                                                                                                                 |
@@ -41,6 +45,7 @@ The terms these pages use, in alphabetical order.
 | path                        | The part of an issue that says where the value was: field keys and array indexes, such as `['items', 0]`.                                                              |
 | peer dependency             | A package you install yourself next to this one, such as `zod` for the Zod adapter. The core needs none.                                                               |
 | pipe                        | In NestJS, a class that checks or converts an argument before the handler runs, such as `NominalPipe`.                                                                 |
+| Punycode                    | The way a Unicode label is written in plain letters for DNS, after `xn--`: `bücher` becomes `xn--bcher-kva`.                                                           |
 | RFC 3339                    | The standard format for dates and times on the internet, such as `2024-05-01T09:30:00Z`. JSON Schema's `date-time` and `date` formats follow it.                       |
 | rule                        | What a valid value looks like: a regular expression, a type guard or a schema from another library.                                                                    |
 | safe integer                | A whole number from `-(2^53 - 1)` to `2^53 - 1`. JavaScript numbers hold every one of them exactly; beyond that, digits can be lost.                                   |
@@ -58,6 +63,7 @@ The terms these pages use, in alphabetical order.
 | subtype                     | A narrower type made with `subtype()`. It fits where its parent is expected, not the other way round.                                                                  |
 | Temporal                    | The date and time API of JavaScript, with objects such as `Temporal.Instant` and `Temporal.PlainDate`. Node.js 26 has it; older versions need a polyfill.              |
 | text form                   | How a type reads its value from a string, for `fromString()` and `fromEnv()`. Types under a base type have one; types made with `Nominal()` don't.                     |
+| top-level domain            | The last label of a domain name, such as `com` in `example.com`.                                                                                                       |
 | `trusted`                   | An option of the database adapters: `true` skips checking values read from the database.                                                                               |
 | type guard                  | A function `(value: unknown) => value is T` that returns `true` for a valid value.                                                                                     |
 | type name                   | The name given to `Nominal()`, such as `billing.InvoiceNumber`. It names the type in errors, JSON Schema and Swagger.                                                  |

@@ -305,6 +305,7 @@ An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accep
 
 - Any scheme is accepted, including `mailto:` and `javascript:`. Use `HttpUrl` for web addresses only.
 - `value` keeps the text as given. The members read the parsed URL.
+- The host is read as browsers read it: `http://0x7f.1` has the `hostname` `127.0.0.1`. To refuse internal hosts, check `hostname` with [`IpAddress`](#ipaddress) and its `isGlobal`.
 
 | Property    | Value                                                            |
 | ----------- | ---------------------------------------------------------------- |
@@ -570,5 +571,247 @@ Bytes written as base64url text like `aGVsbG8`: the [base64](../glossary.md) for
   token.byteLength; // 5
   new TextDecoder().decode(token.toBytes()); // 'hello'
   It has the members and the static field of `Base64`.
+
+## Hostname
+
+`AnyString` › `Hostname`
+
+A [host name](../glossary.md) like `localhost` or `api.example.com`.
+
+- Labels of letters, digits and hyphens, joined by dots. A label can't start or end with a hyphen.
+- Up to 63 characters per label, and up to 253 in total.
+- The last label is never all digits, so `192.0.2.1` is not a host name.
+- Not accepted: a trailing dot (`example.com.`), underscores (`_dmarc.example.com`) and Unicode text. Convert Unicode to [Punycode](../glossary.md) first (`bücher.de` is `xn--bcher-kva.de`).
+- An `xn--` label must decode to lowercase letters and digits of any script, such as `bücher`. A label with `--` in places 3 and 4 is accepted only as an `xn--` label.
+- Upper and lower case are both accepted and kept as given.
+
+| Property    | Value                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', format: 'hostname', pattern, minLength: 1, maxLength: 253 }`, with an example                                 |
+| Message     | `must be a host name (was "a_b")`                                                                                                |
+| Limits      | the `pattern` can't decode `xn--` labels, so the schema accepts an `xn--` label that is not valid Punycode, such as `xn--zz.com` |
+
+```ts
+import { Hostname } from '@horizon-republic/nominal-types';
+
+const host = new Hostname('API.Example.com');
+
+host.canonical().value; // 'api.example.com'
+new Hostname('example.com.'); // throws NominalError: nominal.Hostname: must be a host name (was "example.com.")
+```
+
+Members, with results for this `host`:
+
+| Member                | Returns                                         | Example                      |
+| --------------------- | ----------------------------------------------- | ---------------------------- |
+| `labels`              | the labels between the dots                     | `['API', 'Example', 'com']`  |
+| `canonical()`         | the same name in lowercase                      | `api.example.com`            |
+| `toUnicode()`         | the name with `xn--` labels decoded, for people | `'API.Example.com'`          |
+| `isSubdomainOf(name)` | whether it is `name` or a name under it         | `true` for `example.com`     |
+| `equals(other)`       | compares regardless of case                     | `true` for `api.example.com` |
+
+`toUnicode()` gives display text, not a host name: `new Hostname('xn--bcher-kva.de').toUnicode()` is `'bücher.de'`.
+
+## DomainName
+
+`AnyString` › `Hostname` › `DomainName`
+
+A host name with a [top-level domain](../glossary.md), like `example.com`. It has the members of `Hostname`.
+
+- At least two labels.
+- The last label is letters only, such as `com`, or an `xn--` label, such as `xn--p1ai` (`рф`).
+- `localhost` is a `Hostname` but not a `DomainName`.
+
+| Property    | Value                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| JSON Schema | `allOf` of `Hostname`'s and `{ type: 'string', pattern }` for the top-level domain, with an example |
+| Message     | `must be a domain name with a top-level domain (was "localhost")`                                   |
+
+```ts
+import { DomainName } from '@horizon-republic/nominal-types';
+
+new DomainName('example.com').value; // 'example.com'
+new DomainName('localhost'); // throws NominalError: nominal.DomainName: must be a domain name with a top-level domain (was "localhost")
+```
+
+## IpAddress
+
+`AnyString` › `IpAddress`
+
+An IPv4 or IPv6 address, like `192.0.2.1` or `2001:db8::1`.
+
+- IPv4: four numbers from 0 to 255, joined by dots. A number with a leading zero is refused (`010.0.0.1`), since some tools read it as octal and reach another host.
+- IPv6: any form of RFC 4291, such as `2001:db8::1`, `2001:0DB8:0:0:0:0:0:1` or `::ffff:192.0.2.1`.
+- Not accepted: short IPv4 forms (`127.1`), hex IPv4 (`0x7f.0.0.1`), a zone (`fe80::1%eth0`) and brackets (`[::1]`).
+- `value` keeps the text as given. `equals()` compares the address, and `canonical()` writes it in the short form of RFC 5952.
+- `IpAddress` is a [sensitive type](../errors-and-messages.md#sensitive-types), like `Email`, since an address can identify a person.
+
+| Property    | Value                                                                                                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', anyOf: [{ format: 'ipv4', pattern }, { format: 'ipv6', pattern }], minLength: 2, maxLength: 45 }`, with examples |
+| Message     | `must be an IP address (was a string of 9 characters)`                                                                              |
+
+```ts
+import { IpAddress } from '@horizon-republic/nominal-types';
+
+const address = new IpAddress('2001:DB8:0:0:0:0:0:1');
+
+address.canonical().value; // '2001:db8::1'
+address.equals(new IpAddress('2001:db8::1')); // true
+new IpAddress('010.0.0.1'); // throws NominalError: nominal.IpAddress: must be an IP address (was a string of 9 characters)
+```
+
+Members:
+
+| Member          | Returns                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `version`       | `4` or `6`                                                                                     |
+| `toBytes()`     | the address as a `Uint8Array`, 4 bytes for IPv4 and 16 for IPv6                                |
+| `canonical()`   | the address in the form of RFC 5952: lowercase, no leading zeros, the longest zero run as `::` |
+| `equals(other)` | whether both are the same address, however they are written                                    |
+| `isLoopback`    | `127.0.0.0/8` or `::1`                                                                         |
+| `isPrivate`     | `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` or `fc00::/7`                                  |
+| `isLinkLocal`   | `169.254.0.0/16` or `fe80::/10`                                                                |
+| `isMulticast`   | `224.0.0.0/4` or `ff00::/8`                                                                    |
+| `isUnspecified` | `0.0.0.0` or `::`                                                                              |
+| `isGlobal`      | whether the address can be reached across the internet                                         |
+
+`isGlobal` follows the IANA special-purpose address registries. It is `false` for private, shared, documentation, benchmarking and reserved addresses, for multicast, and for IPv6 outside `2000::/3`. Use it to refuse internal addresses before your server connects to an address a user gave.
+
+An [IPv4-mapped address](../glossary.md), such as `::ffff:127.0.0.1`, answers these questions as its IPv4 address: its `isLoopback` is `true`. So do `64:ff9b::/96` and `2002::/16` addresses for `isGlobal`.
+
+`IpAddress` and the IPv4-mapped address that carries it are not `equals()`: `192.0.2.1` and `::ffff:192.0.2.1` are different addresses.
+
+## Ipv4Address
+
+`AnyString` › `IpAddress` › `Ipv4Address`
+
+An IPv4 address, like `192.0.2.1`. It has the members of `IpAddress`.
+
+| Property    | Value                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| JSON Schema | `allOf` of `IpAddress`'s and `{ type: 'string', format: 'ipv4', pattern, minLength: 7, maxLength: 15 }`, with an example |
+| Message     | `must be an IPv4 address (was a string of 3 characters)`                                                                 |
+
+```ts
+import { Ipv4Address } from '@horizon-republic/nominal-types';
+
+new Ipv4Address('192.0.2.1').value; // '192.0.2.1'
+new Ipv4Address('::1'); // throws NominalError: nominal.Ipv4Address: must be an IPv4 address (was a string of 3 characters)
+```
+
+## Ipv6Address
+
+`AnyString` › `IpAddress` › `Ipv6Address`
+
+An IPv6 address, like `2001:db8::1`. It has the members of `IpAddress`, and one more.
+
+| Property    | Value                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| JSON Schema | `allOf` of `IpAddress`'s and `{ type: 'string', format: 'ipv6', pattern, minLength: 2, maxLength: 45 }`, with an example |
+| Message     | `must be an IPv6 address (was a string of 9 characters)`                                                                 |
+
+```ts
+import { Ipv6Address } from '@horizon-republic/nominal-types';
+
+new Ipv6Address('2001:0DB8::0001').canonical().value; // '2001:db8::1'
+new Ipv6Address('::ffff:192.0.2.1').toIpv4(); // Ipv4Address { value: '192.0.2.1' }
+```
+
+| Member     | Returns                                                                        |
+| ---------- | ------------------------------------------------------------------------------ |
+| `toIpv4()` | the `Ipv4Address` inside an IPv4-mapped address (`::ffff:…`), else `undefined` |
+
+## IpPrefix
+
+`AnyString` › `IpPrefix`
+
+A network in [CIDR notation](../glossary.md), like `10.0.0.0/8` or `2001:db8::/32`.
+
+- An address as `IpAddress` takes it, a `/`, and a prefix length: 0 to 32 for IPv4, 0 to 128 for IPv6, with no leading zeros.
+- Every [host bit](../glossary.md) must be zero. `10.0.0.1/8` names one host, not a network, and is refused.
+
+| Property    | Value                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', anyOf: [{ pattern }, { pattern }], minLength: 4, maxLength: 49 }`, with examples |
+| Message     | `must be an IP prefix whose host bits are zero (was "10.0.0.1/8")`                                  |
+| Limits      | the `pattern` can't check host bits, so the schema accepts `10.0.0.1/8`                             |
+
+```ts
+import { IpAddress, IpPrefix } from '@horizon-republic/nominal-types';
+
+const network = new IpPrefix('10.0.0.0/8');
+
+network.contains(new IpAddress('10.1.2.3')); // true
+new IpPrefix('10.0.0.1/8'); // throws NominalError: nominal.IpPrefix: must be an IP prefix whose host bits are zero (was "10.0.0.1/8")
+```
+
+Members, with results for this `network`:
+
+| Member            | Returns                                                                 | Example                           |
+| ----------------- | ----------------------------------------------------------------------- | --------------------------------- |
+| `version`         | `4` or `6`                                                              | `4`                               |
+| `address`         | the first address of the network                                        | `IpAddress { value: '10.0.0.0' }` |
+| `length`          | the prefix length                                                       | `8`                               |
+| `contains(other)` | whether an `IpAddress`, or every address of an `IpPrefix`, is inside it | `true` for `10.1.2.3`             |
+| `canonical()`     | the prefix with its address in the form of RFC 5952                     | `10.0.0.0/8`                      |
+| `equals(other)`   | whether both are the same network, however they are written             |                                   |
+
+`contains()` is `false` for an address of the other IP version, IPv4-mapped addresses included.
+
+## Ipv4Prefix and Ipv6Prefix
+
+`AnyString` › `IpPrefix` › `Ipv4Prefix`, `Ipv6Prefix`
+
+A prefix of one IP version, like `192.168.0.0/16` or `2001:db8::/48`. They have the members of `IpPrefix`, and `address` is an `Ipv4Address` or an `Ipv6Address`.
+
+| Property    | Value                                                                                |
+| ----------- | ------------------------------------------------------------------------------------ |
+| JSON Schema | `allOf` of `IpPrefix`'s and `{ type: 'string', pattern }`, with an example           |
+| Message     | `must be an IPv4 prefix whose host bits are zero (was "::/0")`, or the same for IPv6 |
+
+```ts
+import { Ipv4Address, Ipv4Prefix, Ipv6Prefix } from '@horizon-republic/nominal-types';
+
+new Ipv4Prefix('192.168.0.0/16').contains(new Ipv4Address('192.168.1.10')); // true
+new Ipv6Prefix('2001:DB8:0::/48').canonical().value; // '2001:db8::/48'
+```
+
+## MacAddress
+
+`AnyString` › `MacAddress`
+
+A MAC address (EUI-48), like `00:00:5e:00:53:01`.
+
+- Six pairs of hex digits, all separated by `:` or all by `-`. Upper and lower case are both accepted.
+- Not accepted: mixed separators, no separators (`00005e005301`) and the dotted form (`0000.5e00.5301`).
+- `value` keeps the text as given. `equals()` compares the bytes.
+- `MacAddress` is a [sensitive type](../errors-and-messages.md#sensitive-types), since an address identifies a device.
+
+| Property    | Value                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: MacAddress.pattern.source, minLength: 17, maxLength: 17 }`, with an example |
+| Message     | `must be a MAC address (was a string of 17 characters)`                                                 |
+
+```ts
+import { MacAddress } from '@horizon-republic/nominal-types';
+
+const mac = new MacAddress('00-00-5E-00-53-01');
+
+mac.canonical().value; // '00:00:5e:00:53:01'
+mac.equals(new MacAddress('00:00:5e:00:53:01')); // true
+```
+
+| Member                  | Returns                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| `toBytes()`             | the six bytes as a `Uint8Array`                                                    |
+| `isMulticast`           | whether the lowest bit of the first byte is set: a group address                   |
+| `isLocallyAdministered` | whether the second lowest bit is set: an address set locally, such as a random one |
+| `canonical()`           | the address in lowercase with colons                                               |
+| `equals(other)`         | whether both have the same bytes, whatever the case and separator                  |
+
+| Static field         | Holds                     |
+| -------------------- | ------------------------- |
+| `MacAddress.pattern` | the address as a `RegExp` |
 
 [← Built-in types](README.md)

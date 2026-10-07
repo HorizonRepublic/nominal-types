@@ -1,4 +1,4 @@
-import { trustedConstructorFor } from '../../core/nominal.ts';
+import { trustedConstructorFor } from '../../core/type-functions.ts';
 import type { JsonNode } from './json-node.ts';
 import {
   holdsNominal,

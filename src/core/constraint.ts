@@ -8,13 +8,15 @@ import type {
   ConstraintOptions,
   AnyConstraint,
 } from './constraint-types.ts';
+import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { forTarget } from './json-target.ts';
 import { mustBe } from './messages.ts';
-import { constructorFor, isNominalType } from './nominal.ts';
+import { isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
+import { constructorFor } from './type-functions.ts';
 
 const constraintMark = Symbol.for('@horizon-republic/nominal-types/constraint');
 
@@ -42,27 +44,6 @@ const defaultMessage = (keys: readonly string[], path: readonly PropertyKey[]): 
   return path.length === 0
     ? `${keys.join(', ')} must agree`
     : `must agree with ${others.join(', ')}`;
-};
-
-const cannotDescribe = (): TypeError =>
-  new TypeError('a field of the constraint cannot describe itself as JSON Schema');
-
-const describeField = (
-  field: ConstraintField,
-  side: 'input' | 'output',
-  target: StandardJSONSchemaV1.Options,
-): Record<string, unknown> => {
-  const converter: unknown = Reflect.get(field['~standard'], 'jsonSchema');
-  const describe: unknown =
-    typeof converter === 'object' && converter !== null ? Reflect.get(converter, side) : undefined;
-  const schema: unknown =
-    typeof describe === 'function' ? Reflect.apply(describe, converter, [target]) : undefined;
-
-  if (!isRecord(schema)) {
-    throw cannotDescribe();
-  }
-
-  return Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
 };
 
 /**
@@ -197,7 +178,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
     const required: string[] = [];
 
     for (const { key, field, run } of this.#runners) {
-      properties[key] = describeField(field, side, target);
+      properties[key] = describeField(field, side, target, 'constraint');
 
       if (run() instanceof Rejection) {
         required.push(key);

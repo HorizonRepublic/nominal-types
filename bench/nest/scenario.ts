@@ -20,6 +20,7 @@ import { NominalDocumentDto } from './nominal-dtos.ts';
 import {
   arkType,
   nominalWithArkAdapter,
+  nominalObjectOf,
   nominalWithArkType,
   valibotDocument,
   zodDocument,
@@ -82,6 +83,8 @@ const setupOf = async (name: string): Promise<{ controller: Class; pipe: PipeTra
       return { controller: dtoController(DocumentDto), pipe: validation };
     case 'nominal-types + class-validator':
       return { controller: dtoController(NominalDocumentDto), pipe: validation };
+    case 'nominal-types objectOf()':
+      return { controller: schemaController(nominalObjectOf), pipe: standard };
     case 'nominal-types + ArkType adapter':
       return { controller: schemaController(nominalWithArkAdapter), pipe: standard };
     case 'nominal-types + ArkType, schemaOf()':

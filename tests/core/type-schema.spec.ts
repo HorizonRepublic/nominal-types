@@ -59,12 +59,12 @@ describe('schemaOf()', () => {
 });
 
 describe('array()', () => {
-  it('builds a frozen array of instances', () => {
+  it('builds a new array of instances, read-only by type only', () => {
     const ids = valueOf(schemaOf(Uuid).array().parse([first, second]));
 
     expect(ids).toHaveLength(2);
     expect(ids.every((id) => id instanceof Uuid)).toBe(true);
-    expect(Object.isFrozen(ids)).toBe(true);
+    expect(Object.isFrozen(ids)).toBe(false);
   });
 
   it('accepts an empty array unless told otherwise', () => {

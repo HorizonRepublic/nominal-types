@@ -2,6 +2,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import { boundsOf, countMessage } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
+import { generateFunction } from './compile.ts';
 import { mustBe } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import type { Describe, Run } from './standard-props.ts';
@@ -21,49 +22,105 @@ const issuesAt = (
 ): StandardSchemaV1.Issue[] =>
   issues.map((issue) => ({ message: issue.message, path: [index, ...(issue.path ?? [])] }));
 
+const arraySource = `function parseArray(input) {
+  if (!Array.isArray(input)) return notArray(input);
+  const count = input.length;
+  if (count < min || count > max) return wrongCount(count);
+  const values = [];
+  let issues;
+  for (let index = 0; index < count; index += 1) {
+    const result = run(input[index]);
+    if (result instanceof Rejection) issues = itemIssues(issues, index, result);
+    else if (issues === undefined) values.push(result);
+  }
+  return issues === undefined ? values : new Rejection(issues);
+}`;
+
+const itemIssues = (
+  issues: StandardSchemaV1.Issue[] | undefined,
+  index: number,
+  rejection: Rejection,
+): StandardSchemaV1.Issue[] => {
+  const all = issues ?? [];
+
+  all.push(...issuesAt(index, rejection.issues));
+
+  return all;
+};
+
+const notArray = (input: unknown): Rejection =>
+  new Rejection([{ message: mustBe('an array', input) }]);
+
+const isRun = (value: unknown): value is (input: unknown) => unknown => typeof value === 'function';
+
+const arrayRun = <Item>(
+  run: (input: unknown) => Item | Rejection,
+  options: ArrayOptions,
+  min: number,
+  max: number,
+  generate?: boolean,
+): ((input: unknown) => readonly Item[] | Rejection) => {
+  const wrongCount = (count: number): Rejection =>
+    new Rejection([{ message: countMessage(options, count) }]);
+  const generated = generateFunction(
+    ['run', 'min', 'max', 'Rejection', 'notArray', 'wrongCount', 'itemIssues'],
+    arraySource,
+    [run, min, max, Rejection, notArray, wrongCount, itemIssues],
+    generate,
+  );
+
+  if (isRun(generated)) {
+    // The source above returns a new array of what `run` gave, or a Rejection.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    return generated as (input: unknown) => readonly Item[] | Rejection;
+  }
+
+  return (input) => {
+    if (!Array.isArray(input)) {
+      return notArray(input);
+    }
+
+    const list: readonly unknown[] = input;
+
+    if (list.length < min || list.length > max) {
+      return wrongCount(list.length);
+    }
+
+    const values: Item[] = [];
+    let issues: StandardSchemaV1.Issue[] | undefined;
+
+    list.forEach((value, index) => {
+      const result = run(value);
+
+      if (result instanceof Rejection) {
+        issues = itemIssues(issues, index, result);
+      } else if (issues === undefined) {
+        values.push(result);
+      }
+    });
+
+    return issues === undefined ? values : new Rejection(issues);
+  };
+};
+
 /**
- * Internal: a frozen array of what `item` accepts, with its count checked first and every bad item
- * reported with its index.
+ * Internal: a new array of what `item` accepts, with its count checked first and every bad item
+ * reported with its index. It is read-only by type; a nominal type built on it freezes it.
+ *
+ * @remarks
+ * Each array schema runs a loop generated for it, so V8 sees one item schema at its call.
  *
  * @throws TypeError for options `boundsOf` refuses.
  */
 export const arrayShape = <Item>(
   item: Shape<Item>,
   options: ArrayOptions,
+  generate?: boolean,
 ): Shape<readonly Item[]> => {
   const { min, max } = boundsOf(options);
 
   return {
-    run: (input) => {
-      if (!Array.isArray(input)) {
-        return new Rejection([{ message: mustBe('an array', input) }]);
-      }
-
-      const list: readonly unknown[] = input;
-
-      if (list.length < min || list.length > max) {
-        return new Rejection([{ message: countMessage(options, list.length) }]);
-      }
-
-      const values: Item[] = [];
-      let issues: StandardSchemaV1.Issue[] | undefined;
-      const count = list.length;
-
-      // An indexed loop: `entries()` allocates an iterator and a pair per item on the hot path.
-      // oxlint-disable-next-line unicorn/no-for-loop
-      for (let index = 0; index < count; index += 1) {
-        const result = item.run(list[index]);
-
-        if (result instanceof Rejection) {
-          issues ??= [];
-          issues.push(...issuesAt(index, result.issues));
-        } else if (issues === undefined) {
-          values.push(result);
-        }
-      }
-
-      return issues === undefined ? Object.freeze(values) : new Rejection(issues);
-    },
+    run: arrayRun(item.run, options, min, max, generate),
     describe: (side, options_) => ({
       type: 'array',
       items: item.describe(side, options_),

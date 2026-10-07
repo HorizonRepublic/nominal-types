@@ -1,5 +1,5 @@
-import { checkerFor } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
+import { checkerFor } from '../../core/type-functions.ts';
 import type { JsonNode } from './json-node.ts';
 import {
   isArrayNode,

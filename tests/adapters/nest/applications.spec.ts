@@ -59,7 +59,7 @@ describe.each(platforms)('explicit pipes on parameters on %s', (platform) => {
           { id: first, isUuid: true },
           { id: second, isUuid: true },
         ],
-        frozen: true,
+        frozen: false,
       },
     });
   });
@@ -67,7 +67,7 @@ describe.each(platforms)('explicit pipes on parameters on %s', (platform) => {
   it('treats a single value as a list of one', async () => {
     expect(await get(`/explicit/ids?ids=${first}`)).toStrictEqual({
       status: 200,
-      body: { ids: [{ id: first, isUuid: true }], frozen: true },
+      body: { ids: [{ id: first, isUuid: true }], frozen: false },
     });
   });
 

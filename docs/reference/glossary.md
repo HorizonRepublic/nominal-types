@@ -6,6 +6,7 @@
 | instance        | An object made by `new Email(…)` or `Email.parse(…)`. It always holds a valid value.                                      |
 | value           | What an instance wraps, read through `instance.value`: a string, number, bigint or boolean, or a frozen object or array.  |
 | type name       | The name given to `Nominal()`, such as `billing.InvoiceNumber`. It names the type in errors, JSON Schema and Swagger.     |
+| object schema   | What `objectOf()` returns: a schema for an object whose fields are checked by their own schemas.                          |
 | constraint      | A rule across fields of an object, such as an end that must come after a start. Made with `constraint()`.                 |
 | rule            | What a valid value looks like: a regular expression, a type guard or a schema from another library.                       |
 | type guard      | A function `(value: unknown) => value is T` that returns `true` for a valid value.                                        |

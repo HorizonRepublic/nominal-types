@@ -1,3 +1,5 @@
+import type { NominalSchema } from './contracts.ts';
+import { fingerprintOf } from './fingerprint.ts';
 import { shared } from './shared.ts';
 import { checkTypeName } from './type-name.ts';
 
@@ -15,8 +17,18 @@ const warned = new Set<string>();
  * in development does, keeps the signature and stays silent. The last type declared with a name
  * wins.
  */
-export const registerType = (name: string, type: object, signature: string): void => {
+export const registerType = (
+  name: string,
+  type: object,
+  declared: {
+    readonly parent: string;
+    readonly base: boolean;
+    readonly rule: NominalSchema | undefined;
+  },
+): void => {
   checkTypeName(name);
+
+  const signature = `${declared.parent}|${String(declared.base)}|${fingerprintOf(declared.rule)}`;
 
   const known = shared.types.get(name);
 

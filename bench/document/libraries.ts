@@ -4,7 +4,15 @@ import * as v from 'valibot';
 import { z } from 'zod';
 
 import { arkOf, arkSchema } from '../../src/adapters/arktype/index.ts';
-import { Email, NonNegativeInteger, PositiveInteger, schemaOf, Uuid } from '../../src/index.ts';
+import {
+  AnyString,
+  Email,
+  NonNegativeInteger,
+  objectOf,
+  PositiveInteger,
+  schemaOf,
+  Uuid,
+} from '../../src/index.ts';
 import * as typia from '../typia/dist/validators.js';
 import { nominalWithClassValidator, plainClassValidator } from './class-validator-dtos.ts';
 import { CountryCode, Postcode, Sku } from './types.ts';
@@ -72,6 +80,31 @@ export const nominalArkAdapter = arkSchema(
     }).array(),
   }),
 );
+
+const nonEmpty = AnyString.subtype('bench.NonEmpty', /^./u);
+const status = AnyString.subtype('bench.OrderStatus', /^(?:new|paid|shipped)$/u);
+const currency = AnyString.subtype('bench.Currency', /^(?:UAH|EUR|USD)$/u);
+
+export const nominalObjectOf = objectOf({
+  exportId: Uuid,
+  customers: objectOf({
+    id: Uuid,
+    email: Email,
+    name: nonEmpty,
+    addresses: objectOf({ country: CountryCode, postcode: Postcode, line: nonEmpty }).array(),
+  }).array(),
+  orders: objectOf({
+    id: Uuid,
+    customerId: Uuid,
+    status,
+    items: objectOf({
+      sku: Sku,
+      quantity: PositiveInteger,
+      price: objectOf({ amountMinor: NonNegativeInteger, currency }),
+    }).array(),
+    tags: schemaOf(AnyString).array(),
+  }).array(),
+});
 
 const plainArkType = type({
   exportId: 'string.uuid',
@@ -174,6 +207,11 @@ export const documentLibraries: readonly DocumentLibrary[] = [
     name: 'nominal-types + ArkType',
     validate: nominalWithArkType,
     accepted: (result) => !(result instanceof type.errors),
+  },
+  {
+    name: 'nominal-types objectOf()',
+    validate: (input) => nominalObjectOf.parse(input),
+    accepted: (result) => field(result, 'ok') === true,
   },
   {
     name: 'nominal-types + ArkType adapter',

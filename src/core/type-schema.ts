@@ -1,11 +1,15 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
+import { boundsOf, countMessage } from './array-bounds.ts';
+import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
 import { construct, isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { describeValue, forTarget, withoutUri } from './schema-text.ts';
 import type { StandardProps } from './standard-schema.ts';
+import { textFormOf } from './text-form.ts';
+import type { TextForm } from './text-form.ts';
 
 type Run<Output> = (input: unknown) => Output | Rejection;
 
@@ -14,49 +18,26 @@ type Describe = (
   options: StandardJSONSchemaV1.Options,
 ) => Record<string, unknown>;
 
+const arraySchemas = new WeakSet<object>();
+
 /**
- * How many items `array()` accepts: an exact `length`, or a `min`, a `max` or both.
+ * Internal: whether a schema accepts an array at its top, also behind `optional()` and
+ * `nullable()`, so an adapter can wrap a lone value from a query string.
  */
-export interface ArrayOptions {
-  readonly length?: number;
-  readonly min?: number;
-  readonly max?: number;
-}
+export const isArraySchema = (value: unknown): boolean =>
+  typeof value === 'object' && value !== null && arraySchemas.has(value);
 
-const isCount = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
-
-const items = (count: number): string => (count === 1 ? '1 item' : `${count} items`);
-
-const boundsOf = (options: ArrayOptions): { readonly min: number; readonly max: number } => {
-  const { length, min, max } = options;
-  for (const [name, value] of Object.entries({ length, min, max })) {
-    if (value !== undefined && !isCount(value)) {
-      throw new TypeError(
-        `array(): ${name} must be a whole number from 0 up (was ${String(value)})`,
-      );
-    }
-  }
-  if (length !== undefined && (min !== undefined || max !== undefined)) {
-    throw new TypeError('array(): pass either length or min and max, not both');
-  }
-  if (min !== undefined && max !== undefined && min > max) {
-    throw new TypeError(`array(): min (${min}) is greater than max (${max})`);
-  }
-  return {
-    min: length ?? min ?? 0,
-    max: length ?? max ?? Number.POSITIVE_INFINITY,
-  };
-};
-
-const countMessage = (options: ArrayOptions, count: number): string => {
-  if (options.length !== undefined) {
-    return `must have ${items(options.length)} (was ${count})`;
-  }
-  return options.min !== undefined && count < options.min
-    ? `must have at least ${items(options.min)} (was ${count})`
-    : `must have at most ${items(options.max ?? 0)} (was ${count})`;
-};
+/**
+ * Internal: whether a value is a schema built by `schemaOf()`, including one from another copy of
+ * this package.
+ */
+export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unknown> =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof Reflect.get(value, 'parse') === 'function' &&
+  typeof Reflect.get(value, 'array') === 'function' &&
+  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') ===
+    '@horizon-republic/nominal-types';
 
 /**
  * A nominal type, or a shape around one, as a plain Standard Schema object: what `schemaOf()`
@@ -71,13 +52,15 @@ export class TypeSchema<Input, Output> {
   public readonly '~standard': StandardProps<Input, Output>;
   readonly #run: Run<Output>;
   readonly #describe: Describe;
+  readonly #textForm: TextForm | undefined;
 
   /**
    * Internal: built by `schemaOf()` and the methods below.
    */
-  public constructor(run: Run<Output>, describe: Describe) {
+  public constructor(run: Run<Output>, describe: Describe, textForm?: TextForm) {
     this.#run = run;
     this.#describe = describe;
+    this.#textForm = textForm;
     runners.set(this, run);
     this['~standard'] = {
       version: 1,
@@ -91,6 +74,18 @@ export class TypeSchema<Input, Output> {
         output: (options) => forTarget(options, describe('output', options)),
       },
     };
+  }
+
+  #wrap<WrappedInput, WrappedOutput>(
+    array: boolean,
+    run: Run<WrappedOutput>,
+    describe: Describe,
+  ): TypeSchema<WrappedInput, WrappedOutput> {
+    const wrapped = new TypeSchema<WrappedInput, WrappedOutput>(run, describe);
+    if (array) {
+      arraySchemas.add(wrapped);
+    }
+    return wrapped;
   }
 
   /**
@@ -129,7 +124,8 @@ export class TypeSchema<Input, Output> {
     const { min, max } = boundsOf(options);
     const item = this.#run;
     const describe = this.#describe;
-    return new TypeSchema<readonly Input[], readonly Output[]>(
+    return this.#wrap<readonly Input[], readonly Output[]>(
+      true,
       (input) => {
         if (!Array.isArray(input)) {
           return new Rejection([{ message: `must be an array (was ${describeValue(input)})` }]);
@@ -164,6 +160,40 @@ export class TypeSchema<Input, Output> {
   }
 
   /**
+   * This schema, reading its value from text first, for values that arrive as strings: environment
+   * variables, query strings, form fields, CSV.
+   *
+   * @remarks
+   * Only a string is read; any other value goes to the rule as it is. Numbers are read the way
+   * JSON writes them (`'2'`, `'-1.5'`, `'1e3'`), booleans from `'true'` and `'false'`; other text
+   * reaches the rule unchanged and is rejected with the usual message. String and bigint types
+   * take text already. Call it on `schemaOf(Type)` itself, before `array()`, `optional()` or
+   * `nullable()`.
+   *
+   * @throws TypeError when called after another method, or for a type with no text form, such as
+   * one declared from scratch with `Nominal()`.
+   *
+   * @example
+   * ```ts
+   * schemaOf(Port).fromString().parse(process.env.PORT);
+   * schemaOf(PositiveInteger).fromString().array();
+   * ```
+   */
+  public fromString(): TypeSchema<Input | string, Output> {
+    const form = this.#textForm;
+    if (form === undefined) {
+      throw new TypeError(
+        'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable()',
+      );
+    }
+    const item = this.#run;
+    return new TypeSchema<Input | string, Output>(
+      (input) => item(typeof input === 'string' ? (form(input) ?? input) : input),
+      this.#describe,
+    );
+  }
+
+  /**
    * This schema, or `undefined`, for a value that may be missing.
    *
    * @remarks
@@ -172,7 +202,8 @@ export class TypeSchema<Input, Output> {
    */
   public optional(): TypeSchema<Input | undefined, Output | undefined> {
     const item = this.#run;
-    return new TypeSchema<Input | undefined, Output | undefined>(
+    return this.#wrap<Input | undefined, Output | undefined>(
+      isArraySchema(this),
       (input) => (input === undefined ? undefined : item(input)),
       this.#describe,
     );
@@ -188,7 +219,8 @@ export class TypeSchema<Input, Output> {
   public nullable(): TypeSchema<Input | null, Output | null> {
     const item = this.#run;
     const describe = this.#describe;
-    return new TypeSchema<Input | null, Output | null>(
+    return this.#wrap<Input | null, Output | null>(
+      isArraySchema(this),
       (input) => (input === null ? null : item(input)),
       (side, options) =>
         options.target === 'openapi-3.0'
@@ -228,5 +260,6 @@ export const schemaOf = <Type extends AnyNominalType>(
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     (input) => construct(type, input) as Type['prototype'] | Rejection,
     (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
+    textFormOf(type),
   );
 };

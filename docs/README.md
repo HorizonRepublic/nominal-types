@@ -11,6 +11,7 @@ New here? Start with the tutorial.
 - [How to declare a type](guides/declaring-types.md)
 - [How to build on a type](guides/building-on-types.md)
 - [How to validate arrays and optional values](guides/arrays-and-optional.md)
+- [How to read values from strings](guides/reading-strings.md)
 - [How to validate untrusted input](guides/validating-input.md)
 - [How to use a type inside another validator](guides/other-validators.md)
 - [How to generate JSON Schema](guides/json-schema.md)

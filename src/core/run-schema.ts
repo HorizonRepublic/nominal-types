@@ -38,3 +38,29 @@ export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
   }
   return result.issues === undefined ? result.value : new Rejection(result.issues.map(plainIssue));
 };
+
+/**
+ * Internal: how a rule from another library runs inside a type, chosen once: the runner of a
+ * `schemaOf()` schema, or the rule's `validate`.
+ *
+ * @throws TypeError naming the type when the rule answers with a Promise.
+ */
+export const foreignRunner = (
+  rule: NominalSchema,
+  typeName: string,
+): ((value: unknown) => unknown) => {
+  const runner = runners.get(rule);
+  if (runner !== undefined) {
+    return runner;
+  }
+  const { validate } = rule['~standard'];
+  return (value) => {
+    const result = validate(value);
+    if (result instanceof Promise) {
+      throw new TypeError(`${typeName}: asynchronous schemas are not supported`);
+    }
+    return result.issues === undefined
+      ? result.value
+      : new Rejection(result.issues.map(plainIssue));
+  };
+};

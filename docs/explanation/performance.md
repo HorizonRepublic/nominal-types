@@ -39,7 +39,15 @@ A rule from another library ends the simple list. From then on, each rule runs t
 
 ## Checks generated per type
 
-The first time a type checks a value, it builds one function for its list of checks, with `new Function`. V8 can inline the checks of such a function, because each of its calls only ever sees one rule. A loop shared by every type can't be inlined that way, and was about 40% slower for `PositiveInteger`.
+The first time a type checks a value, it builds one function for all its rules, with `new Function`. V8 can inline the checks of such a function, because each of its calls only ever sees one rule. A loop shared by every type can't be inlined that way, and was about 40% slower for `PositiveInteger`.
+
+A rule from another library becomes a step of the same function. Which way it runs is decided once: its `validate`, called directly, or the runner of a `schemaOf()` schema. A type that mixes such a rule with patterns, like an ArkType schema under `AnyString`, is generated as a whole as well. Measured with ArkType:
+
+| Type                                  | Before | After |
+| ------------------------------------- | ------ | ----- |
+| `Nominal('Sku', type(/^SKU-\d{4}$/))` | 56 ns  | 47 ns |
+| the same rule under `AnyString`       | 74 ns  | 51 ns |
+| an ArkType rule that trims its value  | 64 ns  | 55 ns |
 
 Where code generation is forbidden, such as in Cloudflare Workers or under a strict Content-Security-Policy, the same checks run in a loop instead. The results are the same, only slower.
 

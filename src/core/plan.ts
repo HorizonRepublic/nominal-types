@@ -92,3 +92,37 @@ export const runPlan = (plan: readonly Step[], input: unknown): unknown => {
   }
   return input;
 };
+
+/**
+ * Internal: a rule from another library inside a type's rules, which may change the value; it
+ * returns the value the next rule sees, or a `Rejection`.
+ */
+export interface ConvertStep {
+  readonly convert: (value: unknown) => unknown;
+}
+
+/**
+ * Internal: the rules of a type as steps: checks for patterns and guards, folded as `planOf` folds
+ * them, and a mapping step for each rule from another library.
+ */
+export const stepsOf = (
+  rules: readonly NominalSchema[],
+  convertOf: (rule: NominalSchema) => ConvertStep,
+): ReadonlyArray<Step | ConvertStep> => {
+  const steps: Array<Step | ConvertStep> = [];
+  let native: NominalSchema[] = [];
+  const flush = (): void => {
+    steps.push(...(planOf(native) ?? []));
+    native = [];
+  };
+  for (const rule of rules) {
+    if (rule instanceof NativeSchema) {
+      native.push(rule);
+    } else {
+      flush();
+      steps.push(convertOf(rule));
+    }
+  }
+  flush();
+  return steps;
+};

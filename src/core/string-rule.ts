@@ -20,6 +20,7 @@ const stringOnlyRules = new WeakSet<NominalSchema>();
  */
 export const stringOnly = <Schema extends NominalSchema>(schema: Schema): Schema => {
   stringOnlyRules.add(schema);
+
   return schema;
 };
 

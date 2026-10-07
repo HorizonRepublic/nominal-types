@@ -65,7 +65,9 @@ export class Uuid extends UuidBase {
     if (this.version !== 7) {
       return undefined;
     }
+
     const hex = this.value.slice(0, 8) + this.value.slice(9, 13);
+
     return new Date(Number.parseInt(hex, 16));
   }
 

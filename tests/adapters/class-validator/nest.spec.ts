@@ -62,6 +62,7 @@ describe('NominalField with ValidationPipe', () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({ controllers: [OrdersController] }).compile();
+
     app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(
       new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }),
@@ -76,6 +77,7 @@ describe('NominalField with ValidationPipe', () => {
 
   const post = async (payload: object): Promise<{ status: number; body: unknown }> => {
     const response = await app.inject({ method: 'POST', url: '/orders', payload });
+
     return { status: response.statusCode, body: response.json() };
   };
 

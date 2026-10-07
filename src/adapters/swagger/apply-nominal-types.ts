@@ -22,6 +22,7 @@ const isEmptyObjectSchema = (schema: unknown): boolean =>
 
 const schemaFor = (name: string, schema: unknown): unknown => {
   const type = isEmptyObjectSchema(schema) ? nominalTypeNamed(name) : undefined;
+
   return type === undefined
     ? schema
     : withoutUri(type['~standard'].jsonSchema.input({ target: 'openapi-3.0' }));
@@ -47,9 +48,11 @@ export const applyNominalTypes = <Document extends OpenApiDocument>(
   document: Document,
 ): Document => {
   const schemas = document.components?.schemas;
+
   if (schemas === undefined) {
     return document;
   }
+
   return {
     ...document,
     components: {

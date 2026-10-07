@@ -21,6 +21,7 @@ const nestPackage: unknown = JSON.parse(
     'utf8',
   ),
 );
+
 export const nestMajor = isNestPackage(nestPackage) ? Number(nestPackage.version.split('.')[0]) : 0;
 
 export const argument = (
@@ -57,13 +58,16 @@ export const start = async (
     platform === 'fastify'
       ? module.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
       : module.createNestApplication(new ExpressAdapter());
+
   app.useGlobalPipes(...globalPipes);
   await app.listen(0, '127.0.0.1');
   const base = await app.getUrl();
+
   return {
     app,
     get: async (path) => {
       const response = await fetch(`${base}${path}`);
+
       return { status: response.status, body: await response.json() };
     },
   };

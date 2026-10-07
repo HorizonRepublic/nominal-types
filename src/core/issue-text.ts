@@ -11,5 +11,6 @@ export const issueText = (issue: StandardSchemaV1.Issue, name?: string): string 
   const path = [name, ...(issue.path ?? [])]
     .filter((segment) => segment !== undefined)
     .map((segment) => String(typeof segment === 'object' ? segment.key : segment));
+
   return path.length === 0 ? issue.message : `${path.join('.')}: ${issue.message}`;
 };

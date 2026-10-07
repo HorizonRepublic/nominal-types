@@ -22,11 +22,13 @@ export class PatternSchema extends NativeSchema<string> {
     json: Readonly<Record<string, unknown>> = {},
   ) {
     super();
+
     if (pattern.flags !== '' && pattern.flags !== 'u') {
       throw new TypeError(
         `${String(pattern)}: only the u flag is supported, since JSON Schema patterns carry no flags`,
       );
     }
+
     this.pattern = pattern;
     this.description = description;
     this.accepts = (value): value is string => typeof value === 'string' && pattern.test(value);
@@ -37,6 +39,7 @@ export class PatternSchema extends NativeSchema<string> {
     if (typeof value !== 'string') {
       return mustBe('a string', value);
     }
+
     return mustBe(this.description ?? `matched by ${this.pattern.source}`, value);
   }
 

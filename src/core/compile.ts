@@ -13,6 +13,7 @@ const canGenerate = ((): boolean => {
   try {
     // oxlint-disable-next-line typescript/no-implied-eval
     const probe: unknown = new Function('return true');
+
     return isRun(probe);
   } catch {
     return false;
@@ -36,10 +37,12 @@ export const generateFunction = (
   if (!generate) {
     return undefined;
   }
+
   // oxlint-disable-next-line typescript/no-implied-eval
   const build: unknown = new Function(...names, `return ${source};`);
   const built: unknown =
     typeof build === 'function' ? Reflect.apply(build, undefined, values) : undefined;
+
   return isRun(built) ? built : undefined;
 };
 
@@ -47,6 +50,7 @@ const loopOver =
   (steps: ReadonlyArray<Step | ConvertStep>): Run =>
   (input) => {
     let value = input;
+
     for (const step of steps) {
       if (isCheck(step)) {
         if (!step.accepts(value)) {
@@ -54,11 +58,13 @@ const loopOver =
         }
       } else {
         value = step.convert(value);
+
         if (value instanceof Rejection) {
           return value;
         }
       }
     }
+
     return value;
   };
 
@@ -69,10 +75,13 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Run => {
     if (isCheck(step)) {
       names.push(`accepts${index}`, `issues${index}`);
       values.push(step.accepts, step.issues);
+
       return `if (!accepts${index}(value)) return new Rejection(issues${index}(value));`;
     }
+
     names.push(`convert${index}`);
     values.push(step.convert);
+
     return `value = convert${index}(value); if (value instanceof Rejection) return value;`;
   });
   const compiled = generateFunction(
@@ -80,6 +89,7 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Run => {
     `(value) => { ${lines.join(' ')} return value; }`,
     values,
   );
+
   return compiled ?? loopOver(steps);
 };
 
@@ -117,10 +127,12 @@ export const brandCheck = (
     [key],
     generate,
   );
+
   if (generatedCheck === undefined) {
     return (value) =>
       typeof value === 'object' && value !== null && Reflect.get(value, key) === true;
   }
+
   // The generated source is exactly this check; wrapping it again would share one call site
   // between all types and undo the point of generating it.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion

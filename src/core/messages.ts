@@ -6,12 +6,15 @@ export const describeValue = (value: unknown): string => {
   if (typeof value === 'string') {
     return JSON.stringify(value);
   }
+
   if (typeof value === 'number') {
     return Object.is(value, -0) ? '-0' : String(value);
   }
+
   if (typeof value === 'bigint') {
     return `${value}n`;
   }
+
   return typeof value === 'boolean' ? String(value) : typeof value;
 };
 

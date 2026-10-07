@@ -77,6 +77,7 @@ describe('ClassSerializerInterceptor', () => {
       }
     }
     const module = await Test.createTestingModule({ controllers: [AccountsController] }).compile();
+
     app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get('Reflector')));
     await app.init();

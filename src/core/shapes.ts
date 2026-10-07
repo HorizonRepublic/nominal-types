@@ -32,22 +32,28 @@ export const arrayShape = <Item>(
   options: ArrayOptions,
 ): Shape<readonly Item[]> => {
   const { min, max } = boundsOf(options);
+
   return {
     run: (input) => {
       if (!Array.isArray(input)) {
         return new Rejection([{ message: mustBe('an array', input) }]);
       }
+
       const list: readonly unknown[] = input;
+
       if (list.length < min || list.length > max) {
         return new Rejection([{ message: countMessage(options, list.length) }]);
       }
+
       const values: Item[] = [];
       let issues: StandardSchemaV1.Issue[] | undefined;
       const count = list.length;
+
       // An indexed loop: `entries()` allocates an iterator and a pair per item on the hot path.
       // oxlint-disable-next-line unicorn/no-for-loop
       for (let index = 0; index < count; index += 1) {
         const result = item.run(list[index]);
+
         if (result instanceof Rejection) {
           issues ??= [];
           issues.push(...issuesAt(index, result.issues));
@@ -55,6 +61,7 @@ export const arrayShape = <Item>(
           values.push(result);
         }
       }
+
       return issues === undefined ? Object.freeze(values) : new Rejection(issues);
     },
     describe: (side, options_) => ({

@@ -14,6 +14,7 @@ const warned = new Set<string>();
  */
 export const registerType = (name: string, type: object, signature: string): void => {
   const known = shared.types.get(name);
+
   if (known !== undefined && known.signature !== signature && !warned.has(name)) {
     warned.add(name);
     // The warning is the point: a clash breaks types silently, and the package runs outside Node too.
@@ -22,6 +23,7 @@ export const registerType = (name: string, type: object, signature: string): voi
       `@horizon-republic/nominal-types: the type name "${name}" is declared twice with different rules; the two types will pass for each other. Give each type a unique name.`,
     );
   }
+
   shared.types.set(name, { type, signature });
 };
 

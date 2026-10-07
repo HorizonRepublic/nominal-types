@@ -38,32 +38,42 @@ class NominalRoot {
   public constructor(input: unknown) {
     const target = new.target;
     const pending = takePending(target, input);
+
     if (pending !== nothingPending) {
       this.value = pending;
+
       return;
     }
+
     const value = runType(NominalRoot, target, input);
+
     if (value instanceof Rejection) {
       throw new NominalError(target.typeName, value.issues);
     }
+
     this.value = value;
   }
 
   public static get '~standard'(): StandardProps<unknown, NominalRoot> {
     const cached = standardPropsOf.get(this);
+
     if (cached !== undefined) {
       return cached;
     }
+
     const props = standardProps<unknown, NominalRoot>(
       (input) => constructOwn(this, input),
       (side, options) => describeType(NominalRoot, this, side, options),
     );
+
     standardPropsOf.set(this, props);
+
     return props;
   }
 
   public static parse(this: typeof NominalRoot, input: unknown): Parsed<NominalRoot> {
     const result = constructOwn(this, input);
+
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
@@ -84,10 +94,13 @@ class NominalRoot {
   ): typeof NominalRoot {
     const level = levelOf(NominalRoot, this);
     const derived = derive(this, name, toSchema(rule), level.base);
+
     for (const key of level.keys) {
       Object.defineProperty(derived.prototype, key, { value: false });
     }
+
     Object.defineProperty(derived, variantSourceSlot, { value: level.keys });
+
     return derived;
   }
 
@@ -112,15 +125,20 @@ const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot |
     if (input instanceof target) {
       return input;
     }
+
     if (descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)) {
       return constructOwn(target, Reflect.get(input, 'value'));
     }
   }
+
   const value = runType(NominalRoot, target, input);
+
   if (value instanceof Rejection) {
     return value;
   }
+
   remember(target, input, value);
+
   return new target(input);
 };
 
@@ -132,8 +150,10 @@ export const constructorFor = (target: AnyNominalType): ((input: unknown) => unk
   if (isOwnType(target)) {
     return (input) => constructOwn(target, input);
   }
+
   return (input) => {
     const parsed = target.parse(input);
+
     return parsed.ok ? parsed.value : new Rejection(parsed.issues);
   };
 };
@@ -142,11 +162,15 @@ const fingerprintOf = (rule: NominalSchema | undefined): string => {
   if (rule === undefined) {
     return '';
   }
+
   const pattern: unknown = Reflect.get(rule, 'pattern');
+
   if (pattern instanceof RegExp) {
     return `pattern:${pattern.source}`;
   }
+
   const description: unknown = Reflect.get(rule, 'description');
+
   return typeof description === 'string'
     ? `rule:${description}`
     : `schema:${rule['~standard'].vendor}`;
@@ -162,19 +186,23 @@ const derive = (
     public static override readonly typeName: string = name;
   };
   const key = Symbol.for(`${vendor}/${name}`);
+
   Object.defineProperty(derived, 'name', { value: name });
   Object.defineProperty(derived, brandKeySlot, { value: key });
   Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
   Object.defineProperty(derived, Symbol.hasInstance, { value: brandCheck(key) });
+
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
   }
+
   registerType(
     name,
     derived,
     `${parent.typeName}|${String(base === parent)}|${fingerprintOf(rule)}`,
   );
+
   return derived;
 };
 
@@ -201,6 +229,7 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  */
 export const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
   const type = typeNamed(name);
+
   return isNominalType(type) ? type : undefined;
 };
 

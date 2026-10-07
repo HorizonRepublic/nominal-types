@@ -12,12 +12,15 @@ import type { StandardProps } from './standard-schema.ts';
 
 const runRules = (rules: readonly NominalSchema[], input: unknown): unknown => {
   let value = input;
+
   for (const rule of rules) {
     value = runSchema(rule, value);
+
     if (value instanceof Rejection) {
       return value;
     }
   }
+
   return value;
 };
 
@@ -28,12 +31,15 @@ const describeAll = (
 ): Record<string, unknown> => {
   const parts = rules.map((rule) => {
     const converter = rule['~standard'].jsonSchema;
+
     if (converter === undefined) {
       throw new TypeError('the schema cannot describe itself as JSON Schema');
     }
+
     return converter[side](options);
   });
   const uri = parts.find((part) => part['$schema'] !== undefined)?.['$schema'];
+
   return {
     ...(uri === undefined ? {} : { $schema: uri }),
     allOf: parts.map((part) => withoutUri(part)),
@@ -58,6 +64,7 @@ export class ChainSchema {
     const plan = planOf(rules);
     const run = (input: unknown): unknown =>
       plan === undefined ? runRules(rules, input) : runPlan(plan, input);
+
     this.rules = rules;
     this.plan = plan;
     this['~standard'] = standardProps(run, (side, options) => describeAll(rules, side, options));

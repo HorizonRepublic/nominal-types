@@ -17,8 +17,10 @@ const counting = (): { calls: number; schema: StandardSchemaV1<string, string> }
   const state = { calls: 0 };
   const schema = handWritten((value) => {
     state.calls += 1;
+
     return stringOnly(value);
   });
+
   return {
     get calls(): number {
       return state.calls;
@@ -35,9 +37,11 @@ const digitsOnly = handWritten((value) =>
 
 const patternsOf = (schema: Record<string, unknown>): RegExp[] => {
   const parts: unknown = schema['allOf'];
+
   if (!Array.isArray(parts)) {
     throw new TypeError('expected allOf');
   }
+
   return parts.map(
     (part: unknown) =>
       new RegExp(
@@ -60,6 +64,7 @@ describe('Subtype constraints', () => {
 
   it('reports the parent issues and never runs the constraint when the parent refuses', () => {
     const constraint = counting();
+
     class Guarded extends Sku.subtype('GuardedSku', constraint.schema) {}
 
     expect(issuesOf(Guarded.parse('nope'))).toStrictEqual([
@@ -90,8 +95,10 @@ describe('Subtype constraints', () => {
   it('refuses a constraint that answers asynchronously, naming the type', () => {
     const remote = handWritten(async (value) => {
       await Promise.resolve();
+
       return { value: String(value) };
     });
+
     class Remote extends Sku.subtype('RemoteSku', remote) {}
 
     expect(() => Remote.parse('SKU-0001')).toThrow(

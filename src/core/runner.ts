@@ -17,6 +17,8 @@ export const runnableSchema = <Input, Output>(
   describe: Describe,
 ): NominalSchema<Input, Output> => {
   const schema = { '~standard': standardProps<Input, Output>(run, describe) };
+
   runners.set(schema, run);
+
   return schema;
 };

@@ -9,8 +9,10 @@ const patternsIn = (schema: unknown): string[] => {
   if (typeof schema !== 'object' || schema === null) {
     return [];
   }
+
   const own: unknown = Reflect.get(schema, 'pattern');
   const parts: unknown = Reflect.get(schema, 'allOf');
+
   return [
     ...(typeof own === 'string' ? [own] : []),
     ...(Array.isArray(parts) ? parts.flatMap((part: unknown) => patternsIn(part)) : []),
@@ -19,10 +21,13 @@ const patternsIn = (schema: unknown): string[] => {
 
 const patternOf = (nominal: AnyNominalType): { test: (text: string) => boolean } => {
   const patterns = patternsIn(nominal['~standard'].jsonSchema.input({ target: 'draft-2020-12' }));
+
   if (patterns.length === 0) {
     throw new TypeError(`${nominal.typeName} describes no pattern`);
   }
+
   const compiled = patterns.map((pattern) => new RegExp(pattern, 'u'));
+
   return { test: (text) => compiled.every((pattern) => pattern.test(text)) };
 };
 
@@ -64,8 +69,10 @@ const examplesIn = (schema: unknown): unknown[] => {
   if (typeof schema !== 'object' || schema === null) {
     return [];
   }
+
   const own: unknown = Reflect.get(schema, 'examples');
   const parts: unknown = Reflect.get(schema, 'allOf');
+
   return [
     ...(Array.isArray(own) ? (own as unknown[]) : []),
     ...(Array.isArray(parts) ? parts.flatMap((part: unknown) => examplesIn(part)) : []),

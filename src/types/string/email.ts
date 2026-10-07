@@ -88,6 +88,7 @@ export class Email extends EmailBase {
   public get mailbox(): string {
     const local = this.local;
     const plus = local.indexOf('+');
+
     return plus === -1 ? local : local.slice(0, plus);
   }
 
@@ -97,6 +98,7 @@ export class Email extends EmailBase {
   public get tag(): string | undefined {
     const local = this.local;
     const plus = local.indexOf('+');
+
     return plus === -1 ? undefined : local.slice(plus + 1);
   }
 

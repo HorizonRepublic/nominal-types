@@ -24,6 +24,8 @@ export const takePending = (target: object, input: unknown): unknown => {
   if (pendingTarget !== target || !Object.is(pendingInput, input)) {
     return nothingPending;
   }
+
   pendingTarget = undefined;
+
   return pendingValue;
 };

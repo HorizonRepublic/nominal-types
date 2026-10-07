@@ -55,9 +55,12 @@ class UsersController {
 const documentFor = async (controller: new () => unknown): Promise<OpenAPIObject> => {
   const module = await Test.createTestingModule({ controllers: [controller] }).compile();
   const app = module.createNestApplication(new FastifyAdapter());
+
   await app.init();
   const document = SwaggerModule.createDocument(app, new DocumentBuilder().build());
+
   await app.close();
+
   return document;
 };
 

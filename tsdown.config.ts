@@ -9,6 +9,8 @@ const config: UserConfig = {
     'adapters/arktype/index': 'src/adapters/arktype/index.ts',
     'adapters/zod/index': 'src/adapters/zod/index.ts',
     'adapters/valibot/index': 'src/adapters/valibot/index.ts',
+    'adapters/mikro-orm/index': 'src/adapters/mikro-orm/index.ts',
+    'adapters/typeorm/index': 'src/adapters/typeorm/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

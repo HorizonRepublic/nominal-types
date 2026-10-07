@@ -58,7 +58,16 @@ A nominal type works with other libraries in three ways: as a library's field ty
 | [Valibot](https://valibot.dev)                                  | yes, with the adapter `toValibot()`                                      | yes, no JSON Schema   | [Valibot](docs/guides/valibot.md)                   |
 | any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }` | yes                   | [Other validators](docs/guides/other-validators.md) |
 
-Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator or Swagger is installed or loaded unless you import the adapter.
+Databases:
+
+| ORM                                | How                                                               | Guide                                |
+| ---------------------------------- | ----------------------------------------------------------------- | ------------------------------------ |
+| [MikroORM](https://mikro-orm.io) 7 | entity properties hold instances, with the adapter `toMikroOrm()` | [MikroORM](docs/guides/mikro-orm.md) |
+| [TypeORM](https://typeorm.io)      | entity columns hold instances, with the adapter `toTypeOrm()`     | [TypeORM](docs/guides/typeorm.md)    |
+
+Values read from the database are checked, and the column type comes from the nominal type.
+
+Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, MikroORM or TypeORM is installed or loaded unless you import the adapter.
 
 ## Concepts
 

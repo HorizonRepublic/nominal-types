@@ -3,8 +3,10 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { boundsOf, countMessage } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import { generateFunction } from './compile.ts';
+import { hideValues } from './hidden-values.ts';
 import { mustBe } from './messages.ts';
 import { Rejection } from './rejection.ts';
+import { repeatMessage, repeatsIn } from './repeats.ts';
 import type { Describe, Run } from './standard-props.ts';
 import type { TextForm } from './text-form.ts';
 
@@ -14,6 +16,10 @@ import type { TextForm } from './text-form.ts';
 export interface Shape<Output> {
   readonly run: Run<Output>;
   readonly describe: Describe;
+  /**
+   * Whether messages about the value leave it out, as the messages of a sensitive type do.
+   */
+  readonly sensitive?: boolean;
 }
 
 const issuesAt = (
@@ -103,9 +109,37 @@ const arrayRun = <Item>(
   };
 };
 
+// Repeats are looked for once every item is valid, so they are compared as the values they became.
+const uniqueRun =
+  <Item>(
+    run: (input: unknown) => readonly Item[] | Rejection,
+    sensitive: boolean,
+  ): ((input: unknown) => readonly Item[] | Rejection) =>
+  (input) => {
+    const values = run(input);
+
+    if (values instanceof Rejection) {
+      return values;
+    }
+
+    const repeats = repeatsIn(values);
+
+    if (repeats === undefined) {
+      return values;
+    }
+
+    const issues = repeats.map((index) => ({
+      message: repeatMessage(values[index]),
+      path: [index],
+    }));
+
+    return new Rejection(sensitive ? hideValues(issues) : issues);
+  };
+
 /**
  * Internal: a new array of what `item` accepts, with its count checked first and every bad item
- * reported with its index. It is read-only by type; a nominal type built on it freezes it.
+ * reported with its index, then, with `unique`, every item that repeats an earlier one. It is
+ * read-only by type; a nominal type built on it freezes it.
  *
  * @remarks
  * Each array schema runs a loop generated for it, so V8 sees one item schema at its call.
@@ -118,14 +152,17 @@ export const arrayShape = <Item>(
   generate?: boolean,
 ): Shape<readonly Item[]> => {
   const { min, max } = boundsOf(options);
+  const run = arrayRun(item.run, options, min, max, generate);
+  const unique = options.unique === true;
 
   return {
-    run: arrayRun(item.run, options, min, max, generate),
+    run: unique ? uniqueRun(run, item.sensitive === true) : run,
     describe: (side, options_) => ({
       type: 'array',
       items: item.describe(side, options_),
       ...(min > 0 ? { minItems: min } : {}),
       ...(max === Number.POSITIVE_INFINITY ? {} : { maxItems: max }),
+      ...(unique ? { uniqueItems: true } : {}),
     }),
   };
 };
@@ -136,6 +173,7 @@ export const arrayShape = <Item>(
 export const optionalShape = <Item>(item: Shape<Item>): Shape<Item | undefined> => ({
   run: (input) => (input === undefined ? undefined : item.run(input)),
   describe: item.describe,
+  sensitive: item.sensitive === true,
 });
 
 /**
@@ -147,6 +185,7 @@ export const nullableShape = <Item>(item: Shape<Item>): Shape<Item | null> => ({
     options.target === 'openapi-3.0'
       ? { ...item.describe(side, options), nullable: true }
       : { anyOf: [item.describe(side, options), { type: 'null' }] },
+  sensitive: item.sensitive === true,
 });
 
 /**
@@ -155,4 +194,5 @@ export const nullableShape = <Item>(item: Shape<Item>): Shape<Item | null> => ({
 export const textShape = <Item>(item: Shape<Item>, form: TextForm): Shape<Item> => ({
   run: (input) => item.run(typeof input === 'string' ? (form(input) ?? input) : input),
   describe: item.describe,
+  sensitive: item.sensitive === true,
 });

@@ -62,7 +62,7 @@ An issue from another library keeps its message. Its path segments become plain 
 
 ## Message format
 
-Messages from `matching()`, `satisfying()` and the built-in types read:
+Messages from `matching()`, `satisfying()`, `oneOf()` and the built-in types read:
 
 ```
 must be <description> (was <value>)
@@ -89,7 +89,7 @@ Other messages:
 | a pattern given a value that is not a string    | `must be a string (was 42)`                 |
 | `objectOf()` or a constraint given a non-object | `must be an object (was "x")`               |
 | a key refused by `strict()`                     | `is not allowed`                            |
-| `array()` counts                                | see [`array()`](schemas.md#array)           |
+| `array()` counts and repeats                    | see [`array()`](schemas.md#array)           |
 | a constraint's check returns `false`            | see [`constraint()`](schemas.md#constraint) |
 | a rule from another library                     | that library's message                      |
 
@@ -182,6 +182,7 @@ These are `TypeError`s for a mistake in the code, not in the input:
 | a constraint that lists a field its object doesn't declare                                                                    | `objectOf: a constraint reads capacity, which the object does not declare`; from `subtype()` or `variant()` of an object type, from the Zod or Valibot adapter it starts with `subtype:`, `variant:`, `constrainZod:` or `constrainValibot:` |
 | `schemaOf()` given something else                                                                                             | `schemaOf() takes a nominal type (was "Uuid")`                                                                                                                                                                                               |
 | `array()` with invalid options                                                                                                | see [`ArrayOptions`](schemas.md#arrayoptions)                                                                                                                                                                                                |
+| `oneOf()` with no values, a repeated value or a value of another kind                                                         | see [`oneOf()`](declaring.md#oneof)                                                                                                                                                                                                          |
 | `fromString()` in the wrong place                                                                                             | see [`fromString()`](schemas.md#fromstring)                                                                                                                                                                                                  |
 | checking a value with an asynchronous rule                                                                                    | `<type name>: asynchronous schemas are not supported`                                                                                                                                                                                        |
 | JSON Schema for an unknown target                                                                                             | `JSON Schema target draft-04 is not supported`                                                                                                                                                                                               |

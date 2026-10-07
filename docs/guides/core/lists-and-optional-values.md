@@ -43,6 +43,21 @@ schemaOf(HttpUrl).array({ length: 2 }).parse([]); // { ok: false, issues: [{ mes
 
 The count is checked before the items. Options that don't make sense, such as `length` together with `min`, throw a `TypeError` when you declare the schema.
 
+## Refuse repeated items
+
+Pass `unique: true`:
+
+```ts
+import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+
+const Ids = schemaOf(Uuid).array({ unique: true, max: 100 });
+
+Ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F']);
+// { ok: false, issues: [{ message: 'must not repeat an item (was "0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F")', path: [1] }] }
+```
+
+Items are compared with `equals()`, so these two UUIDs are the same. The issue points at the repeat, not at the first item.
+
 ## Make a list a type of its own
 
 When a list means something in your domain, give it a name with `Nominal()`. The class can have methods:

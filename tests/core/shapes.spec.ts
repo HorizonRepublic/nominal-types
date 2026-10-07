@@ -20,4 +20,13 @@ describe('the array loop without code generation', () => {
     );
     expect(run([1, 'a'])).toStrictEqual(new Rejection([{ message: 'a number', path: [1] }]));
   });
+
+  it.each([true, false])('finds repeats after either loop, generation %o', (generate) => {
+    const { run } = arrayShape(item, { unique: true }, generate);
+
+    expect(run([1, 2])).toStrictEqual([1, 2]);
+    expect(run([1, 1])).toStrictEqual(
+      new Rejection([{ message: 'must not repeat an item (was 1)', path: [1] }]),
+    );
+  });
 });

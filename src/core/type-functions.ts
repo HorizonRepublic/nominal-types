@@ -1,6 +1,6 @@
 import type { AnyNominalType } from './contracts.ts';
 import { ownTypes } from './nominal.ts';
-import { remember } from './pending.ts';
+import { forget, remember } from './pending.ts';
 import { Rejection } from './rejection.ts';
 import { onlyChecks, rulesRunnerOf } from './type-rules.ts';
 
@@ -68,6 +68,10 @@ export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown)
 
     remember(target, input, input);
 
-    return new target(input);
+    try {
+      return new target(input);
+    } finally {
+      forget();
+    }
   };
 };

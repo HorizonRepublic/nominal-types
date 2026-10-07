@@ -1,8 +1,10 @@
-# Embedding types in other validators
+# How to use a type inside another validator
 
-Every nominal type class is itself a Standard Schema through its static `~standard`. Libraries that call `~standard` take the class directly, NestJS 12's `@Body({ schema: Email })` among them.
+This guide shows how to put nominal types into a schema from another library, so the library hands back instances.
 
-Libraries that parse definitions treat a class as a function of their own, so give them the plain schema object `standard()` returns. In ArkType:
+For a library that reads `~standard`, such as NestJS 12's `@Body({ schema: Email })`, pass the class itself; every nominal type is a Standard Schema.
+
+For a library that parses its own definitions, such as ArkType, pass the plain object `standard()` returns, since such libraries treat a class as a definition of their own:
 
 ```ts
 import { type } from 'arktype';

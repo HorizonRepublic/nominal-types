@@ -1,10 +1,10 @@
-# NestJS
+# How to validate NestJS route parameters
 
-`@horizon-republic/nominal-types/adapters/nest` provides `NominalPipe` for Nest 11 and 12. `@nestjs/common` is an optional peer dependency, so the core installs nothing from Nest.
+This guide shows how to turn route parameters, query values and bodies into nominal types with `NominalPipe`, on Nest 11 or 12. The pipe comes from `@horizon-republic/nominal-types/adapters/nest`; `@nestjs/common` is an optional peer dependency, so the core installs nothing from Nest.
 
-## Every parameter at once
+## Validating every parameter
 
-Bind the pipe globally and declare parameters with a nominal type. Nest reflects the type from the handler signature, and the pipe turns the value into an instance:
+Bind the pipe globally and declare parameters with a nominal type. The pipe turns each such value into an instance:
 
 ```ts
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
@@ -22,26 +22,26 @@ export class UsersController {
 }
 ```
 
-Arguments declared with any other type pass through untouched, so the global pipe sits safely next to other pipes. It relies on `emitDecoratorMetadata`, which Nest projects enable anyway.
+Arguments declared with any other type pass through untouched, so the global pipe can sit next to other pipes. It reads the declared type through `emitDecoratorMetadata`, which Nest projects enable by default.
 
-## One parameter
+## Validating one parameter
 
-Pass the type explicitly, whatever the parameter is declared as:
+To validate one parameter, or one declared with another type, pass the type to the pipe:
 
 ```ts
 @Get()
 search(@Query('email', new NominalPipe(Email)) email: Email) {}
 ```
 
-## Errors
+## Shaping the error response
 
-A rejected value fails the request with a 400 in the shape of Nest's own Standard Schema pipe:
+By default, a rejected value fails the request with a 400 in the shape of Nest's own Standard Schema pipe:
 
 ```json
 { "statusCode": 400, "error": "Bad Request", "message": ["id: must be a UUID (was \"nope\")"] }
 ```
 
-Shape it differently with `exceptionFactory`, globally or per parameter:
+To answer differently, pass `exceptionFactory`, globally or per parameter:
 
 ```ts
 new NominalPipe({
@@ -53,8 +53,8 @@ new NominalPipe(Email, {
 });
 ```
 
-## Headers
+## Validating headers
 
-Nest runs no pipes on `@Headers()`, so validate header values in the handler with `parse()`.
+Nest runs no pipes on `@Headers()`. Validate header values in the handler with `parse()`, as in [How to validate untrusted input](validating-input.md).
 
 [← Documentation](../README.md)

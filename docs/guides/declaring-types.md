@@ -1,12 +1,12 @@
-# Declaring types
+# How to declare a type
 
-A nominal type has two parts: a rule saying what a valid value looks like, and the behaviour that belongs to such a value.
+This guide shows how to write the rule a type checks, in each of the three forms, and how to put behaviour on it.
 
-`Nominal()` declares a type from scratch, with the rule as its only check. A type can also start from one of the [built-in types](../reference/built-in-types.md), such as `AnyString` or `PositiveInteger`, which is covered in [Building on a type](building-on-types.md#starting-from-a-base-type).
+When one of the [built-in types](../reference/types/README.md) already covers the kind of value, such as `AnyString` or `PositiveInteger`, declare the type under it instead, as [How to build on a type](building-on-types.md#starting-from-a-base-type) shows; the rules below then go into `subtype()`.
 
-## With a pattern
+## Declaring with a pattern
 
-Pass `Nominal()` a unique name and a regular expression. For a string format it is enough, and it is also the fastest option:
+For a string format, pass `Nominal()` a unique name and a regular expression:
 
 ```ts
 import { matching, Nominal } from '@horizon-republic/nominal-types';
@@ -15,13 +15,15 @@ export class Slug extends Nominal('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
 export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
 ```
 
-`matching()` adds a description, which error messages use: `must be a SKU (was "x")` instead of quoting the pattern. A pattern may carry the `u` flag and no other: `g` and `y` keep state between calls, and JSON Schema has no way to express `i`, `m` or `s`, so such patterns are refused when the type is declared. Spell case out in the character class instead, as in `[A-Fa-f]`.
+Wrap the pattern in `matching()` to give it a description, which messages then use: `must be a SKU (was "x")` instead of the pattern's source.
 
-The name brands the type at compile time and identifies it at runtime, so keep it unique among the nominal types one application loads.
+Give a pattern the `u` flag and no other; any other flag is refused when the type is declared. Where case doesn't matter, spell both cases out in the character class, as in `[A-Fa-f]`, rather than using `i`.
 
-## With a type guard
+Keep the name unique among the nominal types one application loads: it identifies the type at runtime.
 
-For a rule a pattern can't say, `satisfying()` takes a type guard, a description and, optionally, the JSON Schema it corresponds to:
+## Declaring with a type guard
+
+For a rule a pattern can't express, pass `satisfying()` a type guard, a description and, if the type should describe itself as JSON Schema, the schema the guard corresponds to:
 
 ```ts
 import { Nominal, satisfying } from '@horizon-republic/nominal-types';
@@ -35,9 +37,9 @@ export class Percentage extends Nominal(
 ) {}
 ```
 
-## With a schema from a validation library
+## Declaring with a schema from another library
 
-Any schema that supports [Standard Schema](https://standardschema.dev) and answers synchronously can define a type:
+To reuse a schema you already have, pass any [Standard Schema](https://standardschema.dev) that answers synchronously:
 
 ```ts
 import { type } from 'arktype';
@@ -47,20 +49,11 @@ export class Percentage extends Nominal('Percentage', type('0 <= number <= 100')
 export class Sku extends Nominal('Sku', z.string().regex(/^SKU-\d{4}$/u)) {}
 ```
 
-Issues come back as plain `{ message, path }` objects whichever library produced them. A schema whose `validate` returns a Promise is refused, since construction is synchronous.
+Issues come back as plain `{ message, path }` objects whichever library produced them. A schema that validates asynchronously, such as one from Yup, can't define a type.
 
 ## Giving the type behaviour
 
-A nominal type is also the place for the code that works on its values. Without one, that code ends up in helpers that take a string and hope it is the right kind:
-
-```ts
-// utils/order-number.ts
-export const orderYear = (orderNumber: string): number => Number(orderNumber.slice(4, 8));
-export const orderSequence = (orderNumber: string): number => Number(orderNumber.slice(8));
-export const isExpressOrder = (orderNumber: string): boolean => orderNumber.startsWith('ORD-9');
-```
-
-Every caller has to find these helpers, and nothing stops one from passing a customer name. On the type, the same code is found by autocompletion and only ever runs on a value that passed the rule:
+Add getters and methods to the class. They read `this.value`, which always holds a value the rule accepted, so they need no checks of their own:
 
 ```ts
 export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
@@ -73,7 +66,7 @@ export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
   }
 
   get isExpress(): boolean {
-    return this.value.startsWith('ORD-9');
+    return this.value.charAt(8) === '9';
   }
 }
 
@@ -83,6 +76,6 @@ order.year; // 2026
 order.isExpress; // false
 ```
 
-Getters and methods read `this.value`, the validated value. A method that produces another value of the type returns an instance, so the result stays checked, the way `email.withoutTag()` returns an `Email`. The built-in types show the pattern: see [Built-in types](../reference/built-in-types.md).
+A method that produces another value of the type should return an instance, so the result is checked too, the way `email.withoutTag()` returns an `Email`. For why the code belongs on the type, see [How it works](../explanation/how-it-works.md#behaviour-on-the-type).
 
 [← Documentation](../README.md)

@@ -71,7 +71,7 @@ export interface AnyNominalType {
 }
 
 /**
- * A nominal type class: construct it with `new`, which validates, or go through `parse` and `is`
+ * A nominal type class: construct it with `new`, which validates, or go through `parse`
  * where bad input is expected.
  *
  * @remarks

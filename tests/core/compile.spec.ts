@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compileRun } from '../../src/core/compile.ts';
+import { brandCheck, compileRun } from '../../src/core/compile.ts';
 import type { ConvertStep, Step } from '../../src/core/plan.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 
@@ -45,5 +45,23 @@ describe.each([
 
   it('returns the value with no steps', () => {
     expect(compileRun([], generate)('anything')).toBe('anything');
+  });
+});
+
+describe.each([
+  ['generated', true],
+  ['plain', false],
+])('a %s brand check', (_, generate) => {
+  const key = Symbol('brand');
+  const isBranded = brandCheck(key, generate);
+
+  it.each([
+    [{ [key]: true }, true],
+    [{ [key]: false }, false],
+    [{}, false],
+    [null, false],
+    ['text', false],
+  ])('answers %o with %s', (value, expected) => {
+    expect(isBranded(value)).toBe(expected);
   });
 });

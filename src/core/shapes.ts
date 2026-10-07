@@ -42,16 +42,20 @@ export const arrayShape = <Item>(
         return new Rejection([{ message: countMessage(options, list.length) }]);
       }
       const values: Item[] = [];
-      const issues: StandardSchemaV1.Issue[] = [];
-      for (const [index, value] of list.entries()) {
-        const result = item.run(value);
+      let issues: StandardSchemaV1.Issue[] | undefined;
+      const count = list.length;
+      // An indexed loop: `entries()` allocates an iterator and a pair per item on the hot path.
+      // oxlint-disable-next-line unicorn/no-for-loop
+      for (let index = 0; index < count; index += 1) {
+        const result = item.run(list[index]);
         if (result instanceof Rejection) {
+          issues ??= [];
           issues.push(...issuesAt(index, result.issues));
-        } else {
+        } else if (issues === undefined) {
           values.push(result);
         }
       }
-      return issues.length === 0 ? Object.freeze(values) : new Rejection(issues);
+      return issues === undefined ? Object.freeze(values) : new Rejection(issues);
     },
     describe: (side, options_) => ({
       type: 'array',

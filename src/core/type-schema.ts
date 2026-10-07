@@ -2,7 +2,7 @@ import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
 import { forTarget, withoutUri } from './json-target.ts';
 import { describeValue } from './messages.ts';
-import { construct, isNominalType } from './nominal.ts';
+import { constructorFor, isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
@@ -178,12 +178,13 @@ export const schemaOf = <Type extends AnyNominalType>(
   if (!isNominalType(type)) {
     throw new TypeError(`schemaOf() takes a nominal type (was ${describeValue(type)})`);
   }
+  const construct = constructorFor(type);
   return new TypeSchema<InputOf<Type['rule']>, Type['prototype']>(
     {
-      // construct() returns an instance of `type` or a Rejection; the compiler can't follow the
+      // The function makes an instance of `type` or a Rejection; the compiler can't follow the
       // class hierarchy that far, and parse() would allocate a result object per value.
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      run: (input) => construct(type, input) as Type['prototype'] | Rejection,
+      run: construct as (input: unknown) => Type['prototype'] | Rejection,
       describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
     },
     { textForm: textFormOf(type) },

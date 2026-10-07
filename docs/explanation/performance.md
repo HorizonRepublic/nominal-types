@@ -9,21 +9,23 @@ Measured on an Apple M4 Pro with Node.js 25.3, after warm-up, one value at a tim
 | `Email.pattern.test(text)` alone                | 68 ns |
 | `new Email(text)`                               | 89 ns |
 | `Email.parse(text)`                             | 94 ns |
-| `Email.parse(existing Email)`                   | 14 ns |
+| `Email.parse(existing Email)`                   | 6 ns  |
 | `Email.parse(invalid text)`                     | 86 ns |
 | `new Uuid(text)`                                | 60 ns |
 | `new AnyString(text)`                           | 21 ns |
 | `new Integer(42)`, three rules                  | 25 ns |
 | `new PositiveInteger(42)`, four rules           | 31 ns |
 | `new AnyBigInt('9007199254740993')`             | 64 ns |
-| `schemaOf(Uuid).array().parse(ids)`, 1000 UUIDs | 63 µs |
+| `value instanceof Email`, `email.equals(other)` | 5 ns  |
+| `schemaOf(Uuid).array().parse(ids)`, 1000 UUIDs | 70 µs |
 
 What the numbers mean:
 
 - A type costs about as much as its own check, plus 15 to 20 ns to create the instance.
 - Each extra rule adds about 2 ns, as the number types show.
 - A schema from another library adds that library's cost. For a rejected value this can be much higher, as some libraries spend microseconds building messages.
-- An array costs the same per item as `parse()`, about 63 ns for a UUID. Its count is checked before the items.
+- An array costs about 10 ns per item on top of the item's own check, 70 ns for a UUID. Its count is checked before the items.
+- Each level of a type's class chain adds about 2 ns to `new`, because V8 calls every constructor in the chain. `Port` under `Uint16` under `Integer` costs a few nanoseconds more than `Uint16` itself.
 - A rejected value is cheaper through `parse()` than through `new`. Throwing and catching an error takes a few microseconds.
 
 ## How a chain runs
@@ -50,6 +52,10 @@ A rule from another library becomes a step of the same function. Which way it ru
 | an ArkType rule that trims its value  | 64 ns  | 55 ns |
 
 Where code generation is forbidden, such as in Cloudflare Workers or under a strict Content-Security-Policy, the same checks run in a loop instead. The results are the same, only slower.
+
+## instanceof
+
+Each type checks its own brand with its own function, generated like the rule checks, instead of one `instanceof` handler shared by every type. A shared handler reads a different brand for every type and can't be optimised. With one per type, `instanceof`, `parse()` of an existing instance and `equals()` take about 5 ns instead of 13 to 16.
 
 ## Regular expressions
 

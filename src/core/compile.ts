@@ -19,6 +19,30 @@ const canGenerate = ((): boolean => {
   }
 })();
 
+/**
+ * Internal: a function built from source with `new Function`, called with `values` for `names`,
+ * or `undefined` where code generation is forbidden.
+ *
+ * @remarks
+ * A generated function gets a call site of its own for everything it calls, which V8 can inline
+ * where a function shared by every type can't.
+ */
+export const generateFunction = (
+  names: readonly string[],
+  source: string,
+  values: readonly unknown[],
+  generate: boolean = canGenerate,
+): ((...values: unknown[]) => unknown) | undefined => {
+  if (!generate) {
+    return undefined;
+  }
+  // oxlint-disable-next-line typescript/no-implied-eval
+  const build: unknown = new Function(...names, `return ${source};`);
+  const built: unknown =
+    typeof build === 'function' ? Reflect.apply(build, undefined, values) : undefined;
+  return isRun(built) ? built : undefined;
+};
+
 const loopOver =
   (steps: ReadonlyArray<Step | ConvertStep>): Run =>
   (input) => {
@@ -51,14 +75,12 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Run => {
     values.push(step.convert);
     return `value = convert${index}(value); if (value instanceof Rejection) return value;`;
   });
-  // oxlint-disable-next-line typescript/no-implied-eval
-  const build: unknown = new Function(
-    ...names,
-    `return (value) => { ${lines.join(' ')} return value; };`,
+  const compiled = generateFunction(
+    names,
+    `(value) => { ${lines.join(' ')} return value; }`,
+    values,
   );
-  const compiled: unknown =
-    typeof build === 'function' ? Reflect.apply(build, undefined, values) : undefined;
-  return isRun(compiled) ? compiled : loopOver(steps);
+  return compiled ?? loopOver(steps);
 };
 
 /**
@@ -76,3 +98,31 @@ export const compileRun = (
   steps: ReadonlyArray<Step | ConvertStep>,
   generate: boolean = canGenerate,
 ): Run => (generate && steps.length > 0 ? generated(steps) : loopOver(steps));
+
+/**
+ * Internal: whether a value carries the brand `key`, as one function per type, generated where
+ * code generation is allowed.
+ *
+ * @remarks
+ * `instanceof` of every type used to run one shared function, whose property reads saw every
+ * brand and couldn't be optimised; a function per type reads one brand only.
+ */
+export const brandCheck = (
+  key: symbol,
+  generate: boolean = canGenerate,
+): ((value: unknown) => boolean) => {
+  const generatedCheck = generateFunction(
+    ['key'],
+    "(value) => typeof value === 'object' && value !== null && value[key] === true",
+    [key],
+    generate,
+  );
+  if (generatedCheck === undefined) {
+    return (value) =>
+      typeof value === 'object' && value !== null && Reflect.get(value, key) === true;
+  }
+  // The generated source is exactly this check; wrapping it again would share one call site
+  // between all types and undo the point of generating it.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return generatedCheck as (value: unknown) => boolean;
+};

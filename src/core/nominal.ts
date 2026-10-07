@@ -17,6 +17,7 @@ import {
 import { NominalError } from './nominal-error.ts';
 import { PatternSchema } from './pattern-schema.ts';
 import { remember, nothingPending, takePending } from './pending.ts';
+import { registerType, typeNamed } from './registry.ts';
 import { Rejection } from './rejection.ts';
 import { sameValue } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
@@ -167,6 +168,7 @@ const derive = (
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
   }
+  registerType(name, derived);
   return derived;
 };
 
@@ -182,6 +184,19 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
   typeof value === 'function' &&
   value !== NominalRoot &&
   Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === vendor;
+
+/**
+ * Internal: finds a nominal type by the name it was declared with, for adapters that only see names, such
+ * as an OpenAPI document whose schemas are named after classes.
+ *
+ * @remarks
+ * Only types declared through this copy of the package are found. A class that merely extends a
+ * type shares its name and is found as that type.
+ */
+export const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
+  const type = typeNamed(name);
+  return isNominalType(type) ? type : undefined;
+};
 
 /**
  * Declares a nominal type: a class whose instances exist only for values the schema accepts.

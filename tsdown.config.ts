@@ -5,6 +5,7 @@ const config: UserConfig = {
     index: 'src/index.ts',
     'adapters/nest/index': 'src/adapters/nest/index.ts',
     'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
+    'adapters/swagger/index': 'src/adapters/swagger/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

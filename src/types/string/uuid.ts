@@ -1,8 +1,19 @@
-import type { NominalSchema, SubtypeOf } from '../../core/contracts.ts';
+import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { AnyString } from './any-string.ts';
 
-const UuidBase: SubtypeOf<typeof AnyString, 'Uuid'> = AnyString.subtype('Uuid');
+const pattern =
+  /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
+
+const UuidBase: SubtypeOf<typeof AnyString, 'Uuid'> = AnyString.subtype(
+  'Uuid',
+  matching(pattern, 'a UUID', {
+    format: 'uuid',
+    minLength: 36,
+    maxLength: 36,
+    examples: ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
+  }),
+);
 
 /**
  * A UUID in its canonical 8-4-4-4-12 text form, any version from 1 to 8 plus the nil and max
@@ -22,19 +33,7 @@ export class Uuid extends UuidBase {
    * schema is built from it once, when the class is defined, so a subclass that changes the pattern
    * overrides `rule` as well.
    */
-  public static readonly pattern: RegExp =
-    /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
-
-  public static override readonly rule: NominalSchema<string, string> = matching(
-    this.pattern,
-    'a UUID',
-    {
-      format: 'uuid',
-      minLength: 36,
-      maxLength: 36,
-      examples: ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
-    },
-  );
+  public static readonly pattern: RegExp = pattern;
 
   /**
    * The version digit: 1 to 8, 0 for the nil UUID and 15 for the max UUID.

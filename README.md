@@ -60,14 +60,16 @@ A nominal type works with other libraries in three ways: as a library's field ty
 
 Databases:
 
-| ORM                                | How                                                               | Guide                                |
-| ---------------------------------- | ----------------------------------------------------------------- | ------------------------------------ |
-| [MikroORM](https://mikro-orm.io) 7 | entity properties hold instances, with the adapter `toMikroOrm()` | [MikroORM](docs/guides/mikro-orm.md) |
-| [TypeORM](https://typeorm.io)      | entity columns hold instances, with the adapter `toTypeOrm()`     | [TypeORM](docs/guides/typeorm.md)    |
+| ORM                                  | How                                                               | Guide                                 |
+| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------- |
+| [MikroORM](https://mikro-orm.io) 7   | entity properties hold instances, with the adapter `toMikroOrm()` | [MikroORM](docs/guides/mikro-orm.md)  |
+| [TypeORM](https://typeorm.io)        | entity columns hold instances, with the adapter `toTypeOrm()`     | [TypeORM](docs/guides/typeorm.md)     |
+| [Drizzle](https://orm.drizzle.team)  | table columns hold instances, with the adapter `toDrizzle()`      | [Drizzle](docs/guides/drizzle.md)     |
+| [Sequelize](https://sequelize.org) 6 | model attributes hold instances, with the adapter `toSequelize()` | [Sequelize](docs/guides/sequelize.md) |
 
 Values read from the database are checked, and the column type comes from the nominal type.
 
-Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, MikroORM or TypeORM is installed or loaded unless you import the adapter.
+Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, MikroORM, TypeORM or Sequelize is installed or loaded unless you import the adapter.
 
 ## Concepts
 

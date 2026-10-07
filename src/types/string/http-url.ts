@@ -4,7 +4,9 @@ import { Url } from './url.ts';
 
 const HttpUrlBase: SubtypeOf<typeof Url, 'HttpUrl'> = Url.subtype(
   'HttpUrl',
-  matching(/^[Hh][Tt][Tt][Pp][Ss]?:\/\//u, 'an http or https URL'),
+  matching(/^[Hh][Tt][Tt][Pp][Ss]?:\/\//u, 'an http or https URL', {
+    examples: ['https://example.com/docs'],
+  }),
 );
 
 /**

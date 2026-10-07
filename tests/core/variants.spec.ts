@@ -30,6 +30,7 @@ describe('Variants', () => {
     it('describes its own rules as JSON Schema', () => {
       expect(ClearanceSku['~standard'].jsonSchema.input({ target: 'draft-07' })).toStrictEqual({
         $schema: 'http://json-schema.org/draft-07/schema#',
+        title: 'ClearanceSku',
         allOf: [
           { type: 'string', pattern: String.raw`^SKU-\d{4}$` },
           { type: 'string', pattern: '^SKU-8' },

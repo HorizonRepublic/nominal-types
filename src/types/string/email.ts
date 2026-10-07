@@ -58,6 +58,7 @@ export class Email extends EmailBase {
   public static override readonly rule: NominalSchema<string, string> = matching(
     this.pattern,
     'an email address',
+    { format: 'email', minLength: 6, maxLength: 254, examples: ['jane.doe@example.com'] },
   );
 
   /**

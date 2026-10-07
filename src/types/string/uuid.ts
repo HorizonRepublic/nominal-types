@@ -28,6 +28,12 @@ export class Uuid extends UuidBase {
   public static override readonly rule: NominalSchema<string, string> = matching(
     this.pattern,
     'a UUID',
+    {
+      format: 'uuid',
+      minLength: 36,
+      maxLength: 36,
+      examples: ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
+    },
   );
 
   /**

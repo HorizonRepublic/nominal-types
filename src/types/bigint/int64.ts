@@ -10,7 +10,12 @@ const inRange = (value: unknown): value is bigint =>
 
 const Int64Base: SubtypeOf<typeof AnyBigInt, 'Int64'> = AnyBigInt.subtype(
   'Int64',
-  satisfying(inRange, 'a signed 64-bit integer', { type: 'string', maxLength: 20 }),
+  satisfying(inRange, 'a signed 64-bit integer', {
+    type: 'string',
+    format: 'int64',
+    maxLength: 20,
+    examples: ['-9223372036854775808'],
+  }),
 );
 
 /**

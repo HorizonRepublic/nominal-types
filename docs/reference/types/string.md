@@ -27,10 +27,10 @@ An email address like `jane.doe+news@example.com`.
 - A `+tag` before the `@` is understood, see `tag` below.
 - Not accepted: quoted names (`"jane"@example.com`), IP addresses (`jane@[127.0.0.1]`) and non-Latin domains. Convert a non-Latin domain to punycode first (`xn--…`).
 
-| Property    | Value                                               |
-| ----------- | --------------------------------------------------- |
-| JSON Schema | `{ type: 'string', pattern: Email.pattern.source }` |
-| Message     | `must be an email address (was "x")`                |
+| Property    | Value                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Email.pattern.source, format: 'email', minLength: 6, maxLength: 254 }`, with an example |
+| Message     | `must be an email address (was "x")`                                                                                |
 
 ```ts
 const email = new Email('Jane.Doe+news@Example.com');
@@ -65,10 +65,10 @@ A UUID like `0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f`.
 - Versions 1 to 8, plus the all-zero and all-`f` values.
 - Upper and lower case are both accepted and kept as given.
 
-| Property    | Value                                              |
-| ----------- | -------------------------------------------------- |
-| JSON Schema | `{ type: 'string', pattern: Uuid.pattern.source }` |
-| Message     | `must be a UUID (was "x")`                         |
+| Property    | Value                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Uuid.pattern.source, format: 'uuid', minLength: 36, maxLength: 36 }`, with an example |
+| Message     | `must be a UUID (was "x")`                                                                                        |
 
 ```ts
 const id = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
@@ -97,7 +97,7 @@ An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accep
 
 | Property    | Value                                                            |
 | ----------- | ---------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', format: 'uri' }`                              |
+| JSON Schema | `{ type: 'string', format: 'uri' }`, with an example             |
 | Message     | `must be a URL (was "x")`, also for a value that is not a string |
 
 ```ts
@@ -120,10 +120,10 @@ const url = new Url('https://Example.com:8443/a/b?x=1#top');
 
 A `Url` whose scheme is `http` or `https`, in any case. It has the members of `Url`.
 
-| Property    | Value                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------- |
-| JSON Schema | `allOf` of `Url`'s and `{ type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?:\\/\\/' }` |
-| Message     | `must be an http or https URL (was "mailto:jane@example.com")`                        |
+| Property    | Value                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| JSON Schema | `allOf` of `Url`'s and `{ type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?:\\/\\/' }`, with an example |
+| Message     | `must be an http or https URL (was "mailto:jane@example.com")`                                         |
 
 ```ts
 new HttpUrl('https://example.com'); // fine

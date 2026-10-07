@@ -160,7 +160,16 @@ describe('array()', () => {
     expect(rangeSchema.input({ target: 'draft-2020-12' })).toStrictEqual({
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'array',
-      items: { type: 'string', pattern: Uuid.pattern.source, description: 'a UUID' },
+      items: {
+        title: 'Uuid',
+        type: 'string',
+        pattern: Uuid.pattern.source,
+        format: 'uuid',
+        minLength: 36,
+        maxLength: 36,
+        examples: ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
+        description: 'a UUID',
+      },
       minItems: 1,
       maxItems: 3,
     });
@@ -205,23 +214,36 @@ describe('optional() and nullable()', () => {
   });
 
   it('describe null for JSON Schema and for OpenAPI 3.0', () => {
-    const body = { type: 'string', pattern: Email.pattern.source, description: 'an email address' };
+    const common = {
+      title: 'Email',
+      type: 'string',
+      pattern: Email.pattern.source,
+      format: 'email',
+      minLength: 6,
+      maxLength: 254,
+    };
+    const draft = {
+      ...common,
+      examples: ['jane.doe@example.com'],
+      description: 'an email address',
+    };
+    const openApi = { ...common, example: 'jane.doe@example.com', description: 'an email address' };
 
     expect(
       schemaOf(Email).nullable()['~standard'].jsonSchema.input({ target: 'draft-07' }),
     ).toStrictEqual({
       $schema: 'http://json-schema.org/draft-07/schema#',
-      anyOf: [body, { type: 'null' }],
+      anyOf: [draft, { type: 'null' }],
     });
     expect(
       schemaOf(Email).nullable()['~standard'].jsonSchema.input({ target: 'openapi-3.0' }),
     ).toStrictEqual({
-      ...body,
+      ...openApi,
       nullable: true,
     });
     expect(
       schemaOf(Email).optional()['~standard'].jsonSchema.input({ target: 'openapi-3.0' }),
-    ).toStrictEqual(body);
+    ).toStrictEqual(openApi);
   });
 });
 

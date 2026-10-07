@@ -28,6 +28,25 @@ PositiveInteger['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 // { allOf: [{ type: 'number', … }, …, { type: 'integer', minimum: 1, … }] }
 ```
 
+## Making the schema more useful
+
+Every type's schema has its name as `title`. The built-in types also add a `format`, length limits and an example, so Swagger UI and similar tools show a real value instead of `"string"`.
+
+Give your own types the same with the third argument of `matching()` or `satisfying()`:
+
+```ts
+import { AnyString, matching } from '@horizon-republic/nominal-types';
+
+export class Sku extends AnyString.subtype(
+  'Sku',
+  matching(/^SKU-\d{4}$/u, 'a SKU', { minLength: 8, maxLength: 8, examples: ['SKU-0042'] }),
+) {}
+```
+
+Keep the extra keywords true to the rule: a length limit must match what the pattern allows.
+
+Examples are checked for you. A type shows only the examples it accepts itself, gathered from all its rules. So a subtype never shows a parent's example that its own rule rejects, and a variant never shows its original's.
+
 ## Making your own type describable
 
 Regular expressions describe themselves. A type guard needs its JSON Schema as the third argument of `satisfying()`:

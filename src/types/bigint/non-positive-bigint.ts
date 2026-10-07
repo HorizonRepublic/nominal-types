@@ -9,6 +9,7 @@ const NonPositiveBigIntBase: SubtypeOf<typeof AnyBigInt, 'NonPositiveBigInt'> = 
   satisfying(isNonPositive, 'a non-positive integer', {
     type: 'string',
     pattern: '^(?:0|-[1-9]\\d*)$',
+    examples: ['-9007199254740993'],
   }),
 );
 

@@ -60,6 +60,7 @@ describe('PredicateSchema', () => {
     ])('describes the guard for %s', (target, header) => {
       expect(EvenNumber['~standard'].jsonSchema.input({ target })).toStrictEqual({
         ...header,
+        title: 'PredicateEven',
         type: 'integer',
         multipleOf: 2,
         description: 'an even number',

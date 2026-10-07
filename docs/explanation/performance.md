@@ -58,7 +58,7 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 | ------------------------------------- | -------------: | --------------------: | ---------------------------: |
 | ArkType                               |         1.3 ms |                 15 ms |                        14 ms |
 | Typia                                 |         2.4 ms |                5.8 ms |                       3.3 ms |
-| nominal-types + ArkType adapter       |         5.0 ms |                 17 ms |                        15 ms |
+| nominal-types + ArkType adapter       |         4.5 ms |                 15 ms |                        14 ms |
 | Zod                                   |         6.8 ms |                7.0 ms |                       6.8 ms |
 | Valibot                               |         7.1 ms |                7.2 ms |                       7.2 ms |
 | class-validator                       |         105 ms |                103 ms |                       105 ms |

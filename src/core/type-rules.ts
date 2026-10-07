@@ -52,6 +52,21 @@ const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown
   );
 
 /**
+ * Internal: the function generated for a type's rules, returning the value or a `Rejection`, with
+ * object values not frozen yet.
+ */
+export const rulesRunnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
+  let runner = typeRunners.get(target);
+
+  if (runner === undefined) {
+    runner = runnerOf(root, target);
+    typeRunners.set(target, runner);
+  }
+
+  return runner;
+};
+
+/**
  * Internal: runs every rule of a type on a value, returning the value or a `Rejection`.
  *
  * @remarks
@@ -61,14 +76,7 @@ const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown
  * @throws TypeError naming the type when a rule fails to run, such as an asynchronous schema.
  */
 export const runType = (root: object, target: TypeClass, input: unknown): unknown => {
-  let runner = typeRunners.get(target);
-
-  if (runner === undefined) {
-    runner = runnerOf(root, target);
-    typeRunners.set(target, runner);
-  }
-
-  const value = runner(input);
+  const value = rulesRunnerOf(root, target)(input);
 
   return typeof value === 'object' && value !== null ? frozen(value) : value;
 };

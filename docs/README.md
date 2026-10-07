@@ -16,6 +16,7 @@ New here? Start with the tutorial.
 - [How to use a type inside another validator](guides/other-validators.md)
 - [How to generate JSON Schema](guides/json-schema.md)
 - [How to validate NestJS route parameters](guides/nestjs.md)
+- [How to use nominal types in class-validator DTOs](guides/class-validator.md)
 
 ## [Reference](reference/README.md)
 

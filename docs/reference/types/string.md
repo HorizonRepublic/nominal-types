@@ -470,61 +470,89 @@ Members, with results for this `tag`:
 ## MediaType
 
 `AnyString` › `MediaType`
+
 A [media type](../glossary.md) like `text/html; charset=utf-8`: what a `Content-Type` header holds.
 
 - The type and the subtype each start with a letter or digit, then hold letters, digits and `!#$&-^_.+`. Each has up to 127 characters.
 - Parameters follow, each as `;` and `name=value`. Spaces and tabs may stand around the `;`.
 - A value with characters other than letters, digits and ``!#$%&'*+-.^_`|~`` goes in double quotes: `boundary="a b"`. Inside the quotes, `\` escapes the next character.
 - Not accepted: wildcards such as `*/*` and `text/*`, a parameter name given twice, an empty parameter (`text/plain;`) and spaces at either end.
-  | Property | Value | | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-  | JSON Schema | `{ type: 'string', pattern: MediaType.pattern.source, minLength: 3 }`, with examples. The pattern accepts a parameter name given twice; the type refuses it. |
-  | Message | `must be a media type (was "*/*")` |
-  import { MediaType } from '@horizon-republic/nominal-types';
-  const type = new MediaType('Application/LD+JSON; Charset="utf-8"');
-  type.essence; // 'application/ld+json'
-  type.isJson; // true
-  Members, with results for this `type`:
-  | Member | Returns | Example | | --------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
-  | `type` | the type as written | `'Application'` |
-  | `subtype` | the subtype as written | `'LD+JSON'` |
-  | `suffix` | what follows the last `+` of the subtype, or `undefined` | `'JSON'` |
-  | `essence` | the type and subtype in lowercase, without parameters | `'application/ld+json'` |
-  | `parameters` | a new `Map` of the parameters: names in lowercase, values without quotes | `Map { 'charset' => 'utf-8' }` |
-  | `charset` | the `charset` parameter, or `undefined` | `'utf-8'` |
-  | `isJson` | whether it is `application/json` or its subtype ends in `+json` | `true` |
-  | `canonical()` | names in lowercase, no spaces, quotes only where a value needs them | `application/ld+json;charset=utf-8` |
-  | `equals(other)` | compares the canonical forms: the case of names, spaces and quotes don't count | `true` for the `canonical()` value |
-  Parameter values keep their case. `text/html;charset=UTF-8` doesn't equal `text/html;charset=utf-8`.
-  | Static field | Holds | | ------------------- | ------------------------------------------------------------ |
-  | `MediaType.pattern` | the media type as a `RegExp`, without the repeated-name rule |
+
+| Property    | Value                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| JSON Schema | `{ type: 'string', pattern: MediaType.pattern.source, minLength: 3 }`, with examples. The pattern accepts a parameter name given twice; the type refuses it. |
+| Message     | `must be a media type (was "*/*")`                                                                                                                           |
+
+```ts
+import { MediaType } from '@horizon-republic/nominal-types';
+
+const type = new MediaType('Application/LD+JSON; Charset="utf-8"');
+
+type.essence; // 'application/ld+json'
+type.isJson; // true
+```
+
+Members, with results for this `type`:
+
+| Member          | Returns                                                                        | Example                             |
+| --------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| `type`          | the type as written                                                            | `'Application'`                     |
+| `subtype`       | the subtype as written                                                         | `'LD+JSON'`                         |
+| `suffix`        | what follows the last `+` of the subtype, or `undefined`                       | `'JSON'`                            |
+| `essence`       | the type and subtype in lowercase, without parameters                          | `'application/ld+json'`             |
+| `parameters`    | a new `Map` of the parameters: names in lowercase, values without quotes       | `Map { 'charset' => 'utf-8' }`      |
+| `charset`       | the `charset` parameter, or `undefined`                                        | `'utf-8'`                           |
+| `isJson`        | whether it is `application/json` or its subtype ends in `+json`                | `true`                              |
+| `canonical()`   | names in lowercase, no spaces, quotes only where a value needs them            | `application/ld+json;charset=utf-8` |
+| `equals(other)` | compares the canonical forms: the case of names, spaces and quotes don't count | `true` for the `canonical()` value  |
+
+Parameter values keep their case. `text/html;charset=UTF-8` doesn't equal `text/html;charset=utf-8`.
+
+| Static field        | Holds                                                        |
+| ------------------- | ------------------------------------------------------------ |
+| `MediaType.pattern` | the media type as a `RegExp`, without the repeated-name rule |
 
 ## HexColor
 
 `AnyString` › `HexColor`
+
 A CSS color in hex notation like `#1e90ff`.
 
 - A `#`, then 3, 4, 6 or 8 hex digits: `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa`.
 - Upper and lower case are both accepted and kept as given.
 - The `#` is required, so `fff` is refused.
-  | Property | Value | | ----------- | --------------------------------------------------------------------------------------------------- |
-  | JSON Schema | `{ type: 'string', pattern: HexColor.pattern.source, minLength: 4, maxLength: 9 }`, with an example |
-  | Message | `must be a hex color (was "fff")` |
-  import { HexColor } from '@horizon-republic/nominal-types';
-  const color = new HexColor('#1E90FF80');
-  color.red; // 30
-  color.canonical().value; // '#1e90ff80'
-  Members, with results for this `color`:
-  | Member | Returns | Example | | ---------------------- | ------------------------------------------------------------- | ----------------------- |
-  | `red`, `green`, `blue` | a channel, from 0 to 255 | `30`, `144`, `255` |
-  | `alpha` | the opacity, from 0 to 1; 1 when the color has no alpha digit | `0.5019607843137255` |
-  | `canonical()` | `#` and 6 lowercase digits, or 8 when not fully opaque | `#1e90ff80` |
-  | `equals(other)` | compares the channels | `#FFF` equals `#ffffff` |
-  | Static field | Holds | | ------------------ | -------------------------- |
-  | `HexColor.pattern` | the notation as a `RegExp` |
+
+| Property    | Value                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: HexColor.pattern.source, minLength: 4, maxLength: 9 }`, with an example |
+| Message     | `must be a hex color (was "fff")`                                                                   |
+
+```ts
+import { HexColor } from '@horizon-republic/nominal-types';
+
+const color = new HexColor('#1E90FF80');
+
+color.red; // 30
+color.canonical().value; // '#1e90ff80'
+```
+
+Members, with results for this `color`:
+
+| Member                 | Returns                                                       | Example                 |
+| ---------------------- | ------------------------------------------------------------- | ----------------------- |
+| `red`, `green`, `blue` | a channel, from 0 to 255                                      | `30`, `144`, `255`      |
+| `alpha`                | the opacity, from 0 to 1; 1 when the color has no alpha digit | `0.5019607843137255`    |
+| `canonical()`          | `#` and 6 lowercase digits, or 8 when not fully opaque        | `#1e90ff80`             |
+| `equals(other)`        | compares the channels                                         | `#FFF` equals `#ffffff` |
+
+| Static field       | Holds                      |
+| ------------------ | -------------------------- |
+| `HexColor.pattern` | the notation as a `RegExp` |
 
 ## Base64
 
 `AnyString` › `Base64`
+
 Bytes written as [base64](../glossary.md) text like `aGVsbG8=`.
 
 - Letters, digits, `+` and `/`, in groups of four characters.
@@ -532,45 +560,72 @@ Bytes written as [base64](../glossary.md) text like `aGVsbG8=`.
 - The bits the `=` fills must be zero, so each byte string has one text. `QR==` is refused; `QQ==` is the same byte.
 - Not accepted: a missing `=`, spaces, line breaks and the `-_` characters of `Base64Url`.
 - The empty string is accepted. It holds zero bytes.
-  | Property | Value | | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | JSON Schema | `{ type: 'string', pattern: Base64.pattern.source, contentEncoding: 'base64' }`, with an example. For `openapi-3.0`, `format: 'byte'` in its place. |
-  | Message | `must be base64 text (was "QQ")` |
-  import { Base64 } from '@horizon-republic/nominal-types';
-  const data = new Base64('aGVsbG8=');
-  data.byteLength; // 5
-  new TextDecoder().decode(data.toBytes()); // 'hello'
-  | Member | Returns | Example | | --------------- | ------------------------------------------------- | -------------------------------------- |
-  | `byteLength` | the number of bytes | `5` |
-  | `toBytes()` | the bytes, in a new `Uint8Array` each call | `Uint8Array [104, 101, 108, 108, 111]` |
-  | `equals(other)` | compares the text, which is the same as the bytes | |
-  | Static field | Holds | | ---------------- | -------------------------- |
-  | `Base64.pattern` | the encoding as a `RegExp` |
-  `Base64` has no size limit. To cap the size, or to refuse the empty string, declare a subtype:
-  import { Base64, matching } from '@horizon-republic/nominal-types';
-  class Avatar extends Base64.subtype(
+
+| Property    | Value                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Base64.pattern.source, contentEncoding: 'base64' }`, with an example. For `openapi-3.0`, `format: 'byte'` in its place. |
+| Message     | `must be base64 text (was "QQ")`                                                                                                                    |
+
+```ts
+import { Base64 } from '@horizon-republic/nominal-types';
+
+const data = new Base64('aGVsbG8=');
+
+data.byteLength; // 5
+new TextDecoder().decode(data.toBytes()); // 'hello'
+```
+
+| Member          | Returns                                           | Example                                |
+| --------------- | ------------------------------------------------- | -------------------------------------- |
+| `byteLength`    | the number of bytes                               | `5`                                    |
+| `toBytes()`     | the bytes, in a new `Uint8Array` each call        | `Uint8Array [104, 101, 108, 108, 111]` |
+| `equals(other)` | compares the text, which is the same as the bytes |                                        |
+
+| Static field     | Holds                      |
+| ---------------- | -------------------------- |
+| `Base64.pattern` | the encoding as a `RegExp` |
+
+`Base64` has no size limit. To cap the size, or to refuse the empty string, declare a subtype:
+
+```ts
+import { Base64, matching } from '@horizon-republic/nominal-types';
+
+class Avatar extends Base64.subtype(
   'profile.Avatar',
   matching(/^.{4,1000000}$/u, 'from 1 to 750,000 bytes'),
-  ) {}
-  Avatar.parse(''); // { ok: false, issues: [{ message: 'must be from 1 to 750,000 bytes (was "")' }] }
+) {}
+
+Avatar.parse(''); // { ok: false, issues: [{ message: 'must be from 1 to 750,000 bytes (was "")' }] }
+```
 
 ## Base64Url
 
 `AnyString` › `Base64Url`
+
 Bytes written as base64url text like `aGVsbG8`: the [base64](../glossary.md) form that URLs and JSON Web Tokens use.
 
 - Letters, digits, `-` and `_`.
 - No `=` at the end: `Zg`, not `Zg==`. Remove the `=` first if a source adds it.
 - The bits the last character fills must be zero, as for `Base64`.
 - The empty string is accepted.
-  `Base64Url` is a [sibling](../glossary.md) of `Base64`, not a subtype. Their characters differ, so neither accepts every text of the other.
-  | Property | Value | | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-  | JSON Schema | `{ type: 'string', pattern: Base64Url.pattern.source, contentEncoding: 'base64url' }`, with an example. For `openapi-3.0`, no `contentEncoding`. |
-  | Message | `must be base64url text (was "Zg==")` |
-  import { Base64Url } from '@horizon-republic/nominal-types';
-  const token = new Base64Url('aGVsbG8');
-  token.byteLength; // 5
-  new TextDecoder().decode(token.toBytes()); // 'hello'
-  It has the members and the static field of `Base64`.
+
+`Base64Url` is a [sibling](../glossary.md) of `Base64`, not a subtype. Their characters differ, so neither accepts every text of the other.
+
+| Property    | Value                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| JSON Schema | `{ type: 'string', pattern: Base64Url.pattern.source, contentEncoding: 'base64url' }`, with an example. For `openapi-3.0`, no `contentEncoding`. |
+| Message     | `must be base64url text (was "Zg==")`                                                                                                            |
+
+```ts
+import { Base64Url } from '@horizon-republic/nominal-types';
+
+const token = new Base64Url('aGVsbG8');
+
+token.byteLength; // 5
+new TextDecoder().decode(token.toBytes()); // 'hello'
+```
+
+It has the members and the static field of `Base64`.
 
 ## Hostname
 

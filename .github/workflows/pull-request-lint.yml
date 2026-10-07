@@ -1,0 +1,48 @@
+name: Pull request lint
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches: [main]
+
+concurrency:
+  group: pull-request-lint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: read
+
+jobs:
+  branch-and-title:
+    name: Verify branch and title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Branch follows <type>/<slug>
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          types='feat|fix|perf|refactor|style|test|docs|build|ci|chore|revert'
+          if ! printf '%s' "$BRANCH" | grep -Eq "^($types)/[a-z0-9]+(-[a-z0-9]+)*$"; then
+            echo "::error::branch '$BRANCH' does not match <type>/<slug>, type being one of $types"
+            exit 1
+          fi
+
+      - name: Title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            style
+            test
+            docs
+            build
+            ci
+            chore
+            revert
+          requireScope: false

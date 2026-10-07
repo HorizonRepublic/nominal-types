@@ -19,7 +19,7 @@ const typeSchema = (
   const target = registry.types.get(name);
 
   if (target === undefined) {
-    throw new TypeError(`arkSchema: no type named ${name} was given to arkOf()`);
+    throw new TypeError(`fromArk: no type named ${name} was given to toArk()`);
   }
 
   return withoutUri(target['~standard'].jsonSchema[side](options));
@@ -79,7 +79,7 @@ const replaceNodes = (
 };
 
 /**
- * Internal: an ArkType schema as JSON Schema, with each `arkOf()` node replaced by its type's own
+ * Internal: an ArkType schema as JSON Schema, with each `toArk()` node replaced by its type's own
  * schema and the input side of every morph.
  *
  * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.

@@ -109,7 +109,7 @@ In DDD, the domain shouldn't be busy with parsing input. The package keeps valid
 
 | Boundary                     | What turns plain input into domain values                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| an HTTP request or a message | an [ArkType schema](../guides/arktype.md) with `arkOf()`, or [`NominalPipe`](../guides/nestjs.md) |
+| an HTTP request or a message | an [ArkType schema](../guides/arktype.md) with `toArk()`, or [`NominalPipe`](../guides/nestjs.md) |
 | a class-validator DTO        | [`@NominalField()`](../guides/class-validator.md)                                                 |
 | an API document              | [Swagger](../guides/swagger.md) adapter                                                           |
 

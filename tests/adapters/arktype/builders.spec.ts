@@ -5,7 +5,7 @@ import {
   generatedArrayBuilder,
   generatedObjectBuilder,
 } from '../../../src/adapters/arktype/builders.ts';
-import { arkOf, arkSchema } from '../../../src/adapters/arktype/index.ts';
+import { toArk, fromArk } from '../../../src/adapters/arktype/index.ts';
 import { Email } from '../../../src/index.ts';
 import { valueOf } from '../../support/results.ts';
 
@@ -80,8 +80,8 @@ describe('generated builders', () => {
     expect(generatedArrayBuilder(wrap, false)).toBeUndefined();
   });
 
-  it('drops undeclared keys in arkSchema when ArkType deletes them', () => {
-    const Strict = arkSchema(type({ '+': 'delete', email: arkOf(Email) }));
+  it('drops undeclared keys in fromArk when ArkType deletes them', () => {
+    const Strict = fromArk(type({ '+': 'delete', email: toArk(Email) }));
 
     expect(valueOf(Strict.parse({ email: 'a@b.co', extra: 1 }))).toStrictEqual({
       email: new Email('a@b.co'),

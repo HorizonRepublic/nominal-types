@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { arkOf, arkSchema } from '../../../src/adapters/arktype/index.ts';
+import { toArk, fromArk } from '../../../src/adapters/arktype/index.ts';
 import type { Built } from '../../../src/adapters/arktype/index.ts';
 import type * as library from '../../../src/index.ts';
 import {
@@ -70,9 +70,9 @@ const types = [
   Uuid,
 ] as const;
 
-describe('arkOf', () => {
+describe('toArk', () => {
   describe.each(types)('%o', (target) => {
-    const node = arkOf(target);
+    const node = toArk(target);
 
     it.each(samples.map((sample) => [sample]))('agrees with the type on %o', (sample) => {
       const accepted = target.parse(sample).ok;
@@ -82,7 +82,7 @@ describe('arkOf', () => {
   });
 
   it('reports the type message, with the path ArkType adds', () => {
-    const result = type({ email: arkOf(Email) })({ email: 'nope' });
+    const result = type({ email: toArk(Email) })({ email: 'nope' });
 
     expect(result).toBeInstanceOf(type.errors);
     expect(Reflect.get(result, 'summary')).toBe('email must be an email address (was "nope")');
@@ -94,7 +94,7 @@ describe('arkOf', () => {
       type({ start: schemaOf(PositiveInteger), end: schemaOf(PositiveInteger) }),
     ) {}
 
-    const schema = arkSchema(type({ range: arkOf(Range) }));
+    const schema = fromArk(type({ range: toArk(Range) }));
 
     expect(issuesOf(schema.parse({ range: { start: 0, end: -1 } }))).toStrictEqual([
       {
@@ -106,7 +106,7 @@ describe('arkOf', () => {
   });
 
   it('returns the value as it came when ArkType runs it alone', () => {
-    expect(type({ id: arkOf(Uuid) })({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f' })).toStrictEqual(
+    expect(type({ id: toArk(Uuid) })({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f' })).toStrictEqual(
       {
         id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f',
       },
@@ -114,7 +114,7 @@ describe('arkOf', () => {
   });
 
   it('accepts an instance of the type, a subtype and a parent holding a valid value', () => {
-    const node = arkOf(PositiveInteger);
+    const node = toArk(PositiveInteger);
 
     expect(node(new PositiveInteger(3))).toBeInstanceOf(PositiveInteger);
     expect(node(new Integer(3))).not.toBeInstanceOf(type.errors);
@@ -122,7 +122,7 @@ describe('arkOf', () => {
   });
 
   it('types its input as the type input and its output as the instance', () => {
-    const node = arkOf(Email);
+    const node = toArk(Email);
 
     expectTypeOf(node.inferIn).toEqualTypeOf<string>();
     expectTypeOf<Built<typeof node.t>>().toEqualTypeOf<Email>();
@@ -131,7 +131,7 @@ describe('arkOf', () => {
   it('works with a type from another copy of the package', async () => {
     vi.resetModules();
     const copy: typeof library = await import('../../../src/index.ts');
-    const schema = arkSchema(type({ id: arkOf(copy.Uuid) }));
+    const schema = fromArk(type({ id: toArk(copy.Uuid) }));
     const value = valueOf(schema.parse({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f' }));
 
     expect(value.id).toBeInstanceOf(Uuid);
@@ -141,7 +141,7 @@ describe('arkOf', () => {
   it('builds the very class it was given when two copies hold a type of one name', async () => {
     vi.resetModules();
     const copy: typeof library = await import('../../../src/index.ts');
-    const schema = arkSchema(type({ mine: arkOf(Uuid), theirs: arkOf(copy.Uuid) }));
+    const schema = fromArk(type({ mine: toArk(Uuid), theirs: toArk(copy.Uuid) }));
     const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
     const value = valueOf(schema.parse({ mine: id, theirs: id }));
 

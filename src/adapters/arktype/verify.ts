@@ -45,7 +45,7 @@ const withPath = (
 };
 
 /**
- * Internal: the constraints `arkObject()` attached to an object node.
+ * Internal: the constraints `constrainArk()` attached to an object node.
  *
  * @throws TypeError for an id no constraint was registered under.
  */
@@ -56,7 +56,7 @@ export const constraintsOf = (node: JsonNode): readonly AnyConstraint[] => {
     const found = registry.constraints.get(id);
 
     if (found === undefined) {
-      throw new TypeError(`arkSchema: constraint ${id} is unknown`);
+      throw new TypeError(`fromArk: constraint ${id} is unknown`);
     }
 
     return found;

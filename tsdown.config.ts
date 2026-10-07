@@ -7,6 +7,8 @@ const config: UserConfig = {
     'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
     'adapters/swagger/index': 'src/adapters/swagger/index.ts',
     'adapters/arktype/index': 'src/adapters/arktype/index.ts',
+    'adapters/zod/index': 'src/adapters/zod/index.ts',
+    'adapters/valibot/index': 'src/adapters/valibot/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

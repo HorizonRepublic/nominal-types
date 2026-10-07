@@ -1,5 +1,5 @@
 import { buildDocument } from '../../document/data.ts';
-import { nominalObjectOf } from '../../document/libraries.ts';
+import { nominalObjectOf } from '../../document/nominal-schemas.ts';
 import { loop } from './loop.ts';
 
 const document = buildDocument();

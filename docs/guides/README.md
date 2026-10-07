@@ -12,6 +12,8 @@ Short recipes. Each one solves one task.
 | check one field against another, such as guests and capacity   | [How to check one field against another](checking-fields-together.md)  |
 | check a request body or a value object with no other library   | [How to check an object with objectOf()](objects.md)                   |
 | check request bodies and configs with ArkType                  | [How to use nominal types in ArkType schemas](arktype.md)              |
+| put nominal types into Zod schemas                             | [How to use nominal types in Zod schemas](zod.md)                      |
+| put nominal types into Valibot schemas                         | [How to use nominal types in Valibot schemas](valibot.md)              |
 | put a nominal type inside another library's schema             | [How to use a type inside another validator](other-validators.md)      |
 | get a JSON Schema for OpenAPI                                  | [How to generate JSON Schema](json-schema.md)                          |
 | turn NestJS parameters and message payloads into nominal types | [How to validate NestJS route parameters](nestjs.md)                   |

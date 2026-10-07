@@ -4,15 +4,16 @@
 
 ## Defaults to follow
 
-- Check a request body, a message or a config with `objectOf({ field: Type, list: schemaOf(Type).array(), maybe: schemaOf(Type).optional() })`. No other library needed; every field comes out as an instance; unknown keys are dropped (`.strict()` refuses them). In a project that already uses ArkType, or for unions, recursion and transforms, use `arkSchema(type({ field: arkOf(Type) }))` from `@horizon-republic/nominal-types/adapters/arktype`.
+- Check a request body, a message or a config with `objectOf({ field: Type, list: schemaOf(Type).array(), maybe: schemaOf(Type).optional() })`. No other library needed; every field comes out as an instance; unknown keys are dropped (`.strict()` refuses them). In a project that already uses ArkType, or for unions, recursion and transforms, use `fromArk(type({ field: toArk(Type) }))` from `@horizon-republic/nominal-types/adapters/arktype`.
 - Make a value object of several fields with `class Stay extends Nominal('booking.Stay', objectOf({ … }, constraint))`: getters per field (`stay.guests`), `stay.copyWith({ guests: 3 })` returns a checked copy and throws `NominalError` when a rule breaks.
-- Name the schema and its value type the same: `export const X = arkSchema(…); export type X = ValueOf<typeof X>;`.
+- Name the schema and its value type the same: `export const X = fromArk(…); export type X = ValueOf<typeof X>;`.
 - Use `Type.parse(input)` for input that may be wrong; it returns `{ ok: true, value }` or `{ ok: false, issues }`. Use `new Type(value)` only where a bad value is a bug; it throws `NominalError`.
-- Write a rule across fields once with `constraint()` and attach it: `objectOf({ … }, rule)`, `arkSchema(type, rule)`, `arkObject(type, rule)` for a nested ArkType object, or `Nominal('Name', rule)`.
+- Write a rule across fields once with `constraint()` and attach it: `objectOf({ … }, rule)`, `fromArk(type, rule)`, `constrainArk(type, rule)` for a nested ArkType object, or `Nominal('Name', rule)`.
 - In NestJS, check route parameters and query values with `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, or `{ schema: Type }` on NestJS 12.
 - Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
 - Name types with the part of the system in front and a dot: `Nominal('billing.InvoiceNumber', …)`, class named like the last part (`class InvoiceNumber`). Names allow letters, digits, `_` and `-` in each part; `/` and spaces throw. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on.
-- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `arkOf(Type)`, which is about 20 times faster.
+- In Zod use `toZod(Type)` for fields and `constrainZod(object, ...constraints)` (`/adapters/zod`); in Valibot `toValibot(Type)` and `constrainValibot(object, ...constraints)` (`/adapters/valibot`). Adapter functions are named verb + library: `to…` (our type into the library), `constrain…` (rules onto the library's object), `fromArk` (an ArkType schema back to instances).
+- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `toArk(Type)`, which is about 20 times faster.
 
 ## Core API
 
@@ -48,18 +49,18 @@ export const withinCapacity = constraint(
 
 ```ts
 import { type } from 'arktype';
-import { arkObject, arkOf, arkSchema } from '@horizon-republic/nominal-types/adapters/arktype';
+import { constrainArk, toArk, fromArk } from '@horizon-republic/nominal-types/adapters/arktype';
 
-const Stay = arkObject(
-  type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+const Stay = constrainArk(
+  type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
   withinCapacity,
 );
 
-export const CreateBooking = arkSchema(
+export const CreateBooking = fromArk(
   type({
-    id: arkOf(Uuid),
-    email: type('string.trim').pipe(arkOf(Email)),
-    'backup?': arkOf(Email).or('null'),
+    id: toArk(Uuid),
+    email: type('string.trim').pipe(toArk(Email)),
+    'backup?': toArk(Email).or('null'),
     stays: Stay.array(),
   }),
 );
@@ -69,8 +70,8 @@ CreateBooking.parse(body);
 // { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['stays', 0, 'guests'] }] }
 ```
 
-- `arkOf(Type)` is a field, `arkObject(type, ...constraints)` an object with rules, `arkSchema(type, ...constraints)` the whole schema.
-- Supported around `arkOf()`: optional keys, `.or('null')`, arrays, tuples, records, unions told apart by type or by a literal field, morphs that end in `arkOf()`. `arkSchema()` throws a `TypeError` for a morph after `arkOf()` and for unions it can't tell apart.
+- `toArk(Type)` is a field, `constrainArk(type, ...constraints)` an object with rules, `fromArk(type, ...constraints)` the whole schema.
+- Supported around `toArk()`: optional keys, `.or('null')`, arrays, tuples, records, unions told apart by type or by a literal field, morphs that end in `toArk()`. `fromArk()` throws a `TypeError` for a morph after `toArk()` and for unions it can't tell apart.
 - The result is a Standard Schema with JSON Schema for `draft-2020-12`, `draft-07` and `openapi-3.0`; NestJS 12 takes it as `@Body({ schema: CreateBooking })`.
 
 ## Built-in types

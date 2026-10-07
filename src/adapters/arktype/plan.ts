@@ -21,7 +21,7 @@ const leafPlan = (name: string): Plan => {
   const target = registry.types.get(name);
 
   if (target === undefined) {
-    throw new TypeError(`arkSchema: no type named ${name} was given to arkOf()`);
+    throw new TypeError(`fromArk: no type named ${name} was given to toArk()`);
   }
 
   return { build: trustedConstructorFor(target), verify: undefined };
@@ -45,7 +45,7 @@ const morphPlan = (node: JsonNode): Plan | undefined => {
  * Internal: the plan for a node of ArkType's `.json`, or `undefined` where nothing below it needs
  * building or verifying.
  *
- * @throws TypeError for an `arkOf()` node in a place whose branch can't be told at runtime.
+ * @throws TypeError for an `toArk()` node in a place whose branch can't be told at runtime.
  */
 export const planOf = (node: unknown): Plan | undefined => {
   if (Array.isArray(node)) {

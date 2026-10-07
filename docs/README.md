@@ -16,6 +16,8 @@ New here? Start with the tutorial. Checking request bodies? See [Choosing how to
 - [How to check one field against another](guides/checking-fields-together.md)
 - [How to check an object with objectOf()](guides/objects.md)
 - [How to use nominal types in ArkType schemas](guides/arktype.md)
+- [How to use nominal types in Zod schemas](guides/zod.md)
+- [How to use nominal types in Valibot schemas](guides/valibot.md)
 - [How to use a type inside another validator](guides/other-validators.md)
 - [How to generate JSON Schema](guides/json-schema.md)
 - [How to validate NestJS route parameters](guides/nestjs.md)

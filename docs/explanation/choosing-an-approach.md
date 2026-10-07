@@ -6,20 +6,21 @@ This page lists the ways, says which one we recommend, and when another one fits
 
 ## The short answer
 
-| You are checking                                    | Recommended                                        | Guide                                                    |
-| --------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------- |
-| a request body, a message or a config               | `objectOf()`                                       | [objectOf()](../guides/objects.md)                       |
-| the same, in a project that uses ArkType            | an ArkType schema with `arkOf()` and `arkSchema()` | [ArkType](../guides/arktype.md)                          |
-| a route parameter or a query value in NestJS        | `NominalPipe`, or `{ schema: Type }` on NestJS 12  | [NestJS](../guides/nestjs.md)                            |
-| a value with behaviour of its own, such as a stay   | a type whose rule is `objectOf()`                  | [objectOf()](../guides/objects.md#making-a-value-object) |
-| DTOs in a project that already uses class-validator | `@NominalField()`                                  | [class-validator](../guides/class-validator.md)          |
-| one value, such as an email from a form             | `Email.parse(input)`                               | [Validating input](../guides/validating-input.md)        |
+| You are checking                                    | Recommended                                       | Guide                                                    |
+| --------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| a request body, a message or a config               | `objectOf()`                                      | [objectOf()](../guides/objects.md)                       |
+| the same, in a project that uses ArkType            | an ArkType schema with `toArk()` and `fromArk()`  | [ArkType](../guides/arktype.md)                          |
+| the same, in a project that uses Zod or Valibot     | their schemas with `toZod()` or `toValibot()`     | [Zod](../guides/zod.md), [Valibot](../guides/valibot.md) |
+| a route parameter or a query value in NestJS        | `NominalPipe`, or `{ schema: Type }` on NestJS 12 | [NestJS](../guides/nestjs.md)                            |
+| a value with behaviour of its own, such as a stay   | a type whose rule is `objectOf()`                 | [objectOf()](../guides/objects.md#making-a-value-object) |
+| DTOs in a project that already uses class-validator | `@NominalField()`                                 | [class-validator](../guides/class-validator.md)          |
+| one value, such as an email from a form             | `Email.parse(input)`                              | [Validating input](../guides/validating-input.md)        |
 
 Using nominal types adds little time to the library that checks the rest. The numbers are at the [end of this page](#what-each-way-costs).
 
 ## Checking an object
 
-A nominal type checks one value. Something else has to say which fields an object has. You have four choices.
+A nominal type checks one value. Something else has to say which fields an object has. You have five choices.
 
 ### objectOf() (recommended)
 
@@ -47,12 +48,12 @@ It doesn't cover unions of different object shapes, recursive schemas or transfo
 
 ```ts
 import { type } from 'arktype';
-import { arkOf, arkSchema } from '@horizon-republic/nominal-types/adapters/arktype';
+import { toArk, fromArk } from '@horizon-republic/nominal-types/adapters/arktype';
 import type { ValueOf } from '@horizon-republic/nominal-types';
 import { Email, PositiveInteger } from '@horizon-republic/nominal-types';
 
-export const CreateOrder = arkSchema(
-  type({ email: arkOf(Email), quantity: arkOf(PositiveInteger), 'note?': 'string' }),
+export const CreateOrder = fromArk(
+  type({ email: toArk(Email), quantity: toArk(PositiveInteger), 'note?': 'string' }),
 );
 export type CreateOrder = ValueOf<typeof CreateOrder>;
 ```
@@ -79,6 +80,10 @@ export class CreateOrderDto {
 Use it when the project already checks its DTOs with class-validator. Nominal types add only a few percent to class-validator's own time.
 
 For new code, prefer ArkType. class-validator itself is slow, and it gets slower as the app registers more DTO classes: the same body takes 0.13 s in a small app and 1.1 s in an app with a thousand DTOs.
+
+### A Zod or Valibot schema with the adapter
+
+In a project that uses Zod or Valibot, put `toZod(Type)` or `toValibot(Type)` into their schemas. The values come out as instances, at about 1.3 to 1.6 times the library's own time on a large document. See [Zod](../guides/zod.md) and [Valibot](../guides/valibot.md).
 
 ### A schema of another library, with `schemaOf()`
 
@@ -124,16 +129,16 @@ new Stay({ guests: 2, capacity: 3 }).copyWith({ guests: 3 }).guests; // Positive
 
 The rule can also be a `constraint()` alone, as in `Occupancy` above, or an ArkType schema. Then the fields are read through `value`, such as `occupancy.value.guests`.
 
-Don't make every request body a class this way. A body is checked once and taken apart. A plain object from `arkSchema()` is simpler to use, and its fields are instances already.
+Don't make every request body a class this way. A body is checked once and taken apart. A plain object from `fromArk()` is simpler to use, and its fields are instances already.
 
 ## Rules across fields
 
 A rule that reads two fields, such as "the end comes after the start", is a `constraint()`. Write it once and attach it wherever the object is checked:
 
-| Where             | How                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| an ArkType schema | `arkSchema(type({ … }), rule)` or `arkObject(type({ … }), rule)` for a nested object |
-| a type of its own | `Nominal('Name', rule)`                                                              |
+| Where             | How                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| an ArkType schema | `fromArk(type({ … }), rule)` or `constrainArk(type({ … }), rule)` for a nested object |
+| a type of its own | `Nominal('Name', rule)`                                                               |
 
 See [How to check one field against another](../guides/checking-fields-together.md).
 

@@ -62,13 +62,15 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 | nominal-types + ArkType adapter       |         4.5 ms |                 15 ms |                        14 ms |
 | Zod                                   |         6.8 ms |                7.0 ms |                       6.8 ms |
 | Valibot                               |         7.1 ms |                7.2 ms |                       7.2 ms |
+| nominal-types + Zod adapter           |         9.1 ms |                 13 ms |                       9.4 ms |
+| nominal-types + Valibot adapter       |          12 ms |                 15 ms |                        15 ms |
 | class-validator                       |         105 ms |                103 ms |                       105 ms |
 | nominal-types + class-validator       |         110 ms |                111 ms |                       109 ms |
 | nominal-types + ArkType, `schemaOf()` |         110 ms |                111 ms |                       201 ms |
 
 How to read it:
 
-- Only the nominal-types rows build instances: objects such as `Email` and `PositiveInteger`, ready to use. The other libraries return plain values. `objectOf()` builds one for every value, about 112,000; the ArkType adapter only for its `arkOf()` fields.
+- Only the nominal-types rows build instances: objects such as `Email` and `PositiveInteger`, ready to use. The other libraries return plain values. `objectOf()` builds one for every value, about 112,000; the ArkType adapter only for its `toArk()` fields.
 - `objectOf()` needs no other library and no build step. It is faster than Zod and Valibot, and as fast as Typia on a document with an error. Typia, which compiles its checks from TypeScript types at build time, stays about twice as fast on a valid one.
 - With the adapter, ArkType checks every field on its own compiled path, and one generated function per object builds the instances afterwards. The whole document comes out faster than with Zod or Valibot, which build no instances.
 - With `schemaOf()` inside ArkType, it is about 20 times slower. A nominal type is then a foreign Standard Schema to ArkType, and every such field goes through a slower path.
@@ -82,7 +84,7 @@ How the adapter gets there, on an object with a UUID, an email and a count:
 | the adapter, with instances        | 256 ns |
 | `schemaOf()` fields inside ArkType | 1.9 µs |
 
-Any morph makes ArkType leave its fast path, so `arkOf()` adds none: it is a one-argument `.narrow()` with the type's own check, which ArkType compiles in. A two-argument predicate costs three times more, since ArkType then builds a context for it.
+Any morph makes ArkType leave its fast path, so `toArk()` adds none: it is a one-argument `.narrow()` with the type's own check, which ArkType compiles in. A two-argument predicate costs three times more, since ArkType then builds a context for it.
 
 ## In a NestJS app
 

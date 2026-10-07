@@ -20,6 +20,7 @@ const items = (count: number): string => (count === 1 ? '1 item' : `${count} ite
  */
 export const boundsOf = (options: ArrayOptions): { readonly min: number; readonly max: number } => {
   const { length, min, max } = options;
+
   for (const [name, value] of Object.entries({ length, min, max })) {
     if (value !== undefined && !isCount(value)) {
       throw new TypeError(
@@ -27,12 +28,15 @@ export const boundsOf = (options: ArrayOptions): { readonly min: number; readonl
       );
     }
   }
+
   if (length !== undefined && (min !== undefined || max !== undefined)) {
     throw new TypeError('array(): pass either length or min and max, not both');
   }
+
   if (min !== undefined && max !== undefined && min > max) {
     throw new TypeError(`array(): min (${min}) is greater than max (${max})`);
   }
+
   return {
     min: length ?? min ?? 0,
     max: length ?? max ?? Number.POSITIVE_INFINITY,
@@ -46,6 +50,7 @@ export const countMessage = (options: ArrayOptions, count: number): string => {
   if (options.length !== undefined) {
     return `must have ${items(options.length)} (was ${count})`;
   }
+
   return options.min !== undefined && count < options.min
     ? `must have at least ${items(options.min)} (was ${count})`
     : `must have at most ${items(options.max ?? 0)} (was ${count})`;

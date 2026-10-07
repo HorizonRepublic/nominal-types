@@ -60,6 +60,7 @@ export class TypeSchema<Input, Output> {
       forTarget(target, shape.describe(side, target)),
     );
     runners.set(this, shape.run);
+
     if (options.array === true) {
       arraySchemas.add(this);
     }
@@ -76,6 +77,7 @@ export class TypeSchema<Input, Output> {
    */
   public parse(input: unknown): Parsed<Output> {
     const result = this.#shape.run(input);
+
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
@@ -123,11 +125,13 @@ export class TypeSchema<Input, Output> {
    */
   public fromString(): TypeSchema<Input | string, Output> {
     const form = this.#textForm;
+
     if (form === undefined) {
       throw new TypeError(
         'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable()',
       );
     }
+
     return new TypeSchema<Input | string, Output>(textShape(this.#shape, form));
   }
 
@@ -178,7 +182,9 @@ export const schemaOf = <Type extends AnyNominalType>(
   if (!isNominalType(type)) {
     throw new TypeError(`schemaOf() takes a nominal type (was ${describeValue(type)})`);
   }
+
   const construct = constructorFor(type);
+
   return new TypeSchema<InputOf<Type['rule']>, Type['prototype']>(
     {
       // The function makes an instance of `type` or a Rejection; the compiler can't follow the

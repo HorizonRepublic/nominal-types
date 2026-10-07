@@ -12,12 +12,14 @@ type Library = typeof library;
 
 const anotherCopy = (): Promise<Library> => {
   vi.resetModules();
+
   return import('../../src/index.ts');
 };
 
 describe('state shared by copies of the package', () => {
   it('finds a type declared by another copy when filling an OpenAPI document', async () => {
     const copy = await anotherCopy();
+
     copy.Nominal('CopyOnlyType', /^c$/u);
     const document = applyNominalTypes({
       components: { schemas: { CopyOnlyType: { type: 'object', properties: {} } } },
@@ -54,6 +56,7 @@ describe('a type name declared twice', () => {
 
   it('warns once when two different types take one name', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     Nominal('TwiceDeclared', /^a$/u);
     Nominal('TwiceDeclared', /^b$/u);
     Nominal('TwiceDeclared', /^c$/u);
@@ -64,6 +67,7 @@ describe('a type name declared twice', () => {
 
   it('stays silent when the same type is declared again', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     Nominal('DeclaredAgain', matching(/^a$/u, 'an a'));
     Nominal('DeclaredAgain', matching(/^a$/u, 'an a'));
 
@@ -72,6 +76,7 @@ describe('a type name declared twice', () => {
 
   it('stays silent when another copy declares the built-in types again', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     await anotherCopy();
 
     expect(warn).not.toHaveBeenCalled();

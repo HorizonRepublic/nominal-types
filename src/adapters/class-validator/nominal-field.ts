@@ -13,6 +13,7 @@ const toPlain = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map((item: unknown) => toPlain(item));
   }
+
   return hasToJson(value) ? toPlain(value.toJSON()) : value;
 };
 
@@ -30,8 +31,61 @@ export interface NominalFieldOptions<Value> extends ValidationOptions {
 
 const messageOf = (target: NominalTarget, value: unknown, property: string): string => {
   const parsed = parseTarget(target, value);
+
   return (parsed.ok ? [] : parsed.issues).map((issue) => issueText(issue, property)).join('; ');
 };
+
+const toInstance = (target: NominalTarget): PropertyDecorator =>
+  Transform(
+    ({ value }: { value: unknown }) => {
+      const parsed = parseTarget(target, value);
+
+      return parsed.ok ? parsed.value : value;
+    },
+    { toClassOnly: true },
+  );
+
+const toValue = <Target extends NominalTarget>(
+  target: Target,
+  serialize: ((value: NonNullable<TargetValue<Target>>) => unknown) | undefined,
+): PropertyDecorator =>
+  Transform(
+    ({ value }: { value: unknown }) => {
+      if (serialize === undefined || value === undefined || value === null) {
+        return toPlain(value);
+      }
+
+      const parsed = parseTarget(target, value);
+
+      if (!parsed.ok) {
+        return toPlain(value);
+      }
+
+      // parse() of the target gives the value the target produces; the compiler can't follow a
+      // target that is either a type or a schema that far.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      const produced = parsed.value as NonNullable<TargetValue<Target>>;
+
+      return serialize(produced);
+    },
+    { toPlainOnly: true },
+  );
+
+const checkOf =
+  (target: NominalTarget, options: ValidationOptions): PropertyDecorator =>
+  (prototype, property) => {
+    registerDecorator({
+      name: 'nominalField',
+      target: prototype.constructor,
+      propertyName: String(property),
+      options,
+      validator: {
+        validate: (value: unknown) => parseTarget(target, value).ok,
+        defaultMessage: (args?: ValidationArguments) =>
+          messageOf(target, args?.value, args?.property ?? String(property)),
+      },
+    });
+  };
 
 /**
  * Declares a DTO property as a nominal type, for class-validator and class-transformer: the value
@@ -64,44 +118,13 @@ export const NominalField = <Target extends NominalTarget>(
   if (!isTarget(target)) {
     throw new TypeError('NominalField() takes a nominal type or a schemaOf() schema');
   }
-  const toInstance = Transform(
-    ({ value }: { value: unknown }) => {
-      const parsed = parseTarget(target, value);
-      return parsed.ok ? parsed.value : value;
-    },
-    { toClassOnly: true },
-  );
+
   const { serialize, ...validation } = options;
-  const toValue = Transform(
-    ({ value }: { value: unknown }) => {
-      if (serialize === undefined || value === undefined || value === null) {
-        return toPlain(value);
-      }
-      const parsed = parseTarget(target, value);
-      if (!parsed.ok) {
-        return toPlain(value);
-      }
-      // parse() of the target gives the value the target produces; the compiler can't follow a
-      // target that is either a type or a schema that far.
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      const produced = parsed.value as NonNullable<TargetValue<Target>>;
-      return serialize(produced);
-    },
-    { toPlainOnly: true },
-  );
+  const decorators = [toInstance(target), toValue(target, serialize), checkOf(target, validation)];
+
   return (prototype, property) => {
-    toInstance(prototype, property);
-    toValue(prototype, property);
-    registerDecorator({
-      name: 'nominalField',
-      target: prototype.constructor,
-      propertyName: String(property),
-      options: validation,
-      validator: {
-        validate: (value: unknown) => parseTarget(target, value).ok,
-        defaultMessage: (args?: ValidationArguments) =>
-          messageOf(target, args?.value, args?.property ?? String(property)),
-      },
-    });
+    for (const decorate of decorators) {
+      decorate(prototype, property);
+    }
   };
 };

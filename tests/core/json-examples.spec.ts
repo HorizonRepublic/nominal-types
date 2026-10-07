@@ -23,6 +23,7 @@ const hasExamples = (part: unknown): boolean =>
 
 const partsWithExamples = (schema: Record<string, unknown>): number => {
   const parts: unknown = schema['allOf'];
+
   return Array.isArray(parts) ? parts.filter((part) => hasExamples(part)).length : 0;
 };
 

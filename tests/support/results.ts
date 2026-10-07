@@ -8,6 +8,7 @@ export const thrownBy = (build: () => unknown): unknown => {
   } catch (error) {
     return error;
   }
+
   throw new Error('expected the call to throw');
 };
 
@@ -15,6 +16,7 @@ export const valueOf = <Instance>(parsed: Parsed<Instance>): Instance => {
   if (!parsed.ok) {
     throw new Error('expected a parsed value');
   }
+
   return parsed.value;
 };
 
@@ -22,6 +24,7 @@ export const issuesOf = (parsed: Parsed<unknown>): readonly StandardSchemaV1.Iss
   if (parsed.ok) {
     throw new Error('expected issues');
   }
+
   return parsed.issues;
 };
 
@@ -29,6 +32,7 @@ export const outputOf = <Output>(result: StandardSchemaV1.Result<Output>): Outpu
   if (result.issues !== undefined) {
     throw new Error('expected a value');
   }
+
   return result.value;
 };
 

@@ -50,6 +50,7 @@ describe('Standard Schema', () => {
         'Remote',
         handWritten(async (value) => {
           await Promise.resolve();
+
           return { value: String(value) };
         }),
       );

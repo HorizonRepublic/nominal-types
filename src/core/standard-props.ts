@@ -34,6 +34,7 @@ export const standardProps = <Input, Output>(
   vendor,
   validate: (value) => {
     const result = run(value);
+
     return result instanceof Rejection ? { issues: result.issues } : { value: result };
   },
   jsonSchema: {

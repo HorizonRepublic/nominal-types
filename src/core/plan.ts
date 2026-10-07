@@ -27,11 +27,13 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
   if (rest.length === 0) {
     return stepOf(first);
   }
+
   const patterns = [first, ...rest];
   const combined = new RegExp(
     `^${patterns.map((schema) => `(?=${schema.pattern.source})`).join('')}`,
     first.pattern.flags,
   );
+
   return {
     accepts: (value) => typeof value === 'string' && combined.test(value),
     issues: (value) =>
@@ -57,15 +59,20 @@ export const planOf = (rules: readonly NominalSchema[]): readonly Step[] | undef
   if (!allNative(rules)) {
     return undefined;
   }
+
   const steps: Step[] = [];
   let group: PatternSchema[] = [];
+
   const flush = (): void => {
     const [first, ...rest] = group;
+
     if (first !== undefined) {
       steps.push(mergedStep(first, rest));
     }
+
     group = [];
   };
+
   for (const rule of rules) {
     if (!mergeable(rule)) {
       flush();
@@ -77,7 +84,9 @@ export const planOf = (rules: readonly NominalSchema[]): readonly Step[] | undef
       group.push(rule);
     }
   }
+
   flush();
+
   return steps;
 };
 
@@ -90,6 +99,7 @@ export const runPlan = (plan: readonly Step[], input: unknown): unknown => {
       return new Rejection(step.issues(input));
     }
   }
+
   return input;
 };
 
@@ -111,10 +121,12 @@ export const stepsOf = (
 ): ReadonlyArray<Step | ConvertStep> => {
   const steps: Array<Step | ConvertStep> = [];
   let native: NominalSchema[] = [];
+
   const flush = (): void => {
     steps.push(...(planOf(native) ?? []));
     native = [];
   };
+
   for (const rule of rules) {
     if (rule instanceof NativeSchema) {
       native.push(rule);
@@ -123,6 +135,8 @@ export const stepsOf = (
       steps.push(convertOf(rule));
     }
   }
+
   flush();
+
   return steps;
 };

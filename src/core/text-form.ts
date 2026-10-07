@@ -21,13 +21,17 @@ export const defineTextForm = (type: object, form: TextForm): void => {
  */
 export const textFormOf = (type: unknown): TextForm | undefined => {
   let current: unknown = type;
+
   while (typeof current === 'function') {
     const form = forms.get(current);
+
     if (form !== undefined) {
       return form;
     }
+
     current = Object.getPrototypeOf(current);
   }
+
   return undefined;
 };
 

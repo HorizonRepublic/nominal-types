@@ -29,6 +29,7 @@ describe('Url', () => {
   it('hands out a fresh URL each time', () => {
     const url = new Url('https://example.com/');
     const copy = url.toURL();
+
     copy.pathname = '/changed';
 
     expect(url.toURL().pathname).toBe('/');

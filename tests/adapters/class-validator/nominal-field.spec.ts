@@ -48,6 +48,7 @@ const build = <Dto extends object>(
   plain: object,
 ): { value: Dto; errors: ValidationError[] } => {
   const value = plainToInstance(dto, plain);
+
   return { value, errors: validateSync(value, { whitelist: true, forbidNonWhitelisted: true }) };
 };
 

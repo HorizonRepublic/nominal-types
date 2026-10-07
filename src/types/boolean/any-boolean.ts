@@ -7,6 +7,7 @@ const booleanFromText = (text: string): boolean | undefined => {
   if (text === 'true') {
     return true;
   }
+
   return text === 'false' ? false : undefined;
 };
 

@@ -13,9 +13,11 @@ const toBigInt = (value: unknown): bigint | Rejection => {
   if (typeof value === 'bigint') {
     return value;
   }
+
   if (typeof value === 'string' && value.length <= longestText && integerText.test(value)) {
     return BigInt(value);
   }
+
   return new Rejection([{ message: mustBe('a bigint or an integer string', value) }]);
 };
 

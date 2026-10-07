@@ -23,6 +23,7 @@ const thrownBy = (run: () => unknown): unknown => {
   } catch (error) {
     return error;
   }
+
   throw new Error('expected the call to throw');
 };
 
@@ -99,6 +100,7 @@ describe('NominalPipe', () => {
     beforeAll(async () => {
       const module = await Test.createTestingModule({ controllers: [UsersController] }).compile();
       const fastify = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+
       fastify.useGlobalPipes(new NominalPipe());
       await fastify.init();
       await fastify.getHttpAdapter().getInstance().ready();
@@ -111,6 +113,7 @@ describe('NominalPipe', () => {
 
     const get = async (url: string): Promise<{ status: number; body: unknown }> => {
       const response = await app.inject({ method: 'GET', url });
+
       return { status: response.statusCode, body: response.json() };
     };
 

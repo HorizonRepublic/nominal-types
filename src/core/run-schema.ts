@@ -28,14 +28,19 @@ export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
   if (schema instanceof NativeSchema) {
     return schema.accepts(input) ? input : new Rejection(schema.issuesFor(input));
   }
+
   const runner = runners.get(schema);
+
   if (runner !== undefined) {
     return runner(input);
   }
+
   const result = schema['~standard'].validate(input);
+
   if (result instanceof Promise) {
     throw new TypeError('asynchronous schemas are not supported');
   }
+
   return result.issues === undefined ? result.value : new Rejection(result.issues.map(plainIssue));
 };
 
@@ -50,15 +55,20 @@ export const foreignRunner = (
   typeName: string,
 ): ((value: unknown) => unknown) => {
   const runner = runners.get(rule);
+
   if (runner !== undefined) {
     return runner;
   }
+
   const { validate } = rule['~standard'];
+
   return (value) => {
     const result = validate(value);
+
     if (result instanceof Promise) {
       throw new TypeError(`${typeName}: asynchronous schemas are not supported`);
     }
+
     return result.issues === undefined
       ? result.value
       : new Rejection(result.issues.map(plainIssue));

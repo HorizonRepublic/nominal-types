@@ -8,14 +8,17 @@ const collect = (
     ...(Array.isArray(examples) ? (examples as unknown[]) : []),
     ...(example === undefined ? [] : [example]),
   ];
+
   if (!Array.isArray(allOf)) {
     return { schema, examples: own };
   }
+
   const parts = allOf.map((part: unknown) =>
     typeof part === 'object' && part !== null
       ? collect(Object.fromEntries(Object.entries(part)))
       : { schema: {}, examples: [] },
   );
+
   return {
     schema: { ...schema, allOf: parts.map((part) => part.schema) },
     examples: [...own, ...parts.flatMap((part) => part.examples)],
@@ -39,9 +42,11 @@ export const withValidExamples = (
   const { schema, examples } = collect(body);
   const valid = [...new Set(examples)].filter((example) => accepts(example));
   const [first] = valid;
+
   if (first === undefined) {
     return schema;
   }
+
   return options.target === 'openapi-3.0'
     ? { ...schema, example: first }
     : { ...schema, examples: valid };

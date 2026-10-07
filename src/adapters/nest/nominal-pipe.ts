@@ -44,9 +44,11 @@ const badRequest: NominalExceptionFactory = (issues, metadata) =>
 
 const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => {
   const declared: unknown = Reflect.get(metadata, 'schema');
+
   if (isTarget(declared)) {
     return declared;
   }
+
   return isNominalType(metadata.metatype) ? metadata.metatype : undefined;
 };
 
@@ -89,6 +91,7 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
   ) {
     const target = isTarget(targetOrOptions) ? targetOrOptions : undefined;
     const settings = isTarget(targetOrOptions) ? options : (targetOrOptions ?? options);
+
     this.#target = target;
     this.#exceptionFactory = settings.exceptionFactory ?? badRequest;
     this.#fromString = settings.fromString ?? true;
@@ -96,26 +99,33 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
 
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {
     const target = this.#target ?? targetOf(metadata);
+
     if (target === undefined) {
       return value;
     }
+
     const parsed = parseTarget(target, this.#inputOf(target, value, metadata));
+
     if (parsed.ok) {
       return parsed.value;
     }
+
     throw this.#exceptionFactory(parsed.issues, metadata);
   }
 
   #inputOf(target: NominalPipeTarget, value: unknown, metadata: ArgumentMetadata): unknown {
     const fromText = metadata.type === 'query' || metadata.type === 'param';
+
     if (fromText && this.#fromString && typeof value === 'string' && isNominalType(target)) {
       return textFormOf(target)?.(value) ?? value;
     }
+
     const lone =
       metadata.type === 'query' &&
       value !== undefined &&
       !Array.isArray(value) &&
       isArraySchema(target);
+
     return lone ? [value] : value;
   }
 }

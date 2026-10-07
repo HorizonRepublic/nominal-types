@@ -33,10 +33,12 @@ export const ApiNominalProperty = (
   if (!isTarget(target)) {
     throw new TypeError('ApiNominalProperty() takes a nominal type or a schemaOf() schema');
   }
+
   const schema = withoutUri(target['~standard'].jsonSchema.input({ target: 'openapi-3.0' }));
   // A schema that accepts a missing value describes an optional property.
   // oxlint-disable-next-line unicorn/no-useless-undefined
   const required = !parseTarget(target, undefined).ok;
+
   // The generated schema is plain JSON Schema, which `ApiProperty` takes keyword for keyword; its
   // option type is a union the compiler can't match against a record.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion

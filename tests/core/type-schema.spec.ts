@@ -208,6 +208,7 @@ describe('optional() and nullable()', () => {
 
   it('leave the original schema as it was', () => {
     const email = schemaOf(Email);
+
     email.optional();
 
     expect(email.parse(undefined).ok).toBe(false);
@@ -249,6 +250,7 @@ describe('optional() and nullable()', () => {
 
 describe('a nominal type over an array', () => {
   const UserId = Uuid.subtype('UserId');
+
   class Podium extends Nominal('Podium', schemaOf(UserId).array({ length: 3 })) {
     public get winner(): InstanceType<typeof UserId> | undefined {
       return this.value[0];

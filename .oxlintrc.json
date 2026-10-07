@@ -137,7 +137,55 @@
     ],
     "jsdoc/require-returns": "off",
     "jsdoc/require-param": "off",
-    "jsdoc/require-throws-type": "off"
+    "jsdoc/require-throws-type": "off",
+    "stylistic/padding-line-between-statements": [
+      "error",
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "return"
+      },
+      {
+        "blankLine": "always",
+        "prev": ["const", "let"],
+        "next": "*"
+      },
+      {
+        "blankLine": "any",
+        "prev": ["const", "let"],
+        "next": ["const", "let"]
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": ["block-like", "throw", "try"]
+      },
+      {
+        "blankLine": "always",
+        "prev": "block-like",
+        "next": "*"
+      },
+      {
+        "blankLine": "always",
+        "prev": "import",
+        "next": "*"
+      },
+      {
+        "blankLine": "any",
+        "prev": "import",
+        "next": "import"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": ["export"]
+      },
+      {
+        "blankLine": "any",
+        "prev": "export",
+        "next": "export"
+      }
+    ]
   },
   "overrides": [
     {
@@ -153,7 +201,12 @@
           }
         ],
         "public-docs/require-jsdoc": "off",
-        "unicorn/no-useless-undefined": ["error", { "checkArguments": false }]
+        "unicorn/no-useless-undefined": [
+          "error",
+          {
+            "checkArguments": false
+          }
+        ]
       }
     },
     {
@@ -176,6 +229,10 @@
     {
       "name": "public-docs",
       "specifier": "eslint-plugin-jsdoc"
+    },
+    {
+      "name": "stylistic",
+      "specifier": "@stylistic/eslint-plugin"
     }
   ]
 }

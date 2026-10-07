@@ -36,11 +36,13 @@ export const rulesOf = (root: object, target: object): readonly NominalSchema[] 
   if (target === root) {
     return [];
   }
+
   const base: unknown = Object.hasOwn(target, levelSlot)
     ? Reflect.get(target, levelSlot)
     : Object.getPrototypeOf(target);
   const inherited = isLevel(root, base) ? rulesOf(root, base) : [];
   const own: unknown = Object.hasOwn(target, 'rule') ? Reflect.get(target, 'rule') : undefined;
+
   return isSchema(own) ? [...inherited, own] : inherited;
 };
 
@@ -53,19 +55,25 @@ export const levelOf = (
 ): { readonly base: object | undefined; readonly keys: readonly symbol[] } => {
   const keys: symbol[] = [];
   let current: unknown = target;
+
   while (isLevel(root, current) && current !== root) {
     const key: unknown = Object.hasOwn(current, brandKeySlot)
       ? Reflect.get(current, brandKeySlot)
       : undefined;
+
     if (typeof key === 'symbol') {
       keys.push(key);
     }
+
     if (Object.hasOwn(current, levelSlot)) {
       const base: unknown = Reflect.get(current, levelSlot);
+
       return { base: isLevel(root, base) ? base : undefined, keys };
     }
+
     current = Object.getPrototypeOf(current);
   }
+
   return { base: undefined, keys };
 };
 
@@ -74,22 +82,27 @@ export const levelOf = (
  */
 export const descendsFrom = (root: object, target: object, instance: object): boolean => {
   let ancestor: unknown = Object.getPrototypeOf(target);
+
   while (typeof ancestor === 'function' && ancestor !== root) {
     if (instance instanceof ancestor) {
       return true;
     }
+
     ancestor = Object.getPrototypeOf(ancestor);
   }
+
   return false;
 };
 
 const ownKeyOf = (root: object, target: unknown): symbol | undefined => {
   const key: unknown = isLevel(root, target) ? Reflect.get(target, brandKeySlot) : undefined;
+
   return typeof key === 'symbol' ? key : undefined;
 };
 
 const variantSourcesOf = (root: object, target: unknown): readonly unknown[] => {
   const keys: unknown = isLevel(root, target) ? Reflect.get(target, variantSourceSlot) : undefined;
+
   return Array.isArray(keys) ? keys : [];
 };
 
@@ -100,6 +113,7 @@ const variantSourcesOf = (root: object, target: unknown): readonly unknown[] => 
 export const isVariantPair = (root: object, target: object, instance: object): boolean => {
   const own = ownKeyOf(root, target);
   const other: unknown = instance.constructor;
+
   return (
     variantSourcesOf(root, target).some(
       (key) => typeof key === 'symbol' && Reflect.get(instance, key) === true,

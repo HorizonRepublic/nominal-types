@@ -34,6 +34,8 @@ export const shared: SharedState = isSharedState(existing)
   ? existing
   : (() => {
       const state = create();
+
       Reflect.set(globalThis, key, state);
+
       return state;
     })();

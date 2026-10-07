@@ -14,6 +14,7 @@ export const withoutUri = (schema: Record<string, unknown>): Record<string, unkn
 
 const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
   const { examples, ...rest } = body;
+
   return Array.isArray(examples) && examples.length > 0 ? { ...rest, example: examples[0] } : rest;
 };
 
@@ -32,9 +33,12 @@ export const forTarget = (
   if (!Object.hasOwn(schemaUris, options.target)) {
     throw new TypeError(`JSON Schema target ${options.target} is not supported`);
   }
+
   const uri = schemaUris[options.target];
+
   if (uri === undefined) {
     return forOpenApi(body);
   }
+
   return { $schema: uri, ...body };
 };

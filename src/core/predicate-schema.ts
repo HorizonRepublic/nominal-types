@@ -33,6 +33,7 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
     if (this.#json === undefined) {
       throw new TypeError('the schema cannot describe itself as JSON Schema');
     }
+
     return { ...this.#json, description: this.description };
   }
 }

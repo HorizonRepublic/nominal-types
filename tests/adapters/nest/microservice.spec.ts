@@ -22,8 +22,10 @@ import { first } from './support.ts';
 const freePort = (): Promise<number> =>
   new Promise((resolve, reject) => {
     const server = createServer();
+
     server.listen(0, '127.0.0.1', () => {
       const address = server.address();
+
       server.close(() => {
         if (typeof address === 'object' && address !== null) {
           resolve(address.port);
@@ -57,6 +59,7 @@ describe('NominalPipe in a microservice', () => {
   beforeAll(async () => {
     const port = await freePort();
     const module = await Test.createTestingModule({ controllers: [UsersHandler] }).compile();
+
     service = module.createNestMicroservice({
       transport: Transport.TCP,
       options: { host: '127.0.0.1', port },

@@ -44,6 +44,14 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
   ) {
     return false;
   }
+  const minLength = keyword('minLength');
+  if (
+    typeof minLength === 'number' &&
+    typeof value === 'string' &&
+    Array.from(value).length < minLength
+  ) {
+    return false;
+  }
   const maxLength = keyword('maxLength');
   return !(
     typeof maxLength === 'number' &&

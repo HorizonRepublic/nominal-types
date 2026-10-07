@@ -6,7 +6,11 @@ const isNegative = (value: unknown): value is bigint => typeof value === 'bigint
 
 const NegativeBigIntBase: SubtypeOf<typeof AnyBigInt, 'NegativeBigInt'> = AnyBigInt.subtype(
   'NegativeBigInt',
-  satisfying(isNegative, 'a negative integer', { type: 'string', pattern: '^-[1-9]\\d*$' }),
+  satisfying(isNegative, 'a negative integer', {
+    type: 'string',
+    pattern: '^-[1-9]\\d*$',
+    examples: ['-9007199254740993'],
+  }),
 );
 
 /**

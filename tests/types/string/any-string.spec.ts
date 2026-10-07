@@ -37,6 +37,7 @@ describe('AnyString', () => {
 
   it('describes itself as a string', () => {
     expect(AnyString['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
+      title: 'AnyString',
       type: 'string',
       description: 'a string',
     });
@@ -101,8 +102,13 @@ describe('types under AnyString', () => {
 
   it('describes a type with one rule left without allOf', () => {
     expect(Email['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
+      title: 'Email',
       type: 'string',
       pattern: Email.pattern.source,
+      format: 'email',
+      minLength: 6,
+      maxLength: 254,
+      example: 'jane.doe@example.com',
       description: 'an email address',
     });
   });

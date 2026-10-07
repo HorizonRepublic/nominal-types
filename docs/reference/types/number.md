@@ -25,10 +25,10 @@ Root of the number types. Accepts any `number`, `NaN`, `Infinity` and `-Infinity
 
 Accepts any number but `NaN`, `Infinity` and `-Infinity`: the numbers JSON can carry, the 64-bit double of other languages.
 
-| Property    | Value                               |
-| ----------- | ----------------------------------- |
-| JSON Schema | adds `{ type: 'number' }`           |
-| Message     | `must be a finite number (was NaN)` |
+| Property    | Value                                       |
+| ----------- | ------------------------------------------- |
+| JSON Schema | adds `{ type: 'number', format: 'double' }` |
+| Message     | `must be a finite number (was NaN)`         |
 
 ## Sign types
 

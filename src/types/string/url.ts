@@ -8,7 +8,13 @@ const isAbsoluteUrl = (value: unknown): value is string =>
 
 const UrlBase: SubtypeOf<typeof AnyString, 'Url'> = AnyString.subtype(
   'Url',
-  stringOnly(satisfying(isAbsoluteUrl, 'a URL', { type: 'string', format: 'uri' })),
+  stringOnly(
+    satisfying(isAbsoluteUrl, 'a URL', {
+      type: 'string',
+      format: 'uri',
+      examples: ['https://example.com/docs'],
+    }),
+  ),
 );
 
 /**

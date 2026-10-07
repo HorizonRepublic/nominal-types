@@ -103,6 +103,7 @@ describe('PatternSchema', () => {
     ])('describes the pattern for %s', (target, header) => {
       expect(Ticket['~standard'].jsonSchema.input({ target })).toStrictEqual({
         ...header,
+        title: 'PatternTicket',
         type: 'string',
         pattern: String.raw`^T-\d{3}$`,
         description: 'a ticket number',
@@ -111,6 +112,7 @@ describe('PatternSchema', () => {
 
     it('leaves the description out when there is none', () => {
       expect(Code['~standard'].jsonSchema.output({ target: 'openapi-3.0' })).toStrictEqual({
+        title: 'PatternCode',
         type: 'string',
         pattern: String.raw`^C-\d{3}$`,
       });

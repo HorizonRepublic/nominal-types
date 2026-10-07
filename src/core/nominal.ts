@@ -9,6 +9,7 @@ import type {
   Parsed,
   ValueOf,
 } from './contracts.ts';
+import { withValidExamples } from './examples.ts';
 import {
   brandKeySlot,
   descendsFrom,
@@ -66,12 +67,21 @@ const run = (target: typeof NominalRoot, input: unknown): unknown => {
 const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
   schema instanceof RegExp ? new PatternSchema(schema) : schema;
 
-const converterOf = (target: typeof NominalRoot): StandardJSONSchemaV1.Converter => {
+const describe = (
+  target: typeof NominalRoot,
+  side: 'input' | 'output',
+  options: StandardJSONSchemaV1.Options,
+): Record<string, unknown> => {
   const converter = effectiveSchemaOf(target)['~standard'].jsonSchema;
   if (converter === undefined) {
     throw new TypeError(`${target.typeName}: the schema cannot describe itself as JSON Schema`);
   }
-  return converter;
+  const { $schema, title, ...body } = converter[side](options);
+  return {
+    ...($schema === undefined ? {} : { $schema }),
+    title: title ?? target.typeName,
+    ...withValidExamples(body, options, (example) => !(run(target, example) instanceof Rejection)),
+  };
 };
 
 class NominalRoot {
@@ -106,8 +116,8 @@ class NominalRoot {
         return parsed.ok ? { value: parsed.value } : { issues: parsed.issues };
       },
       jsonSchema: {
-        input: (options) => converterOf(this).input(options),
-        output: (options) => converterOf(this).output(options),
+        input: (options) => describe(this, 'input', options),
+        output: (options) => describe(this, 'output', options),
       },
     };
     standardProps.set(this, props);

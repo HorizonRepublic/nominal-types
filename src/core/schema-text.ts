@@ -29,8 +29,16 @@ export const describeValue = (value: unknown): string => {
 export const withoutUri = (schema: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
 
+const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
+  const { examples, ...rest } = body;
+  return Array.isArray(examples) && examples.length > 0 ? { ...rest, example: examples[0] } : rest;
+};
+
 /**
  * Puts the `$schema` of the requested target in front of a JSON Schema body.
+ *
+ * @remarks
+ * OpenAPI 3.0 has no `examples` keyword on a schema, so the first one becomes its `example`.
  *
  * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.
  */
@@ -42,5 +50,8 @@ export const forTarget = (
     throw new TypeError(`JSON Schema target ${options.target} is not supported`);
   }
   const uri = schemaUris[options.target];
-  return uri === undefined ? { ...body } : { $schema: uri, ...body };
+  if (uri === undefined) {
+    return forOpenApi(body);
+  }
+  return { $schema: uri, ...body };
 };

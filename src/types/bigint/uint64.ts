@@ -13,6 +13,7 @@ const Uint64Base: SubtypeOf<typeof AnyBigInt, 'Uint64'> = AnyBigInt.subtype(
     type: 'string',
     pattern: '^(?:0|[1-9]\\d*)$',
     maxLength: 20,
+    examples: ['18446744073709551615'],
   }),
 );
 

@@ -111,6 +111,7 @@ describe('Subtype constraints', () => {
     it('describes a subtype as allOf the parent and the constraint', () => {
       expect(FlashSku['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toStrictEqual({
         $schema: 'https://json-schema.org/draft/2020-12/schema',
+        title: 'FlashSku',
         allOf: [
           { type: 'string', pattern: String.raw`^SKU-\d{4}$` },
           { type: 'string', pattern: '^SKU-9' },

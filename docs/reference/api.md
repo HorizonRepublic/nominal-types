@@ -22,7 +22,7 @@ A schema that answers asynchronously throws `TypeError: <name>: asynchronous sch
 ### matching()
 
 ```ts
-matching(pattern, description?): PatternSchema
+matching(pattern, description?, jsonSchema?): PatternSchema
 ```
 
 A rule for strings that match `pattern`.
@@ -174,7 +174,9 @@ Get a schema with `Type['~standard'].jsonSchema.input({ target })` or `.output({
 Notes:
 
 - Any other target throws `TypeError: JSON Schema target <target> is not supported`.
+- Every type gets its name as `title`, unless its rule sets one.
 - A type with several rules gets an `allOf`, one entry per rule, with `$schema` once at the top.
+- Examples from all the type's rules move to the top, and only those the type accepts are kept. For `openapi-3.0`, which has no `examples` on a schema, the first one becomes `example`.
 - If a rule can't describe itself, the call throws `TypeError`.
 
 ## Types

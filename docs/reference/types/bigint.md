@@ -26,6 +26,8 @@ A string longer than 1000 characters is rejected before it is converted.
 
 ## Sign types
 
+Each sign type, and `Int64` and `Uint64`, also adds an example its JSON Schema accepts.
+
 | Type                | Accepts | Adds to JSON Schema                                  | Message ends with        |
 | ------------------- | ------- | ---------------------------------------------------- | ------------------------ |
 | `PositiveBigInt`    | `≥ 1`   | `{ type: 'string', pattern: '^[1-9]\\d*$' }`         | `a positive integer`     |
@@ -39,7 +41,7 @@ A string longer than 1000 characters is rejected before it is converted.
 
 | Type     | Accepts           | Adds to JSON Schema                                                |
 | -------- | ----------------- | ------------------------------------------------------------------ |
-| `Int64`  | -2^63 to 2^63 - 1 | `{ type: 'string', maxLength: 20 }`                                |
+| `Int64`  | -2^63 to 2^63 - 1 | `{ type: 'string', format: 'int64', maxLength: 20 }`               |
 | `Uint64` | 0 to 2^64 - 1     | `{ type: 'string', pattern: '^(?:0\|[1-9]\\d*)$', maxLength: 20 }` |
 
 The JSON Schema limits the length of the string, not the value: `'9223372036854775808'` passes the schema of `Int64` and is rejected by the type. Messages end with `a signed 64-bit integer (was 9223372036854775808n)`.

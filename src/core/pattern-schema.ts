@@ -16,8 +16,13 @@ export class PatternSchema {
   public readonly pattern: RegExp;
   public readonly description: string | undefined;
   public readonly '~standard': StandardProps<string, string>;
+  readonly #json: Readonly<Record<string, unknown>>;
 
-  public constructor(pattern: RegExp, description?: string) {
+  public constructor(
+    pattern: RegExp,
+    description?: string,
+    json: Readonly<Record<string, unknown>> = {},
+  ) {
     if (pattern.flags !== '' && pattern.flags !== 'u') {
       throw new TypeError(
         `${String(pattern)}: only the u flag is supported, since JSON Schema patterns carry no flags`,
@@ -25,6 +30,7 @@ export class PatternSchema {
     }
     this.pattern = pattern;
     this.description = description;
+    this.#json = json;
     this['~standard'] = {
       version: 1,
       vendor: '@horizon-republic/nominal-types',
@@ -59,6 +65,7 @@ export class PatternSchema {
     return forTarget(options, {
       type: 'string',
       pattern: this.pattern.source,
+      ...this.#json,
       ...(this.description === undefined ? {} : { description: this.description }),
     });
   }
@@ -69,15 +76,19 @@ export class PatternSchema {
  *
  * @remarks
  * The description completes the sentence "must be …" in error messages; without one, the message
- * quotes the pattern.
+ * quotes the pattern. `json` adds keywords to the JSON Schema, such as a `format`, length limits
+ * that the pattern already implies, or `examples`.
  *
  * @example
  * ```ts
  * export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
  * ```
  */
-export const matching = (pattern: RegExp, description?: string): PatternSchema =>
-  new PatternSchema(pattern, description);
+export const matching = (
+  pattern: RegExp,
+  description?: string,
+  json?: Readonly<Record<string, unknown>>,
+): PatternSchema => new PatternSchema(pattern, description, json);
 
 /**
  * The issues a pattern schema reports for a value it rejects.

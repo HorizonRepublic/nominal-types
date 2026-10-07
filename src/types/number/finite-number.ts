@@ -6,7 +6,7 @@ const isFinite = (value: unknown): value is number => Number.isFinite(value);
 
 const FiniteNumberBase: SubtypeOf<typeof AnyNumber, 'FiniteNumber'> = AnyNumber.subtype(
   'FiniteNumber',
-  satisfying(isFinite, 'a finite number', { type: 'number' }),
+  satisfying(isFinite, 'a finite number', { type: 'number', format: 'double' }),
 );
 
 /**

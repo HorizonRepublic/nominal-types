@@ -82,6 +82,7 @@ jobs:
           @nestjs/core@${{ matrix.nest }}
           @nestjs/testing@${{ matrix.nest }}
           @nestjs/platform-fastify@${{ matrix.nest }}
+          @nestjs/platform-express@${{ matrix.nest }}
           @nestjs/microservices@${{ matrix.nest }}
           @nestjs/swagger@${{ matrix.nest }}
       - run: npx vitest run tests/adapters

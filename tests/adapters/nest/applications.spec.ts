@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
 import { AnyBoolean, Email, PositiveInteger, schemaOf, Uuid } from '../../../src/index.ts';
-import { badRequest, describeIds, first, nestMajor, request, second, start } from './support.ts';
+import { badRequest, describeIds, first, nestMajor, platforms, second, start } from './support.ts';
+import type { Started } from './support.ts';
 
 @Controller('explicit')
 class ExplicitController {
@@ -39,16 +39,16 @@ class ExplicitController {
   }
 }
 
-describe('explicit pipes on parameters', () => {
-  let app: NestFastifyApplication;
-  const get = request(() => app);
+describe.each(platforms)('explicit pipes on parameters on %s', (platform) => {
+  let started: Started;
+  const get = (url: string): Promise<{ status: number; body: unknown }> => started.get(url);
 
   beforeAll(async () => {
-    app = await start(ExplicitController, []);
+    started = await start(ExplicitController, [], platform);
   });
 
   afterAll(async () => {
-    await app.close();
+    await started.app.close();
   });
 
   it('checks every value of a repeated query parameter', async () => {
@@ -133,16 +133,16 @@ class GlobalController {
   }
 }
 
-describe('a global pipe', () => {
-  let app: NestFastifyApplication;
-  const get = request(() => app);
+describe.each(platforms)('a global pipe on %s', (platform) => {
+  let started: Started;
+  const get = (url: string): Promise<{ status: number; body: unknown }> => started.get(url);
 
   beforeAll(async () => {
-    app = await start(GlobalController, [new NominalPipe()]);
+    started = await start(GlobalController, [new NominalPipe()], platform);
   });
 
   afterAll(async () => {
-    await app.close();
+    await started.app.close();
   });
 
   it('reads numbers from a query string', async () => {
@@ -181,39 +181,46 @@ describe('a global pipe', () => {
   });
 });
 
-describe.runIf(nestMajor >= 12)('a global pipe with the Nest 12 schema option', () => {
-  let app: NestFastifyApplication;
-  const get = request(() => app);
+describe.runIf(nestMajor >= 12).each(platforms)(
+  'a global pipe with the Nest 12 schema option on %s',
+  (platform) => {
+    let started: Started;
+    const get = (url: string): Promise<{ status: number; body: unknown }> => started.get(url);
 
-  beforeAll(async () => {
-    @Controller('declared')
-    class DeclaredController {
-      @Get('ids')
-      public ids(@Query('ids', { schema: schemaOf(Uuid).array() }) ids: readonly Uuid[]): unknown {
-        return { ids: describeIds(ids) };
+    beforeAll(async () => {
+      @Controller('declared')
+      class DeclaredController {
+        @Get('ids')
+        public ids(
+          @Query('ids', { schema: schemaOf(Uuid).array() }) ids: readonly Uuid[],
+        ): unknown {
+          return { ids: describeIds(ids) };
+        }
+
+        @Get('email')
+        public email(
+          @Query('email', { schema: schemaOf(Email).optional() }) email?: Email,
+        ): unknown {
+          return { email: email === undefined ? 'none' : email.domain };
+        }
       }
-
-      @Get('email')
-      public email(@Query('email', { schema: schemaOf(Email).optional() }) email?: Email): unknown {
-        return { email: email === undefined ? 'none' : email.domain };
-      }
-    }
-    app = await start(DeclaredController, [new NominalPipe()]);
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
-  it('reads the schema from the parameter, with no pipe on it', async () => {
-    expect(await get(`/declared/ids?ids=${first}`)).toStrictEqual({
-      status: 200,
-      body: { ids: [{ id: first, isUuid: true }] },
+      started = await start(DeclaredController, [new NominalPipe()], platform);
     });
-    expect((await get('/declared/ids?ids=nope')).status).toBe(400);
-  });
 
-  it('lets a missing optional value through', async () => {
-    expect(await get('/declared/email')).toStrictEqual({ status: 200, body: { email: 'none' } });
-  });
-});
+    afterAll(async () => {
+      await started.app.close();
+    });
+
+    it('reads the schema from the parameter, with no pipe on it', async () => {
+      expect(await get(`/declared/ids?ids=${first}`)).toStrictEqual({
+        status: 200,
+        body: { ids: [{ id: first, isUuid: true }] },
+      });
+      expect((await get('/declared/ids?ids=nope')).status).toBe(400);
+    });
+
+    it('lets a missing optional value through', async () => {
+      expect(await get('/declared/email')).toStrictEqual({ status: 200, body: { email: 'none' } });
+    });
+  },
+);

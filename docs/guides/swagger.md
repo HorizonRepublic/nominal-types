@@ -35,6 +35,15 @@ Every empty schema named after a nominal type is replaced with that type's schem
 
 Your own types get the same treatment, under their own names: `UserId` for `Uuid.subtype('UserId')`.
 
+The schema is found by the class name, so name the class like the type. If they differ, as in `class Mailbox extends AnyString.subtype('MailboxAddress', …)`, tell Swagger the type's name with `@ApiSchema()`:
+
+```ts
+import { ApiSchema } from '@nestjs/swagger';
+
+@ApiSchema({ name: 'MailboxAddress' })
+export class Mailbox extends AnyString.subtype('MailboxAddress', /^[a-z]+@example\.com$/u) {}
+```
+
 ## Route parameters
 
 A parameter declared with a nominal type is documented once the document is filled:

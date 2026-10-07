@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 
-import type { ArgumentMetadata, PipeTransform, Type } from '@nestjs/common';
+import type { ArgumentMetadata, INestApplication, PipeTransform, Type } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
@@ -34,24 +35,39 @@ export const argument = (
 export const describeIds = (ids: readonly Uuid[] | undefined): unknown =>
   ids === undefined ? 'none' : ids.map((id) => ({ id: id.value, isUuid: id instanceof Uuid }));
 
+/**
+ * The HTTP platforms the application tests run on.
+ */
+export const platforms: readonly Platform[] = ['fastify', 'express'];
+
+export type Platform = 'fastify' | 'express';
+
+export interface Started {
+  readonly app: INestApplication;
+  readonly get: (path: string) => Promise<{ status: number; body: unknown }>;
+}
+
 export const start = async (
   controller: Type,
   globalPipes: readonly PipeTransform[],
-): Promise<NestFastifyApplication> => {
+  platform: Platform = 'fastify',
+): Promise<Started> => {
   const module = await Test.createTestingModule({ controllers: [controller] }).compile();
-  const app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+  const app =
+    platform === 'fastify'
+      ? module.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
+      : module.createNestApplication(new ExpressAdapter());
   app.useGlobalPipes(...globalPipes);
-  await app.init();
-  await app.getHttpAdapter().getInstance().ready();
-  return app;
-};
-
-export const request =
-  (app: () => NestFastifyApplication) =>
-  async (url: string): Promise<{ status: number; body: unknown }> => {
-    const response = await app().inject({ method: 'GET', url });
-    return { status: response.statusCode, body: response.json() };
+  await app.listen(0, '127.0.0.1');
+  const base = await app.getUrl();
+  return {
+    app,
+    get: async (path) => {
+      const response = await fetch(`${base}${path}`);
+      return { status: response.status, body: await response.json() };
+    },
   };
+};
 
 export const badRequest = (message: string): { status: number; body: unknown } => ({
   status: 400,

@@ -36,7 +36,7 @@ export class UsersController {
 
 How the global pipe treats values:
 
-- Parameters of any other type are left alone, so it is safe next to your other pipes.
+- Parameters of any other type are left alone, so it is safe next to your other pipes. That includes DTO classes: to check nominal properties of a DTO, use [class-validator](class-validator.md).
 - Query and route values are always strings. For number and boolean types, the pipe reads them first: `'2'` becomes `2`, `'true'` becomes `true`. Text like `'abc'` or `'02'` is rejected with the type's message.
 - The pipe learns each parameter's type from `emitDecoratorMetadata`. A project made with the Nest CLI has it on already.
 
@@ -80,7 +80,7 @@ search(
 
 Why not globally on Nest 11: Nest runs global pipes before the pipes on a parameter. The global pipe would see `email: Email`, not know it's optional, and reject a missing value first.
 
-Two details for lists in a query string:
+Two details for lists in a query string, the same on Fastify and Express:
 
 - `?ids=a` gives one string, not a list. The pipe turns it into a list of one.
 - Items of a schema are read from strings only if you ask: `schemaOf(PositiveInteger).fromString().array()`.

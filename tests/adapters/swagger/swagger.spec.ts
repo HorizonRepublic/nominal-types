@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
-import { ApiProperty, DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ApiProperty, ApiSchema, DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
@@ -10,7 +10,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { NominalField } from '../../../src/adapters/class-validator/index.ts';
 import { ApiNominalProperty, applyNominalTypes } from '../../../src/adapters/swagger/index.ts';
-import { Email, schemaOf, Uuid } from '../../../src/index.ts';
+import { AnyString, Email, schemaOf, Uuid } from '../../../src/index.ts';
 import { nestMajor } from '../nest/support.ts';
 
 class UserId extends Uuid.subtype('UserId') {}
@@ -217,5 +217,24 @@ describe('ApiNominalProperty next to NominalField', () => {
     });
     expect(validateSync(plainToInstance(SignupDto, { email: 'nope' }))).toHaveLength(1);
     expect(plainToInstance(SignupDto, { email: 'jane@example.com' }).email).toBeInstanceOf(Email);
+  });
+});
+
+describe('a class named differently from its type', () => {
+  it('is found through @ApiSchema', async () => {
+    @ApiSchema({ name: 'MailboxAddress' })
+    class Mailbox extends AnyString.subtype('MailboxAddress', /^[a-z]+@example\.com$/u) {}
+
+    @Controller('mailboxes')
+    class MailboxesController {
+      @Get(':address')
+      public find(@Param('address') address: Mailbox): unknown {
+        return address.value;
+      }
+    }
+    const schemas = applyNominalTypes(await documentFor(MailboxesController)).components?.schemas;
+
+    expect(schemas?.['MailboxAddress']).toMatchObject({ title: 'MailboxAddress', type: 'string' });
+    expect(schemas).not.toHaveProperty('Mailbox');
   });
 });

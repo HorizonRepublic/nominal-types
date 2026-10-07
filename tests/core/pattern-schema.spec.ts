@@ -15,8 +15,8 @@ describe('PatternSchema', () => {
     });
 
     it('keeps the pattern on the schema', () => {
-      expect(Code.schema).toBeInstanceOf(PatternSchema);
-      expect(Code.schema).toHaveProperty('pattern', /^C-\d{3}$/u);
+      expect(Code.rule).toBeInstanceOf(PatternSchema);
+      expect(Code.rule).toHaveProperty('pattern', /^C-\d{3}$/u);
     });
 
     it.each(['', 'C-01', 'C-0001', 'c-001', 'C-001\n', ' C-001'])('rejects %j', (text) => {

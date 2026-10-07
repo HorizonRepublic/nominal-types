@@ -48,7 +48,6 @@ describe('Variants', () => {
     it('is not an instance of its source, and the source is not an instance of it', () => {
       expect(new WideSku('SKU-0001')).not.toBeInstanceOf(Sku);
       expect(new Sku('SKU-0001')).not.toBeInstanceOf(WideSku);
-      expect(Sku.is(new WideSku('SKU-0001'))).toBe(false);
     });
 
     it('sits next to its source under the same parent', () => {

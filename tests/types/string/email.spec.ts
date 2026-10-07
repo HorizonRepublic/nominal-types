@@ -67,7 +67,7 @@ describe('Email', () => {
   describe('overriding the pattern', () => {
     class CompanyEmail extends Email {
       public static override readonly pattern = /^[a-z.]+@example\.com$/u;
-      public static override readonly schema = matching(CompanyEmail.pattern);
+      public static override readonly rule = matching(CompanyEmail.pattern);
     }
 
     it('validates with the subclass pattern and keeps the behaviour', () => {

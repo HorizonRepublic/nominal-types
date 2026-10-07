@@ -29,7 +29,7 @@ export const isLevel = (root: object, value: unknown): value is object =>
   (typeof value === 'function' && Object.prototype.isPrototypeOf.call(root, value));
 
 /**
- * The rules a class validates with, from the root down: every level's own `schema`, starting over
+ * The rules a class validates with, from the root down: every level's own `rule`, starting over
  * where a variant replaced its source's level.
  */
 export const rulesOf = (root: object, target: object): readonly NominalSchema[] => {
@@ -40,7 +40,7 @@ export const rulesOf = (root: object, target: object): readonly NominalSchema[] 
     ? Reflect.get(target, levelSlot)
     : Object.getPrototypeOf(target);
   const inherited = isLevel(root, base) ? rulesOf(root, base) : [];
-  const own: unknown = Object.hasOwn(target, 'schema') ? Reflect.get(target, 'schema') : undefined;
+  const own: unknown = Object.hasOwn(target, 'rule') ? Reflect.get(target, 'rule') : undefined;
   return isSchema(own) ? [...inherited, own] : inherited;
 };
 

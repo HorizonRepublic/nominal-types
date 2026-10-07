@@ -61,11 +61,11 @@ describe('Nominal', () => {
     });
   });
 
-  describe('is and instanceof', () => {
+  describe('instanceof', () => {
     it('recognises its own instances only', () => {
-      expect(Sku.is(new Sku('SKU-0001'))).toBe(true);
-      expect(Sku.is('SKU-0001')).toBe(false);
-      expect(Sku.is(new Slug('sku'))).toBe(false);
+      expect(new Sku('SKU-0001')).toBeInstanceOf(Sku);
+      expect('SKU-0001').not.toBeInstanceOf(Sku);
+      expect(new Slug('sku')).not.toBeInstanceOf(Sku);
     });
 
     it('treats a subtype instance as its parent, and not the other way round', () => {

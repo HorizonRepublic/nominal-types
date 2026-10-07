@@ -15,5 +15,5 @@ export class PromoSku extends Sku.subtype('PromoSku', /^SKU-9/u) {}
 export class FlashSku extends PromoSku.subtype('FlashSku', /^SKU-99/u) {}
 
 export class LowSku extends Sku {
-  public static override readonly schema = type(/^SKU-0/u);
+  public static override readonly rule = type(/^SKU-0/u);
 }

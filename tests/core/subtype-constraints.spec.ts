@@ -100,8 +100,8 @@ describe('Subtype constraints', () => {
   });
 
   it('validates through the chain schema on its own', async () => {
-    const accepted = await PromoSku.schema['~standard'].validate('SKU-9001');
-    const rejected = await PromoSku.schema['~standard'].validate('SKU-0001');
+    const accepted = await PromoSku.rule['~standard'].validate('SKU-9001');
+    const rejected = await PromoSku.rule['~standard'].validate('SKU-0001');
 
     expect(accepted).toStrictEqual({ value: 'SKU-9001' });
     expect(rejected.issues).toHaveLength(1);

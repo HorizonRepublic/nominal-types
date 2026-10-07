@@ -65,21 +65,20 @@ export interface NominalInstance<Name extends string, Value> {
 export interface AnyNominalType {
   readonly prototype: NominalInstance<string, unknown>;
   readonly typeName: string;
-  readonly schema: NominalSchema;
+  readonly rule: NominalSchema;
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
   parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
-  is<Type extends AnyNominalType>(this: Type, value: unknown): value is Type['prototype'];
   /**
    * The whole type as a plain Standard Schema object, for libraries that treat a class as a
    * definition of their own, such as ArkType.
    *
    * @remarks
-   * Not to be confused with `schema`, which is only the rule of one level. The object is created
+   * Not to be confused with `rule`, which is only the rule of one level. The object is created
    * once per type and returned on every call.
    */
   standardSchema<Type extends AnyNominalType>(
     this: Type,
-  ): StandardSchema<InputOf<Type['schema']>, Type['prototype']>;
+  ): StandardSchema<InputOf<Type['rule']>, Type['prototype']>;
 }
 
 /**
@@ -99,21 +98,21 @@ export interface NominalType<
   new (input: InputOf<Schema>): Instance;
   readonly prototype: Instance;
   readonly typeName: Name;
-  readonly schema: Schema;
+  readonly rule: Schema;
   readonly '~standard': StandardProps<InputOf<Schema>, Instance>;
   subtype<Type extends AnyNominalType, const SubtypeName extends string>(
     this: Type,
     name: SubtypeName,
     constraint?:
-      | NominalSchema<ValueOf<Type['schema']>, ValueOf<Type['schema']>>
-      | (ValueOf<Type['schema']> extends string ? RegExp : never),
+      | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
+      | (ValueOf<Type['rule']> extends string ? RegExp : never),
   ): SubtypeOf<Type, SubtypeName>;
   variant<Type extends AnyNominalType, const VariantName extends string>(
     this: Type,
     name: VariantName,
     rule:
-      | NominalSchema<ValueOf<Type['schema']>, ValueOf<Type['schema']>>
-      | (ValueOf<Type['schema']> extends string ? RegExp : never),
+      | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
+      | (ValueOf<Type['rule']> extends string ? RegExp : never),
   ): VariantOf<Type, VariantName>;
 }
 
@@ -125,7 +124,7 @@ export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit
   Parent,
   'prototype' | 'typeName'
 > & {
-  new (input: InputOf<Parent['schema']>): Parent['prototype'] & { readonly [brand]: Brand<Name> };
+  new (input: InputOf<Parent['rule']>): Parent['prototype'] & { readonly [brand]: Brand<Name> };
   readonly prototype: Parent['prototype'] & { readonly [brand]: Brand<Name> };
   readonly typeName: Name;
 };
@@ -152,7 +151,7 @@ export type VariantOf<Source extends AnyNominalType, Name extends string> = Omit
   Source,
   'prototype' | 'typeName'
 > & {
-  new (input: InputOf<Source['schema']>): VariantInstance<Source, Name>;
+  new (input: InputOf<Source['rule']>): VariantInstance<Source, Name>;
   readonly prototype: VariantInstance<Source, Name>;
   readonly typeName: Name;
 };

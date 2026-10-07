@@ -154,4 +154,121 @@ new HttpUrl('https://example.com').value; // 'https://example.com'
 new HttpUrl('mailto:jane@example.com'); // throws NominalError: nominal.HttpUrl: must be an http or https URL (was "mailto:jane@example.com")
 ```
 
+## CountryCode
+
+`AnyString` › `CountryCode`
+
+A country or territory as its two-letter [ISO 3166-1](../glossary.md) code, like `US` or `UA`.
+
+- The 249 codes officially assigned as of 8 October 2026. The package carries this list, so the Node version doesn't change it.
+- Upper case only: `us` is refused.
+- Reserved codes are refused: `UK` (write `GB`), `EU` and `XK`.
+
+| Property    | Value                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| JSON Schema | `{ type: 'string', enum: CountryCode.codes, minLength: 2, maxLength: 2 }`, with an example |
+| Message     | `must be an ISO 3166-1 alpha-2 country code (was "UK")`                                    |
+
+```ts
+import { CountryCode } from '@horizon-republic/nominal-types';
+
+new CountryCode('UA').flag; // '🇺🇦'
+new CountryCode('UK'); // throws NominalError: nominal.CountryCode: must be an ISO 3166-1 alpha-2 country code (was "UK")
+```
+
+| Member | Returns                     | Example |
+| ------ | --------------------------- | ------- |
+| `flag` | the flag emoji for the code | `'🇺🇦'`  |
+
+| Static field        | Holds                                      |
+| ------------------- | ------------------------------------------ |
+| `CountryCode.codes` | every accepted code, in alphabetical order |
+
+To accept a code outside the list, such as `XK`, declare your own type from `CountryCode.codes`:
+
+```ts
+import { AnyString, CountryCode } from '@horizon-republic/nominal-types';
+
+const codes = [...CountryCode.codes, 'XK'].join('|');
+
+class Region extends AnyString.subtype('geo.Region', new RegExp(`^(?:${codes})$`, 'u')) {}
+
+new Region('XK').value; // 'XK'
+```
+
+## CurrencyCode
+
+`AnyString` › `CurrencyCode`
+
+A currency as its three-letter [ISO 4217](../glossary.md) code, like `EUR` or `JPY`.
+
+- The 178 codes of ISO 4217 List One, as published on 17 September 2026. The package carries this list, so the Node version doesn't change it.
+- Upper case only: `eur` is refused.
+- Codes that are not money are accepted too: funds such as `CLF`, metals such as `XAU`, `XTS` for tests and `XXX` for "no currency".
+- Withdrawn codes are refused, such as `HRK` and `BGN`.
+
+| Property    | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', enum: CurrencyCode.codes, minLength: 3, maxLength: 3 }`, with an example |
+| Message     | `must be an ISO 4217 currency code (was "HRK")`                                             |
+
+```ts
+import { CurrencyCode } from '@horizon-republic/nominal-types';
+
+new CurrencyCode('JPY').minorUnits; // 0
+new CurrencyCode('HRK'); // throws NominalError: nominal.CurrencyCode: must be an ISO 4217 currency code (was "HRK")
+```
+
+| Member       | Returns                                                           | Example                              |
+| ------------ | ----------------------------------------------------------------- | ------------------------------------ |
+| `minorUnits` | the [minor units](../glossary.md): digits after the decimal point | `2` for `EUR`, `undefined` for `XAU` |
+| `isFund`     | whether ISO marks the code as a fund, not a currency              | `true` for `CLF`, `false` for `USD`  |
+
+| Static field         | Holds                                      |
+| -------------------- | ------------------------------------------ |
+| `CurrencyCode.codes` | every accepted code, in alphabetical order |
+
+## LanguageTag
+
+`AnyString` › `LanguageTag`
+
+A [BCP 47](../glossary.md) language tag, like `en`, `en-US` or `zh-Hant-TW`.
+
+- Any case is accepted and kept as given. `equals()` ignores case.
+- The type checks the form of the tag, not whether its parts exist: `xx-YY` passes.
+- `Intl` accepts every tag this type accepts.
+- Refused: `en_US`, a language of four or more letters (`french`), an extended language (`zh-yue`, write `yue`), old irregular tags (`i-klingon`), private use alone (`x-mine`), and a variant or extension written twice (`de-1996-1996`).
+
+| Property    | Value                                                                      |
+| ----------- | -------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: LanguageTag.pattern.source }`, with an example |
+| Message     | `must be a BCP 47 language tag (was "en_US")`                              |
+
+The JSON Schema can't see a variant or extension written twice, so a JSON Schema validator accepts `de-1996-1996`.
+
+```ts
+import { LanguageTag } from '@horizon-republic/nominal-types';
+
+const tag = new LanguageTag('ZH-hant-tw');
+
+tag.region; // 'TW'
+tag.canonical().value; // 'zh-Hant-TW'
+```
+
+Members, with results for this `tag`:
+
+| Member          | Returns                                           | Example      |
+| --------------- | ------------------------------------------------- | ------------ |
+| `language`      | the language, lower case                          | `'zh'`       |
+| `script`        | the script in title case, or `undefined`          | `'Hant'`     |
+| `region`        | the region in upper case, or `undefined`          | `'TW'`       |
+| `canonical()`   | the tag as `Intl.getCanonicalLocales()` writes it | `zh-Hant-TW` |
+| `equals(other)` | compares regardless of case                       |              |
+
+`canonical()` also replaces old codes, such as `iw` with `he`. That list comes from Node, so a newer Node may replace more.
+
+| Static field          | Holds                 |
+| --------------------- | --------------------- |
+| `LanguageTag.pattern` | the tag as a `RegExp` |
+
 [← Built-in types](README.md)

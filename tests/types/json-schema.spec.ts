@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import * as library from '../../src/index.ts';
-import { Email, isNominalType, Uuid } from '../../src/index.ts';
+import { Email, isNominalType, LanguageTag, Uuid } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
 
@@ -46,6 +46,11 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
       'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF',
     ],
     ['6f1c2a3e-8b9d-9e5f-a1b2-c3d4e5f60718', '6f1c2a3e8b9d4e5fa1b2c3d4e5f60718', 'not-a-uuid'],
+  ],
+  [
+    LanguageTag,
+    ['en', 'EN-us', 'zh-Hant-TW', 'de-CH-1996', 'en-u-ca-gregory', 'en-t-zh', 'en-x-a'],
+    ['en_US', 'french', 'i-klingon', 'zh-yue', 'x-private', 'en-', 'abcdefghi'],
   ],
 ];
 

@@ -1,7 +1,7 @@
 import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 
 import type { NominalSchema } from './contracts.ts';
-import { withoutUri } from './json-target.ts';
+import { withOpenApiEncoding, withoutUri } from './json-target.ts';
 import { NativeSchema } from './native-schema.ts';
 import { NoJsonSchema } from './no-json-schema.ts';
 
@@ -19,6 +19,34 @@ const describedBy = (
 
     throw error;
   }
+};
+
+// Rules of this package keep all their examples here, so the type picks its one OpenAPI example
+// from those it accepts; a rule that knows no OpenAPI 3.0 is described as draft-07, which OpenAPI
+// 3.0 schemas are built on.
+const describeForOpenApi = (
+  typeName: string,
+  rule: NominalSchema,
+  converter: StandardJSONSchemaV1.Converter,
+  side: 'input' | 'output',
+  options: StandardJSONSchemaV1.Options,
+): Record<string, unknown> => {
+  const target = rule instanceof NativeSchema ? 'draft-2020-12' : undefined;
+  const body = withoutUri(
+    describedBy(typeName, () => {
+      try {
+        return converter[side]({ ...options, target: target ?? options.target });
+      } catch (error) {
+        if (target !== undefined) {
+          throw error;
+        }
+
+        return converter[side]({ ...options, target: 'draft-07' });
+      }
+    }),
+  );
+
+  return withOpenApiEncoding(body);
 };
 
 /**
@@ -44,24 +72,7 @@ export const describeRules = (
       return describedBy(typeName, () => converter[side](options));
     }
 
-    // Rules of this package keep all their examples here, so the type picks its one OpenAPI
-    // example from those it accepts; a rule that knows no OpenAPI 3.0 is described as draft-07,
-    // which OpenAPI 3.0 schemas are built on.
-    const target = rule instanceof NativeSchema ? 'draft-2020-12' : undefined;
-
-    return withoutUri(
-      describedBy(typeName, () => {
-        try {
-          return converter[side]({ ...options, target: target ?? options.target });
-        } catch (error) {
-          if (target !== undefined) {
-            throw error;
-          }
-
-          return converter[side]({ ...options, target: 'draft-07' });
-        }
-      }),
-    );
+    return describeForOpenApi(typeName, rule, converter, side, options);
   });
   const [only] = parts;
 

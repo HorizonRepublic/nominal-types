@@ -9,11 +9,12 @@ The column comes from the type. Each adapter has an option to choose your own.
 | Type                                                                                                                 | MikroORM, TypeORM, Drizzle                           | Sequelize         |
 | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
 | `Email`                                                                                                              | `varchar(254)`                                       | `STRING(254)`     |
+| `HexColor`                                                                                                           | `varchar(9)`                                         | `STRING(9)`       |
 | `Uuid`                                                                                                               | `uuid`                                               | `UUID`            |
 | `CountryCode`                                                                                                        | `varchar(2)`                                         | `STRING(2)`       |
 | `CurrencyCode`                                                                                                       | `varchar(3)`                                         | `STRING(3)`       |
 | another string type with a length limit                                                                              | `varchar(<limit>)`                                   | `STRING(<limit>)` |
-| `AnyString`, `Url`, `HttpUrl`, `LanguageTag`, a string type without a limit                                          | `text`                                               | `TEXT`            |
+| `AnyString`, `Url`, `HttpUrl`, `LanguageTag`, `MediaType`, `Base64`, `Base64Url`, a string type without a limit      | `text`                                               | `TEXT`            |
 | `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`                                                                          | `integer`                                            | `INTEGER`         |
 | `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Uint32`                | `bigint`                                             | `BIGINT`          |
 | `AnyNumber`, `FiniteNumber`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber` | `double precision` (MikroORM: the platform's double) | `DOUBLE`          |

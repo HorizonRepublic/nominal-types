@@ -208,6 +208,10 @@ config.PORT.value; // 3000 for PORT=3000
 | `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code, upper case (`UK`, `EU`, `XK` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
 | `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |
 | `LanguageTag` | `nominal.LanguageTag` | a well-formed BCP 47 tag in any case that `Intl` also takes (`en_US`, `french`, `zh-yue`, `i-klingon` refused); `language`, `script`, `region`, `canonical()` via `Intl.getCanonicalLocales`; `equals` ignores case | yes |
+| `MediaType` | `nominal.MediaType` | an RFC 6838 type/subtype with RFC 9110 parameters, no wildcards, no repeated parameter name; `type`, `subtype`, `suffix`, `essence`, `parameters`, `charset`, `isJson`, `canonical()`; `equals` ignores case of names, spaces and quoting | yes |
+| `HexColor` | `nominal.HexColor` | `#` and 3, 4, 6 or 8 hex digits; `red`, `green`, `blue`, `alpha` (0–1), `canonical()` (lowercase 6 or 8 digits); `equals` compares channels | yes |
+| `Base64` | `nominal.Base64` | RFC 4648 §4 base64, `=` padding required, pad bits zero, `''` accepted; `byteLength`, `toBytes()`; JSON Schema `contentEncoding: 'base64'` (`format: 'byte'` for OpenAPI 3.0) | yes |
+| `Base64Url` | `nominal.Base64Url` | RFC 4648 §5 base64url, no padding, pad bits zero, `''` accepted; a sibling of `Base64`; `byteLength`, `toBytes()` | yes |
 | `AnyNumber` | `nominal.AnyNumber` | any number | yes |
 | `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
 | `Float32` | `nominal.Float32` | a 32-bit float | yes |
@@ -346,7 +350,7 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.

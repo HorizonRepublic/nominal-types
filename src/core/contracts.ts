@@ -54,9 +54,9 @@ export type Parsed<Instance> =
 export interface NominalInstance<Name extends string, Value> {
   readonly [brand]: Brand<Name>;
   readonly value: Value;
-  readonly equals: (other: unknown) => boolean;
-  readonly toJSON: () => Value;
-  readonly toString: () => string;
+  equals(other: unknown): boolean;
+  toJSON(): Value;
+  toString(): string;
 }
 
 /**
@@ -67,17 +67,11 @@ export interface AnyNominalType {
   readonly typeName: string;
   readonly schema: NominalSchema;
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
-  readonly parse: <Type extends AnyNominalType>(
+  parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
+  is<Type extends AnyNominalType>(this: Type, value: unknown): value is Type['prototype'];
+  standard<Type extends AnyNominalType>(
     this: Type,
-    input: unknown,
-  ) => Parsed<Type['prototype']>;
-  readonly is: <Type extends AnyNominalType>(
-    this: Type,
-    value: unknown,
-  ) => value is Type['prototype'];
-  readonly standard: <Type extends AnyNominalType>(
-    this: Type,
-  ) => StandardSchema<InputOf<Type['schema']>, Type['prototype']>;
+  ): StandardSchema<InputOf<Type['schema']>, Type['prototype']>;
 }
 
 /**
@@ -99,13 +93,13 @@ export interface NominalType<
   readonly typeName: Name;
   readonly schema: Schema;
   readonly '~standard': StandardProps<InputOf<Schema>, Instance>;
-  readonly refine: <Type extends AnyNominalType, const Refined extends string>(
+  refine<Type extends AnyNominalType, const Refined extends string>(
     this: Type,
     name: Refined,
     narrow: (
       schema: Type['schema'],
     ) => NominalSchema<InputOf<Type['schema']>, ValueOf<Type['schema']>>,
-  ) => RefinedType<Type, Refined>;
+  ): RefinedType<Type, Refined>;
 }
 
 /**

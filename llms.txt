@@ -13,6 +13,7 @@
 - Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
 - Name types with the part of the system in front and a dot: `Nominal('billing.InvoiceNumber', …)`, class named like the last part (`class InvoiceNumber`). Names allow letters, digits, `_` and `-` in each part; `/` and spaces throw. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on.
 - In Zod use `toZod(Type)` for fields and `constrainZod(object, ...constraints)` (`/adapters/zod`); in Valibot `toValibot(Type)` and `constrainValibot(object, ...constraints)` (`/adapters/valibot`). Adapter functions are named verb + library: `to…` (our type into the library), `constrain…` (rules onto the library's object), `fromArk` (an ArkType schema back to instances).
+- Store instances with `p.type(toMikroOrm(Type))` (`/adapters/mikro-orm`) or `@Column(toTypeOrm(Type))` (`/adapters/typeorm`). The column type comes from the nominal type; reads are checked (`trusted: true` skips it); `serialize` chooses what is stored and also runs on query values.
 - Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `toArk(Type)`, which is about 20 times faster.
 
 ## Core API

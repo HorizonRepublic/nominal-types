@@ -18,6 +18,8 @@ Short recipes. Each one solves one task.
 | get a JSON Schema for OpenAPI                                  | [How to generate JSON Schema](json-schema.md)                          |
 | turn NestJS parameters and message payloads into nominal types | [How to validate NestJS route parameters](nestjs.md)                   |
 | use nominal types in class-validator DTOs                      | [How to use nominal types in class-validator DTOs](class-validator.md) |
+| keep nominal types in MikroORM entities                        | [How to store nominal types with MikroORM](mikro-orm.md)               |
+| keep nominal types in TypeORM entities                         | [How to store nominal types with TypeORM](typeorm.md)                  |
 | show nominal types in Swagger with pattern, format and example | [How to document nominal types in Swagger](swagger.md)                 |
 
 [← Documentation](../README.md)

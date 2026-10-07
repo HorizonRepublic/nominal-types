@@ -55,6 +55,14 @@
       "import": "./dist/adapters/valibot/index.js",
       "require": "./dist/adapters/valibot/index.cjs"
     },
+    "./adapters/mikro-orm": {
+      "import": "./dist/adapters/mikro-orm/index.js",
+      "require": "./dist/adapters/mikro-orm/index.cjs"
+    },
+    "./adapters/typeorm": {
+      "import": "./dist/adapters/typeorm/index.js",
+      "require": "./dist/adapters/typeorm/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -78,6 +86,8 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
+    "@mikro-orm/core": "^7.2.4",
+    "@mikro-orm/sqlite": "^7.2.4",
     "@nestjs/common": "^12.1.2",
     "@nestjs/core": "^12.1.2",
     "@nestjs/microservices": "^12.1.2",
@@ -89,6 +99,7 @@
     "@types/node": "^24.19.1",
     "@vitest/coverage-v8": "^5.0.3",
     "arktype": "^2.2.7",
+    "better-sqlite3": "^12.11.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "effect": "^4.0.1",
@@ -105,6 +116,7 @@
     "tsdown": "^0.23.0",
     "ttsc": "^0.30.4",
     "typebox": "^1.3.36",
+    "typeorm": "^1.1.1",
     "typescript": "^7.0.2",
     "typia": "^15.1.0",
     "valibot": "^1.5.0",
@@ -112,15 +124,23 @@
     "zod": "^4.6.5"
   },
   "peerDependencies": {
+    "@mikro-orm/core": "^7.0.0",
     "@nestjs/common": "^11.0.0 || ^12.0.0",
     "@nestjs/swagger": "^11.0.0 || ^12.0.0",
     "arktype": "^2.2.0",
     "class-transformer": "^0.5.0",
     "class-validator": "^0.14.0 || ^0.15.0",
+    "typeorm": "^0.3.0 || ^1.0.0",
     "valibot": "^1.0.0",
     "zod": "^4.0.0"
   },
   "peerDependenciesMeta": {
+    "@mikro-orm/core": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    },
     "@nestjs/common": {
       "optional": true
     },

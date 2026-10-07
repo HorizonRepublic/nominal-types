@@ -122,6 +122,7 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 - Numbers: `AnyNumber`, `FiniteNumber`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Float32`, `Latitude`, `Longitude`, `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`, `Port`.
 - Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64`.
 - Booleans: `AnyBoolean`.
+- Dates and times, from `/temporal`: `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`.
 
 [Built-in types](docs/reference/types/README.md) describes each one.
 

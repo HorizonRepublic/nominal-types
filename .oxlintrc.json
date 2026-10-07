@@ -203,7 +203,7 @@
         "import/no-unassigned-import": [
           "error",
           {
-            "allow": ["reflect-metadata"]
+            "allow": ["reflect-metadata", "temporal-polyfill/global"]
           }
         ],
         "public-docs/require-jsdoc": "off",

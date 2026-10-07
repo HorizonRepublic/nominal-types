@@ -12,7 +12,8 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 - Declare a type as a class: `export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}`. Add behaviour as getters and methods in the class body.
 - For strings, numbers, bigints and booleans, build on a base type (`AnyString.subtype(...)`, `PositiveInteger.subtype(...)`). Only types under a base type can be read from text by `fromString()` and `fromEnv()`. Use `Nominal(name, rule)` for objects (`objectOf()`) and for types with no base.
 - Name types with the part of the system in front and a dot: `'billing.InvoiceNumber'`. Each part holds letters, digits, `_` and `-`. A `/`, a space or an empty part throws `TypeError`. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on. Name the class like the last part.
-- Compare instances with `a.equals(b)`, never `===`. Read the plain value with `.value`. Arithmetic needs `.value` (`quantity.value * 2`); `>`, `<`, `Number(x)` and template strings work on the instance itself.
+- Compare instances with `a.equals(b)`, never `===`. Read the plain value with `.value`. Arithmetic needs `.value` (`quantity.value * 2`); `>`, `<`, `Number(x)` and template strings work on the instance itself. The date and time types are the exception: `>` and `<` throw, so compare with `Temporal.Instant.compare(a.value, b.value)`.
+- For dates and times use `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` from `@horizon-republic/nominal-types/temporal`, never `Date` or a string type. On Node.js 22 and 24, `import 'temporal-polyfill/global'` first in the program; without `Temporal`, building a value throws `TypeError`.
 - `matching()` takes a regular expression with no flag or only `u`. Other flags throw `TypeError`.
 - Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 - Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `hideValues(issues)`.
@@ -30,6 +31,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). The only depend
 | Entry point | Exports | Peer package |
 | --- | --- | --- |
 | `@horizon-republic/nominal-types` | the core API and the built-in types | none |
+| `@horizon-republic/nominal-types/temporal` | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` | none; needs `Temporal`: Node.js 26, or `temporal-polyfill/global` |
 | `@horizon-republic/nominal-types/adapters/arktype` | `toArk`, `fromArk`, `constrainArk`, `ArkSchema`, types `ArkField`, `Built` | `arktype` ^2.2 |
 | `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
 | `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
@@ -116,9 +118,9 @@ What `parse()` does with an instance: an instance of the same type or a subtype 
 | --- | --- |
 | `value` | the checked value; an object value is frozen |
 | `equals(other)` | same type line and same value; deep for objects; `Uuid` ignores case |
-| `toJSON()` | the value; big integer types write a decimal string |
-| `toString()` | the value as text; JSON for an object value |
-| `[Symbol.toPrimitive]` | the value, so `>`, `Number(x)` and template strings work; an object value throws `TypeError` outside a string |
+| `toJSON()` | the value; big integer types write a decimal string; date and time types write their RFC 3339 text |
+| `toString()` | the value as text; JSON for an object value; date and time types write their text |
+| `[Symbol.toPrimitive]` | the value, so `>`, `Number(x)` and template strings work; an object or Temporal value throws `TypeError` outside a string |
 | getters per field, `copyWith(changes)` | on types built on `objectOf()`; `copyWith` returns a checked copy and throws `NominalError` |
 
 A field of an `objectOf()` type can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws `TypeError` for such a field.
@@ -232,6 +234,25 @@ config.PORT.value; // 3000 for PORT=3000
 | `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt` | `nominal.…` | a big integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int64`, `Uint64` | `nominal.…` | signed and unsigned 64-bit integers | yes |
 | `AnyBoolean` | `nominal.AnyBoolean` | `true` or `false`; from text only `'true'` and `'false'` | yes |
+
+Dates and times, from `@horizon-republic/nominal-types/temporal`. Each is a root; `value` is the Temporal object. Text is strict RFC 3339: upper-case `T` and `Z`, years 0000 to 9999, a real calendar day, seconds required, a fraction of 1 to 9 digits after a dot, no `:60`, no week or ordinal dates, no `[zone]`. Each also takes a Temporal object of its kind. `equals()` uses Temporal's `equals()`. JSON Schema carries `pattern` beside any `format`.
+
+| Type | Name | Accepts | Text form |
+| --- | --- | --- | --- |
+| `Instant` | `nominal.Instant` | `2024-05-01T09:30:00Z` or `…+02:00` (offset required, up to `±23:59`), a `Temporal.Instant`; `toJSON()` writes UTC; `toDate()`; format `date-time` | yes |
+| `PlainDate` | `nominal.PlainDate` | `2024-05-01`, a `Temporal.PlainDate` in the ISO calendar; format `date` | yes |
+| `PlainTime` | `nominal.PlainTime` | `09:30:00[.f]`, no offset, a `Temporal.PlainTime`; no `format` | yes |
+| `PlainDateTime` | `nominal.PlainDateTime` | `2024-05-01T09:30:00[.f]`, no offset, a `Temporal.PlainDateTime`; no `format` | yes |
+
+```ts
+import 'temporal-polyfill/global';
+import { Instant } from '@horizon-republic/nominal-types/temporal';
+
+const sent = new Instant('2024-05-01T11:30:00+02:00');
+sent.toJSON(); // '2024-05-01T09:30:00Z'
+Temporal.Instant.compare(sent.value, new Instant('2024-05-01T10:00:00Z').value); // -1
+Instant.parse('2024-05-01 09:30:00'); // { ok: false, issues: [{ message: 'must be an RFC 3339 date-time with Z or an offset (was "2024-05-01 09:30:00")' }] }
+```
 
 A number type never converts its input: `PositiveInteger.parse('2')` fails; `schemaOf(PositiveInteger).fromString()` reads `'2'`. Big integer types are the one exception and take a decimal string. A number beyond 2^53 - 1 is refused by big integer types, since it may have lost digits.
 
@@ -358,10 +379,11 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256), integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256), integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`, `Instant` `timestamptz`, `PlainDate` `date`, `PlainTime` `time`, `PlainDateTime` `timestamp`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.
+- A driver's `Date` is read for `Instant` only, to the millisecond. For `PlainDate` and `PlainDateTime` make the driver return text (node-postgres: `types.setTypeParser(1082, (t) => t)`, `types.setTypeParser(1114, (t) => t.replace(' ', 'T'))`). With TypeORM store `PlainDateTime` as `{ type: 'varchar', length: 29 }`.
 
 ## Docs
 
@@ -369,6 +391,7 @@ export class OrdersController {
 - [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): one task per page, one page per library
 - [Reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/README.md): every export, option and message
 - [Built-in types](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/types/README.md)
+- [How to use dates and times](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/core/use-dates-and-times.md)
 - [Common problems](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/core/fix-common-problems.md)
 
 ## Optional

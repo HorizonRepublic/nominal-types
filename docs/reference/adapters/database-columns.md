@@ -22,6 +22,10 @@ The column comes from the type. Each adapter has an option to choose your own.
 | `Uint64`                                                                                                                                            | `decimal(20, 0)`                                     | `DECIMAL(20)`     |
 | `AnyBigInt` and the other big integer types                                                                                                         | `varchar(1000)`                                      | `STRING(1000)`    |
 | `AnyBoolean`                                                                                                                                        | `boolean`                                            | `BOOLEAN`         |
+| `Instant`                                                                                                                                           | `timestamptz` (MikroORM: the platform's date-time)   | `DATE`            |
+| `PlainDate`                                                                                                                                         | `date`                                               | `DATEONLY`        |
+| `PlainTime`                                                                                                                                         | `time` (MikroORM: `time(6)`)                         | `TIME`            |
+| `PlainDateTime`                                                                                                                                     | `timestamp` (MikroORM: the date-time without a zone) | `TIMESTAMP`       |
 
 Your own types get a column the same way, by what they accept. A number type that takes fractions, such as a price from 1 up, gets `double precision`. A type declared with `Nominal()` gets a column by what it accepts: `boolean` for `true`, a number column for `1`, else `text`.
 
@@ -61,6 +65,30 @@ MikroORM, TypeORM and Drizzle convert condition values the way they convert writ
 So with `serialize: (email) => email.canonical().value`, a lookup by `new Email('JANE.DOE@example.com')` finds `jane.doe@example.com`.
 
 Sequelize doesn't run attribute setters on `where` values, and it refuses instances: `Error: Invalid value Email { value: 'jane.doe@example.com' }`. Compare with what is stored, such as `email.value`.
+
+## Dates and times
+
+The [date and time types](../types/temporal.md) are stored as the text `toJSON()` writes, such as `2024-05-01T09:30:00Z`.
+
+Drivers read these columns in different ways:
+
+| Driver returns          | `Instant`                | `PlainDate`, `PlainTime`, `PlainDateTime` |
+| ----------------------- | ------------------------ | ----------------------------------------- |
+| text in the type's form | read                     | read                                      |
+| a `Date`                | read, to the millisecond | refused with a `NominalError`             |
+
+A `Date` for a `date` or `timestamp` column stands for local midnight or a local time. The time zone of the process would shift it, so it is refused. Make the driver return text instead. With node-postgres:
+
+```ts
+import pg from 'pg';
+
+pg.types.setTypeParser(1082, (text: string) => text); // date
+pg.types.setTypeParser(1114, (text: string) => text.replace(' ', 'T')); // timestamp
+```
+
+TypeORM turns `timestamp` and `datetime` columns into a `Date` itself. Store a `PlainDateTime` in a text column there: `toTypeOrm(PlainDateTime, { type: 'varchar', length: 29 })`.
+
+On SQLite, TypeORM has no `timestamptz` and `timestamp`. Use `{ type: 'datetime' }` for an `Instant`.
 
 ## Big integers and precision
 

@@ -44,6 +44,12 @@ const columnSql = (column: ColumnKind, prop: EntityProperty, platform: Platform)
     bigint: () => platform.getBigIntTypeDeclarationSQL(prop),
     double: () => platform.getDoubleDeclarationSQL(),
     boolean: () => platform.getBooleanTypeDeclarationSQL(),
+    timestamptz: () => platform.getDateTimeTypeDeclarationSQL({ length: 6 }),
+    date: () => platform.getDateTypeDeclarationSQL(),
+    time: () => platform.getTimeTypeDeclarationSQL(6),
+    // PostgreSQL's date-time is `timestamptz`; the other dialects have no zone in theirs.
+    timestamp: () =>
+      platform.getDateTimeTypeDeclarationSQL({ length: 6 }).replace('timestamptz', 'timestamp'),
   };
 
   return simple[column.kind]();

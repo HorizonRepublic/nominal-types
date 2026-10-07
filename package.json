@@ -47,11 +47,14 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
-    "lint": "oxlint",
+    "lint": "oxlint --ignore-pattern 'bench/**'",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "bench:typia": "ttsc -p bench/typia/tsconfig.json",
+    "bench": "npm run bench:check && node bench/run.ts",
+    "bench:check": "npm run bench:typia && oxlint bench && tsc --noEmit -p bench && node bench/verify.ts"
   },
   "dependencies": {
     "@standard-schema/spec": "^1.1.0"
@@ -67,21 +70,31 @@
     "@nestjs/testing": "^12.1.2",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@swc/core": "^1.16.13",
+    "@types/node": "^24.19.1",
     "@vitest/coverage-v8": "^5.0.3",
     "arktype": "^2.2.7",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "effect": "^4.0.1",
     "eslint-plugin-jsdoc": "^65.2.0",
+    "joi": "^18.2.9",
+    "mitata": "^1.0.34",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2003",
     "publint": "^0.3.25",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "sury": "^11.1.0-rc.0",
     "tsdown": "^0.23.0",
+    "ttsc": "^0.30.4",
+    "typebox": "^1.3.36",
     "typescript": "^7.0.2",
+    "typia": "^15.1.0",
     "unplugin-swc": "^2.0.0",
-    "vitest": "^5.0.3"
+    "valibot": "^1.5.0",
+    "vitest": "^5.0.3",
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0 || ^12.0.0",

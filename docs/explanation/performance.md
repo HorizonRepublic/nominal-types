@@ -28,6 +28,28 @@ What the numbers mean:
 - Each level of a type's class chain adds about 2 ns to `new`, because V8 calls every constructor in the chain. `Port` under `Uint16` under `Integer` costs a few nanoseconds more than `Uint16` itself.
 - A rejected value is cheaper through `parse()` than through `new`. Throwing and catching an error takes a few microseconds.
 
+## Compared with other libraries
+
+`npm run bench` checks the same values with ten libraries and prints the median time per call. Each library is called the way code calls it at a boundary: it gets unknown input and returns something usable, a value or the reasons it was rejected. Measured on an Apple M4 Pro, Node.js 25.3, 7 Oct 2026:
+
+| Scenario                  | nominal-types | Typia | ArkType |    Zod | Valibot |   Sury | Effect | TypeBox |    Joi | class-validator |
+| ------------------------- | ------------: | ----: | ------: | -----: | ------: | -----: | -----: | ------: | -----: | --------------: |
+| the same pattern, valid   |         37 ns | 44 ns |   14 ns |  30 ns |   29 ns |  42 ns |  30 ns |   12 ns | 208 ns |          417 ns |
+| the same pattern, invalid |         51 ns | 99 ns |  1.4 µs | 236 ns |   68 ns | 5.2 µs | 390 ns |  542 ns | 739 ns |          896 ns |
+| UUID, valid               |         71 ns | 52 ns |   52 ns |  60 ns |   73 ns |  83 ns |  76 ns |   58 ns | 139 ns |          332 ns |
+| email, valid              |         91 ns | 36 ns |   39 ns |  52 ns |   40 ns |  84 ns |      — |   41 ns | 638 ns |               — |
+| positive integer, valid   |         40 ns |  0 ns |    8 ns |  47 ns |   24 ns |  42 ns |  43 ns |    0 ns | 106 ns |          339 ns |
+| 1000 UUIDs in an array    |         69 µs | 55 µs |   50 µs |  69 µs |   69 µs |  53 µs |  67 µs |   54 µs | 166 µs |               — |
+
+How to read it:
+
+- Every other library returns the input as it is. nominal-types creates an instance and a result object, which costs about 25 to 30 ns. It shows most where the check itself is nearly free, as for a positive integer.
+- A rejected value is cheaper here than anywhere else, because messages are built from a description and the value, with no error tree.
+- UUID and email depend on each library's own pattern. The UUID pattern here only accepts versions 1 to 8 with the RFC 9562 variant, plus nil and max. The email pattern also checks the RFC 5321 length limits. Both do more than most of the others, and pay for it.
+- A dash means the library has no built-in check for that case.
+
+The second table of the run gives the cost of each level of a type, from `AnyNumber` to `Port` under `Uint16`.
+
 ## How a chain runs
 
 A type checks the rules of every level, from the base type down, and stops at the first failure.

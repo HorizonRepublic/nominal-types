@@ -222,6 +222,17 @@
       "rules": {
         "require-unicode-regexp": "off"
       }
+    },
+    {
+      "files": ["bench/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "import/no-nodejs-modules": "off",
+        "max-classes-per-file": "off",
+        "import/no-named-as-default": "off",
+        "import/no-named-as-default-member": "off",
+        "public-docs/require-jsdoc": "off"
+      }
     }
   ],
   "ignorePatterns": ["node_modules", "dist", "coverage"],

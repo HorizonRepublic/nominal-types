@@ -79,6 +79,47 @@ Accepts a whole number from `Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGE
 
 Messages end with `a signed 8-bit integer`, `an unsigned 16-bit integer` and so on. The sized types sit next to the sign types: a `Uint8` is not a `NonNegativeInteger`.
 
+## Port
+
+`AnyNumber` › `FiniteNumber` › `Integer` › `Uint16` › `Port`
+
+A TCP or UDP port number from 1 to 65,535. Port 0 is not accepted: it asks the system for any free port, so it is not a port to connect to. Use `Uint16` where 0 belongs.
+
+| Property    | Value                                                                   |
+| ----------- | ----------------------------------------------------------------------- |
+| JSON Schema | adds `{ type: 'integer', minimum: 1, maximum: 65535 }`, with an example |
+| Message     | `must be a port from 1 to 65535 (was 0)`                                |
+
+```ts
+import { Port, schemaOf } from '@horizon-republic/nominal-types';
+
+new Port(8080).value; // 8080
+schemaOf(Port).fromString().parse('443'); // { ok: true, value: Port { value: 443 } }
+schemaOf(Port).fromString().parse('+80'); // { ok: false, issues: [{ message: 'must be a number (was "+80")' }] }
+```
+
+## Latitude and Longitude
+
+`AnyNumber` › `FiniteNumber` › `Latitude`, and `AnyNumber` › `FiniteNumber` › `Longitude`
+
+A position on Earth in decimal degrees, as GPS and GeoJSON write it. Both ends of each range are accepted.
+
+| Type        | Accepts     | Adds to JSON Schema                               | Message ends with              |
+| ----------- | ----------- | ------------------------------------------------- | ------------------------------ |
+| `Latitude`  | -90 to 90   | `{ type: 'number', minimum: -90, maximum: 90 }`   | `a latitude from -90 to 90`    |
+| `Longitude` | -180 to 180 | `{ type: 'number', minimum: -180, maximum: 180 }` | `a longitude from -180 to 180` |
+
+-180 and 180 are the same line on Earth, but `equals()` tells them apart.
+
+```ts
+import { Latitude, Longitude, objectOf } from '@horizon-republic/nominal-types';
+
+const Place = objectOf({ lat: Latitude, lon: Longitude });
+
+Place.parse({ lat: 51.5072, lon: -0.1276 }).ok; // true
+Place.parse({ lat: 91, lon: 0 }); // { ok: false, issues: [{ message: 'must be a latitude from -90 to 90 (was 91)', path: ['lat'] }] }
+```
+
 ## Float32
 
 `AnyNumber` › `FiniteNumber` › `Float32`

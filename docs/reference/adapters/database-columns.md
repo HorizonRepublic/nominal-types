@@ -6,22 +6,22 @@ The four database adapters, [mikro-orm](mikro-orm.md), [typeorm](typeorm.md), [d
 
 The column comes from the type. Each adapter has an option to choose your own.
 
-| Type                                                                                                                 | MikroORM, TypeORM, Drizzle                           | Sequelize         |
-| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
-| `Email`                                                                                                              | `varchar(254)`                                       | `STRING(254)`     |
-| `HexColor`                                                                                                           | `varchar(9)`                                         | `STRING(9)`       |
-| `Uuid`                                                                                                               | `uuid`                                               | `UUID`            |
-| `CountryCode`                                                                                                        | `varchar(2)`                                         | `STRING(2)`       |
-| `CurrencyCode`                                                                                                       | `varchar(3)`                                         | `STRING(3)`       |
-| another string type with a length limit                                                                              | `varchar(<limit>)`                                   | `STRING(<limit>)` |
-| `AnyString`, `Url`, `HttpUrl`, `LanguageTag`, `MediaType`, `Base64`, `Base64Url`, a string type without a limit      | `text`                                               | `TEXT`            |
-| `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`                                                                          | `integer`                                            | `INTEGER`         |
-| `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Uint32`                | `bigint`                                             | `BIGINT`          |
-| `AnyNumber`, `FiniteNumber`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber` | `double precision` (MikroORM: the platform's double) | `DOUBLE`          |
-| `Int64`                                                                                                              | `bigint`                                             | `BIGINT`          |
-| `Uint64`                                                                                                             | `decimal(20, 0)`                                     | `DECIMAL(20)`     |
-| `AnyBigInt` and the other big integer types                                                                          | `varchar(1000)`                                      | `STRING(1000)`    |
-| `AnyBoolean`                                                                                                         | `boolean`                                            | `BOOLEAN`         |
+| Type                                                                                                                                                | MikroORM, TypeORM, Drizzle                           | Sequelize         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
+| `Email`                                                                                                                                             | `varchar(254)`                                       | `STRING(254)`     |
+| `HexColor`                                                                                                                                          | `varchar(9)`                                         | `STRING(9)`       |
+| `CountryCode`                                                                                                                                       | `varchar(2)`                                         | `STRING(2)`       |
+| `CurrencyCode`                                                                                                                                      | `varchar(3)`                                         | `STRING(3)`       |
+| `Uuid`, `UuidV4`, `UuidV7`                                                                                                                          | `uuid`                                               | `UUID`            |
+| another string type with a length limit: `Ulid` 26, `ObjectId` 24, `SemVer` 256                                                                     | `varchar(<limit>)`                                   | `STRING(<limit>)` |
+| `AnyString`, `NonEmptyString`, `NonBlankString`, `Url`, `HttpUrl`, `LanguageTag`, `MediaType`, `Base64`, `Base64Url`, a string type without a limit | `text`                                               | `TEXT`            |
+| `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Port`                                                                                                 | `integer`                                            | `INTEGER`         |
+| `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Uint32`                                               | `bigint`                                             | `BIGINT`          |
+| `AnyNumber`, `FiniteNumber`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Latitude`, `Longitude`       | `double precision` (MikroORM: the platform's double) | `DOUBLE`          |
+| `Int64`                                                                                                                                             | `bigint`                                             | `BIGINT`          |
+| `Uint64`                                                                                                                                            | `decimal(20, 0)`                                     | `DECIMAL(20)`     |
+| `AnyBigInt` and the other big integer types                                                                                                         | `varchar(1000)`                                      | `STRING(1000)`    |
+| `AnyBoolean`                                                                                                                                        | `boolean`                                            | `BOOLEAN`         |
 
 Your own types get a column the same way, by what they accept. A number type that takes fractions, such as a price from 1 up, gets `double precision`. A type declared with `Nominal()` gets a column by what it accepts: `boolean` for `true`, a number column for `1`, else `text`.
 

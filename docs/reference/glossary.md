@@ -46,6 +46,7 @@ The terms these pages use, in alphabetical order.
 | scalar                      | In GraphQL, a type for a single value, such as `String`. The GraphQL adapter makes one per nominal type.                                                               |
 | schema                      | An object that checks values, such as a Zod schema or what `schemaOf()` returns.                                                                                       |
 | `schemaOf()`                | Turns a type into a plain schema object, to build lists and optional values from: `schemaOf(Uuid).array()`.                                                            |
+| semantic version            | A version number such as `2.1.0`: major, minor and patch. The major number grows when a change breaks users. See [semver.org](https://semver.org).                     |
 | sensitive type              | A type declared with `sensitive: true`. Its messages leave the rejected value out and tell only its kind, such as `a string of 7 characters`.                          |
 | `serialize`                 | An option of the database adapters: a function that turns an instance into the value stored in the column. Without it, `toJSON()` is stored.                           |
 | sibling                     | A type with the same parent as another, such as `Email` and `Uuid` under `AnyString`. A variant is a sibling of its source.                                            |
@@ -58,9 +59,11 @@ The terms these pages use, in alphabetical order.
 | `trusted`                   | An option of the database adapters: `true` skips checking values read from the database.                                                                               |
 | type guard                  | A function `(value: unknown) => value is T` that returns `true` for a valid value.                                                                                     |
 | type name                   | The name given to `Nominal()`, such as `billing.InvoiceNumber`. It names the type in errors, JSON Schema and Swagger.                                                  |
+| ULID                        | An id of 26 letters and digits whose first part is the time it was made, so ids sort by time. See the [ULID specification](https://github.com/ulid/spec).              |
 | union                       | A value that may have one of several shapes, such as a payment by card or by bank transfer.                                                                            |
 | value                       | What an instance wraps, read through `instance.value`: a string, number, bigint or boolean, or a frozen object or array.                                               |
 | value object                | In domain-driven design, a value defined by its fields, such as a stay of guests and capacity. It is always valid, can't change, and compares by value.                |
 | variant                     | A sibling type made with `variant()`. It has the methods of its source and a different rule, and the two don't mix.                                                    |
+| white space                 | Characters that show as empty space: spaces, tabs, line breaks and 22 others that Unicode marks as `White_Space`.                                                      |
 
 [← Reference](README.md)

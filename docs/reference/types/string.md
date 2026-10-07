@@ -19,6 +19,54 @@ import { AnyString } from '@horizon-republic/nominal-types';
 new AnyString('').value; // ''
 ```
 
+## NonEmptyString
+
+`AnyString` › `NonEmptyString`
+
+A string of at least one character, for a required text field. A string of spaces passes. The value is never trimmed.
+
+| Property    | Value                                                                        |
+| ----------- | ---------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', minLength: 1 }`, with an example                          |
+| Message     | `must be a non-empty string (was "")`, also for a value that is not a string |
+
+```ts
+import { NonEmptyString } from '@horizon-republic/nominal-types';
+
+new NonEmptyString(' ').value; // ' '
+new NonEmptyString(''); // throws NominalError: nominal.NonEmptyString: must be a non-empty string (was "")
+```
+
+## NonBlankString
+
+`AnyString` › `NonEmptyString` › `NonBlankString`
+
+A string with at least one character that is not [white space](../glossary.md), for a name or a title. The value is never trimmed: `' Jane '` stays `' Jane '`.
+
+White space is the 25 characters Unicode marks as `White_Space`: spaces, tabs, line breaks and the like. This set is not the one `trim()` removes:
+
+| Character                | `NonBlankString` | `trim()` |
+| ------------------------ | ---------------- | -------- |
+| U+0085, next line        | white space      | kept     |
+| U+FEFF, byte order mark  | a character      | removed  |
+| U+200B, zero-width space | a character      | kept     |
+
+| Property    | Value                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| JSON Schema | `allOf` of `NonEmptyString`'s and `{ type: 'string', pattern: NonBlankString.pattern.source }` |
+| Message     | `must be a non-blank string (was "   ")`; `''` gets the message of `NonEmptyString`            |
+
+```ts
+import { NonBlankString } from '@horizon-republic/nominal-types';
+
+new NonBlankString(' Jane ').value; // ' Jane '
+new NonBlankString('   '); // throws NominalError: nominal.NonBlankString: must be a non-blank string (was "   ")
+```
+
+| Static field             | Holds                                               |
+| ------------------------ | --------------------------------------------------- |
+| `NonBlankString.pattern` | a `RegExp` that finds one character not white space |
+
 ## Email
 
 `AnyString` › `Email`
@@ -101,6 +149,153 @@ id.version; // 7
 | Static field   | Holds                  |
 | -------------- | ---------------------- |
 | `Uuid.pattern` | the UUID as a `RegExp` |
+
+## UuidV4 and UuidV7
+
+`AnyString` › `Uuid` › `UuidV4`, and `AnyString` › `Uuid` › `UuidV7`
+
+A `Uuid` of one version, as RFC 9562 defines it. Both have the members of `Uuid`.
+
+- `UuidV4` is random. Use it for an id that must not tell when it was made.
+- `UuidV7` starts with the time it was made, so ids sort by time. Its `timestamp` is always a `Date`.
+- The nil and max UUIDs are not accepted.
+- `canonical()` keeps the type: `UuidV4` gives a `UuidV4`.
+
+| Property    | Value                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| JSON Schema | `allOf` of `Uuid`'s and `{ type: 'string', pattern: '^.{14}4' }` (`7` for `UuidV7`), with an example |
+| Message     | `must be a version 4 UUID (was "0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f")`                              |
+
+```ts
+import { Uuid, UuidV7 } from '@horizon-republic/nominal-types';
+
+const id = new UuidV7('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
+
+id.timestamp; // 2024-07-27T01:15:56.618Z
+id.equals(new Uuid('0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F')); // true
+```
+
+| Static field                       | Holds                                          |
+| ---------------------------------- | ---------------------------------------------- |
+| `UuidV4.pattern`, `UuidV7.pattern` | a UUID of that version as a `RegExp`, to reuse |
+
+## Ulid
+
+`AnyString` › `Ulid`
+
+A [ULID](../glossary.md) like `01ARZ3NDEKTSV4RRFFQ69G5FAV`: an id that starts with the time it was made, as the [ULID specification](https://github.com/ulid/spec) writes it.
+
+- 26 characters: digits and letters except `I`, `L`, `O` and `U`.
+- The first character is `0` to `7`.
+- Upper and lower case are both accepted and kept as given.
+
+| Property    | Value                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Ulid.pattern.source, minLength: 26, maxLength: 26 }`, with an example |
+| Message     | `must be a ULID (was "x")`                                                                        |
+
+```ts
+import { Ulid } from '@horizon-republic/nominal-types';
+
+const id = new Ulid('01arz3ndektsv4rrffq69g5fav');
+
+id.timestamp; // 2016-07-30T23:54:10.259Z
+id.canonical().value; // '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+```
+
+| Member          | Returns                           |
+| --------------- | --------------------------------- |
+| `timestamp`     | the time it was made, as a `Date` |
+| `canonical()`   | the same ULID in uppercase        |
+| `equals(other)` | compares regardless of case       |
+
+| Static field   | Holds                  |
+| -------------- | ---------------------- |
+| `Ulid.pattern` | the ULID as a `RegExp` |
+
+## ObjectId
+
+`AnyString` › `ObjectId`
+
+A MongoDB ObjectId like `507f1f77bcf86cd799439011`: 24 hex digits. The first eight hold the second it was made.
+
+- Upper and lower case are both accepted and kept as given.
+- All zeros is a valid ObjectId.
+
+| Property    | Value                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: ObjectId.pattern.source, minLength: 24, maxLength: 24 }`, with an example |
+| Message     | `must be an ObjectId (was "x")`                                                                       |
+
+```ts
+import { ObjectId } from '@horizon-republic/nominal-types';
+
+const id = new ObjectId('507F1F77BCF86CD799439011');
+
+id.timestamp; // 2012-10-17T21:13:27.000Z
+id.canonical().value; // '507f1f77bcf86cd799439011'
+```
+
+| Member          | Returns                             |
+| --------------- | ----------------------------------- |
+| `timestamp`     | the second it was made, as a `Date` |
+| `canonical()`   | the same ObjectId in lowercase      |
+| `equals(other)` | compares regardless of case         |
+
+| Static field       | Holds                      |
+| ------------------ | -------------------------- |
+| `ObjectId.pattern` | the ObjectId as a `RegExp` |
+
+## SemVer
+
+`AnyString` › `SemVer`
+
+A [semantic version](../glossary.md) like `2.0.0-rc.1+build.5`, as [Semantic Versioning 2.0.0](https://semver.org) writes it: `MAJOR.MINOR.PATCH`, then an optional `-prerelease` and `+build` part.
+
+- No leading `v`: `v1.2.3` is not accepted.
+- No leading zeros in numbers: `01.0.0` and `1.0.0-01` are not accepted. Build parts may have them: `1.0.0+01`.
+- Up to 256 characters, and each number up to `Number.MAX_SAFE_INTEGER`.
+
+| Property    | Value                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: SemVer.pattern.source, minLength: 5, maxLength: 256 }`, with examples |
+| Message     | `must be a semantic version (was "v1.2.3")`                                                       |
+
+```ts
+import { SemVer } from '@horizon-republic/nominal-types';
+
+const version = new SemVer('2.0.0-rc.1+build.5');
+
+version.prerelease; // ['rc', 1]
+version.isNewerThan(new SemVer('2.0.0-beta.9')); // true
+```
+
+Members, with results for this `version`:
+
+| Member                    | Returns                                                        | Example          |
+| ------------------------- | -------------------------------------------------------------- | ---------------- |
+| `major`, `minor`, `patch` | the three numbers                                              | `2`, `0`, `0`    |
+| `prerelease`              | the parts after `-`, numbers as numbers; `[]` without them     | `['rc', 1]`      |
+| `build`                   | the parts after `+`, as text; `[]` without them                | `['build', '5']` |
+| `isPrerelease`            | whether there is a prerelease part                             | `true`           |
+| `compare(other)`          | `-1` if this version comes first, `1` if after, `0` if neither |                  |
+| `isNewerThan(other)`      | whether this version comes after the other                     |                  |
+
+`compare()` follows the order of the specification: `1.0.0-alpha` < `1.0.0-alpha.1` < `1.0.0-beta` < `1.0.0`. The build part doesn't count, so `1.0.0+a` and `1.0.0+b` compare as `0`. `equals()` compares the text, so they are not equal.
+
+Sort a list with `compare()`:
+
+```ts
+import { SemVer } from '@horizon-republic/nominal-types';
+
+const versions = ['1.0.0', '1.0.0-beta', '0.9.12'].map((text) => new SemVer(text));
+
+versions.sort((a, b) => a.compare(b)).map(String); // ['0.9.12', '1.0.0-beta', '1.0.0']
+```
+
+| Static field     | Holds                     |
+| ---------------- | ------------------------- |
+| `SemVer.pattern` | the version as a `RegExp` |
 
 ## Url
 

@@ -8,12 +8,15 @@ import {
   Int32,
   Int8,
   Integer,
+  Latitude,
+  Longitude,
   NegativeInteger,
   NegativeNumber,
   NonNegativeInteger,
   NonNegativeNumber,
   NonPositiveInteger,
   NonPositiveNumber,
+  Port,
   PositiveInteger,
   PositiveNumber,
   Uint16,
@@ -67,6 +70,15 @@ const finite = [
   2 ** 128,
   16_777_216,
   16_777_217,
+  90,
+  -90,
+  90.000_000_1,
+  -90.000_000_1,
+  180,
+  -180,
+  180.000_000_1,
+  -180.000_000_1,
+  51.5,
 ];
 const special = [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 const foreign: unknown[] = ['1', '', 1n, null, undefined, true, new Object(1), [1], {}];
@@ -98,6 +110,9 @@ const expectations: ReadonlyArray<
   [Uint8, inRange(0, 255)],
   [Uint16, inRange(0, 65_535)],
   [Uint32, inRange(0, 4_294_967_295)],
+  [Port, inRange(1, 65_535)],
+  [Latitude, (value) => value >= -90 && value <= 90],
+  [Longitude, (value) => value >= -180 && value <= 180],
 ];
 
 describe.each(
@@ -146,6 +161,9 @@ describe('the number hierarchy', () => {
     [Integer, Uint8, 1],
     [Integer, Uint16, 1],
     [Integer, Uint32, 1],
+    [Uint16, Port, 1],
+    [FiniteNumber, Latitude, -0.5],
+    [FiniteNumber, Longitude, 0.5],
   ];
 
   it.each(

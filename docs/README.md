@@ -17,6 +17,7 @@ New here? Start with the tutorial.
 - [How to generate JSON Schema](guides/json-schema.md)
 - [How to validate NestJS route parameters](guides/nestjs.md)
 - [How to use nominal types in class-validator DTOs](guides/class-validator.md)
+- [How to document nominal types in Swagger](guides/swagger.md)
 
 ## [Reference](reference/README.md)
 

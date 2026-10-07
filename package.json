@@ -71,6 +71,14 @@
       "import": "./dist/adapters/sequelize/index.js",
       "require": "./dist/adapters/sequelize/index.cjs"
     },
+    "./adapters/graphql": {
+      "import": "./dist/adapters/graphql/index.js",
+      "require": "./dist/adapters/graphql/index.cjs"
+    },
+    "./adapters/superjson": {
+      "import": "./dist/adapters/superjson/index.js",
+      "require": "./dist/adapters/superjson/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -114,6 +122,7 @@
     "drizzle-orm": "^0.45.3",
     "effect": "^4.0.1",
     "eslint-plugin-jsdoc": "^65.2.0",
+    "graphql": "^17.0.2",
     "joi": "^18.2.9",
     "mitata": "^1.0.34",
     "oxfmt": "^0.72.0",
@@ -124,6 +133,7 @@
     "rxjs": "^7.8.2",
     "sequelize": "^6.37.8",
     "sqlite3": "^6.0.1",
+    "superjson": "^2.2.6",
     "sury": "^11.1.0-rc.0",
     "tsdown": "^0.23.0",
     "ttsc": "^0.30.4",
@@ -142,12 +152,16 @@
     "arktype": "^2.2.0",
     "class-transformer": "^0.5.0",
     "class-validator": "^0.14.0 || ^0.15.0",
+    "graphql": "^16.0.0 || ^17.0.0",
     "sequelize": "^6.0.0",
     "typeorm": "^0.3.0 || ^1.0.0",
     "valibot": "^1.0.0",
     "zod": "^4.0.0"
   },
   "peerDependenciesMeta": {
+    "graphql": {
+      "optional": true
+    },
     "sequelize": {
       "optional": true
     },

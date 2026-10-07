@@ -48,15 +48,17 @@ It works with both `import` and `require`, on Node.js 22.12 or later.
 
 A nominal type works with other libraries in three ways: as a library's field type, as a rule written with that library, or through an adapter, a separate entry point of this package.
 
-| Library                                                         | Fields of its schemas                                                    | Rules for a type      | Guide                                               |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------- | --------------------------------------------------- |
-| [ArkType](https://arktype.io)                                   | yes, with the adapter `toArk()`, at ArkType's speed                      | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
-| [NestJS](https://nestjs.com) 11, 12                             | parameters, bodies and message payloads, with the adapter `NominalPipe`  | —                     | [NestJS](docs/guides/nestjs.md)                     |
-| [class-validator](https://github.com/typestack/class-validator) | DTO properties, with the adapter `@NominalField()`                       | —                     | [class-validator](docs/guides/class-validator.md)   |
-| [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | full schemas in the document, with the adapter `applyNominalTypes()`     | —                     | [Swagger](docs/guides/swagger.md)                   |
-| [Zod](https://zod.dev) 4                                        | yes, with the adapter `toZod()`                                          | yes, with JSON Schema | [Zod](docs/guides/zod.md)                           |
-| [Valibot](https://valibot.dev)                                  | yes, with the adapter `toValibot()`                                      | yes, no JSON Schema   | [Valibot](docs/guides/valibot.md)                   |
-| any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }` | yes                   | [Other validators](docs/guides/other-validators.md) |
+| Library                                                         | Fields of its schemas                                                     | Rules for a type      | Guide                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------- | --------------------------------------------------- |
+| [ArkType](https://arktype.io)                                   | yes, with the adapter `toArk()`, at ArkType's speed                       | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
+| [NestJS](https://nestjs.com) 11, 12                             | parameters, bodies and message payloads, with the adapter `NominalPipe`   | —                     | [NestJS](docs/guides/nestjs.md)                     |
+| [class-validator](https://github.com/typestack/class-validator) | DTO properties, with the adapter `@NominalField()`                        | —                     | [class-validator](docs/guides/class-validator.md)   |
+| [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | full schemas in the document, with the adapter `applyNominalTypes()`      | —                     | [Swagger](docs/guides/swagger.md)                   |
+| [GraphQL](https://graphql.org) 16, 17                           | scalars that give instances, with the adapter `toGraphQL()`               | —                     | [GraphQL](docs/guides/graphql.md)                   |
+| [superjson](https://github.com/flightcontrolhq/superjson)       | instances that survive tRPC and Next.js, with the adapter `toSuperjson()` | —                     | [superjson](docs/guides/superjson.md)               |
+| [Zod](https://zod.dev) 4                                        | yes, with the adapter `toZod()`                                           | yes, with JSON Schema | [Zod](docs/guides/zod.md)                           |
+| [Valibot](https://valibot.dev)                                  | yes, with the adapter `toValibot()`                                       | yes, no JSON Schema   | [Valibot](docs/guides/valibot.md)                   |
+| any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }`  | yes                   | [Other validators](docs/guides/other-validators.md) |
 
 Databases:
 
@@ -69,7 +71,7 @@ Databases:
 
 Values read from the database are checked, and the column type comes from the nominal type.
 
-Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, MikroORM, TypeORM or Sequelize is installed or loaded unless you import the adapter.
+Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, GraphQL, MikroORM, TypeORM or Sequelize is installed or loaded unless you import the adapter.
 
 ## Concepts
 

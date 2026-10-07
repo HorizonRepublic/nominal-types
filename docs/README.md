@@ -22,6 +22,8 @@ New here? Start with the tutorial. Checking request bodies? See [Choosing how to
 - [How to generate JSON Schema](guides/json-schema.md)
 - [How to validate NestJS route parameters](guides/nestjs.md)
 - [How to use nominal types in class-validator DTOs](guides/class-validator.md)
+- [How to use nominal types in GraphQL](guides/graphql.md)
+- [How to send nominal types through superjson](guides/superjson.md)
 - [How to store nominal types with MikroORM](guides/mikro-orm.md)
 - [How to store nominal types with TypeORM](guides/typeorm.md)
 - [How to store nominal types with Drizzle](guides/drizzle.md)

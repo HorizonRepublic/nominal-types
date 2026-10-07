@@ -152,15 +152,17 @@ See [Built-in types](docs/reference/types/README.md) for each one.
 
 The repository keeps `package-lock.json`, and `.node-version` names the Node.js release the checks run on. A pull request that adds or changes public behaviour updates this README in the same change.
 
-| Script                   | What it does                                                        |
-| ------------------------ | ------------------------------------------------------------------- |
-| `npm run build`          | Builds both formats into `dist` and checks how the package resolves |
-| `npm run typecheck`      | Runs the TypeScript compiler without emitting                       |
-| `npm run lint`           | Runs oxlint with type-aware rules                                   |
-| `npm run format`         | Formats the tree with oxfmt; `format:check` only reports            |
-| `npm test`               | Runs the vitest suites; `test:coverage` adds a coverage report      |
-| `npm run bench`          | Compares the speed of nominal-types with nine other libraries       |
-| `npm run bench:document` | Validates a 3 MB document with eight setups                         |
+| Script                              | What it does                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run build`                     | Builds both formats into `dist` and checks how the package resolves            |
+| `npm run typecheck`                 | Runs the TypeScript compiler without emitting                                  |
+| `npm run lint`                      | Runs oxlint with type-aware rules                                              |
+| `npm run format`                    | Formats the tree with oxfmt; `format:check` only reports                       |
+| `npm test`                          | Runs the vitest suites; `test:coverage` adds a coverage report                 |
+| `npm run bench`                     | Compares the speed of nominal-types with nine other libraries                  |
+| `npm run bench:document`            | Validates a 3 MB document with eight setups                                    |
+| `npm run profile:cpu -- <script>`   | Profiles a script and lists where the time goes, by place and function         |
+| `npm run profile:deopt -- <script>` | Lists the functions of this package V8 optimised and deoptimised, with reasons |
 
 ## License
 

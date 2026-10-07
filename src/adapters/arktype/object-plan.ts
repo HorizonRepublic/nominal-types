@@ -1,3 +1,5 @@
+import type { DeclaredField } from './builders.ts';
+import { generatedObjectBuilder } from './builders.ts';
 import type { JsonNode } from './json-node.ts';
 import { isJsonNode, listOf, unsupported } from './json-node.ts';
 import type { Plan, PlanOf } from './plan-contract.ts';
@@ -18,6 +20,20 @@ const fieldsOf = (node: JsonNode, kind: 'required' | 'optional', planOf: PlanOf)
       ? []
       : [{ key: String(entry['key']), optional: kind === 'optional', plan }];
   });
+
+const declaredFields = (node: JsonNode, fields: readonly Field[]): DeclaredField[] => {
+  const plans = new Map(fields.map((field) => [field.key, field.plan.build]));
+
+  return (['required', 'optional'] as const).flatMap((kind) =>
+    listOf(node[kind]).flatMap((entry) => {
+      const key = isJsonNode(entry) ? String(entry['key']) : undefined;
+
+      return key === undefined
+        ? []
+        : [{ key, optional: kind === 'optional', build: plans.get(key) }];
+    }),
+  );
+};
 
 const declaredKeys = (node: JsonNode): ReadonlySet<string> =>
   new Set(
@@ -96,8 +112,13 @@ export const objectPlan = (node: JsonNode, planOf: PlanOf): Plan | undefined => 
     plan.verify === undefined ? [] : [[key, plan.verify] as const],
   );
 
+  const generated =
+    index === undefined
+      ? generatedObjectBuilder(declaredFields(node, fields), node['undeclared'] === undefined)
+      : undefined;
+
   return {
-    build: builder(fields, index, declared),
+    build: generated ?? builder(fields, index, declared),
     verify: combine(
       combine(
         fieldVerifiers.length === 0 ? undefined : verifyKeys(fieldVerifiers),

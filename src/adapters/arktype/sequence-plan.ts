@@ -1,3 +1,4 @@
+import { generatedArrayBuilder } from './builders.ts';
 import { isJsonNode, listOf } from './json-node.ts';
 import type { Plan, PlanOf } from './plan-contract.ts';
 import type { Verify } from './verify.ts';
@@ -70,8 +71,13 @@ export const sequencePlan = (sequence: unknown, planOf: PlanOf): Plan | undefine
     return fromEnd <= trailing.length ? trailing[trailing.length - fromEnd] : rest;
   };
 
+  const generated =
+    leading.length === 0 && trailing.length === 0 && rest !== undefined
+      ? generatedArrayBuilder(rest.build)
+      : undefined;
+
   return {
-    build: builder(planAt),
+    build: generated ?? builder(planAt),
     verify: plans.every((plan) => plan?.verify === undefined) ? undefined : verifier(planAt),
   };
 };

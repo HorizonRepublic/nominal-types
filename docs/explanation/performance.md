@@ -56,11 +56,11 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 
 | Library                               | Valid document | One error deep inside | Every hundredth email broken |
 | ------------------------------------- | -------------: | --------------------: | ---------------------------: |
-| ArkType                               |         1.4 ms |                 15 ms |                        14 ms |
+| ArkType                               |         1.3 ms |                 15 ms |                        14 ms |
 | Typia                                 |         2.4 ms |                5.8 ms |                       3.3 ms |
+| nominal-types + ArkType adapter       |         5.0 ms |                 17 ms |                        15 ms |
 | Zod                                   |         6.8 ms |                7.0 ms |                       6.8 ms |
 | Valibot                               |         7.1 ms |                7.2 ms |                       7.2 ms |
-| nominal-types + ArkType adapter       |         8.2 ms |                 17 ms |                        15 ms |
 | class-validator                       |         105 ms |                103 ms |                       105 ms |
 | nominal-types + class-validator       |         110 ms |                111 ms |                       109 ms |
 | nominal-types + ArkType, `schemaOf()` |         110 ms |                111 ms |                       201 ms |
@@ -68,16 +68,16 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 How to read it:
 
 - Only the nominal-types rows build instances: 112,000 objects such as `Email` and `PositiveInteger`, ready to use. The other libraries return plain values.
-- With the adapter, ArkType checks every field on its own compiled path, and one pass builds the instances afterwards. That pass is most of the gap to plain ArkType.
-- With `schemaOf()` inside ArkType, it is about 13 times slower. A nominal type is then a foreign Standard Schema to ArkType, and every such field goes through a slower path.
+- With the adapter, ArkType checks every field on its own compiled path, and one generated function per object builds the instances afterwards. The whole document comes out faster than with Zod or Valibot, which build no instances.
+- With `schemaOf()` inside ArkType, it is about 20 times slower. A nominal type is then a foreign Standard Schema to ArkType, and every such field goes through a slower path.
 - Inside class-validator, nominal types add about 5% to its own time.
 
 How the adapter gets there, on an object with a UUID, an email and a count:
 
 | Setup                              |   Time |
 | ---------------------------------- | -----: |
-| ArkType alone, plain values        |  97 ns |
-| the adapter, with instances        | 287 ns |
+| ArkType alone, plain values        | 100 ns |
+| the adapter, with instances        | 256 ns |
 | `schemaOf()` fields inside ArkType | 1.9 µs |
 
 Any morph makes ArkType leave its fast path, so `arkOf()` adds none: it is a one-argument `.narrow()` with the type's own check, which ArkType compiles in. A two-argument predicate costs three times more, since ArkType then builds a context for it.
@@ -92,7 +92,7 @@ Any morph makes ArkType leave its fast path, so `arkOf()` adds none: it is a one
 | ArkType                                               |  21 ms |                 33 ms |                        31 ms |
 | Valibot                                               |  27 ms |                 26 ms |                        26 ms |
 | Zod                                                   |  27 ms |                 28 ms |                        27 ms |
-| nominal-types + ArkType adapter                       |  29 ms |                 35 ms |                        32 ms |
+| nominal-types + ArkType adapter                       |  27 ms |                 36 ms |                        33 ms |
 | nominal-types + ArkType, `schemaOf()`                 | 128 ms |                124 ms |                       220 ms |
 | class-validator                                       | 129 ms |                122 ms |                       123 ms |
 | nominal-types + class-validator                       | 140 ms |                130 ms |                       131 ms |
@@ -104,7 +104,7 @@ Measured on an Apple M4 Pro, Node.js 24.2, 7 Oct 2026.
 How to read it:
 
 - About 20 ms of every request is Fastify reading the body and `JSON.parse` on 3 MB, whatever validates it.
-- With the ArkType adapter, nominal types add about 8 ms to ArkType, and the request is as fast as with Zod or Valibot, while every value comes out as an instance.
+- With the ArkType adapter, nominal types add about 6 ms to ArkType, and the request is as fast as with Zod or Valibot, while every value comes out as an instance.
 - class-validator gets slower as the app grows. The same document takes 0.13 s in an app with 5 DTOs and 1.1 s in an app with 1000 more. Its work per object grows with the number of decorated classes the whole app has registered, not only with the document. In a large app with a larger payload, that reaches minutes.
 - nominal types inside class-validator add only a few percent to it, in a small app and in a large one.
 

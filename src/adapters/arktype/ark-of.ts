@@ -5,7 +5,7 @@ import type { AnyNominalType, InputOf } from '../../core/contracts.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { checkerFor } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
-import { rememberType, typeKey } from './registry.ts';
+import { typeIdOf, typeKey } from './registry.ts';
 
 /**
  * The ArkType node `arkOf()` returns: it takes the type's input, and `arkSchema()` gives an
@@ -33,8 +33,6 @@ export type ArkOf<Target extends AnyNominalType> = Type<
 export const arkOf = <Target extends AnyNominalType>(target: Target): ArkOf<Target> => {
   const check = checkerFor(target);
 
-  rememberType(target);
-
   const problem = (error: { readonly data: unknown }): string => {
     const result = check(error.data);
 
@@ -44,7 +42,7 @@ export const arkOf = <Target extends AnyNominalType>(target: Target): ArkOf<Targ
   };
 
   // A one-argument predicate keeps ArkType on its fast path; the message is built on failure only.
-  const meta = { [typeKey]: target.typeName, description: target.typeName, problem };
+  const meta = { [typeKey]: typeIdOf(target), description: target.typeName, problem };
   const node = type('unknown')
     .narrow((value) => !(check(value) instanceof Rejection))
     .configure(meta);

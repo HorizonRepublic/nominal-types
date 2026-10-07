@@ -137,4 +137,15 @@ describe('arkOf', () => {
     expect(value.id).toBeInstanceOf(Uuid);
     expect(value.id).toBeInstanceOf(copy.Uuid);
   });
+
+  it('builds the very class it was given when two copies hold a type of one name', async () => {
+    vi.resetModules();
+    const copy: typeof library = await import('../../../src/index.ts');
+    const schema = arkSchema(type({ mine: arkOf(Uuid), theirs: arkOf(copy.Uuid) }));
+    const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
+    const value = valueOf(schema.parse({ mine: id, theirs: id }));
+
+    expect(Object.getPrototypeOf(value.mine)).toBe(Uuid.prototype);
+    expect(Object.getPrototypeOf(value.theirs)).toBe(copy.Uuid.prototype);
+  });
 });

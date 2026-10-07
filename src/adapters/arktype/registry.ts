@@ -2,7 +2,7 @@ import type { AnyConstraint } from '../../core/constraint-types.ts';
 import type { AnyNominalType } from '../../core/contracts.ts';
 
 /**
- * Internal: the meta key that marks an ArkType node made by `arkOf()`, holding the type's name.
+ * Internal: the meta key that marks an ArkType node made by `arkOf()`, holding the id of its type.
  */
 export const typeKey = 'x-nominal-type';
 
@@ -13,15 +13,19 @@ export const constraintsKey = 'x-nominal-constraints';
 
 interface ArkRegistry {
   readonly types: Map<string, AnyNominalType>;
+  readonly ids: WeakMap<AnyNominalType, string>;
   readonly constraints: Map<string, AnyConstraint>;
 }
 
-const key = Symbol.for('@horizon-republic/nominal-types/arktype/1');
+const key = Symbol.for('@horizon-republic/nominal-types/arktype/2');
 
 const existing: unknown = Reflect.get(globalThis, key);
 
 const isRegistry = (value: unknown): value is ArkRegistry =>
-  typeof value === 'object' && value !== null && Reflect.get(value, 'types') instanceof Map;
+  typeof value === 'object' &&
+  value !== null &&
+  Reflect.get(value, 'types') instanceof Map &&
+  Reflect.get(value, 'ids') instanceof WeakMap;
 
 /**
  * Internal: what `arkOf()` and `arkObject()` put in ArkType meta refers to these maps, shared by
@@ -30,7 +34,7 @@ const isRegistry = (value: unknown): value is ArkRegistry =>
 export const registry: ArkRegistry = isRegistry(existing)
   ? existing
   : (() => {
-      const state: ArkRegistry = { types: new Map(), constraints: new Map() };
+      const state: ArkRegistry = { types: new Map(), ids: new WeakMap(), constraints: new Map() };
 
       Reflect.set(globalThis, key, state);
 
@@ -38,16 +42,25 @@ export const registry: ArkRegistry = isRegistry(existing)
     })();
 
 /**
- * Internal: remembers the type behind a name, keeping the first one.
+ * Internal: the id of a type, the same for the same class every time.
  *
  * @remarks
- * Two copies of the package hold two classes for one type, and `instanceof` holds across them, so
- * either serves; two different types under one name are warned about where they are declared.
+ * An id rather than the name, so each node builds instances of the very class it was given, even
+ * where two copies of the package hold two classes of one name.
  */
-export const rememberType = (target: AnyNominalType): void => {
-  if (!registry.types.has(target.typeName)) {
-    registry.types.set(target.typeName, target);
+export const typeIdOf = (target: AnyNominalType): string => {
+  const known = registry.ids.get(target);
+
+  if (known !== undefined) {
+    return known;
   }
+
+  const id = `${target.typeName}#${String(registry.types.size + 1)}`;
+
+  registry.ids.set(target, id);
+  registry.types.set(id, target);
+
+  return id;
 };
 
 /**

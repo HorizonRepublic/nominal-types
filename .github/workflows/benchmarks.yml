@@ -22,4 +22,5 @@ jobs:
       - run: npm ci
       - run: npm run bench:check
       - run: node bench/run.ts --quiet | tee bench-result.md
+      - run: node bench/document/run.ts | tee -a bench-result.md
       - run: cat bench-result.md >> "$GITHUB_STEP_SUMMARY"

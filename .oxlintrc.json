@@ -231,7 +231,13 @@
         "max-classes-per-file": "off",
         "import/no-named-as-default": "off",
         "import/no-named-as-default-member": "off",
-        "public-docs/require-jsdoc": "off"
+        "public-docs/require-jsdoc": "off",
+        "import/no-unassigned-import": [
+          "error",
+          {
+            "allow": ["reflect-metadata"]
+          }
+        ]
       }
     }
   ],

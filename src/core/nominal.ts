@@ -21,7 +21,7 @@ import {
 } from './hierarchy.ts';
 import { jsonText } from './messages.ts';
 import { NominalError } from './nominal-error.ts';
-import { defineObjectMembers, objectKeysOf } from './object-members.ts';
+import { checkObjectRule, defineObjectMembers, objectKeysOf } from './object-members.ts';
 import { asRule } from './pattern-schema.ts';
 import { nothingPending, takePending } from './pending.ts';
 import { registerType } from './registry.ts';
@@ -89,6 +89,8 @@ class NominalRoot {
     constraint?: NominalSchema | RegExp,
     options?: NominalOptions,
   ): typeof NominalRoot {
+    checkObjectRule('subtype', this, constraint);
+
     return derive(
       this,
       name,
@@ -104,6 +106,8 @@ class NominalRoot {
     rule: NominalSchema | RegExp,
     options?: NominalOptions,
   ): typeof NominalRoot {
+    checkObjectRule('variant', this, rule);
+
     const level = levelOf(NominalRoot, this);
     const derived = derive(this, name, asRule(rule), level.base, options);
 

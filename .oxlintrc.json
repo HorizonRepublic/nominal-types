@@ -189,6 +189,12 @@
   },
   "overrides": [
     {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "import/no-nodejs-modules": "off"
+      }
+    },
+    {
       "files": ["tests/**/*.ts"],
       "rules": {
         "import/no-nodejs-modules": "off",

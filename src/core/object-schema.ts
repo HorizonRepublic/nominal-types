@@ -1,3 +1,4 @@
+import { checkConstraintFields } from './constraint-fields.ts';
 import type {
   AnyConstraint,
   ConstraintField,
@@ -97,6 +98,12 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    */
   public constructor(source: ObjectFields, constraints: readonly AnyConstraint[], strict: boolean) {
     const fields = fieldsOf(source);
+
+    checkConstraintFields(
+      'objectOf',
+      fields.map(({ key }) => key),
+      constraints,
+    );
 
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion

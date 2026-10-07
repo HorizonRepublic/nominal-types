@@ -7,6 +7,14 @@ Rules for all number types:
 - Only values of type `number` are accepted. `'1'` and `new Number(1)` are rejected.
 - Values are never rounded or converted.
 - Messages show the rejected value: `must be a positive integer (was -0)`.
+- To read a number from text, such as `'3'`, use [`fromString()`](../schemas.md#fromstring).
+
+```ts
+import { PositiveInteger } from '@horizon-republic/nominal-types';
+
+new PositiveInteger(3).value; // 3
+new PositiveInteger(-0); // throws NominalError: nominal.PositiveInteger: must be a positive integer (was -0)
+```
 
 ## AnyNumber
 
@@ -58,7 +66,7 @@ Accepts a whole number from `Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGE
 
 ## Sized integers
 
-`AnyNumber` › `FiniteNumber` › `Integer` › each of the types below
+`AnyNumber` › `FiniteNumber` › `Integer` › each sized type
 
 | Type     | Accepts                         | Adds to JSON Schema                                    |
 | -------- | ------------------------------- | ------------------------------------------------------ |

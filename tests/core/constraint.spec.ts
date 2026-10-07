@@ -129,8 +129,8 @@ describe('constraint', () => {
 
     it.each([
       ['a string', 'x', 'must be an object (was "x")'],
-      ['null', null, 'must be an object (was object)'],
-      ['an array', [], 'must be an object (was object)'],
+      ['null', null, 'must be an object (was null)'],
+      ['an array', [], 'must be an object (was array)'],
       ['undefined', undefined, 'must be an object (was undefined)'],
     ])('rejects %s in place of the object', (_name, input, message) => {
       expect(issues(endAfterStart, input)).toStrictEqual([{ message }]);

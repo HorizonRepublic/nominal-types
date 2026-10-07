@@ -1,3 +1,5 @@
+import { checkConstraintFields, isConstraint } from './constraint-fields.ts';
+
 /**
  * Internal: the mark an `objectOf()` schema carries, shared by every copy of this package.
  */
@@ -60,4 +62,39 @@ export const defineObjectMembers = (prototype: object, keys: readonly string[]):
     writable: true,
     configurable: true,
   });
+};
+
+// The fields of the object a type holds, from the closest level built on `objectOf()`.
+const objectKeysAbove = (target: object): readonly string[] | undefined => {
+  for (
+    let current: unknown = target;
+    typeof current === 'function' && current !== Function.prototype;
+    current = Object.getPrototypeOf(current)
+  ) {
+    const keys = Object.hasOwn(current, 'rule')
+      ? objectKeysOf(Reflect.get(current, 'rule'))
+      : undefined;
+
+    if (keys !== undefined) {
+      return keys;
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * Internal: throws when a constraint given to `subtype()` or `variant()` of a type built on
+ * `objectOf()` reads a field the object doesn't declare.
+ */
+export const checkObjectRule = (
+  owner: 'subtype' | 'variant',
+  target: object,
+  rule: unknown,
+): void => {
+  const keys = objectKeysAbove(target);
+
+  if (keys !== undefined && isConstraint(rule)) {
+    checkConstraintFields(owner, keys, [rule]);
+  }
 };

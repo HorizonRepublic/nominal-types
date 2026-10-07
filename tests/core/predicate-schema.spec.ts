@@ -36,7 +36,7 @@ describe('PredicateSchema', () => {
   it.each([
     [3, 'must be an even number (was 3)'],
     ['4', 'must be an even number (was "4")'],
-    [null, 'must be an even number (was object)'],
+    [null, 'must be an even number (was null)'],
   ])('reports %j in words', (input, message) => {
     expect(issuesOf(EvenNumber.parse(input))).toStrictEqual([{ message }]);
   });

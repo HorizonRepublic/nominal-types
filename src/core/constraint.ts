@@ -1,12 +1,12 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
+import { constraintMark } from './constraint-fields.ts';
 import type {
   ConstraintField,
   ConstraintValues,
   ConstraintInputs,
   ConstraintVerdict,
   ConstraintOptions,
-  AnyConstraint,
 } from './constraint-types.ts';
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
@@ -17,8 +17,6 @@ import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { constructorFor } from './type-functions.ts';
-
-const constraintMark = Symbol.for('@horizon-republic/nominal-types/constraint');
 
 interface FieldRunner {
   readonly key: string;
@@ -190,12 +188,6 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
 }
 
 /**
- * Whether a value is a constraint, also one built by another copy of this package.
- */
-export const isConstraint = (value: unknown): value is AnyConstraint =>
-  typeof value === 'object' && value !== null && Reflect.get(value, constraintMark) === true;
-
-/**
  * Builds a rule across fields of an object, like a `CHECK` constraint over several columns in SQL:
  * a stay whose check-out must come after its check-in, a guest count within a room's capacity.
  *
@@ -230,3 +222,5 @@ export const constraint = <const Fields extends Readonly<Record<string, Constrai
   check: (values: ConstraintValues<Fields>) => ConstraintVerdict,
   options: ConstraintOptions<Extract<keyof Fields, string>> = {},
 ): Constraint<Fields> => new Constraint(fields, check, options);
+
+export { isConstraint } from './constraint-fields.ts';

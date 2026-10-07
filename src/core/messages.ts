@@ -1,6 +1,6 @@
 /**
- * How a rejected value appears in a message: a string quoted, a number, a bigint or a boolean as written,
- * anything else by its kind.
+ * How a rejected value appears in a message: a string quoted, a number, a bigint, a boolean or
+ * `null` as written, an array as `array`, anything else by its kind.
  */
 export const describeValue = (value: unknown): string => {
   if (typeof value === 'string') {
@@ -15,7 +15,11 @@ export const describeValue = (value: unknown): string => {
     return `${value}n`;
   }
 
-  return typeof value === 'boolean' ? String(value) : typeof value;
+  if (typeof value === 'boolean' || value === null) {
+    return String(value);
+  }
+
+  return Array.isArray(value) ? 'array' : typeof value;
 };
 
 /**

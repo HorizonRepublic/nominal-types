@@ -105,6 +105,17 @@ describe('toValibot', () => {
 });
 
 describe('constrainValibot', () => {
+  it('refuses a constraint reading a key an object drops or refuses, not one a loose object keeps', () => {
+    const guests = { guests: toValibot(PositiveInteger) };
+    const error = new TypeError(
+      'constrainValibot: a constraint reads capacity, which the object does not declare',
+    );
+
+    expect(() => constrainValibot(v.object(guests), withinCapacity)).toThrow(error);
+    expect(() => constrainValibot(v.strictObject(guests), withinCapacity)).toThrow(error);
+    expect(() => constrainValibot(v.looseObject(guests), withinCapacity)).not.toThrow();
+  });
+
   it('runs the constraints once the fields are valid, with paths from the top', () => {
     expect(
       issues(

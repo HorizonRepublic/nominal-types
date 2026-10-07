@@ -119,6 +119,20 @@ describe('applyNominalTypes', () => {
     expect(raw.components?.schemas?.['Email']).toStrictEqual({ type: 'object', properties: {} });
   });
 
+  it('finds a built-in type by its short name when a type of yours has the same last part', () => {
+    AnyString.subtype('swaggerdup.Email', /^.+@.+$/u);
+    const empty = { type: 'object', properties: {} };
+    const schemas = applyNominalTypes({
+      components: { schemas: { Email: empty, 'swaggerdup.Email': empty } },
+    }).components?.schemas;
+
+    expect(schemas?.['Email']).toMatchObject({ title: 'nominal.Email', format: 'email' });
+    expect(schemas?.['swaggerdup.Email']).toMatchObject({ title: 'swaggerdup.Email' });
+    expect(
+      applyNominalTypes({ components: { schemas: { Email: empty } } }).components?.schemas,
+    ).toStrictEqual({ Email: empty });
+  });
+
   it('leaves schemas with properties and documents without schemas alone', () => {
     const dto = { type: 'object', properties: { id: { type: 'string' } } };
 

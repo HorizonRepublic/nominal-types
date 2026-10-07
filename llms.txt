@@ -1,92 +1,364 @@
 # @horizon-republic/nominal-types
 
-> Runtime-validated nominal types for TypeScript. A type is a class with a rule: `new Email(text)` checks the text once, and every `Email` you hold is valid. Types don't mix at compile time, even when they wrap the same kind of value. Every type is a Standard Schema and a Standard JSON Schema, and adapters connect types to ArkType, NestJS, class-validator and Swagger.
+> Runtime-validated nominal types for TypeScript. A type is a class with a rule: `new Email(text)` checks the text, and every `Email` you hold is valid. Two types don't mix at compile time even when they wrap the same kind of value. Every type is a Standard Schema and a Standard JSON Schema. Optional adapters connect types to ArkType, Zod, Valibot, NestJS, class-validator, Swagger, GraphQL, superjson, MikroORM, TypeORM, Drizzle and Sequelize.
 
-## Defaults to follow
+This file describes version 3 and ships inside the package: `node_modules/@horizon-republic/nominal-types/llms.txt` matches the installed code. `llms-full.txt` next to it holds every documentation page in one file.
 
-- Check a request body, a message or a config with `objectOf({ field: Type, list: schemaOf(Type).array(), maybe: schemaOf(Type).optional() })`. No other library needed; every field comes out as an instance; unknown keys are dropped (`.strict()` refuses them). In a project that already uses ArkType, or for unions, recursion and transforms, use `fromArk(type({ field: toArk(Type) }))` from `@horizon-republic/nominal-types/adapters/arktype`.
-- Read configuration with `class Config extends Nominal('app.Config', objectOf({ PORT: Port, DEBUG: AnyBoolean }).fromEnv())` and `new Config(process.env)`: fields with a text form are read from strings, other variables are dropped, and one `NominalError` lists every bad variable.
-- Make a value object of several fields with `class Stay extends Nominal('booking.Stay', objectOf({ … }, constraint))`: getters per field (`stay.guests`), `stay.copyWith({ guests: 3 })` returns a checked copy and throws `NominalError` when a rule breaks.
-- Name the schema and its value type the same: `export const X = fromArk(…); export type X = ValueOf<typeof X>;`.
-- Use `Type.parse(input)` for input that may be wrong; it returns `{ ok: true, value }` or `{ ok: false, issues }`. Use `new Type(value)` only where a bad value is a bug; it throws `NominalError`.
-- Write a rule across fields once with `constraint()` and attach it: `objectOf({ … }, rule)`, `fromArk(type, rule)`, `constrainArk(type, rule)` for a nested ArkType object, or `Nominal('Name', rule)`.
-- In NestJS, check route parameters and query values with `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, or `{ schema: Type }` on NestJS 12.
-- Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
-- Name types with the part of the system in front and a dot: `Nominal('billing.InvoiceNumber', …)`, class named like the last part (`class InvoiceNumber`). Names allow letters, digits, `_` and `-` in each part; `/` and spaces throw. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on.
-- In Zod use `toZod(Type)` for fields and `constrainZod(object, ...constraints)` (`/adapters/zod`); in Valibot `toValibot(Type)` and `constrainValibot(object, ...constraints)` (`/adapters/valibot`). Adapter functions are named verb + library: `to…` (our type into the library), `constrain…` (rules onto the library's object), `fromArk` (an ArkType schema back to instances).
-- GraphQL: `toGraphQL(Type)` (`/adapters/graphql`) is a scalar whose arguments arrive as instances. superjson: `superjson.registerCustom(...toSuperjson(Type))` (`/adapters/superjson`) keeps instances across tRPC or Next.js.
-- Store instances with `p.type(toMikroOrm(Type))` (`/adapters/mikro-orm`), `@Column(toTypeOrm(Type))` (`/adapters/typeorm`), `customType<DrizzleColumn<typeof Type>>(toDrizzle(Type))` (`/adapters/drizzle`) or `toSequelize(Type)` as a model attribute (`/adapters/sequelize`; its `where` takes stored values, not instances). The column type comes from the nominal type; reads are checked (`trusted: true` skips it); `serialize` chooses what is stored and also runs on query values.
-- Messages name the rejected value: `must be a UUID (was "x")`. Declare types that hold passwords or personal data with `{ sensitive: true }` (third argument of `Nominal()`, `subtype()`, `variant()`; inherited) so messages say `(was a string of 7 characters)` instead; `Email` is sensitive. Where messages leave the app, use `new NominalPipe({ hideValues: true })`, `toGraphQL(Type, { hideValues: true })` or `hideValues(issues)`.
-- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `toArk(Type)`, which is about 20 times faster.
+## Rules for agents
+
+- Use `Type.parse(input)` for input that may be wrong (requests, files, env, queue messages). It returns `{ ok: true, value }` or `{ ok: false, issues }` and never throws.
+- Use `new Type(value)` only where a bad value is a bug. It throws `NominalError`.
+- Check request bodies, configs and value objects with `objectOf()` and `constraint()`. If the project already uses ArkType, Zod, Valibot or class-validator, keep it and use that library's adapter instead.
+- Declare a type as a class: `export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}`. Add behaviour as getters and methods in the class body.
+- For strings, numbers, bigints and booleans, build on a base type (`AnyString.subtype(...)`, `PositiveInteger.subtype(...)`). Only types under a base type can be read from text by `fromString()` and `fromEnv()`. Use `Nominal(name, rule)` for objects (`objectOf()`) and for types with no base.
+- Name types with the part of the system in front and a dot: `'billing.InvoiceNumber'`. Each part holds letters, digits, `_` and `-`. A `/`, a space or an empty part throws `TypeError`. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on. Name the class like the last part.
+- Compare instances with `a.equals(b)`, never `===`. Read the plain value with `.value`. Arithmetic needs `.value` (`quantity.value * 2`); `>`, `<`, `Number(x)` and template strings work on the instance itself.
+- `matching()` takes a regular expression with no flag or only `u`. Other flags throw `TypeError`.
+- Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
+- Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `hideValues(issues)`.
+- Install the peer package of an adapter yourself (`npm install zod`). Every peer dependency is optional; nothing loads until the adapter's entry point is imported.
+- Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3.
+
+## Install and entry points
+
+```shell
+npm install @horizon-republic/nominal-types
+```
+
+Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). The only dependency is `@standard-schema/spec`, for types.
+
+| Entry point | Exports | Peer package |
+| --- | --- | --- |
+| `@horizon-republic/nominal-types` | the core API and the built-in types | none |
+| `@horizon-republic/nominal-types/adapters/arktype` | `toArk`, `fromArk`, `constrainArk`, `ArkSchema`, types `ArkField`, `Built` | `arktype` ^2.2 |
+| `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
+| `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
+| `@horizon-republic/nominal-types/adapters/class-validator` | `NominalField`, types `NominalFieldOptions`, `NominalTarget`, `TargetValue` | `class-validator` ^0.14 or ^0.15, `class-transformer` ^0.5 |
+| `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory` | `@nestjs/common` ^11 or ^12 |
+| `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, type `OpenApiDocument` | `@nestjs/swagger` ^11 or ^12 |
+| `@horizon-republic/nominal-types/adapters/graphql` | `toGraphQL`, type `GraphQLOptions` | `graphql` ^16 or ^17 |
+| `@horizon-republic/nominal-types/adapters/superjson` | `toSuperjson`, types `SuperjsonTransformer`, `SuperjsonValue` | `superjson` |
+| `@horizon-republic/nominal-types/adapters/mikro-orm` | `toMikroOrm`, types `MikroOrmOptions`, `MikroOrmType` | `@mikro-orm/core` ^7 |
+| `@horizon-republic/nominal-types/adapters/typeorm` | `toTypeOrm`, type `TypeOrmOptions` | `typeorm` ^0.3 or ^1 |
+| `@horizon-republic/nominal-types/adapters/drizzle` | `toDrizzle`, types `DrizzleColumn`, `DrizzleOptions`, `DrizzleParams` | `drizzle-orm` |
+| `@horizon-republic/nominal-types/adapters/sequelize` | `toSequelize`, type `SequelizeOptions` | `sequelize` ^6 |
+
+## Which tool for which job
+
+| Situation | Use |
+| --- | --- |
+| one value from outside, such as a route parameter | `Uuid.parse(input)` |
+| a request body or a message | `objectOf({ ... }).parse(body)` |
+| a rule across fields (end after start, guests ≤ capacity) | `constraint()` passed to `objectOf()` |
+| a value object of several fields | `class Stay extends Nominal('booking.Stay', objectOf({ ... }, rule)) {}` |
+| configuration from environment variables | `class Config extends Nominal('app.Config', objectOf({ ... }).fromEnv()) {}`, `new Config(process.env)` |
+| numbers or booleans from a query string or CSV | `schemaOf(PositiveInteger).fromString()` |
+| a list, a missing value, `null` | `schemaOf(Tag).array({ max: 20 })`, `.optional()`, `.nullable()` |
+| an existing ArkType schema | `toArk()` fields, `fromArk()` around the object |
+| an existing Zod or Valibot schema | `toZod()` / `toValibot()` fields, `constrainZod()` / `constrainValibot()` for rules across fields |
+| class-validator DTOs | `@NominalField(Type)` |
+| NestJS parameters and bodies | `NominalPipe` |
+| an OpenAPI document from `@nestjs/swagger` | `applyNominalTypes(document)` |
+| a GraphQL scalar | `toGraphQL(Type)` |
+| instances through tRPC or Next.js | `superjson.registerCustom(...toSuperjson(Type))` |
+| a database column | `toMikroOrm`, `toTypeOrm`, `toDrizzle`, `toSequelize` |
+| any other Standard Schema library | the type itself, or `schemaOf(Type)` where the library treats a function as its own construct |
+| messages without personal data | `{ sensitive: true }`, `hideValues` |
 
 ## Core API
 
-```ts
-import { constraint, Email, Nominal, PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+All from `@horizon-republic/nominal-types`.
 
-export class OrderNumber extends Nominal('sales.OrderNumber', /^ORD-\d{8}$/u) {
-  get year(): number {
-    return Number(this.value.slice(4, 8));
+### Declaring types
+
+- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `matching()`, `satisfying()`, `objectOf()`, `constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean }`.
+- `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first.
+- `Type.variant(name, rule, options?)` makes a sibling: the same methods, its own rule in place of the source's, and the two don't mix.
+- `matching(pattern, description?, json?)` builds a rule from a regular expression. `description` completes "must be …" in messages. `json` adds JSON Schema keywords such as `format` or `examples`. Returns a `PatternSchema`.
+- `satisfying(guard, description, json?)` builds a rule from a type guard `(value: unknown) => value is T`. Without `json` the type can't describe itself as JSON Schema. Returns a `PredicateSchema`.
+- `isNominalType(value)` tells whether a value is a nominal type class, also from another copy of the package.
+
+```ts
+import { AnyString, matching, Nominal, PositiveInteger, satisfying } from '@horizon-republic/nominal-types';
+
+export class Sku extends AnyString.subtype('shop.Sku', matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['TEA-0042'] })) {
+  public get category(): string {
+    return this.value.slice(0, 3);
   }
 }
 
-export class ExpressOrderNumber extends OrderNumber.subtype('sales.ExpressOrderNumber', /^ORD-\d{4}9/u) {}
+export class Quantity extends PositiveInteger.subtype('shop.Quantity', satisfying((value: unknown): value is number => typeof value === 'number' && value <= 99, 'at most 99', { maximum: 99 })) {}
 
-OrderNumber.parse('42'); // { ok: false, issues: [{ message: 'must be matched by ^ORD-\d{8}$ (was "42")' }] }
-new OrderNumber('ORD-20261007').value; // 'ORD-20261007'
+export class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
-schemaOf(Uuid).array({ min: 1 }).optional(); // a Standard Schema for an optional, non-empty list of Uuid
+new Sku('TEA-0042').category; // 'TEA'
+Quantity.parse(100); // { ok: false, issues: [{ message: 'must be at most 99 (was 100)' }] }
+Password.parse('short'); // { ok: false, issues: [{ message: 'must be matched by ^.{12,}$ (was a string of 5 characters)' }] }
+```
 
-export const withinCapacity = constraint(
+### Static members of a type
+
+| Member | Meaning |
+| --- | --- |
+| `new Type(input)` | checks `input` and returns an instance; throws `NominalError`. Takes a plain value only. |
+| `Type.parse(input)` | `{ ok: true, value }` or `{ ok: false, issues }`; never throws |
+| `value instanceof Type` | `true` for its instances and its subtypes' instances, also across `import` and `require` copies |
+| `Type.typeName` | the name, such as `'shop.Sku'` |
+| `Type.rule` | the rule of the type's own level |
+| `Type['~standard']` | the Standard Schema and Standard JSON Schema interface |
+| `Type.subtype()`, `Type.variant()` | see above |
+
+What `parse()` does with an instance: an instance of the same type or a subtype comes back as it is. An instance of a parent, a variant or another type under the same base type has its value checked against the type's rules. An instance of an unrelated type is rejected.
+
+### Instance members
+
+| Member | Meaning |
+| --- | --- |
+| `value` | the checked value; an object value is frozen |
+| `equals(other)` | same type line and same value; deep for objects; `Uuid` ignores case |
+| `toJSON()` | the value; big integer types write a decimal string |
+| `toString()` | the value as text; JSON for an object value |
+| `[Symbol.toPrimitive]` | the value, so `>`, `Number(x)` and template strings work; an object value throws `TypeError` outside a string |
+| getters per field, `copyWith(changes)` | on types built on `objectOf()`; `copyWith` returns a checked copy and throws `NominalError` |
+
+A field of an `objectOf()` type can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws `TypeError` for such a field.
+
+### Schemas
+
+- `schemaOf(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max? }`, `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `schemaOf()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
+- `objectOf(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, a `schemaOf()` schema, another `objectOf()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string and makes every field optional in the input type, so `new Config(process.env)` compiles. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
+- `constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
+- `isObjectSchema(value)`, `isConstraint(value)` tell those apart.
+
+```ts
+import { AnyString, constraint, Email, Nominal, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+
+const withinCapacity = constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
 );
+
+export const CreateBooking = objectOf({
+  customer: Email,
+  guests: PositiveInteger,
+  capacity: PositiveInteger,
+  note: schemaOf(AnyString).optional(),
+}, withinCapacity);
+
+export class Stay extends Nominal('booking.Stay', objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity)) {
+  public get free(): number {
+    return this.capacity.value - this.guests.value;
+  }
+}
+
+CreateBooking.parse({ customer: 'jane@example.com', guests: 3, capacity: 2 });
+// { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['guests'] }] }
+
+const stay = new Stay({ guests: 2, capacity: 3 });
+stay.guests; // PositiveInteger
+stay.free; // 1
+stay.copyWith({ guests: 5 }); // throws NominalError: booking.Stay: guests: must not exceed the capacity
 ```
 
-- A rule is a `RegExp`, `matching(pattern, description)`, `satisfying(guard, description, jsonSchema)` or any synchronous Standard Schema (ArkType, Zod, Valibot).
-- `subtype(name, rule?)` makes a narrower type that passes where its parent is expected. `variant(name, rule)` makes a sibling that passes for neither.
-- Instances compare by value: `end > start`, `Number(count)`, `` `${email}` ``. Compare an instance with a plain number through `.value`: `count.value <= 10`. An instance holding an object throws a `TypeError` in `>` or `+`; compare its fields through `.value`.
-- An object or array value is frozen; the input is copied first. `equals()` compares by value within one line of types.
-
-## ArkType adapter
+Configuration:
 
 ```ts
-import { type } from 'arktype';
-import { constrainArk, toArk, fromArk } from '@horizon-republic/nominal-types/adapters/arktype';
+import { AnyBoolean, Nominal, objectOf, PositiveInteger, schemaOf, Url } from '@horizon-republic/nominal-types';
 
-const Stay = constrainArk(
-  type({ guests: toArk(PositiveInteger), capacity: toArk(PositiveInteger) }),
-  withinCapacity,
-);
+export class Config extends Nominal('app.Config', objectOf({
+  PORT: PositiveInteger,
+  DEBUG: schemaOf(AnyBoolean).optional(),
+  DATABASE_URL: Url,
+}).fromEnv()) {}
 
-export const CreateBooking = fromArk(
-  type({
-    id: toArk(Uuid),
-    email: type('string.trim').pipe(toArk(Email)),
-    'backup?': toArk(Email).or('null'),
-    stays: Stay.array(),
-  }),
-);
-
-CreateBooking.parse(body);
-// { ok: true, value: { id: Uuid, email: Email, stays: [{ guests: PositiveInteger, … }] } }
-// { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['stays', 0, 'guests'] }] }
+const config = new Config(process.env); // throws one NominalError listing every bad variable
+config.PORT.value; // 3000 for PORT=3000
 ```
 
-- `toArk(Type)` is a field, `constrainArk(type, ...constraints)` an object with rules, `fromArk(type, ...constraints)` the whole schema.
-- Supported around `toArk()`: optional keys, `.or('null')`, arrays, tuples, records, unions told apart by type or by a literal field, morphs that end in `toArk()`. `fromArk()` throws a `TypeError` for a morph after `toArk()` and for unions it can't tell apart.
-- The result is a Standard Schema with JSON Schema for `draft-2020-12`, `draft-07` and `openapi-3.0`; NestJS 12 takes it as `@Body({ schema: CreateBooking })`.
+### Errors and messages
+
+- `NominalError` extends `TypeError`. Members: `typeName`, `issues` (`{ message, path? }[]`), and `message` such as `'nominal.Uuid: must be a UUID (was "x")'`, with a path in front of each issue that has one: `'booking.Stay: guests: must not exceed the capacity'`.
+- Messages read `must be <description> (was <value>)`. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`).
+- A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email` is sensitive.
+- `hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")` and Valibot's `received "x"`.
+- Rules from other libraries keep their own messages.
+
+### JSON Schema
+
+- `Type['~standard'].jsonSchema.input({ target })` and `.output({ target })`. Targets: `'draft-2020-12'`, `'draft-07'`, `'openapi-3.0'`; any other throws `TypeError`.
+- `title` is the type name. A type with several rules gets `allOf`, one entry per rule. Only examples the whole type accepts are kept; OpenAPI 3.0 gets one `example`.
+- Big integer types: input is `anyOf` a decimal string and a safe integer; output is the string.
+- `objectOf()` output adds `additionalProperties: false`.
+- A rule without JSON Schema throws `TypeError: <name>: the schema cannot describe itself as JSON Schema`.
+
+### TypeScript types
+
+`ValueOf<Schema>` (the value a schema gives: `type CreateBooking = ValueOf<typeof CreateBooking>`), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`.
 
 ## Built-in types
 
-Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`. Numbers: `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`. Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64` (read from a bigint, a decimal string or a whole number up to 2^53 - 1; written to JSON as decimal strings). Booleans: `AnyBoolean`.
+| Type | Name | Accepts | Text form |
+| --- | --- | --- | --- |
+| `AnyString` | `nominal.AnyString` | any string | yes |
+| `Email` | `nominal.Email` | an RFC 5322 dot-atom address, up to 254 characters; sensitive; `local`, `domain`, `mailbox`, `tag`, `withTag()`, `withoutTag()`, `canonical()`, `isSameMailbox()` | yes |
+| `Uuid` | `nominal.Uuid` | a UUID in any case; `version`, `timestamp`, `isNil`, `isMax`, `canonical()`; `equals` ignores case | yes |
+| `Url` | `nominal.Url` | an absolute URL; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
+| `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
+| `AnyNumber` | `nominal.AnyNumber` | any number | yes |
+| `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
+| `Float32` | `nominal.Float32` | a 32-bit float | yes |
+| `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber` | `nominal.…` | a finite number `> 0`, `< 0`, `≥ 0`, `≤ 0` | yes |
+| `Integer` | `nominal.Integer` | a safe integer | yes |
+| `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger` | `nominal.…` | a safe integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
+| `Int8`, `Int16`, `Int32` | `nominal.…` | signed 8-, 16-, 32-bit integers | yes |
+| `Uint8`, `Uint16`, `Uint32` | `nominal.…` | unsigned 8-, 16-, 32-bit integers | yes |
+| `AnyBigInt` | `nominal.AnyBigInt` | a bigint, a decimal string up to 1000 characters, or a safe integer number; `value` is a `bigint`; `toJSON()` writes the decimal string | yes |
+| `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt` | `nominal.…` | a big integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
+| `Int64`, `Uint64` | `nominal.…` | signed and unsigned 64-bit integers | yes |
+| `AnyBoolean` | `nominal.AnyBoolean` | `true` or `false`; from text only `'true'` and `'false'` | yes |
+
+A number type never converts its input: `PositiveInteger.parse('2')` fails; `schemaOf(PositiveInteger).fromString()` reads `'2'`. Big integer types are the one exception and take a decimal string. A number beyond 2^53 - 1 is refused by big integer types, since it may have lost digits.
+
+## Adapters
+
+### ArkType
+
+```ts
+import { type } from 'arktype';
+import { fromArk, toArk } from '@horizon-republic/nominal-types/adapters/arktype';
+import { Email, PositiveInteger } from '@horizon-republic/nominal-types';
+
+export const CreateOrder = fromArk(type({ customer: toArk(Email), quantity: toArk(PositiveInteger), 'note?': 'string' }));
+
+CreateOrder.parse({ customer: 'jane@example.com', quantity: 2 }); // { ok: true, value: { customer: Email, quantity: PositiveInteger } }
+```
+
+- `toArk(Type)` is an ArkType field checked with the type's rules and messages. Called alone, the ArkType object gives plain values.
+- `fromArk(type, ...constraints)` returns an `ArkSchema` whose `parse()` gives `{ ok, value | issues }` with instances. It is a Standard Schema.
+- `constrainArk(objectType, ...constraints)` attaches constraints to a nested ArkType object.
+- ArkType morphs on a `toArk()` field and some union forms throw `TypeError` when `fromArk()` builds the schema.
+
+### Zod
+
+```ts
+import { z } from 'zod';
+import { constrainZod, toZod } from '@horizon-republic/nominal-types/adapters/zod';
+import { Email, PositiveInteger } from '@horizon-republic/nominal-types';
+
+export const CreateOrder = z.object({ customer: toZod(Email), quantity: toZod(PositiveInteger) });
+
+CreateOrder.safeParse({ customer: 'jane@example.com', quantity: 2 }); // { success: true, data: { customer: Email, quantity: PositiveInteger } }
+```
+
+- `toZod(Type)` is a Zod field that gives an instance. Its JSON Schema comes from Zod's `z.toJSONSchema(schema, { io: 'input' })`.
+- `constrainZod(object, ...constraints)` attaches constraints. A constraint reading a key that `z.object` or `z.strictObject` doesn't declare throws `TypeError`.
+- Zod's own `parse()` throws `ZodError`; use `safeParse()` for `{ success, data | error }`.
+
+### Valibot
+
+- `toValibot(Type)` is a Valibot schema that gives an instance: `v.object({ customer: toValibot(Email) })`.
+- `constrainValibot(object, ...constraints)` returns `v.pipe(object, rawCheck)`. The same undeclared-key `TypeError` applies to `v.object` and `v.strictObject`.
+- Valibot's `v.parse()` throws `ValiError`; use `v.safeParse()`. Valibot rules give no JSON Schema.
+
+### class-validator
+
+```ts
+import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
+import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+
+export class CreateOrderDto {
+  @NominalField(Email)
+  public customer!: Email;
+
+  @NominalField(schemaOf(Uuid).array({ min: 1, max: 50 }))
+  public items!: readonly Uuid[];
+}
+```
+
+- `@NominalField(target, options?)` checks the property and, with `plainToInstance`, turns it into instances. `options.serialize(value)` sets what `instanceToPlain` writes. Messages carry the property path: `customer: must be an email address (was a string of 4 characters)`.
+
+### NestJS
+
+```ts
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+import { AppModule } from './app.module';
+
+const app = await NestFactory.create(AppModule);
+app.useGlobalPipes(new NominalPipe());
+await app.listen(3000);
+```
+
+```ts
+// orders.controller.ts
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+import { Email, objectOf, PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import type { ValueOf } from '@horizon-republic/nominal-types';
+
+const CreateOrder = objectOf({ customer: Email, quantity: PositiveInteger });
+type CreateOrder = ValueOf<typeof CreateOrder>;
+
+@Controller('orders')
+export class OrdersController {
+  @Get(':id')
+  public find(@Param('id') id: Uuid): void {} // checked by the global pipe from the declared type
+
+  @Get()
+  public list(@Query('page') page?: PositiveInteger, @Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }).optional())) ids?: readonly Uuid[]): void {}
+
+  @Post()
+  public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder): void {}
+}
+```
+
+- `new NominalPipe(target?, options?)`. `target` is a nominal type, a `schemaOf()`/`objectOf()` schema or any synchronous Standard Schema (a `fromArk()` schema, a Zod object). Without a target it uses Nest 12's `{ schema }` on the parameter if that is a nominal type or `schemaOf()` schema, else the parameter's declared type, and passes every other argument through. Safe to bind globally.
+- Declared types lose array items and `?`: `Uuid[]` is not checked without a schema, and a missing value of a declared type reaches the handler as `undefined`. To require it or check a list, give the parameter its own pipe or a `{ schema }`.
+- In a query string, a lone value for an array schema becomes a list of one, and a string for a number or boolean type is read as its value (`?page=2` gives `2`), unless `fromString: false`.
+- Options: `fromString` (default `true`), `hideValues` (default `false`), `exceptionFactory(issues, metadata)` (default: `BadRequestException` with `{ statusCode: 400, error: 'Bad Request', message: ['id: must be a UUID (was "x")'] }`). In a microservice pass an `exceptionFactory` that returns an `RpcException`.
+- Pipes never run on `@Headers()`. `ClassSerializerInterceptor` writes instances as `{ "value": … }`; without it, responses use each instance's `toJSON()`.
+- Nest 12 `@Body({ schema: CreateOrder })` works only together with the global `NominalPipe`.
+
+### Swagger
+
+- `applyNominalTypes(document)` fills the schemas `@nestjs/swagger` leaves empty for nominal types with each type's OpenAPI 3.0 schema. Use it on the result of `SwaggerModule.createDocument()`. Two of your types with the same last part need different schema names: `@ApiSchema({ name: 'billing.Email' })`.
+- `@ApiNominalProperty(target, options?)` writes the type's schema into a DTO property; `options` are `@ApiProperty()` options and win.
+
+### GraphQL
+
+- `toGraphQL(Type, options?)` returns a `GraphQLScalarType`. Arguments and variables arrive as instances; results are sent as `toJSON()`. Big integer literals keep every digit. Options: `name` (default: the last part of the type name, such as `Email`), `description`, `serialize`, `specifiedByURL`, `hideValues`. The scalar carries the type's JSON Schema in `extensions.jsonSchema`.
+
+### superjson
+
+- `superjson.registerCustom(...toSuperjson(Email))` keeps instances across tRPC and Next.js. Register each type once on both sides; subtypes need their own registration.
+
+### Databases
+
+| ORM | Use |
+| --- | --- |
+| MikroORM 7 | `email: p.type(toMikroOrm(Email))` in `defineEntity`, or `@Property({ type: toMikroOrm(Email) })` |
+| TypeORM | `@Column(toTypeOrm(Email, { nullable: true }))` |
+| Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
+| Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
+
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
+- Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
+- Sequelize `where` takes stored values, not instances.
 
 ## Docs
 
-- [Nominal types in domain-driven design](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/domain-driven-design.md): value objects, invariants, names per bounded context
-- [Choosing how to check input](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/choosing-an-approach.md): every way, the recommended one, and what each costs
-- [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): objectOf(), ArkType, NestJS, class-validator, Swagger, arrays and optional values, rules across fields, JSON Schema
-- [API reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/api.md)
+- [Tutorial: build a sign-up check](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/tutorials/README.md): seven short lessons
+- [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): one task per page, one page per library
+- [Reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/README.md): every export, option and message
 - [Built-in types](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/types/README.md)
-- [Performance](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/performance.md)
+- [Common problems](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/core/fix-common-problems.md)
+
+## Optional
+
+- [What a nominal type is](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/nominal-types.md)
+- [Choosing how to check input](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/choosing-an-approach.md)
+- [Nominal types in domain-driven design](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/domain-driven-design.md)
+- [Benchmarks](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/benchmarks.md)

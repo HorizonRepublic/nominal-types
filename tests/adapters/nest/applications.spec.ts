@@ -110,11 +110,39 @@ describe.each(platforms)('explicit pipes on parameters on %s', (platform) => {
   });
 });
 
+describe.each(platforms)('explicit pipes on parameters under a global pipe on %s', (platform) => {
+  let started: Started;
+  const get = (url: string): Promise<{ status: number; body: unknown }> => started.get(url);
+
+  beforeAll(async () => {
+    started = await start(ExplicitController, [new NominalPipe()], platform);
+  });
+
+  afterAll(async () => {
+    await started.app.close();
+  });
+
+  it('lets the parameter pipe decide that a missing value is fine', async () => {
+    expect(await get('/explicit/email')).toStrictEqual({ status: 200, body: { email: 'none' } });
+    expect(await get('/explicit/optional-ids')).toStrictEqual({
+      status: 200,
+      body: { ids: 'none' },
+    });
+  });
+
+  it('still checks a value that is given, and a required one that is missing', async () => {
+    expect((await get('/explicit/email?email=nope')).status).toBe(400);
+    expect((await get('/explicit/ids')).status).toBe(400);
+  });
+});
+
 @Controller('global')
 class GlobalController {
   @Get('page')
-  public page(@Query('page') page: PositiveInteger): unknown {
-    return { page: page.value, isPositive: page instanceof PositiveInteger };
+  public page(@Query('page') page?: PositiveInteger): unknown {
+    return page === undefined
+      ? { page: 'none' }
+      : { page: page.value, isPositive: page instanceof PositiveInteger };
   }
 
   @Get('flag')
@@ -162,6 +190,10 @@ describe.each(platforms)('a global pipe on %s', (platform) => {
     expect(await get(`/global/page?page=${page}`)).toStrictEqual(badRequest(message));
   });
 
+  it('passes a missing value on, since a declared type cannot say it is required', async () => {
+    expect(await get('/global/page')).toStrictEqual({ status: 200, body: { page: 'none' } });
+  });
+
   it('reads booleans and route parameters', async () => {
     expect(await get('/global/flag?active=false')).toStrictEqual({
       status: 200,
@@ -203,6 +235,11 @@ describe.runIf(nestMajor >= 12).each(platforms)(
         ): unknown {
           return { email: email === undefined ? 'none' : email.domain };
         }
+
+        @Get('page')
+        public page(@Query('page', { schema: PositiveInteger }) page: PositiveInteger): unknown {
+          return { page: page.value };
+        }
       }
       started = await start(DeclaredController, [new NominalPipe()], platform);
     });
@@ -221,6 +258,11 @@ describe.runIf(nestMajor >= 12).each(platforms)(
 
     it('lets a missing optional value through', async () => {
       expect(await get('/declared/email')).toStrictEqual({ status: 200, body: { email: 'none' } });
+    });
+
+    it('rejects a missing value when the schema is the declared type itself', async () => {
+      expect((await get('/declared/page')).status).toBe(400);
+      expect(await get('/declared/page?page=2')).toStrictEqual({ status: 200, body: { page: 2 } });
     });
   },
 );

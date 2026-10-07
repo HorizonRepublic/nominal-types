@@ -54,16 +54,23 @@ export const typeNamed = (name: string): object | undefined => shared.types.get(
  * documents that name schemas after classes: `InvoiceNumber` finds `billing.InvoiceNumber`.
  *
  * @remarks
- * Two types ending in the same part, such as `billing.Email` and `nominal.Email`, find neither.
+ * Types named in `claimed` have a schema of their own under their full name, so they don't
+ * compete for a short one. Two other types ending in the same part, such as `billing.Email` and
+ * `nominal.Email`, find neither.
  */
-export const typeForSchemaName = (name: string): object | undefined => {
+export const typeForSchemaName = (
+  name: string,
+  claimed: ReadonlySet<string> = new Set(),
+): object | undefined => {
   const exact = typeNamed(name);
 
   if (exact !== undefined) {
     return exact;
   }
 
-  const found = [...shared.types].filter(([typeName]) => typeName.endsWith(`.${name}`));
+  const found = [...shared.types].filter(
+    ([typeName]) => typeName.endsWith(`.${name}`) && !claimed.has(typeName),
+  );
 
   return found.length === 1 ? found[0]?.[1].type : undefined;
 };

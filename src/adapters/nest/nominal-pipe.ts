@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
+import type { Parsed } from '../../core/contracts.ts';
 import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { isNominalType } from '../../core/nominal.ts';
@@ -11,9 +12,34 @@ import { textFormOf } from '../../core/text-form.ts';
 import { isArraySchema } from '../../core/type-schema.ts';
 
 /**
- * What `NominalPipe` checks a value against: a nominal type, or a schema built by `schemaOf()`.
+ * What `NominalPipe` checks a value against: a nominal type, a schema built by `schemaOf()` or
+ * `objectOf()`, or any synchronous Standard Schema, such as one from `fromArk()` or Zod.
  */
-export type NominalPipeTarget = NominalTarget;
+export type NominalPipeTarget = NominalTarget | StandardSchemaV1;
+
+const isStandardSchema = (value: unknown): value is StandardSchemaV1 =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof Reflect.get(Reflect.get(value, '~standard') ?? {}, 'validate') === 'function';
+
+const isPipeTarget = (value: unknown): value is NominalPipeTarget =>
+  isTarget(value) || isStandardSchema(value);
+
+const parseAny = (target: NominalPipeTarget, input: unknown): Parsed<unknown> => {
+  if (isTarget(target)) {
+    return parseTarget(target, input);
+  }
+
+  const result = target['~standard'].validate(input);
+
+  if (result instanceof Promise) {
+    throw new TypeError('NominalPipe: asynchronous schemas are not supported');
+  }
+
+  return result.issues === undefined
+    ? { ok: true, value: result.value }
+    : { ok: false, issues: result.issues };
+};
 
 /**
  * Turns the issues of a rejected value into the exception the request fails with.
@@ -66,8 +92,9 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
  * Given a type or a `schemaOf()` schema, it checks that. Given none, it uses the parameter's
  * `{ schema }` on Nest 12 when that is a nominal type or a `schemaOf()` schema, else the type the
  * parameter is declared with, and passes every other argument through untouched; that makes it
- * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` and `email?: Email`
- * need a schema. In a query string, a lone value given to an array schema is wrapped into an
+ * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` needs a schema,
+ * and a missing value of a declared type is passed on as `undefined`; to require it, give the
+ * parameter a pipe of its own or a schema. In a query string, a lone value given to an array schema is wrapped into an
  * array, and a string for a number or boolean type is read as its value, so `?page=2` gives `2`.
  * Works on Nest 11 and 12. Pipes never run on `@Headers()`.
  *
@@ -97,8 +124,8 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     targetOrOptions?: NominalPipeTarget | NominalPipeOptions,
     options: NominalPipeOptions = {},
   ) {
-    const target = isTarget(targetOrOptions) ? targetOrOptions : undefined;
-    const settings = isTarget(targetOrOptions) ? options : (targetOrOptions ?? options);
+    const target = isPipeTarget(targetOrOptions) ? targetOrOptions : undefined;
+    const settings = isPipeTarget(targetOrOptions) ? options : (targetOrOptions ?? options);
 
     this.#target = target;
     this.#exceptionFactory = settings.exceptionFactory ?? badRequest;
@@ -109,11 +136,11 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {
     const target = this.#target ?? targetOf(metadata);
 
-    if (target === undefined) {
+    if (target === undefined || (value === undefined && this.#onlyDeclared(target, metadata))) {
       return value;
     }
 
-    const parsed = parseTarget(target, this.#inputOf(target, value, metadata));
+    const parsed = parseAny(target, this.#inputOf(target, value, metadata));
 
     if (parsed.ok) {
       return parsed.value;
@@ -122,6 +149,18 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     throw this.#exceptionFactory(
       this.#hideValues ? hideValues(parsed.issues) : parsed.issues,
       metadata,
+    );
+  }
+
+  // A type read from the declaration can't tell `email?: Email` from `email: Email`, so a missing
+  // value is left to a pipe on the parameter or a schema, which say whether it may be missing.
+  #onlyDeclared(target: NominalPipeTarget, metadata: ArgumentMetadata): boolean {
+    const declared: unknown = metadata.metatype;
+
+    return (
+      this.#target === undefined &&
+      !isTarget(Reflect.get(metadata, 'schema')) &&
+      target === declared
     );
   }
 

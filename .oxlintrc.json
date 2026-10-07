@@ -1,0 +1,120 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    "typeAware": true
+  },
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "node", "jsdoc", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "typescript/no-extraneous-class": [
+      "error",
+      {
+        "allowWithDecorator": true,
+        "allowEmpty": true,
+        "allowStaticOnly": true
+      }
+    ],
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowHigherOrderFunctions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "typescript/explicit-module-boundary-types": "error",
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "fixStyle": "separate-type-imports"
+      }
+    ],
+    "typescript/consistent-type-exports": "error",
+    "typescript/no-import-type-side-effects": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/require-await": "error",
+    "typescript/return-await": ["error", "in-try-catch"],
+    "typescript/switch-exhaustiveness-check": "error",
+    "typescript/prefer-readonly": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+    "typescript/no-deprecated": "error",
+    "typescript/no-namespace": "error",
+    "typescript/prefer-readonly-parameter-types": "off",
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/prefer-module": "error",
+    "unicorn/error-message": "error",
+    "unicorn/throw-new-error": "error",
+    "unicorn/no-typeof-undefined": "error",
+    "unicorn/no-useless-promise-resolve-reject": "error",
+    "unicorn/prefer-export-from": "error",
+    "import/no-default-export": "error",
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    "import/no-duplicates": "error",
+    "import/no-nodejs-modules": "error",
+    "import/no-unassigned-import": "error",
+    "import/max-dependencies": [
+      "error",
+      {
+        "max": 15
+      }
+    ],
+    "promise/prefer-await-to-then": "error",
+    "jsdoc/check-tag-names": [
+      "error",
+      {
+        "definedTags": ["remarks", "typeParam"]
+      }
+    ],
+    "jsdoc/empty-tags": "error",
+    "jsdoc/no-defaults": "error",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-disabled-tests": "error",
+    "vitest/expect-expect": "error",
+    "vitest/valid-expect": "error",
+    "vitest/no-identical-title": "error",
+    "no-console": "error",
+    "no-alert": "error",
+    "no-param-reassign": "error",
+    "eqeqeq": "error",
+    "max-depth": ["error", 4],
+    "prefer-template": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-await-in-loop": "off",
+    "eslint/no-underscore-dangle": "error"
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "rules": {
+        "import/no-nodejs-modules": "off",
+        "max-lines-per-function": "off",
+        "max-classes-per-file": "off"
+      }
+    },
+    {
+      "files": ["*.config.ts"],
+      "rules": {
+        "import/no-default-export": "off",
+        "import/no-nodejs-modules": "off"
+      }
+    },
+    {
+      "files": ["src/index.ts"],
+      "rules": {
+        "unicorn/no-empty-file": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["node_modules", "dist", "coverage"]
+}

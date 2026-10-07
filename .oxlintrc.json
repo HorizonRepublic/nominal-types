@@ -145,7 +145,13 @@
       "rules": {
         "import/no-nodejs-modules": "off",
         "max-lines-per-function": "off",
-        "max-classes-per-file": "off"
+        "max-classes-per-file": "off",
+        "import/no-unassigned-import": [
+          "error",
+          {
+            "allow": ["reflect-metadata"]
+          }
+        ]
       }
     },
     {

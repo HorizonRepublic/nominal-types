@@ -1,4 +1,4 @@
-export { Nominal } from './core/nominal.ts';
+export { isNominalType, Nominal } from './core/nominal.ts';
 export type {
   AnyNominalType,
   Brand,

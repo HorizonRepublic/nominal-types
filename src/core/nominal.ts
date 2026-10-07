@@ -153,6 +153,19 @@ const derive = (
 };
 
 /**
+ * Tells whether a value is a nominal type class, including one loaded from another copy of this
+ * package.
+ *
+ * @remarks
+ * Adapters use it to recognise a nominal type in metadata they receive, such as the parameter type
+ * a framework reflects from a decorator.
+ */
+export const isNominalType = (value: unknown): value is AnyNominalType =>
+  typeof value === 'function' &&
+  value !== NominalRoot &&
+  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === namespace;
+
+/**
  * Declares a nominal type: a class whose instances exist only for values the schema accepts.
  *
  * @remarks

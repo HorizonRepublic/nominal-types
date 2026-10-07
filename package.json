@@ -30,6 +30,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./adapters/nest": {
+      "import": "./dist/adapters/nest/index.js",
+      "require": "./dist/adapters/nest/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -47,15 +51,31 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
+    "@nestjs/common": "^12.1.2",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-fastify": "^12.1.2",
+    "@nestjs/testing": "^12.1.2",
+    "@swc/core": "^1.16.13",
     "@vitest/coverage-v8": "^5.0.3",
     "eslint-plugin-jsdoc": "^65.2.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2003",
     "publint": "^0.3.25",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
+    "unplugin-swc": "^2.0.0",
     "vitest": "^5.0.3"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0 || ^12.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.12"

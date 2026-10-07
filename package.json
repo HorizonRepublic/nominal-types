@@ -38,7 +38,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
     "lint": "oxlint",
     "format": "oxfmt",
     "format:check": "oxfmt --check",

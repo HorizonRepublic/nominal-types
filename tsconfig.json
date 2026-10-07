@@ -28,5 +28,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src", "tests", "*.config.ts"]
+  "include": ["src", "*.config.ts"]
 }

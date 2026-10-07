@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HttpUrl, NominalError, Url } from '../../src/index.ts';
+import { valueOf } from '../support/results.ts';
 
 describe('Url', () => {
   it.each(['https://example.com/a?b=1#c', 'mailto:jane@example.com', 'http://localhost:3000'])(
@@ -56,5 +57,15 @@ describe('HttpUrl', () => {
   it('is a Url, while a Url is not necessarily an HttpUrl', () => {
     expect(new HttpUrl('https://example.com')).toBeInstanceOf(Url);
     expect(new Url('mailto:jane@example.com')).not.toBeInstanceOf(HttpUrl);
+  });
+});
+
+describe('narrowing a Url to an HttpUrl', () => {
+  it('narrows a web address', () => {
+    expect(valueOf(HttpUrl.parse(new Url('https://example.com')))).toBeInstanceOf(HttpUrl);
+  });
+
+  it('refuses any other scheme', () => {
+    expect(HttpUrl.parse(new Url('mailto:jane@example.com')).ok).toBe(false);
   });
 });

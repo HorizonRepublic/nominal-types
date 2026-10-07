@@ -3,8 +3,8 @@ import { Nominal } from '../../core/nominal.ts';
 import { stringRule } from '../../core/string-rule.ts';
 import { asText, defineTextForm } from '../../core/text-form.ts';
 
-const AnyStringBase: NominalType<'AnyString', NominalSchema<string, string>> = Nominal(
-  'AnyString',
+const AnyStringBase: NominalType<'nominal.AnyString', NominalSchema<string, string>> = Nominal(
+  'nominal.AnyString',
   stringRule,
 );
 

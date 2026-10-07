@@ -74,7 +74,7 @@ describe('narrowing a Url to an HttpUrl', () => {
 describe('Url as JSON Schema', () => {
   it('describes itself as a URI string', () => {
     expect(Url['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
-      title: 'Url',
+      title: 'nominal.Url',
       type: 'string',
       format: 'uri',
       example: 'https://example.com/docs',

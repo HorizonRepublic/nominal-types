@@ -46,7 +46,10 @@ describe('JSON Schema of arkSchema', () => {
       type: 'object',
       properties: {
         id: uuidSchema('draft-2020-12'),
-        stays: { type: 'array', items: { properties: { guests: { title: 'PositiveInteger' } } } },
+        stays: {
+          type: 'array',
+          items: { properties: { guests: { title: 'nominal.PositiveInteger' } } },
+        },
       },
       required: ['email', 'id', 'status', 'stays'],
     });
@@ -70,7 +73,7 @@ describe('JSON Schema of arkSchema', () => {
   it('describes the output side the same way', () => {
     expect(Booking['~standard'].jsonSchema.output({ target: 'draft-07' })).toMatchObject({
       $schema: 'http://json-schema.org/draft-07/schema#',
-      properties: { id: { title: 'Uuid' } },
+      properties: { id: { title: 'nominal.Uuid' } },
     });
   });
 
@@ -81,7 +84,7 @@ describe('JSON Schema of arkSchema', () => {
     expect(openApi).toMatchObject({
       properties: {
         id: uuidSchema('openapi-3.0'),
-        backup: { title: 'Email', nullable: true },
+        backup: { title: 'nominal.Email', nullable: true },
         status: { enum: ['new', 'paid'] },
       },
     });

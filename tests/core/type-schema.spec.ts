@@ -161,7 +161,7 @@ describe('array()', () => {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'array',
       items: {
-        title: 'Uuid',
+        title: 'nominal.Uuid',
         type: 'string',
         pattern: Uuid.pattern.source,
         format: 'uuid',
@@ -216,7 +216,7 @@ describe('optional() and nullable()', () => {
 
   it('describe null for JSON Schema and for OpenAPI 3.0', () => {
     const common = {
-      title: 'Email',
+      title: 'nominal.Email',
       type: 'string',
       pattern: Email.pattern.source,
       format: 'email',

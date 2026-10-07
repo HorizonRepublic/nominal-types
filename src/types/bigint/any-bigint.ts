@@ -33,10 +33,10 @@ const bigintRule: NominalSchema<bigint | string, bigint> = runnableSchema<bigint
   (_side, options) => forTarget(options, json),
 );
 
-const AnyBigIntBase: NominalType<'AnyBigInt', NominalSchema<bigint | string, bigint>> = Nominal(
-  'AnyBigInt',
-  bigintRule,
-);
+const AnyBigIntBase: NominalType<
+  'nominal.AnyBigInt',
+  NominalSchema<bigint | string, bigint>
+> = Nominal('nominal.AnyBigInt', bigintRule);
 
 /**
  * Any integer as a `bigint`: the root of the integer types that outgrow `number`, such as

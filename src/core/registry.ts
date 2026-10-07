@@ -1,10 +1,13 @@
 import { shared } from './shared.ts';
+import { checkTypeName } from './type-name.ts';
 
 const warned = new Set<string>();
 
 /**
  * Internal: remembers a type under its name, as `Nominal()`, `subtype()` and `variant()` declare
  * it, and warns once when a different type takes a name already in use.
+ *
+ * @throws TypeError for a name that can't serve as a schema name, before anything is remembered.
  *
  * @remarks
  * Names are unique within an application: two types with one name share their brand and pass for
@@ -13,6 +16,8 @@ const warned = new Set<string>();
  * wins.
  */
 export const registerType = (name: string, type: object, signature: string): void => {
+  checkTypeName(name);
+
   const known = shared.types.get(name);
 
   if (known !== undefined && known.signature !== signature && !warned.has(name)) {
@@ -31,3 +36,22 @@ export const registerType = (name: string, type: object, signature: string): voi
  * Internal: the type declared with a name, if any.
  */
 export const typeNamed = (name: string): object | undefined => shared.types.get(name)?.type;
+
+/**
+ * Internal: the type declared with a name, or else the one type whose name ends in `.<name>`, for
+ * documents that name schemas after classes: `InvoiceNumber` finds `billing.InvoiceNumber`.
+ *
+ * @remarks
+ * Two types ending in the same part, such as `billing.Email` and `nominal.Email`, find neither.
+ */
+export const typeForSchemaName = (name: string): object | undefined => {
+  const exact = typeNamed(name);
+
+  if (exact !== undefined) {
+    return exact;
+  }
+
+  const found = [...shared.types].filter(([typeName]) => typeName.endsWith(`.${name}`));
+
+  return found.length === 1 ? found[0]?.[1].type : undefined;
+};

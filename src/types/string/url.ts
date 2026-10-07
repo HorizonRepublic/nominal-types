@@ -6,8 +6,8 @@ import { AnyString } from './any-string.ts';
 const isAbsoluteUrl = (value: unknown): value is string =>
   typeof value === 'string' && URL.canParse(value);
 
-const UrlBase: SubtypeOf<typeof AnyString, 'Url'> = AnyString.subtype(
-  'Url',
+const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
+  'nominal.Url',
   stringOnly(
     satisfying(isAbsoluteUrl, 'a URL', {
       type: 'string',

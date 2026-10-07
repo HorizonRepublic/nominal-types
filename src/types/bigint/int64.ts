@@ -5,8 +5,8 @@ import { bigintRule } from './bigint-rule.ts';
 const lowest = -(2n ** 63n);
 const highest = 2n ** 63n - 1n;
 
-const Int64Base: SubtypeOf<typeof AnyBigInt, 'Int64'> = AnyBigInt.subtype(
-  'Int64',
+const Int64Base: SubtypeOf<typeof AnyBigInt, 'nominal.Int64'> = AnyBigInt.subtype(
+  'nominal.Int64',
   bigintRule('a signed 64-bit integer', (value) => value >= lowest && value <= highest, {
     type: 'string',
     format: 'int64',

@@ -6,8 +6,8 @@ import { AnyString } from './any-string.ts';
 const pattern =
   /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
 
-const UuidBase: SubtypeOf<typeof AnyString, 'Uuid'> = AnyString.subtype(
-  'Uuid',
+const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid'> = AnyString.subtype(
+  'nominal.Uuid',
   matching(pattern, 'a UUID', {
     format: 'uuid',
     minLength: 36,

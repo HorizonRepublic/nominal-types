@@ -94,11 +94,13 @@ describe('plan internals', () => {
     const schema = arkSchema(type({ to: arkOf(Email).or(arkOf(Uuid)) }));
 
     expect(schema['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toMatchObject({
-      properties: { to: { anyOf: [{ title: 'Email' }, { title: 'Uuid' }] } },
+      properties: { to: { anyOf: [{ title: 'nominal.Email' }, { title: 'nominal.Uuid' }] } },
     });
   });
 
   it('builds the message of a value the type accepts as its name', () => {
-    expect(problemOf(arkOf(Uuid), '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f')).toBe('must be Uuid');
+    expect(problemOf(arkOf(Uuid), '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f')).toBe(
+      'must be nominal.Uuid',
+    );
   });
 });

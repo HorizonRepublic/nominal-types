@@ -81,7 +81,7 @@ const uuidSchema = (title: string): Record<string, unknown> => ({
 });
 
 const emailSchema = {
-  title: 'Email',
+  title: 'nominal.Email',
   type: 'string',
   pattern: Email.pattern.source,
   format: 'email',
@@ -153,7 +153,9 @@ describe('ApiNominalProperty', () => {
 
   it('writes lists with their items and bounds', () => {
     expect(schema).toMatchObject({
-      properties: { items: { type: 'array', minItems: 1, maxItems: 5, items: uuidSchema('Uuid') } },
+      properties: {
+        items: { type: 'array', minItems: 1, maxItems: 5, items: uuidSchema('nominal.Uuid') },
+      },
     });
   });
 

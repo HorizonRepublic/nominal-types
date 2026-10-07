@@ -2,8 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
 import { integerBetween } from './number-rule.ts';
 
-const Int32Base: SubtypeOf<typeof Integer, 'Int32'> = Integer.subtype(
-  'Int32',
+const Int32Base: SubtypeOf<typeof Integer, 'nominal.Int32'> = Integer.subtype(
+  'nominal.Int32',
   integerBetween(-2147483648, 2147483647, 'a signed 32-bit integer', {
     format: 'int32',
   }),

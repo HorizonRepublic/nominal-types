@@ -76,7 +76,7 @@ describe('arkSchema', () => {
       ).toStrictEqual([
         { message: 'must be an email address (was "nope")', path: ['email'] },
         { message: 'must be a UUID (was "x")', path: ['id'] },
-        { message: 'must be Uuid or null (was 1)', path: ['manager'] },
+        { message: 'must be a UUID or null (was 1)', path: ['manager'] },
         { message: 'must be a string (was a number)', path: ['name'] },
       ]);
     });

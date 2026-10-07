@@ -145,7 +145,7 @@ describe('AnyBigInt input', () => {
 
     expect(output({ target: 'draft-07' })).toStrictEqual(input({ target: 'draft-07' }));
     expect(input({ target: 'openapi-3.0' })).toStrictEqual({
-      title: 'AnyBigInt',
+      title: 'nominal.AnyBigInt',
       type: 'string',
       pattern: '^(?:0|-?[1-9]\\d*)$',
       maxLength: 1000,

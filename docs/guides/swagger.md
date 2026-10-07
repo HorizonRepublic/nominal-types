@@ -22,7 +22,7 @@ Every empty schema named after a nominal type is replaced with that type's schem
 
 ```json
 {
-  "title": "Uuid",
+  "title": "nominal.Uuid",
   "type": "string",
   "pattern": "^(?:[\\dA-Fa-f]{8}-…)$",
   "format": "uuid",
@@ -35,7 +35,9 @@ Every empty schema named after a nominal type is replaced with that type's schem
 
 Your own types get the same treatment, under their own names: `UserId` for `Uuid.subtype('UserId')`.
 
-The schema is found by the class name, so name the class like the type. If they differ, as in `class Mailbox extends AnyString.subtype('MailboxAddress', …)`, tell Swagger the type's name with `@ApiSchema()`:
+The schema is found by the class name. A name with a prefix is found by its last part, so `class InvoiceNumber extends Nominal('billing.InvoiceNumber', …)` needs nothing more. When two types end in the same part, such as `billing.Email` and `nominal.Email`, the schema is left empty: name it in full with `@ApiSchema({ name: 'billing.Email' })`.
+
+Name the class like the type, or like the last part of its name. If they differ, as in `class Mailbox extends AnyString.subtype('MailboxAddress', …)`, tell Swagger the type's name with `@ApiSchema()`:
 
 ```ts
 import { ApiSchema } from '@nestjs/swagger';

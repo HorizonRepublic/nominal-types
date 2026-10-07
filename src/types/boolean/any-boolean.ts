@@ -13,8 +13,8 @@ const booleanFromText = (text: string): boolean | undefined => {
 
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
 
-const AnyBooleanBase: NominalType<'AnyBoolean', NominalSchema<boolean, boolean>> = Nominal(
-  'AnyBoolean',
+const AnyBooleanBase: NominalType<'nominal.AnyBoolean', NominalSchema<boolean, boolean>> = Nominal(
+  'nominal.AnyBoolean',
   satisfying(isBoolean, 'a boolean', { type: 'boolean' }),
 );
 

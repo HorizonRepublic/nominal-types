@@ -2,8 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
 import { numberRule } from './number-rule.ts';
 
-const NegativeIntegerBase: SubtypeOf<typeof Integer, 'NegativeInteger'> = Integer.subtype(
-  'NegativeInteger',
+const NegativeIntegerBase: SubtypeOf<typeof Integer, 'nominal.NegativeInteger'> = Integer.subtype(
+  'nominal.NegativeInteger',
   numberRule('a negative integer', (value) => value < 0, { type: 'integer', maximum: -1 }),
 );
 

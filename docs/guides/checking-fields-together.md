@@ -46,23 +46,26 @@ So the check never has to handle a missing or wrong field.
 
 ## Making a type of the object
 
-A constraint can be the rule of a type. The instance then holds an object with instances inside:
+To make a value object that keeps the rule, give its fields and the constraint to `objectOf()`, and the schema to `Nominal()`:
 
 ```ts
-import { Nominal } from '@horizon-republic/nominal-types';
+import { Nominal, objectOf } from '@horizon-republic/nominal-types';
 
-export class Occupancy extends Nominal('Occupancy', withinCapacity) {}
+export class Occupancy extends Nominal(
+  'booking.Occupancy',
+  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+) {}
 
 const occupancy = new Occupancy({ guests: 2, capacity: 3 });
 
-occupancy.value.guests; // PositiveInteger
+occupancy.guests; // PositiveInteger
 String(occupancy); // '{"guests":2,"capacity":3}'
 
 new Occupancy({ guests: 4, capacity: 3 });
-// NominalError: Occupancy: guests: must not exceed the capacity
+// NominalError: booking.Occupancy: guests: must not exceed the capacity
 ```
 
-The value is frozen, so nobody can break the rule after the check. Your input object is copied, not frozen.
+The value is frozen, so nobody can break the rule after the check. See [Making a value object](objects.md#making-a-value-object) for the getters and `copyWith()`.
 
 In NestJS, give the type to `NominalPipe` like any other type:
 

@@ -161,7 +161,7 @@ What a constraint does with an object:
 2. It calls `check` with the values: instances for nominal types.
 3. It returns a copy of the object with the checked values in place. Keys that aren't listed pass through unchecked.
 
-A constraint is a Standard Schema and a Standard JSON Schema, so `Nominal()` takes it as a rule. Its JSON Schema is an object with the listed fields in `properties` and the ones that can't be `undefined` in `required`; `check` itself has no JSON Schema form.
+A constraint is a Standard Schema and a Standard JSON Schema. Give it to `objectOf()`, or to an adapter's `constrain…()`; for a value object, make a type on `objectOf()` with it. Its JSON Schema is an object with the listed fields in `properties` and the ones that can't be `undefined` in `required`; `check` itself has no JSON Schema form.
 
 Messages:
 

@@ -7,17 +7,27 @@ import {
   AnyNumber,
   AnyString,
   Email,
+  FiniteNumber,
   Float32,
   Int16,
   Int32,
   Int64,
   Int8,
   Integer,
+  NegativeInteger,
+  NegativeNumber,
   Nominal,
+  NonNegativeInteger,
+  NonNegativeNumber,
+  NonPositiveInteger,
+  NonPositiveNumber,
   PositiveInteger,
+  PositiveNumber,
   satisfying,
+  Uint16,
   Uint32,
   Uint64,
+  Uint8,
   Url,
   Uuid,
 } from '../../../src/index.ts';
@@ -35,6 +45,14 @@ const Flag = Nominal(
   satisfying((value: unknown): value is boolean => typeof value === 'boolean', 'a flag'),
 );
 const Code = Nominal('columns.Code', /^[A-Z]{3}$/u);
+// Takes fractions, but none below 1.
+const Price = Nominal(
+  'columns.Price',
+  satisfying(
+    (value: unknown): value is number => typeof value === 'number' && value >= 1,
+    'a price',
+  ),
+);
 
 describe('columnKindOf', () => {
   it.each([
@@ -48,7 +66,17 @@ describe('columnKindOf', () => {
     [Uint32, { kind: 'bigint' }],
     [Integer, { kind: 'bigint' }],
     [PositiveInteger, { kind: 'bigint' }],
+    [NegativeInteger, { kind: 'bigint' }],
+    [NonNegativeInteger, { kind: 'bigint' }],
+    [NonPositiveInteger, { kind: 'bigint' }],
+    [Uint8, { kind: 'integer' }],
+    [Uint16, { kind: 'integer' }],
     [AnyNumber, { kind: 'double' }],
+    [FiniteNumber, { kind: 'double' }],
+    [PositiveNumber, { kind: 'double' }],
+    [NegativeNumber, { kind: 'double' }],
+    [NonNegativeNumber, { kind: 'double' }],
+    [NonPositiveNumber, { kind: 'double' }],
     [Float32, { kind: 'double' }],
     [AnyBoolean, { kind: 'boolean' }],
     [Int64, { kind: 'bigint' }],
@@ -62,5 +90,6 @@ describe('columnKindOf', () => {
     expect(columnKindOf(Percent)).toStrictEqual({ kind: 'integer' });
     expect(columnKindOf(Flag)).toStrictEqual({ kind: 'boolean' });
     expect(columnKindOf(Code)).toStrictEqual({ kind: 'text' });
+    expect(columnKindOf(Price)).toStrictEqual({ kind: 'double' });
   });
 });

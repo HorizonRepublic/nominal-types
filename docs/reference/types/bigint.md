@@ -17,6 +17,8 @@ Root of the big integer types. `value` is always a `bigint`.
 | Message             | `must be a bigint, an integer string or a safe integer (was 1.5)`                                                    |
 
 ```ts
+import { AnyBigInt } from '@horizon-republic/nominal-types';
+
 const id = new AnyBigInt('9007199254740993');
 
 id.value; // 9007199254740993n
@@ -30,13 +32,15 @@ A string longer than 1000 characters is rejected before it is converted.
 A number beyond `2^53 - 1` is rejected, because it may already have lost digits. The message says so:
 
 ```ts
+import { AnyBigInt } from '@horizon-republic/nominal-types';
+
 AnyBigInt.parse(2 ** 53);
-// must be a bigint or an integer string, since a number this large may have lost digits (was 9007199254740992)
+// { ok: false, issues: [{ message: 'must be a bigint or an integer string, since a number this large may have lost digits (was 9007199254740992)' }] }
 ```
 
 ## Sign types
 
-Each sign type, and `Int64` and `Uint64`, also adds an example its JSON Schema accepts. On the input side, each one adds a string and a number, joined by `anyOf`. On the output side, only the string.
+Each sign type, and `Int64` and `Uint64`, adds an example its JSON Schema accepts. The [input schema](../json-schema.md#input-and-output) adds a string and a number, joined by `anyOf`. The output schema adds the string only.
 
 | Type                | Accepts | Adds for a string                                    | Adds for a number                  | Message ends with        |
 | ------------------- | ------- | ---------------------------------------------------- | ---------------------------------- | ------------------------ |

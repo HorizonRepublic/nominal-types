@@ -6,3 +6,4 @@ coverage
 *.tsbuildinfo
 bench/typia/dist/
 bench/nest/dist/
+llms-full.txt

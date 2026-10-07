@@ -99,7 +99,7 @@ describe('NominalField', () => {
       Email,
     );
     expect(messages(build(OrderDto, { ...valid, backup: null }).errors)).toStrictEqual([
-      'backup: must be a string (was object)',
+      'backup: must be a string (was null)',
     ]);
   });
 

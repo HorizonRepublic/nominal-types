@@ -1,5 +1,6 @@
 import { mustBe } from './messages.ts';
 import { NativeSchema } from './native-schema.ts';
+import { NoJsonSchema } from './no-json-schema.ts';
 
 /**
  * A Standard Schema that accepts the values a type guard approves.
@@ -31,7 +32,7 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
 
   protected jsonBody(_side: 'input' | 'output'): Record<string, unknown> {
     if (this.#json === undefined) {
-      throw new TypeError('the schema cannot describe itself as JSON Schema');
+      throw new NoJsonSchema();
     }
 
     return { ...this.#json, description: this.description };

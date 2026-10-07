@@ -4,12 +4,18 @@ import type { ArgumentMetadata } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
+import { type } from 'arktype';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
+import { fromArk, toArk } from '../../../src/adapters/arktype/index.ts';
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
+import { toZod } from '../../../src/adapters/zod/index.ts';
 import { Email, Uuid } from '../../../src/index.ts';
 
 const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
+
+const body: ArgumentMetadata = { type: 'body', metatype: Object };
 
 const param = (metatype: ArgumentMetadata['metatype'], data = 'id'): ArgumentMetadata => ({
   type: 'param',
@@ -99,6 +105,30 @@ describe('NominalPipe', () => {
       expect(thrownBy(() => new NominalPipe().transform('nope', param(Uuid)))).toHaveProperty(
         'response.message',
         ['id: must be a UUID (was "nope")'],
+      );
+    });
+
+    it('checks against any synchronous Standard Schema, such as an ArkType or Zod object', () => {
+      const ark = fromArk(type({ customer: toArk(Email) }));
+      const zod = z.object({ customer: toZod(Email) });
+
+      for (const schema of [ark, zod]) {
+        const pipe = new NominalPipe(schema);
+
+        expect(pipe.transform({ customer: 'jane@example.com' }, body)).toStrictEqual({
+          customer: new Email('jane@example.com'),
+        });
+        expect(thrownBy(() => pipe.transform({ customer: 'nope' }, body))).toBeInstanceOf(
+          BadRequestException,
+        );
+      }
+    });
+
+    it('refuses an asynchronous schema', () => {
+      const slow = z.string().refine(() => Promise.resolve(true));
+
+      expect(() => new NominalPipe(slow).transform('x', body)).toThrow(
+        new TypeError('NominalPipe: asynchronous schemas are not supported'),
       );
     });
 

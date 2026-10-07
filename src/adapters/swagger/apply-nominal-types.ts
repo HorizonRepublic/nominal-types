@@ -11,8 +11,11 @@ export interface OpenApiDocument {
   readonly components?: { readonly schemas?: Readonly<Record<string, unknown>> } | undefined;
 }
 
-const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
-  const type = typeForSchemaName(name);
+const nominalTypeNamed = (
+  name: string,
+  claimed: ReadonlySet<string>,
+): AnyNominalType | undefined => {
+  const type = typeForSchemaName(name, claimed);
 
   return isNominalType(type) ? type : undefined;
 };
@@ -28,8 +31,8 @@ const isEmptyObjectSchema = (schema: unknown): boolean =>
   isEmpty(Reflect.get(schema, 'properties')) &&
   Reflect.get(schema, 'allOf') === undefined;
 
-const schemaFor = (name: string, schema: unknown): unknown => {
-  const type = isEmptyObjectSchema(schema) ? nominalTypeNamed(name) : undefined;
+const schemaFor = (name: string, schema: unknown, claimed: ReadonlySet<string>): unknown => {
+  const type = isEmptyObjectSchema(schema) ? nominalTypeNamed(name, claimed) : undefined;
 
   return type === undefined
     ? schema
@@ -61,12 +64,14 @@ export const applyNominalTypes = <Document extends OpenApiDocument>(
     return document;
   }
 
+  const claimed = new Set(Object.keys(schemas));
+
   return {
     ...document,
     components: {
       ...document.components,
       schemas: Object.fromEntries(
-        Object.entries(schemas).map(([name, schema]) => [name, schemaFor(name, schema)]),
+        Object.entries(schemas).map(([name, schema]) => [name, schemaFor(name, schema, claimed)]),
       ),
     },
   };

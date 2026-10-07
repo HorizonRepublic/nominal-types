@@ -24,8 +24,12 @@ export const isUnder = (root: object, target: AnyNominalType): boolean =>
 
 const accepts = (target: AnyNominalType, value: unknown): boolean => target.parse(value).ok;
 
+// Fractions on both sides of zero and past one, so a type limited to negative numbers or to
+// amounts from 1 up is still seen to take fractions.
+const fractions = [0.5, -0.5, 1.5, -1.5, Number.NaN];
+
 const integerKind = (target: AnyNominalType): ColumnKind => {
-  if (accepts(target, 0.5) || accepts(target, Number.NaN)) {
+  if (fractions.some((fraction) => accepts(target, fraction))) {
     return { kind: 'double' };
   }
 

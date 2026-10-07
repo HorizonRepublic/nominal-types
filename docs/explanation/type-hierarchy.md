@@ -1,5 +1,7 @@
 # Type hierarchy
 
+Why do the built-in types form a tree, and why are there three ways to build one type on another? This page explains the choices behind the hierarchy.
+
 ## Why base types
 
 A value often belongs to several kinds at once. A port is a 16-bit unsigned integer, which is an integer, which is a number.
@@ -9,57 +11,77 @@ Different code cares about different levels:
 - code that adds up integers should accept a port;
 - code that opens a socket should accept only a port.
 
-A tree of types gives you both. Each type sits under the closest kind it belongs to. It gets that kind's checks, and it fits wherever that kind is expected. `Port` under `Uint16` takes one line.
+A tree of types gives you both. Each type sits under the closest kind it belongs to. It gets that kind's checks, and it fits wherever that kind is expected. So `Port` under `Uint16` takes one line.
 
-The base types are optional. `Nominal()` creates a type from scratch, and it is just as valid. Base types are one way to keep code tidy: related types live in one tree, and common checks are written once.
+Your own rule sees only values that passed the checks above it. Under `NonNegativeInteger`, it gets whole numbers from 0 up and needs no checks of its own for that.
 
-The roots are named `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`. Names like `String` already belong to JavaScript, and "any" says what the root accepts.
+The roots are `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`. They are the [base types](../reference/glossary.md). Their names start with `Any`, because `String` and `Number` already belong to JavaScript.
+
+## Why start under a base type
+
+A type made with `AnyString.subtype()` and a type made with `Nominal()` check values the same way. They differ in one thing: only a type under a base type has a text form.
+
+A text form says how to read the type from a string. `fromString()` and `fromEnv()` use it to read `'3'` from a query string or an environment variable. A type made from scratch with `Nominal()` doesn't say what kind of value it holds. It may be a number, a string or an object, so the package can't know how to read it from text.
+
+That is why the docs start strings, numbers, big integers and booleans under a base type. `Nominal()` is for objects and for values no base type fits.
 
 ## Why three ways to build on a type
 
 Two questions describe how a new type relates to the original:
 
-1. Can the new type go where the original is expected?
-2. Can the original go where the new type is expected?
+- Can the new type go where the original is expected?
+- Can the original go where the new type is expected?
 
 Each tool answers them differently:
 
-| Tool        | 1   | 2   | What it is                                 |
-| ----------- | --- | --- | ------------------------------------------ |
-| `subtype()` | yes | no  | a narrower case, like an express order     |
-| `extends`   | yes | yes | the same type with more methods            |
-| `variant()` | no  | no  | a sibling with the same methods, new rules |
+| Tool        | New type where the original goes | Original where the new type goes | What it is                                                                |
+| ----------- | -------------------------------- | -------------------------------- | ------------------------------------------------------------------------- |
+| `subtype()` | yes                              | no                               | a narrower case, such as a staff email                                    |
+| `extends`   | yes                              | yes                              | the same type with more methods                                           |
+| `variant()` | no                               | no                               | a [sibling](../reference/glossary.md) with the same methods and new rules |
 
 `subtype()` is the default. It is the only one where both the compiler and the runtime know exactly what was checked.
 
-`extends` keeps the same type. Because any original passes for the subclass, a rule added in the subclass can't be relied on by code that receives it.
+`extends` keeps the same type. Any original passes for the subclass. So a rule added in the subclass can't be relied on by code that receives it.
 
 `variant()` replaces a rule, so it has to be a separate type. If it passed for the original, code relying on the original's rule would get values that never passed it.
 
-The fourth combination, "no" then "yes", has no practical use, so there is no tool for it.
-
 ## Why limits are new types
 
-Built-in types have no options like a maximum. A limit is a subtype instead. That gives three things:
+Built-in types have no options such as a maximum. A limit is a subtype instead. That gives three things:
 
 - the limit has a name, such as `Percentage`;
 - the name shows in function signatures, so `(value: Percentage)` says what it needs;
 - the limit travels with the type, including into its JSON Schema.
 
-There is one fixed limit: an `AnyBigInt` string can be at most 1000 characters. It sits on the root because it must run before the string is turned into a `bigint`. A subtype only sees the result.
+One limit is fixed: an `AnyBigInt` string can be at most 1000 characters.
 
 ## Why zero splits the sign types
 
-`Positive` and `NonNegative` differ by one value: zero. Zero matters often. A quantity in an order can't be zero, but a stock count can. So each sign comes in two forms, without zero and with it.
+`PositiveInteger` and `NonNegativeInteger` differ by one value: zero. A quantity in an order can't be zero, but a stock count can. So each sign comes in two forms, without zero and with it.
 
-`-0` counts as zero. It keeps its sign in `value`, because the package never changes values. `equals()` uses `Object.is`, so `-0` is not equal to `0`, and `NaN` is equal to `NaN`.
+How `-0` and `NaN` behave is listed in the [number types reference](../reference/types/number.md).
 
 ## Why big integers travel as strings
 
-JSON has no bigint. `JSON.stringify` throws on one, and most JSON parsers lose digits after 2^53. A decimal string survives every step. That is why database drivers and APIs often send 64-bit integers as strings.
+JSON has no bigint. `JSON.stringify` throws on one, and most JSON parsers lose digits after 2^53. So database drivers and APIs often send 64-bit integers as decimal strings. `AnyBigInt` reads such a string and writes it back as a string.
 
-`AnyBigInt` reads such a string and writes it back the same way.
+It also reads a number, as long as it is a [safe integer](../reference/glossary.md). So an ID sent as `42` works. A larger number may have lost digits before it arrived. `AnyBigInt` can't tell, so it refuses the number and asks for a string:
 
-It also reads a number, as long as the number is exact. Every whole number up to `2^53 - 1` is, so an ID sent as `42` works. A larger number may already have lost digits by the time it arrives. `AnyBigInt` can't tell, so it refuses the number and asks for a string.
+```ts
+import { AnyBigInt } from '@horizon-republic/nominal-types';
+
+AnyBigInt.parse('9007199254740993'); // { ok: true, value: AnyBigInt { value: 9007199254740993n } }
+AnyBigInt.parse(42); // { ok: true, value: AnyBigInt { value: 42n } }
+AnyBigInt.parse(2 ** 53);
+// { ok: false, issues: [{ message: 'must be a bigint or an integer string, since a number this large may have lost digits (was 9007199254740992)' }] }
+```
+
+## See also
+
+- [How to make a stricter type or a variant](../guides/core/build-on-a-type.md)
+- [How to declare a type](../guides/core/declare-a-type.md)
+- [Built-in types](../reference/types/README.md)
+- [What a nominal type is](nominal-types.md)
 
 [← Explanation](README.md)

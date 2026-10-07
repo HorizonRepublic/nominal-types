@@ -14,6 +14,8 @@ Root of the string types.
 | Message     | `must be a string (was 42)`               |
 
 ```ts
+import { AnyString } from '@horizon-republic/nominal-types';
+
 new AnyString('').value; // ''
 ```
 
@@ -24,17 +26,24 @@ new AnyString('').value; // ''
 An email address like `jane.doe+news@example.com`.
 
 - Up to 64 characters before the `@`, and up to 254 in total.
-- A `+tag` before the `@` is understood, see `tag` below.
+- A `+tag` before the `@` is understood, see the `tag` member.
 - Not accepted: quoted names (`"jane"@example.com`), IP addresses (`jane@[127.0.0.1]`) and non-Latin domains. Convert a non-Latin domain to punycode first (`xn--…`).
 
-| Property    | Value                                                                                                               |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', pattern: Email.pattern.source, format: 'email', minLength: 6, maxLength: 254 }`, with an example |
-| Message     | `must be an email address (was a string of 1 character)`                                                            |
+| Property    | Value                                                                                                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Email.pattern.source, format: 'email', minLength: 6, maxLength: 254 }`, with an example                                         |
+| Message     | `must be an email address (was a string of 1 character)`. `Email` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden. |
 
 ```ts
+import { Email } from '@horizon-republic/nominal-types';
+
 const email = new Email('Jane.Doe+news@Example.com');
+
+email.tag; // 'news'
+email.canonical().value; // 'jane.doe@example.com'
 ```
+
+Members, with results for this `email`:
 
 | Member                 | Returns                                    | Example                           |
 | ---------------------- | ------------------------------------------ | --------------------------------- |
@@ -49,6 +58,8 @@ const email = new Email('Jane.Doe+news@Example.com');
 
 `equals()` compares the text exactly. `canonical()` and `isSameMailbox()` apply no provider rules, such as Gmail ignoring dots.
 
+The static fields help build patterns of your own for email-like values.
+
 | Static field     | Holds                                                    |
 | ---------------- | -------------------------------------------------------- |
 | `Email.pattern`  | the whole address as a `RegExp`, with the length limits  |
@@ -62,7 +73,8 @@ const email = new Email('Jane.Doe+news@Example.com');
 
 A UUID like `0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f`.
 
-- Versions 1 to 8, plus the all-zero and all-`f` values.
+- Versions 1 to 8, with the variant of RFC 9562: the first digit of the fourth group is `8`, `9`, `a` or `b`.
+- The all-zero and all-`f` values.
 - Upper and lower case are both accepted and kept as given.
 
 | Property    | Value                                                                                                             |
@@ -71,7 +83,11 @@ A UUID like `0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f`.
 | Message     | `must be a UUID (was "x")`                                                                                        |
 
 ```ts
+import { Uuid } from '@horizon-republic/nominal-types';
+
 const id = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
+
+id.version; // 7
 ```
 
 | Member            | Returns                                                   | Example |
@@ -93,7 +109,7 @@ const id = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
 An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accepts.
 
 - Any scheme is accepted, including `mailto:` and `javascript:`. Use `HttpUrl` for web addresses only.
-- `value` keeps the text as given. The members below read the parsed URL.
+- `value` keeps the text as given. The members read the parsed URL.
 
 | Property    | Value                                                            |
 | ----------- | ---------------------------------------------------------------- |
@@ -101,18 +117,24 @@ An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accep
 | Message     | `must be a URL (was "x")`, also for a value that is not a string |
 
 ```ts
+import { Url } from '@horizon-republic/nominal-types';
+
 const url = new Url('https://Example.com:8443/a/b?x=1#top');
+
+url.hostname; // 'example.com'
 ```
 
-| Member              | Returns                             | Example                                |
-| ------------------- | ----------------------------------- | -------------------------------------- |
-| `protocol`          | the scheme with its colon           | `'https:'`                             |
-| `hostname` / `host` | the host, without and with the port | `'example.com'` / `'example.com:8443'` |
-| `origin`            | scheme, host and port               | `'https://example.com:8443'`           |
-| `pathname`          | the path                            | `'/a/b'`                               |
-| `searchParams`      | a fresh copy of the query           | `URLSearchParams`                      |
-| `toURL()`           | a fresh `URL`                       |                                        |
-| `canonical()`       | the URL as the parser serialises it | `https://example.com:8443/a/b?x=1#top` |
+Members, with results for this `url`:
+
+| Member              | Returns                                             | Example                                |
+| ------------------- | --------------------------------------------------- | -------------------------------------- |
+| `protocol`          | the scheme with its colon                           | `'https:'`                             |
+| `hostname` / `host` | the host, without and with the port                 | `'example.com'` / `'example.com:8443'` |
+| `origin`            | scheme, host and port                               | `'https://example.com:8443'`           |
+| `pathname`          | the path                                            | `'/a/b'`                               |
+| `searchParams`      | a fresh copy of the query                           | `URLSearchParams`                      |
+| `toURL()`           | a fresh `URL`                                       |                                        |
+| `canonical()`       | a `Url` of the text the parser writes, host lowered | `https://example.com:8443/a/b?x=1#top` |
 
 ## HttpUrl
 
@@ -126,8 +148,10 @@ A `Url` whose scheme is `http` or `https`, in any case. It has the members of `U
 | Message     | `must be an http or https URL (was "mailto:jane@example.com")`                                         |
 
 ```ts
-new HttpUrl('https://example.com'); // fine
-new HttpUrl('mailto:jane@example.com'); // throws NominalError
+import { HttpUrl } from '@horizon-republic/nominal-types';
+
+new HttpUrl('https://example.com').value; // 'https://example.com'
+new HttpUrl('mailto:jane@example.com'); // throws NominalError: nominal.HttpUrl: must be an http or https URL (was "mailto:jane@example.com")
 ```
 
 [← Built-in types](README.md)

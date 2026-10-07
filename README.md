@@ -8,33 +8,42 @@
 
 Runtime-validated nominal types for TypeScript, for the validators and frameworks you already use.
 
-To TypeScript, an email address is just a `string`. Nothing stops you from passing a user ID where an email is expected, or a string that was never checked.
+## The bug
 
-This package turns such values into small classes:
+To TypeScript, an email address and a team ID are both `string`. Swap them, and the code still compiles:
 
-- `new Email(text)` checks the text once. Every `Email` you hold is valid.
-- An `Email` can't be passed where a `Uuid` or a plain `string` is expected.
-- Helpers live on the type: `email.domain`, `uuid.timestamp`.
-- The same types work across your stack: ArkType, NestJS, class-validator, Swagger and any [Standard Schema](https://standardschema.dev) library. See [Supported libraries](#supported-libraries).
+```ts
+const sendInvite = (to: string, team: string): void => {
+  console.log(`inviting ${to} to team ${team}`);
+};
 
-## Example
+const email = 'jane@example.com';
+const teamId = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
+
+sendInvite(teamId, email); // compiles, and invites a UUID to a team called jane@example.com
+```
+
+## The fix
+
+Give each kind of value its own type. `new` checks the value, and the compiler keeps the types apart:
 
 ```ts
 import { Email, Uuid } from '@horizon-republic/nominal-types';
 
 const sendInvite = (to: Email, team: Uuid): void => {
-  // `to` is a valid address and `team` a valid UUID: nothing to check here
+  console.log(`inviting ${to.value} to team ${team.value}`);
 };
 
-const team = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
+const email = new Email('jane@example.com');
+const teamId = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
 
-sendInvite(new Email('jane+invites@example.com'), team);
-sendInvite('jane@example.com', team); // compile error: a string is not an Email
-new Email('not an address'); // throws NominalError
+sendInvite(email, teamId); // inviting jane@example.com to team 0190f1c2-…
+sendInvite(teamId, email); // ❌ compile error: Type 'Uuid' is missing the following properties from type 'Email': …
+sendInvite('jane@example.com', teamId); // ❌ compile error: Argument of type 'string' is not assignable to parameter of type 'Email'.
+new Email('jane@'); // throws NominalError: nominal.Email: must be an email address (was a string of 5 characters)
 ```
 
-> `main` holds version 3, which has not been published yet. Version 2 stays on npm:
-> `npm install @horizon-republic/nominal-types@2`.
+Every `Email` you hold is valid, and it has methods such as `email.domain`. [What a nominal type is](docs/explanation/nominal-types.md) compares this with Zod's checked strings and with branded strings.
 
 ## Installation
 
@@ -42,152 +51,88 @@ new Email('not an address'); // throws NominalError
 npm install @horizon-republic/nominal-types
 ```
 
+> These docs describe version 3, which is not on npm yet. `npm install` gives version 2, which has a different API.
+
 It works with both `import` and `require`, on Node.js 22.12 or later.
 
-## Supported libraries
+## Make your own type
 
-A nominal type works with other libraries in three ways: as a library's field type, as a rule written with that library, or through an adapter, a separate entry point of this package.
-
-| Library                                                         | Fields of its schemas                                                     | Rules for a type      | Guide                                               |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------- | --------------------------------------------------- |
-| [ArkType](https://arktype.io)                                   | yes, with the adapter `toArk()`, at ArkType's speed                       | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
-| [NestJS](https://nestjs.com) 11, 12                             | parameters, bodies and message payloads, with the adapter `NominalPipe`   | —                     | [NestJS](docs/guides/nestjs.md)                     |
-| [class-validator](https://github.com/typestack/class-validator) | DTO properties, with the adapter `@NominalField()`                        | —                     | [class-validator](docs/guides/class-validator.md)   |
-| [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | full schemas in the document, with the adapter `applyNominalTypes()`      | —                     | [Swagger](docs/guides/swagger.md)                   |
-| [GraphQL](https://graphql.org) 16, 17                           | scalars that give instances, with the adapter `toGraphQL()`               | —                     | [GraphQL](docs/guides/graphql.md)                   |
-| [superjson](https://github.com/flightcontrolhq/superjson)       | instances that survive tRPC and Next.js, with the adapter `toSuperjson()` | —                     | [superjson](docs/guides/superjson.md)               |
-| [Zod](https://zod.dev) 4                                        | yes, with the adapter `toZod()`                                           | yes, with JSON Schema | [Zod](docs/guides/zod.md)                           |
-| [Valibot](https://valibot.dev)                                  | yes, with the adapter `toValibot()`                                       | yes, no JSON Schema   | [Valibot](docs/guides/valibot.md)                   |
-| any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }`  | yes                   | [Other validators](docs/guides/other-validators.md) |
-
-Databases:
-
-| ORM                                  | How                                                               | Guide                                 |
-| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------- |
-| [MikroORM](https://mikro-orm.io) 7   | entity properties hold instances, with the adapter `toMikroOrm()` | [MikroORM](docs/guides/mikro-orm.md)  |
-| [TypeORM](https://typeorm.io)        | entity columns hold instances, with the adapter `toTypeOrm()`     | [TypeORM](docs/guides/typeorm.md)     |
-| [Drizzle](https://orm.drizzle.team)  | table columns hold instances, with the adapter `toDrizzle()`      | [Drizzle](docs/guides/drizzle.md)     |
-| [Sequelize](https://sequelize.org) 6 | model attributes hold instances, with the adapter `toSequelize()` | [Sequelize](docs/guides/sequelize.md) |
-
-Values read from the database are checked, and the column type comes from the nominal type.
-
-Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, Zod, Valibot, NestJS, class-validator, Swagger, GraphQL, MikroORM, TypeORM or Sequelize is installed or loaded unless you import the adapter.
-
-## Concepts
-
-### A type is a class with a rule
+A type is a class with a rule. Start from a built-in type, and add getters for its behaviour:
 
 ```ts
-import { Nominal } from '@horizon-republic/nominal-types';
+import { AnyString } from '@horizon-republic/nominal-types';
 
-export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {}
-```
-
-The rule here is a regular expression: `ORD-` and eight digits. It can also be a type guard or a schema from another library.
-
-### Every instance is valid
-
-`new` checks the value and throws if it is wrong. `parse()` returns a result instead, for input that may be wrong:
-
-```ts
-new OrderNumber('ORD-20261007').value; // 'ORD-20261007'
-new OrderNumber('42'); // throws NominalError: OrderNumber: must be matched by ^ORD-\d{8}$ (was "42")
-
-OrderNumber.parse('42'); // { ok: false, issues: [{ message: 'must be matched by …' }] }
-```
-
-### Types don't mix
-
-The compiler keeps every type apart, even when two types wrap the same kind of value:
-
-```ts
-const ship = (order: OrderNumber): void => {};
-
-ship(new OrderNumber('ORD-20261007')); // fine
-ship('ORD-20261007'); // compile error
-```
-
-### Methods live on the type
-
-Add getters and methods to the class. They always work on a valid value:
-
-```ts
-export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
-  get year(): number {
-    return Number(this.value.slice(4, 8));
+export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {
+  public get category(): string {
+    return this.value.slice(0, 3);
   }
 }
+
+new Sku('ABC-1234').category; // 'ABC'
+Sku.parse('abc'); // { ok: false, issues: [{ message: 'must be matched by ^[A-Z]{3}-\d{4}$ (was "abc")' }] }
+new Sku('abc'); // throws NominalError: shop.Sku: must be matched by ^[A-Z]{3}-\d{4}$ (was "abc")
 ```
 
-### Types build on each other
+## Works with your stack
 
-A subtype adds a rule and fits wherever its parent is expected:
+Each adapter is a separate import path. Install the other library only if you use its adapter.
 
-```ts
-export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
-```
+Validators:
 
-### Objects are checked field by field
+- [ArkType](https://arktype.io) 2.2 or later: `toArk()` and `fromArk()` from `adapters/arktype`. [Guide](docs/guides/validators/arktype.md)
+- [Zod](https://zod.dev) 4: `toZod()` from `adapters/zod`. [Guide](docs/guides/validators/zod.md)
+- [Valibot](https://valibot.dev) 1: `toValibot()` from `adapters/valibot`. [Guide](docs/guides/validators/valibot.md)
+- [class-validator](https://github.com/typestack/class-validator) 0.14 and 0.15: `@NominalField()` from `adapters/class-validator`. [Guide](docs/guides/validators/class-validator.md)
+- any [Standard Schema](https://standardschema.dev) library: the type itself, or `schemaOf(Type)`, with no adapter. [Guide](docs/guides/validators/standard-schema.md)
 
-`objectOf()` checks an object of nominal fields, with no other library, as fast as Zod gives plain values:
+Web frameworks:
 
-```ts
-import { Email, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+- [NestJS](https://nestjs.com) 11 and 12: `NominalPipe` from `adapters/nest`, for parameters, bodies and message payloads. [Guide](docs/guides/frameworks/nestjs.md)
 
-export const CreateOrder = objectOf({ email: Email, quantity: PositiveInteger });
+API and transport:
 
-CreateOrder.parse(body); // { ok: true, value: { email: Email, quantity: PositiveInteger } }
-```
+- [GraphQL](https://graphql.org) 16 and 17: scalars from `toGraphQL()` in `adapters/graphql`. [Guide](docs/guides/frameworks/graphql.md)
+- [superjson](https://github.com/flightcontrolhq/superjson): `toSuperjson()` from `adapters/superjson`, so instances survive tRPC and Next.js. [Guide](docs/guides/frameworks/superjson.md)
 
-### Rules can span fields
+Databases (values read back are checked):
 
-A constraint checks fields of an object against each other, like a `CHECK` constraint in SQL:
+- [MikroORM](https://mikro-orm.io) 7: `toMikroOrm()` from `adapters/mikro-orm`. [Guide](docs/guides/databases/mikro-orm.md)
+- [TypeORM](https://typeorm.io) 0.3 and 1: `toTypeOrm()` from `adapters/typeorm`. [Guide](docs/guides/databases/typeorm.md)
+- [Drizzle](https://orm.drizzle.team): `toDrizzle()` from `adapters/drizzle`. [Guide](docs/guides/databases/drizzle.md)
+- [Sequelize](https://sequelize.org) 6: `toSequelize()` from `adapters/sequelize`. [Guide](docs/guides/databases/sequelize.md)
 
-```ts
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+API docs:
 
-export const withinCapacity = constraint(
-  { guests: PositiveInteger, capacity: PositiveInteger },
-  ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
-  { path: 'guests' },
-);
-```
+- [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) 11 and 12: `applyNominalTypes()` from `adapters/swagger`. [Guide](docs/guides/api-docs/swagger.md)
+- JSON Schema: built into every type, with no adapter. [Guide](docs/guides/api-docs/json-schema.md)
+
+Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-republic/nominal-types/adapters/zod`.
+
+## What else it does
+
+- [Check a whole request body](docs/guides/core/check-an-object.md) with `objectOf()`, with no other library.
+- [Check one field against another](docs/guides/core/check-fields-together.md) with `constraint()`.
+- [Make a value object](docs/guides/core/make-a-value-object.md) of several fields, with getters and `copyWith()`.
+- [Read configuration from environment variables](docs/guides/core/read-config.md) with `fromEnv()`.
+- [Keep values out of error messages](docs/guides/core/hide-values.md), such as passwords.
 
 ## Built-in types
 
-Each group starts from a base type. Using them is optional.
+- Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`.
+- Numbers: `AnyNumber`, `FiniteNumber`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Float32`, `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`.
+- Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64`.
+- Booleans: `AnyBoolean`.
 
-| Group        | Types                                                                                                                                  |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Strings      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`                                                                                         |
-| Numbers      | `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, positive / negative / non-negative / non-positive, `Int8`–`Int32`, `Uint8`–`Uint32` |
-| Big integers | `AnyBigInt`, positive / negative / non-negative / non-positive, `Int64`, `Uint64`                                                      |
-| Booleans     | `AnyBoolean`                                                                                                                           |
-
-See [Built-in types](docs/reference/types/README.md) for each one.
+[Built-in types](docs/reference/types/README.md) describes each one.
 
 ## Documentation
 
-- [Tutorial](docs/tutorials/your-first-type.md): build your first type step by step.
-- [Guides](docs/guides/README.md): recipes for common tasks.
+- [Tutorial](docs/tutorials/README.md): build a sign-up check, step by step. Start here.
+- [Guides](docs/guides/README.md): how to do one task.
 - [Reference](docs/reference/README.md): every export and built-in type.
 - [Explanation](docs/explanation/README.md): why it works the way it does.
 
-## Contributing
-
-The repository keeps `package-lock.json`, and `.node-version` names the Node.js release the checks run on. A pull request that adds or changes public behaviour updates this README in the same change.
-
-| Script                              | What it does                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| `npm run build`                     | Builds both formats into `dist` and checks how the package resolves            |
-| `npm run typecheck`                 | Runs the TypeScript compiler without emitting                                  |
-| `npm run lint`                      | Runs oxlint with type-aware rules                                              |
-| `npm run format`                    | Formats the tree with oxfmt; `format:check` only reports                       |
-| `npm test`                          | Runs the vitest suites; `test:coverage` adds a coverage report                 |
-| `npm run bench`                     | Compares the speed of nominal-types with nine other libraries                  |
-| `npm run bench:document`            | Validates a 3 MB document with eight setups                                    |
-| `npm run profile:cpu -- <script>`   | Profiles a script and lists where the time goes, by place and function         |
-| `npm run profile:deopt -- <script>` | Lists the functions of this package V8 optimised and deoptimised, with reasons |
+[Contributing](CONTRIBUTING.md) lists the scripts of this repository.
 
 ## License
 

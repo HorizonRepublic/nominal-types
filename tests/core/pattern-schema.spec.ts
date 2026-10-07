@@ -49,10 +49,10 @@ describe('PatternSchema', () => {
       [Number.NaN, 'NaN'],
       [true, 'true'],
       [Symbol('code'), 'symbol'],
-      [null, 'object'],
+      [null, 'null'],
       [undefined, 'undefined'],
       [{ value: 'C-001' }, 'object'],
-      [['C-001'], 'object'],
+      [['C-001'], 'array'],
     ])('reports %s as not a string', (input, kind) => {
       expect(issuesOf(Code.parse(input))).toStrictEqual([
         { message: `must be a string (was ${kind})` },

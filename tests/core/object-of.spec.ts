@@ -9,6 +9,7 @@ import {
   constraint,
   Email,
   isObjectSchema,
+  Nominal,
   objectOf,
   PositiveInteger,
   schemaOf,
@@ -101,12 +102,48 @@ describe('objectOf', () => {
 
     it.each([
       ['a string', 'x', 'must be an object (was "x")'],
-      ['null', null, 'must be an object (was object)'],
-      ['an array', [], 'must be an object (was object)'],
+      ['null', null, 'must be an object (was null)'],
+      ['an array', [], 'must be an object (was array)'],
       ['undefined', undefined, 'must be an object (was undefined)'],
     ])('rejects %s in place of the object', (_name, input, message) => {
       expect(issuesOf(Order.parse(input))).toStrictEqual([{ message }]);
     });
+  });
+
+  it('refuses such a constraint on a subtype or variant of a type built on objectOf()', () => {
+    const fits = constraint(
+      { guests: PositiveInteger, capacity: PositiveInteger },
+      ({ guests, capacity }) => guests <= capacity,
+    );
+    const Party = Nominal('objects.Party', objectOf({ guests: PositiveInteger }));
+    const Room = Nominal(
+      'objects.Room',
+      objectOf({ guests: PositiveInteger, capacity: PositiveInteger }),
+    );
+
+    expect(() => Party.subtype('objects.SmallParty', fits)).toThrow(
+      new TypeError('subtype: a constraint reads capacity, which the object does not declare'),
+    );
+    expect(() => Party.variant('objects.OtherParty', fits)).toThrow(
+      new TypeError('variant: a constraint reads capacity, which the object does not declare'),
+    );
+    expect(Room.subtype('objects.FittingRoom', fits).parse({ guests: 3, capacity: 2 }).ok).toBe(
+      false,
+    );
+  });
+
+  it('refuses a constraint that reads a field the object does not declare', () => {
+    const fits = constraint(
+      { guests: PositiveInteger, capacity: PositiveInteger },
+      ({ guests, capacity }) => guests <= capacity,
+    );
+
+    expect(() => objectOf({ guests: PositiveInteger }, fits)).toThrow(
+      new TypeError('objectOf: a constraint reads capacity, which the object does not declare'),
+    );
+    expect(() =>
+      objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, fits),
+    ).not.toThrow();
   });
 
   describe('strict()', () => {

@@ -108,6 +108,17 @@ describe('toZod', () => {
 });
 
 describe('constrainZod', () => {
+  it('refuses a constraint reading a key an object drops or refuses, not one a loose object keeps', () => {
+    const guests = { guests: toZod(PositiveInteger) };
+    const error = new TypeError(
+      'constrainZod: a constraint reads capacity, which the object does not declare',
+    );
+
+    expect(() => constrainZod(z.object(guests), withinCapacity)).toThrow(error);
+    expect(() => constrainZod(z.strictObject(guests), withinCapacity)).toThrow(error);
+    expect(() => constrainZod(z.looseObject(guests), withinCapacity)).not.toThrow();
+  });
+
   it('runs the constraints once the fields are valid, with paths from the top', () => {
     expect(
       issues(

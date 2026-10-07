@@ -1,6 +1,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import * as v from 'valibot';
 
+import { checkConstraintFields } from '../../core/constraint-fields.ts';
 import type { AnyConstraint } from '../../core/constraint-types.ts';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -53,8 +54,19 @@ export const constrainValibot = <
 >(
   object: Schema,
   ...constraints: AnyConstraint[]
-): v.SchemaWithPipe<readonly [Schema, v.RawCheckAction<v.InferOutput<Schema>>]> =>
-  v.pipe(
+): v.SchemaWithPipe<readonly [Schema, v.RawCheckAction<v.InferOutput<Schema>>]> => {
+  const entries: unknown = Reflect.get(object, 'entries');
+
+  // An object that drops or refuses undeclared keys never hands them to a constraint.
+  if (
+    (object.type === 'object' || object.type === 'strict_object') &&
+    typeof entries === 'object' &&
+    entries !== null
+  ) {
+    checkConstraintFields('constrainValibot', Object.keys(entries), constraints);
+  }
+
+  return v.pipe(
     object,
     v.rawCheck(({ dataset, addIssue }) => {
       if (!dataset.typed) {
@@ -70,3 +82,4 @@ export const constrainValibot = <
       }
     }),
   );
+};

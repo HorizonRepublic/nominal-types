@@ -23,9 +23,9 @@ jobs:
           BRANCH: ${{ github.head_ref }}
         run: |
           types='feat|fix|perf|refactor|style|test|docs|build|ci|chore|revert'
-          if [ "$BRANCH" = release-please--branches--main ]; then
-            exit 0
-          fi
+          case "$BRANCH" in
+            release-please--branches--main*) exit 0 ;;
+          esac
           if ! printf '%s' "$BRANCH" | grep -Eq "^($types)/[a-z0-9]+(-[a-z0-9]+)*$"; then
             echo "::error::branch '$BRANCH' does not match <type>/<slug>, type being one of $types"
             exit 1

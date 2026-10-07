@@ -86,6 +86,9 @@ class NominalRoot {
   }
 
   public static parse(this: typeof NominalRoot, input: unknown): Parsed<NominalRoot> {
+    if (typeof input === 'object' && input !== null && input instanceof this) {
+      return { ok: true, value: input };
+    }
     const result = check(this, input);
     if (result.issues !== undefined) {
       return { ok: false, issues: result.issues };

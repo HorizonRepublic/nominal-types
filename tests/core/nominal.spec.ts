@@ -89,6 +89,23 @@ describe('Nominal', () => {
       expect(issuesOf(Sku.parse(42))).not.toHaveLength(0);
     });
 
+    it('passes an existing instance through without validating it again', () => {
+      const sku = new Sku('SKU-0001');
+
+      expect(valueOf(Sku.parse(sku))).toBe(sku);
+      expect(outputOf(Sku['~standard'].validate(sku))).toBe(sku);
+    });
+
+    it('passes a refined instance through its parent type', () => {
+      const promo = new PromoSku('SKU-9001');
+
+      expect(valueOf(Sku.parse(promo))).toBe(promo);
+    });
+
+    it('does not take a parent instance for a refined type', () => {
+      expect(issuesOf(PromoSku.parse(new Sku('SKU-9001')))).not.toHaveLength(0);
+    });
+
     it('leaves later constructions of the same input validated', () => {
       Sku.parse('SKU-0001');
 

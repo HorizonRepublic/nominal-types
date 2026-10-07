@@ -1,7 +1,7 @@
 import type { UserConfig } from 'tsdown';
 
 const config: UserConfig = {
-  entry: ['src/index.ts'],
+  entry: { index: 'src/index.ts', 'adapters/nest/index': 'src/adapters/nest/index.ts' },
   format: ['esm', 'cjs'],
   platform: 'neutral',
   target: 'es2022',

@@ -58,3 +58,28 @@ jobs:
 
       - run: npm ci
       - run: npm test
+
+  nest:
+    name: Nest adapter on Nest ${{ matrix.nest }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        nest: [11, 12]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm ci
+      - run: >-
+          npm install --no-save --no-audit --no-fund
+          @nestjs/common@${{ matrix.nest }}
+          @nestjs/core@${{ matrix.nest }}
+          @nestjs/testing@${{ matrix.nest }}
+          @nestjs/platform-fastify@${{ matrix.nest }}
+      - run: npx vitest run tests/adapters/nest

@@ -1,6 +1,12 @@
 {
   "extends": "../tests/tsconfig.json",
-  "include": ["./*.ts", "./document/*.ts", "./nest/run.ts"],
+  "include": [
+    "./*.ts",
+    "./document/*.ts",
+    "./nest/run.ts",
+    "./profile/*.ts",
+    "./profile/targets/*.ts"
+  ],
   "compilerOptions": {
     "types": ["node"]
   }

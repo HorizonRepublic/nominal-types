@@ -63,7 +63,7 @@ For new code, prefer ArkType. class-validator itself is slow, and it gets slower
 const invitation = type({ email: schemaOf(Email) });
 ```
 
-`schemaOf()` works in any library that accepts a Standard Schema inside its own schemas. It needs no adapter, and it is slower: in ArkType about 13 times slower than the adapter, because the library runs every such field through its slow path.
+`schemaOf()` works in any library that accepts a Standard Schema inside its own schemas. It needs no adapter, and it is slower: in ArkType about 20 times slower than the adapter, because the library runs every such field through its slow path.
 
 Use it where no adapter exists yet, or in a schema that runs rarely, such as a config read once at startup.
 
@@ -113,12 +113,12 @@ A 3 MB JSON body with 112,000 values, posted to a NestJS 12 app on Fastify. Each
 | ------------------------------------- | ---------: | :-------------: |
 | ArkType alone                         |      21 ms |       no        |
 | Zod alone                             |      27 ms |       no        |
-| nominal-types + ArkType adapter       |      29 ms |       yes       |
+| nominal-types + ArkType adapter       |      27 ms |       yes       |
 | nominal-types + ArkType, `schemaOf()` |     128 ms |       yes       |
 | nominal-types + class-validator       |     140 ms |       yes       |
 | class-validator alone                 |     129 ms |       no        |
 
-About 20 ms of every row is Fastify reading the body and parsing the JSON. With the adapter, nominal types add about 8 ms to ArkType for 112,000 checked values turned into instances. Inside class-validator, they add a few percent.
+About 20 ms of every row is Fastify reading the body and parsing the JSON. With the adapter, nominal types add about 6 ms to ArkType for 112,000 checked values turned into instances. Inside class-validator, they add a few percent.
 
 More numbers are on the [Performance](performance.md) page.
 

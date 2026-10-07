@@ -10,7 +10,7 @@
 - Write a rule across fields once with `constraint()` and attach it: `arkSchema(type, rule)`, `arkObject(type, rule)` for a nested object, or `Nominal('Name', rule)` for a value with behaviour.
 - In NestJS, check route parameters and query values with `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, or `{ schema: Type }` on NestJS 12.
 - Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
-- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `arkOf(Type)`, which is about 13 times faster.
+- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `arkOf(Type)`, which is about 20 times faster.
 
 ## Core API
 

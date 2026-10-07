@@ -46,7 +46,7 @@ const nominalWithArkType = type({
   }).array(),
 });
 
-const nominalArkAdapter = arkSchema(
+export const nominalArkAdapter = arkSchema(
   type({
     exportId: arkOf(Uuid),
     customers: type({

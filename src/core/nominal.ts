@@ -199,7 +199,7 @@ export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown)
     return build;
   }
 
-  return (input) => {
+  return function buildInstance(input: unknown): unknown {
     if (typeof input === 'object' && input !== null) {
       return build(input);
     }

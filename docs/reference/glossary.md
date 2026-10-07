@@ -13,6 +13,7 @@ The terms these pages use, in alphabetical order.
 | boundary                    | A place where data enters your code, such as an HTTP request, an environment variable or a database row.                                                               |
 | bounded context             | In domain-driven design, a part of a system with its own meaning for its words. A type name such as `billing.Email` names it.                                          |
 | brand                       | The hidden marker that makes the compiler tell types apart.                                                                                                            |
+| check digit                 | The last character of a number such as an ISBN, computed from the others. A typo almost always makes it wrong, so the number is refused.                               |
 | CIDR notation               | A way to write a network as an address, a `/` and a prefix length, such as `10.0.0.0/8`: every address whose first 8 bits match. See `IpPrefix`.                       |
 | constraint                  | A rule across fields of an object, such as guests that must not exceed a capacity. Made with `constraint()`.                                                           |
 | `copyWith()`                | The method of an instance built on `objectOf()` that returns a new, checked instance with some fields changed.                                                         |
@@ -23,13 +24,17 @@ The terms these pages use, in alphabetical order.
 | entry point                 | A path you import from, such as `@horizon-republic/nominal-types/adapters/zod`. The core is `@horizon-republic/nominal-types`.                                         |
 | `fromString()`              | A step that reads a number or boolean from text first, such as `'2'` from a query string.                                                                              |
 | frozen                      | Made read-only with `Object.freeze`. An object or array value of an instance is frozen all the way down.                                                               |
+| GTIN                        | Global Trade Item Number: the number under a product's bar code, 8, 12, 13 or 14 digits. EAN and UPC numbers are GTINs.                                                |
 | host bit                    | In a network written in CIDR notation, a bit after the prefix length. In `10.0.0.0/8` the last 24 bits are host bits. `IpPrefix` needs them to be zero.                |
 | host name                   | The name of a computer on a network, such as `localhost` or `api.example.com`: labels of letters, digits and hyphens, joined by dots.                                  |
 | instance                    | An object made by `new Email(…)` or `Email.parse(…)`. It always holds a valid value.                                                                                   |
 | invariant                   | A rule that always holds for a value, such as a stay's guests never exceeding its capacity.                                                                            |
 | IPv4-mapped address         | An IPv6 address that carries an IPv4 address in its last 32 bits, such as `::ffff:192.0.2.1`. A server that listens on IPv6 can see IPv4 clients this way.             |
+| ISBN                        | International Standard Book Number: the number of a book, 13 digits, or 10 for books from before 2007.                                                                 |
+| ISIN                        | International Securities Identification Number: the number of a share or a bond, such as `US0378331005`.                                                               |
 | ISO 3166-1                  | The standard list of country codes. Its two-letter codes, such as `US` and `UA`, are the ones `CountryCode` takes.                                                     |
 | ISO 4217                    | The standard list of three-letter currency codes, such as `EUR` and `JPY`, with their minor units.                                                                     |
+| ISSN                        | International Standard Serial Number: the number of a journal or a magazine, such as `0378-5955`.                                                                      |
 | issue                       | One reason a value was rejected: `{ message, path? }`.                                                                                                                 |
 | JSON Schema                 | A JSON format for describing data, used by OpenAPI and many tools.                                                                                                     |
 | level                       | One step in a line of types, such as `Integer` in `AnyNumber` › `FiniteNumber` › `Integer`.                                                                            |

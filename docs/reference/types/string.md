@@ -814,4 +814,141 @@ mac.equals(new MacAddress('00:00:5e:00:53:01')); // true
 | -------------------- | ------------------------- |
 | `MacAddress.pattern` | the address as a `RegExp` |
 
+## Isbn
+
+`AnyString` › `Isbn`
+
+A book number ([ISBN](../glossary.md)) like `9780306406157`: an ISBN-13, or an ISBN-10 as older books carry it. The last character is a [check digit](../glossary.md).
+
+- Digits only. An ISBN-10 may end in `X`, upper case only.
+- An ISBN-13 starts with `978` or `979`. It can't start with `9790`, which is a number for printed music.
+- Hyphens and spaces are refused. Remove them before you check the value: `text.replaceAll(/[\s-]/gu, '')`.
+- `value` keeps the form as given. `equals()` finds an ISBN-10 equal to its ISBN-13.
+
+| Property    | Value                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Isbn.pattern.source, minLength: 10, maxLength: 13 }`, with examples |
+| Message     | `must be an ISBN with a valid check digit (was "9780306406158")`                                |
+| Limits      | the `pattern` can't compute the check digit, so the schema accepts `9780306406158`              |
+
+```ts
+import { Isbn } from '@horizon-republic/nominal-types';
+
+const isbn = new Isbn('0306406152');
+
+isbn.canonical().value; // '9780306406157'
+isbn.equals(new Isbn('9780306406157')); // true
+new Isbn('978-0-306-40615-7'); // throws NominalError: nominal.Isbn: must be an ISBN with a valid check digit (was "978-0-306-40615-7")
+```
+
+Members, with results for this `isbn`:
+
+| Member          | Returns                                                     | Example                    |
+| --------------- | ----------------------------------------------------------- | -------------------------- |
+| `format`        | `10` or `13`, the number of characters                      | `10`                       |
+| `canonical()`   | the ISBN-13                                                 | `9780306406157`            |
+| `toIsbn10()`    | the ISBN-10; `undefined` for an ISBN that starts with `979` | `0306406152`               |
+| `equals(other)` | whether both are the same ISBN, as an ISBN-10 or ISBN-13    | `true` for `9780306406157` |
+
+| Static field   | Holds                                                       |
+| -------------- | ----------------------------------------------------------- |
+| `Isbn.pattern` | the shape of an ISBN as a `RegExp`, without the check digit |
+
+## Issn
+
+`AnyString` › `Issn`
+
+A number for a journal or another serial ([ISSN](../glossary.md)) like `0378-5955`. The last character is a [check digit](../glossary.md).
+
+- Four digits, a hyphen, three digits and a check digit. The check digit may be `X`, upper case only.
+- The hyphen is required: `03785955` is refused.
+
+| Property    | Value                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Issn.pattern.source, minLength: 9, maxLength: 9 }`, with an example |
+| Message     | `must be an ISSN with a valid check digit (was "0378-5956")`                                    |
+| Limits      | the `pattern` can't compute the check digit, so the schema accepts `0378-5956`                  |
+
+```ts
+import { Issn } from '@horizon-republic/nominal-types';
+
+new Issn('2434-561X').value; // '2434-561X'
+new Issn('0378-5956'); // throws NominalError: nominal.Issn: must be an ISSN with a valid check digit (was "0378-5956")
+```
+
+| Static field   | Holds                                                       |
+| -------------- | ----------------------------------------------------------- |
+| `Issn.pattern` | the shape of an ISSN as a `RegExp`, without the check digit |
+
+## Gtin
+
+`AnyString` › `Gtin`
+
+The number under a product's bar code ([GTIN](../glossary.md)), like `4006381333931`. EAN and UPC numbers are GTINs. The last digit is a [check digit](../glossary.md).
+
+- Digits only: 8, 12, 13 or 14 of them.
+- `value` keeps the length as given. A shorter GTIN is the same number with zeros in front, so `equals()` finds `036000291452` equal to `0036000291452`.
+- Only the check digit is checked. All zeros, such as `00000000`, is accepted.
+
+| Property    | Value                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| JSON Schema | `{ type: 'string', pattern: Gtin.pattern.source, minLength: 8, maxLength: 14 }`, with an example |
+| Message     | `must be a GTIN with a valid check digit (was "4006381333932")`                                  |
+| Limits      | the `pattern` can't compute the check digit, so the schema accepts `4006381333932`               |
+
+```ts
+import { Gtin } from '@horizon-republic/nominal-types';
+
+const gtin = new Gtin('036000291452');
+
+gtin.format; // 12
+gtin.canonical().value; // '00036000291452'
+```
+
+Members, with results for this `gtin`:
+
+| Member          | Returns                                                       | Example                    |
+| --------------- | ------------------------------------------------------------- | -------------------------- |
+| `format`        | `8`, `12`, `13` or `14`, the number of digits                 | `12`                       |
+| `canonical()`   | the 14-digit form with zeros in front, to store in a database | `00036000291452`           |
+| `equals(other)` | whether both are the same number, whatever their length       | `true` for `0036000291452` |
+
+| Static field   | Holds                                                      |
+| -------------- | ---------------------------------------------------------- |
+| `Gtin.pattern` | the shape of a GTIN as a `RegExp`, without the check digit |
+
+## Isin
+
+`AnyString` › `Isin`
+
+A number for a share, a bond or another security ([ISIN](../glossary.md)), like `US0378331005`. The last digit is a [check digit](../glossary.md).
+
+- Two letters, nine letters or digits, and a check digit: 12 characters.
+- Upper case only: `us0378331005` is refused.
+- The two letters are a country code, or a code such as `XS` for international securities. They are not checked against the list of countries.
+
+| Property    | Value                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Isin.pattern.source, minLength: 12, maxLength: 12 }`, with an example |
+| Message     | `must be an ISIN with a valid check digit (was "US0378331006")`                                   |
+| Limits      | the `pattern` can't compute the check digit, so the schema accepts `US0378331006`                 |
+
+```ts
+import { Isin } from '@horizon-republic/nominal-types';
+
+const isin = new Isin('US0378331005');
+
+isin.prefix; // 'US'
+isin.nsin; // '037833100'
+```
+
+| Member   | Returns                                                               | Example       |
+| -------- | --------------------------------------------------------------------- | ------------- |
+| `prefix` | the two letters in front                                              | `'US'`        |
+| `nsin`   | the nine characters before the check digit: the number in its country | `'037833100'` |
+
+| Static field   | Holds                                                       |
+| -------------- | ----------------------------------------------------------- |
+| `Isin.pattern` | the shape of an ISIN as a `RegExp`, without the check digit |
+
 [← Built-in types](README.md)

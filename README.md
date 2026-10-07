@@ -52,6 +52,7 @@ new Email('not an address'); // throws NominalError
   - [Static members](#static-members)
   - [Instance members](#instance-members)
   - [NominalError](#nominalerror)
+  - [matching()](#matching)
   - [isNominalType()](#isnominaltype)
   - [Types](#types)
 - [How it works](#how-it-works)
@@ -119,13 +120,22 @@ JSON.stringify({ order }); // '{"order":"ORD-20261007"}'
 
 ### Declaring a type
 
-Pass `Nominal()` a unique name and a schema whose Standard Schema `validate` answers synchronously. ArkType types qualify directly:
+Pass `Nominal()` a unique name and what a valid value looks like. For a string format, a regular expression is enough, and it is also the fastest option:
+
+```ts
+import { matching, Nominal } from '@horizon-republic/nominal-types';
+
+export class Slug extends Nominal('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
+export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
+```
+
+`matching()` adds a description, which error messages use: `must be a SKU (was "x")` instead of quoting the pattern. A pattern may carry the `u` flag and no other: `g` and `y` keep state between calls, and JSON Schema has no way to express `i`, `m` or `s`, so such patterns are refused when the type is declared. Spell case out in the character class instead, as in `[A-Fa-f]`.
+
+For anything a pattern can't say, pass a schema from a validation library. Any schema whose Standard Schema `validate` answers synchronously works, ArkType included:
 
 ```ts
 import { type } from 'arktype';
-import { Nominal } from '@horizon-republic/nominal-types';
 
-export class Slug extends Nominal('Slug', type(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)) {}
 export class Percentage extends Nominal('Percentage', type('0 <= number <= 100')) {}
 ```
 
@@ -398,9 +408,18 @@ new HttpUrl('mailto:jane@example.com'); // throws NominalError
 
 ```ts
 Nominal(name, schema);
+Nominal(name, pattern);
 ```
 
-Returns a class to extend. `name` has to be unique within an application; `schema` is any Standard Schema whose `validate` answers synchronously. A schema that also carries a Standard JSON Schema converter lets the type describe itself.
+Returns a class to extend. `name` has to be unique within an application. `schema` is any Standard Schema whose `validate` answers synchronously; a schema that also carries a Standard JSON Schema converter lets the type describe itself. A regular expression stands for `matching(pattern)`.
+
+### matching()
+
+```ts
+matching(pattern, description?): PatternSchema
+```
+
+A Standard Schema and Standard JSON Schema for the strings `pattern` matches. Nominal types test the pattern directly, so a type built on one costs little more than the pattern itself. Only the `u` flag is allowed. `description` completes "must be …" in error messages and goes into the JSON Schema.
 
 ### Static members
 

@@ -9,7 +9,7 @@ declare const brand: unique symbol;
  *
  * @remarks
  * Each name becomes a key, so a subtype carries its own key and every key of the type it
- * refines: it is assignable to its parent, while the parent is not assignable to it.
+ * extends: it is assignable to its parent, while the parent is not assignable to it.
  */
 export type Brand<Name extends string> = Readonly<Record<Name, true>>;
 
@@ -103,7 +103,7 @@ export interface NominalType<
 }
 
 /**
- * The class `refine` returns: the parent type with a stricter schema and a brand of its own.
+ * The class `subtype` returns: the parent type with a stricter schema and a brand of its own.
  */
 export type SubtypeOf<Parent extends AnyNominalType, Name extends string> = Omit<
   Parent,

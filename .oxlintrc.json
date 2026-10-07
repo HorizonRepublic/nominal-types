@@ -162,6 +162,12 @@
         "import/no-nodejs-modules": "off",
         "public-docs/require-jsdoc": "off"
       }
+    },
+    {
+      "files": ["tests/core/pattern-schema.spec.ts"],
+      "rules": {
+        "require-unicode-regexp": "off"
+      }
     }
   ],
   "ignorePatterns": ["node_modules", "dist", "coverage"],

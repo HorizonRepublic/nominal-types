@@ -11,6 +11,8 @@ const config: UserConfig = {
     'adapters/valibot/index': 'src/adapters/valibot/index.ts',
     'adapters/mikro-orm/index': 'src/adapters/mikro-orm/index.ts',
     'adapters/typeorm/index': 'src/adapters/typeorm/index.ts',
+    'adapters/drizzle/index': 'src/adapters/drizzle/index.ts',
+    'adapters/sequelize/index': 'src/adapters/sequelize/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

@@ -24,6 +24,8 @@ New here? Start with the tutorial. Checking request bodies? See [Choosing how to
 - [How to use nominal types in class-validator DTOs](guides/class-validator.md)
 - [How to store nominal types with MikroORM](guides/mikro-orm.md)
 - [How to store nominal types with TypeORM](guides/typeorm.md)
+- [How to store nominal types with Drizzle](guides/drizzle.md)
+- [How to store nominal types with Sequelize](guides/sequelize.md)
 - [How to document nominal types in Swagger](guides/swagger.md)
 
 ## [Reference](reference/README.md)

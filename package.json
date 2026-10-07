@@ -48,6 +48,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
     "@vitest/coverage-v8": "^5.0.3",
+    "eslint-plugin-jsdoc": "^65.2.0",
     "oxfmt": "^0.72.0",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2003",

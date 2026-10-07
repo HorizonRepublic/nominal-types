@@ -1,8 +1,9 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 
+import { ChainSchema, runSchema } from './chain-schema.ts';
 import type { AnyNominalType, NominalSchema, NominalType, Parsed } from './contracts.ts';
 import { NominalError } from './nominal-error.ts';
-import { PatternSchema, patternIssues } from './pattern-schema.ts';
+import { PatternSchema } from './pattern-schema.ts';
 import { Rejection } from './rejection.ts';
 import type { StandardProps, StandardSchema } from './standard-schema.ts';
 
@@ -15,14 +16,6 @@ let pendingTarget: object | undefined;
 let pendingInput: unknown;
 let pendingValue: unknown;
 
-const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
-  issue.path === undefined || issue.path.length === 0
-    ? { message: issue.message }
-    : {
-        message: issue.message,
-        path: issue.path.map((segment) => (typeof segment === 'object' ? segment.key : segment)),
-      };
-
 const remember = (target: object, input: unknown, value: unknown): void => {
   pendingTarget = target;
   pendingInput = input;
@@ -30,16 +23,20 @@ const remember = (target: object, input: unknown, value: unknown): void => {
 };
 
 const run = (target: typeof NominalRoot, input: unknown): unknown => {
-  const schema = target.schema;
-  if (schema instanceof PatternSchema) {
-    return schema.accepts(input) ? input : new Rejection(patternIssues(schema, input));
+  try {
+    return runSchema(target.schema, input);
+  } catch (error) {
+    throw new TypeError(
+      `${target.typeName}: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        cause: error,
+      },
+    );
   }
-  const result = schema['~standard'].validate(input);
-  if (result instanceof Promise) {
-    throw new TypeError(`${target.typeName}: asynchronous schemas are not supported`);
-  }
-  return result.issues === undefined ? result.value : new Rejection(result.issues.map(plainIssue));
 };
+
+const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
+  schema instanceof RegExp ? new PatternSchema(schema) : schema;
 
 const converterOf = (target: typeof NominalRoot): StandardJSONSchemaV1.Converter => {
   const converter = target.schema['~standard'].jsonSchema;
@@ -131,9 +128,9 @@ class NominalRoot {
   public static subtype(
     this: typeof NominalRoot,
     name: string,
-    stricter: (schema: NominalSchema) => NominalSchema,
+    constraint: NominalSchema | RegExp,
   ): typeof NominalRoot {
-    return derive(this, name, stricter(this.schema));
+    return derive(this, name, new ChainSchema(this.schema, toSchema(constraint)));
   }
 
   public equals(other: unknown): boolean {
@@ -223,5 +220,5 @@ export function Nominal(
   name: string,
   schema: NominalSchema | RegExp,
 ): typeof NominalRoot | AnyNominalType {
-  return derive(NominalRoot, name, schema instanceof RegExp ? new PatternSchema(schema) : schema);
+  return derive(NominalRoot, name, toSchema(schema));
 }

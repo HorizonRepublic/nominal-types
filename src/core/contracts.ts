@@ -96,9 +96,9 @@ export interface NominalType<
   subtype<Type extends AnyNominalType, const SubtypeName extends string>(
     this: Type,
     name: SubtypeName,
-    stricter: (
-      schema: Type['schema'],
-    ) => NominalSchema<InputOf<Type['schema']>, ValueOf<Type['schema']>>,
+    constraint:
+      | NominalSchema<ValueOf<Type['schema']>, ValueOf<Type['schema']>>
+      | (ValueOf<Type['schema']> extends string ? RegExp : never),
   ): SubtypeOf<Type, SubtypeName>;
 }
 

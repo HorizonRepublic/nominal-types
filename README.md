@@ -6,7 +6,7 @@ An email address, a UUID and a username are all `string` to the compiler. Nothin
 
 Here each of them is a class. You validate a value once, when it comes in, by constructing it. After that the compiler won't let you mix it up with other strings, and code that receives an `Email` knows it already holds a valid address.
 
-Types can have their own methods, such as `email.domain` or `uuid.timestamp`. They work with any library that accepts [Standard Schema](https://standardschema.dev), and a NestJS pipe validates route parameters with them. Validation runs on [ArkType](https://arktype.io); constructing an `Email` takes about 100 ns.
+Types can have their own methods, such as `email.domain` or `uuid.timestamp`. They work with any library that accepts [Standard Schema](https://standardschema.dev), and a NestJS pipe validates route parameters with them. The package has no runtime dependencies, and constructing an `Email` takes about 85 ns.
 
 ## Example
 
@@ -53,6 +53,7 @@ new Email('not an address'); // throws NominalError
   - [Instance members](#instance-members)
   - [NominalError](#nominalerror)
   - [matching()](#matching)
+  - [satisfying()](#satisfying)
   - [isNominalType()](#isnominaltype)
   - [Types](#types)
 - [How it works](#how-it-works)
@@ -72,7 +73,7 @@ new Email('not an address'); // throws NominalError
 npm install @horizon-republic/nominal-types
 ```
 
-Any package manager works. The package ships ES modules and CommonJS side by side, each with its own type declarations, and runs on Node.js 22.12 or later. Its only runtime dependency is [ArkType](https://arktype.io).
+Any package manager works. The package ships ES modules and CommonJS side by side, each with its own type declarations, and runs on Node.js 22.12 or later. It has no runtime dependencies: the only package it lists, `@standard-schema/spec`, holds type definitions alone.
 
 ### Your first type
 
@@ -130,7 +131,21 @@ export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
 
 `matching()` adds a description, which error messages use: `must be a SKU (was "x")` instead of quoting the pattern. A pattern may carry the `u` flag and no other: `g` and `y` keep state between calls, and JSON Schema has no way to express `i`, `m` or `s`, so such patterns are refused when the type is declared. Spell case out in the character class instead, as in `[A-Fa-f]`.
 
-For anything a pattern can't say, pass a schema from a validation library. Any schema whose Standard Schema `validate` answers synchronously works, ArkType included:
+For a rule a pattern can't say, `satisfying()` takes a type guard, a description and, optionally, the JSON Schema it corresponds to:
+
+```ts
+import { Nominal, satisfying } from '@horizon-republic/nominal-types';
+
+const isPercentage = (value: unknown): value is number =>
+  typeof value === 'number' && value >= 0 && value <= 100;
+
+export class Percentage extends Nominal(
+  'Percentage',
+  satisfying(isPercentage, 'a percentage', { type: 'number', minimum: 0, maximum: 100 }),
+) {}
+```
+
+Or pass a schema from a validation library. Any schema whose Standard Schema `validate` answers synchronously works:
 
 ```ts
 import { type } from 'arktype';
@@ -199,12 +214,11 @@ Only types up the chain are narrowed. An instance of an unrelated type is reject
 A subclass that overrides `schema` validates with its own rules and stays the same type as the class it extends. The built-in types keep their patterns as static fields, so you can build on them:
 
 ```ts
-import { type } from 'arktype';
-import { Email } from '@horizon-republic/nominal-types';
+import { Email, matching } from '@horizon-republic/nominal-types';
 
 export class CompanyEmail extends Email {
   static override readonly pattern = /^[a-z.]+@example\.com$/u;
-  static override readonly schema = type(CompanyEmail.pattern);
+  static override readonly schema = matching(CompanyEmail.pattern, 'a company address');
 }
 
 new CompanyEmail('jane.doe@example.com').mailbox; // 'jane.doe'
@@ -459,6 +473,14 @@ Thrown by `new` for a rejected value. Extends `TypeError`.
 | `issues`   | Plain `{ message, path? }` objects               |
 | `message`  | `'Email: must be an email address (was "nope")'` |
 
+### satisfying()
+
+```ts
+satisfying(check, description, jsonSchema?): PredicateSchema
+```
+
+A Standard Schema for the values the type guard `check` approves. Nominal types call the guard directly. `description` completes "must be …" in error messages; `jsonSchema`, when given, is what the type describes itself as, with the description added. Without it, asking for JSON Schema throws.
+
 ### isNominalType()
 
 ```ts
@@ -503,16 +525,16 @@ An application can load this package twice, once as ES modules and once as Commo
 
 Measured on an Apple M4 Pro with Node.js 25.3, after warm-up, one value at a time:
 
-| Operation                             | Time   |
-| ------------------------------------- | ------ |
-| ArkType alone, on the `Email` pattern | 69 ns  |
-| `new Email(text)`                     | 108 ns |
-| `Email.parse(text)`                   | 116 ns |
-| `Email.parse(existing Email)`         | 16 ns  |
-| `Email.parse(invalid text)`           | 1.7 µs |
-| `new Uuid(text)`                      | 76 ns  |
+| Operation                        | Time  |
+| -------------------------------- | ----- |
+| `Email.pattern.test(text)` alone | 69 ns |
+| `new Email(text)`                | 85 ns |
+| `Email.parse(text)`              | 88 ns |
+| `Email.parse(existing Email)`    | 15 ns |
+| `Email.parse(invalid text)`      | 54 ns |
+| `new Uuid(text)`                 | 57 ns |
 
-A rejected value costs more because the schema writes out its messages. That is also why boundaries use `parse()`: catching an exception from `new` adds a few microseconds on top.
+Patterns and type guards run directly, without the Standard Schema call around them, so a type costs about its own check plus 15 to 20 ns for the instance. A schema from a library adds that library's cost, which can be far higher for a rejected value, since some libraries spend microseconds writing out their messages. Boundaries use `parse()` rather than catching exceptions from `new`, which costs a few microseconds more.
 
 ## Contributing
 

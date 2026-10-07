@@ -1,12 +1,15 @@
-import { type } from 'arktype';
-import type { Type } from 'arktype';
-
 import type { NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
+import { satisfying } from '../core/predicate-schema.ts';
+import type { PredicateSchema } from '../core/predicate-schema.ts';
 
-const urlSchema: Type<string> = type('string.url');
+const isAbsoluteUrl = (value: unknown): value is string =>
+  typeof value === 'string' && URL.canParse(value);
 
-const UrlBase: NominalType<'Url', Type<string>> = Nominal('Url', urlSchema);
+const UrlBase: NominalType<'Url', PredicateSchema<string>> = Nominal(
+  'Url',
+  satisfying(isAbsoluteUrl, 'a URL', { type: 'string', format: 'uri' }),
+);
 
 /**
  * An absolute URL as the WHATWG URL standard parses it, with any scheme.

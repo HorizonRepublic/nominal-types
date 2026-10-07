@@ -1,10 +1,11 @@
-import { type } from 'arktype';
-import type { Type } from 'arktype';
-
 import type { NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
+import { matching } from '../core/pattern-schema.ts';
+import type { PatternSchema } from '../core/pattern-schema.ts';
 
-const EmailBase: NominalType<'Email', Type<string>> = Nominal('Email', type('string'));
+const declaredBelow = /(?!)/u;
+
+const EmailBase: NominalType<'Email', PatternSchema> = Nominal('Email', matching(declaredBelow));
 
 /**
  * An email address in the dot-atom form RFC 5322 defines, with plus addressing understood.
@@ -48,7 +49,7 @@ export class Email extends EmailBase {
    * ```ts
    * class CompanyEmail extends Email {
    *   static override readonly pattern = /^[a-z.]+@example\.com$/u;
-   *   static override readonly schema = type(CompanyEmail.pattern);
+   *   static override readonly schema = matching(CompanyEmail.pattern);
    * }
    * ```
    */
@@ -57,7 +58,8 @@ export class Email extends EmailBase {
     'u',
   );
 
-  public static override readonly schema: Type<string> = type(this.pattern).describe(
+  public static override readonly schema: PatternSchema = matching(
+    this.pattern,
     'an email address',
   );
 

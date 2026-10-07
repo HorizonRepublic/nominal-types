@@ -1,15 +1,7 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
+import { describeValue, forTarget } from './schema-text.ts';
 import type { StandardProps } from './standard-schema.ts';
-
-const describeValue = (value: unknown): string =>
-  typeof value === 'string' ? JSON.stringify(value) : typeof value;
-
-const schemaUris: Readonly<Record<string, string | undefined>> = {
-  'draft-2020-12': 'https://json-schema.org/draft/2020-12/schema',
-  'draft-07': 'http://json-schema.org/draft-07/schema#',
-  'openapi-3.0': undefined,
-};
 
 /**
  * A Standard Schema that accepts the strings a regular expression matches.
@@ -64,16 +56,11 @@ export class PatternSchema {
   }
 
   private jsonSchema(options: StandardJSONSchemaV1.Options): Record<string, unknown> {
-    if (!Object.hasOwn(schemaUris, options.target)) {
-      throw new TypeError(`JSON Schema target ${options.target} is not supported`);
-    }
-    const uri = schemaUris[options.target];
-    return {
-      ...(uri === undefined ? {} : { $schema: uri }),
+    return forTarget(options, {
       type: 'string',
       pattern: this.pattern.source,
       ...(this.description === undefined ? {} : { description: this.description }),
-    };
+    });
   }
 }
 

@@ -41,7 +41,7 @@ A request passes through three layers of checks. This package covers the last on
 | Structure | which fields exist, which are required, lists and their size | a DTO library, ArkType, Zod and such |
 | Value     | whether a value is really an `Email`, and what it can do     | nominal types                        |
 
-`schemaOf()` with `array()`, `optional()` and `nullable()` is the small bridge between structure and value. It exists for the places that take a single schema, such as a NestJS parameter, and for validators that can't hold a nominal type themselves. Objects, unions and converting strings to numbers are left to the structure layer.
+`schemaOf()` with `array()`, `optional()` and `nullable()` is the small bridge between structure and value. It exists for the places that take a single schema, such as a NestJS parameter, and for validators that can't hold a nominal type themselves. `fromString()` belongs to the same bridge: it reads numbers and booleans from text where the transport carries only text, such as environment variables and query strings. It is a step you choose, never part of a rule. Objects and unions are left to the structure layer.
 
 ## One identity across copies
 

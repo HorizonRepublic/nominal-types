@@ -21,7 +21,7 @@ schemaOf(Uuid).array().parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']);
 // { ok: false, issues: [{ message: 'must be a UUID (was "nope")', path: [1] }] }
 ```
 
-The same schema object also goes to [NestJS](nestjs.md) and into [ArkType](other-validators.md).
+The same schema object also goes to [NestJS](nestjs.md) and into [ArkType](other-validators.md). To read values from text first, add [`fromString()`](reading-strings.md).
 
 ## Validating an array
 

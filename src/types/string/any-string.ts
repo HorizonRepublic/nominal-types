@@ -1,6 +1,7 @@
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { stringRule } from '../../core/string-rule.ts';
+import { asText, defineTextForm } from '../../core/text-form.ts';
 
 const AnyStringBase: NominalType<'AnyString', NominalSchema<string, string>> = Nominal(
   'AnyString',
@@ -20,3 +21,5 @@ const AnyStringBase: NominalType<'AnyString', NominalSchema<string, string>> = N
  * ```
  */
 export class AnyString extends AnyStringBase {}
+
+defineTextForm(AnyString, asText);

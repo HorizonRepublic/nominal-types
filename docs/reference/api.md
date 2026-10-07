@@ -54,15 +54,16 @@ schemaOf(Type): TypeSchema
 
 A nominal type as a plain Standard Schema object. Throws `TypeError` if `Type` is not a nominal type. See [How to validate arrays and optional values](../guides/arrays-and-optional.md).
 
-| Member of `TypeSchema` | Returns                                                          |
-| ---------------------- | ---------------------------------------------------------------- |
-| `parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw. |
-| `array(options?)`      | A schema for a frozen array of values this schema accepts.       |
-| `optional()`           | A schema that also accepts `undefined`.                          |
-| `nullable()`           | A schema that also accepts `null`.                               |
-| `['~standard']`        | The Standard Schema and Standard JSON Schema interface.          |
+| Member of `TypeSchema` | Returns                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                          |
+| `array(options?)`      | A schema for a frozen array of values this schema accepts.                                |
+| `fromString()`         | A schema that reads a string as a number or boolean first. Only right after `schemaOf()`. |
+| `optional()`           | A schema that also accepts `undefined`.                                                   |
+| `nullable()`           | A schema that also accepts `null`.                                                        |
+| `['~standard']`        | The Standard Schema and Standard JSON Schema interface.                                   |
 
-Every method returns a new schema and leaves the old one as it is.
+Every method returns a new schema and leaves the old one as it is. `fromString()` throws `TypeError` after another method, or for a type with no text form, such as one made with `Nominal()`. See [How to read values from strings](../guides/reading-strings.md).
 
 Options of `array()`:
 

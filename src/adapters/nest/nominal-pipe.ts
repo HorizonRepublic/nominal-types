@@ -2,8 +2,16 @@ import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { AnyNominalType } from '../../core/contracts.ts';
+import type { AnyNominalType, Parsed } from '../../core/contracts.ts';
 import { isNominalType } from '../../core/nominal.ts';
+import { textFormOf } from '../../core/text-form.ts';
+import { isArraySchema, isTypeSchema } from '../../core/type-schema.ts';
+import type { TypeSchema } from '../../core/type-schema.ts';
+
+/**
+ * What `NominalPipe` checks a value against: a nominal type, or a schema built by `schemaOf()`.
+ */
+export type NominalPipeTarget = AnyNominalType | TypeSchema<unknown, unknown>;
 
 /**
  * Turns the issues of a rejected value into the exception the request fails with.
@@ -18,6 +26,12 @@ export type NominalExceptionFactory = (
  */
 export interface NominalPipeOptions {
   readonly exceptionFactory?: NominalExceptionFactory;
+  /**
+   * Whether a string from a query string or a route parameter is read as the value of a number or
+   * boolean type, so `?page=2` becomes `2`. On by default; a `schemaOf()` schema reads text only
+   * through its own `fromString()`.
+   */
+  readonly fromString?: boolean;
 }
 
 const describeIssue = (issue: StandardSchemaV1.Issue, metadata: ArgumentMetadata): string => {
@@ -34,14 +48,31 @@ const badRequest: NominalExceptionFactory = (issues, metadata) =>
     message: issues.map((issue) => describeIssue(issue, metadata)),
   });
 
+const isTarget = (value: unknown): value is NominalPipeTarget =>
+  isNominalType(value) || isTypeSchema(value);
+
+const parse = (target: NominalPipeTarget, input: unknown): Parsed<unknown> =>
+  isTypeSchema(target) ? target.parse(input) : target.parse(input);
+
+const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => {
+  const declared: unknown = Reflect.get(metadata, 'schema');
+  if (isTarget(declared)) {
+    return declared;
+  }
+  return isNominalType(metadata.metatype) ? metadata.metatype : undefined;
+};
+
 /**
  * Validates a route argument into a nominal type and hands the handler the instance.
  *
  * @remarks
- * Given a type, it checks that type. Given none, it reads the type the parameter is declared with,
- * which Nest reflects from the handler signature, and passes every other argument through
- * untouched; that makes it safe to bind globally. A value that is already an instance passes
- * without a second check. Works on Nest 11 and 12. Pipes never run on `@Headers()`.
+ * Given a type or a `schemaOf()` schema, it checks that. Given none, it uses the parameter's
+ * `{ schema }` on Nest 12 when that is a nominal type or a `schemaOf()` schema, else the type the
+ * parameter is declared with, and passes every other argument through untouched; that makes it
+ * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` and `email?: Email`
+ * need a schema. In a query string, a lone value given to an array schema is wrapped into an
+ * array, and a string for a number or boolean type is read as its value, so `?page=2` gives `2`.
+ * Works on Nest 11 and 12. Pipes never run on `@Headers()`.
  *
  * @example
  * ```ts
@@ -52,33 +83,51 @@ const badRequest: NominalExceptionFactory = (issues, metadata) =>
  *
  * @Get(':id')
  * findOne(@Param('id', new NominalPipe(Uuid)) id: Uuid) {}
+ *
+ * @Get()
+ * list(@Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {}
  * ```
  */
 export class NominalPipe implements PipeTransform<unknown, unknown> {
-  readonly #type: AnyNominalType | undefined;
+  readonly #target: NominalPipeTarget | undefined;
   readonly #exceptionFactory: NominalExceptionFactory;
+  readonly #fromString: boolean;
 
   public constructor(options?: NominalPipeOptions);
-  public constructor(type: AnyNominalType, options?: NominalPipeOptions);
+  public constructor(target: NominalPipeTarget, options?: NominalPipeOptions);
   public constructor(
-    typeOrOptions?: AnyNominalType | NominalPipeOptions,
+    targetOrOptions?: NominalPipeTarget | NominalPipeOptions,
     options: NominalPipeOptions = {},
   ) {
-    const type = isNominalType(typeOrOptions) ? typeOrOptions : undefined;
-    const settings = isNominalType(typeOrOptions) ? options : (typeOrOptions ?? options);
-    this.#type = type;
+    const target = isTarget(targetOrOptions) ? targetOrOptions : undefined;
+    const settings = isTarget(targetOrOptions) ? options : (targetOrOptions ?? options);
+    this.#target = target;
     this.#exceptionFactory = settings.exceptionFactory ?? badRequest;
+    this.#fromString = settings.fromString ?? true;
   }
 
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {
-    const type = this.#type ?? (isNominalType(metadata.metatype) ? metadata.metatype : undefined);
-    if (type === undefined) {
+    const target = this.#target ?? targetOf(metadata);
+    if (target === undefined) {
       return value;
     }
-    const parsed = type.parse(value);
+    const parsed = parse(target, this.#inputOf(target, value, metadata));
     if (parsed.ok) {
       return parsed.value;
     }
     throw this.#exceptionFactory(parsed.issues, metadata);
+  }
+
+  #inputOf(target: NominalPipeTarget, value: unknown, metadata: ArgumentMetadata): unknown {
+    const fromText = metadata.type === 'query' || metadata.type === 'param';
+    if (fromText && this.#fromString && typeof value === 'string' && isNominalType(target)) {
+      return textFormOf(target)?.(value) ?? value;
+    }
+    const lone =
+      metadata.type === 'query' &&
+      value !== undefined &&
+      !Array.isArray(value) &&
+      isArraySchema(target);
+    return lone ? [value] : value;
   }
 }

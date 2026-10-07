@@ -4,6 +4,7 @@ import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { describeValue, forTarget } from '../../core/schema-text.ts';
 import type { StandardProps } from '../../core/standard-schema.ts';
+import { asText, defineTextForm } from '../../core/text-form.ts';
 
 const longestText = 1000;
 const integerText = /^(?:0|-?[1-9]\d*)$/u;
@@ -68,3 +69,5 @@ export class AnyBigInt extends AnyBigIntBase {
     return this.value.toString();
   }
 }
+
+defineTextForm(AnyBigInt, asText);

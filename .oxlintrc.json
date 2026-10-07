@@ -164,7 +164,7 @@
       }
     },
     {
-      "files": ["tests/core/pattern-schema.spec.ts"],
+      "files": ["tests/core/pattern-schema.spec.ts", "tests/core/internals.spec.ts"],
       "rules": {
         "require-unicode-regexp": "off"
       }

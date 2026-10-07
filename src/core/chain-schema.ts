@@ -32,8 +32,23 @@ export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
     return schema.check(input) ? input : new Rejection(predicateIssues(schema, input));
   }
   if (schema instanceof ChainSchema) {
-    const value = runSchema(schema.parent, input);
-    return value instanceof Rejection ? value : runSchema(schema.constraint, value);
+    const plan = schema.plan;
+    if (plan !== undefined) {
+      for (const step of plan) {
+        if (!step.accepts(input)) {
+          return new Rejection(step.issues(input));
+        }
+      }
+      return input;
+    }
+    let value = input;
+    for (const rule of schema.rules) {
+      value = runSchema(rule, value);
+      if (value instanceof Rejection) {
+        return value;
+      }
+    }
+    return value;
   }
   const result = schema['~standard'].validate(input);
   if (result instanceof Promise) {
@@ -45,38 +60,121 @@ export const runSchema = (schema: NominalSchema, input: unknown): unknown => {
 const withoutUri = (schema: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(schema).filter(([key]) => key !== '$schema'));
 
-const bothSides = (
-  parent: StandardJSONSchemaV1.Converter | undefined,
-  constraint: StandardJSONSchemaV1.Converter | undefined,
+const describeAll = (
+  rules: readonly NominalSchema[],
   side: 'input' | 'output',
   options: StandardJSONSchemaV1.Options,
 ): Record<string, unknown> => {
-  if (parent === undefined || constraint === undefined) {
-    throw new TypeError('the schema cannot describe itself as JSON Schema');
-  }
-  const first = parent[side](options);
-  const second = constraint[side](options);
+  const parts = rules.map((rule) => {
+    const converter = rule['~standard'].jsonSchema;
+    if (converter === undefined) {
+      throw new TypeError('the schema cannot describe itself as JSON Schema');
+    }
+    return converter[side](options);
+  });
+  const uri = parts.find((part) => part['$schema'] !== undefined)?.['$schema'];
   return {
-    ...(first['$schema'] === undefined ? {} : { $schema: first['$schema'] }),
-    allOf: [withoutUri(first), withoutUri(second)],
+    ...(uri === undefined ? {} : { $schema: uri }),
+    allOf: parts.map((part) => withoutUri(part)),
   };
 };
 
+interface Step {
+  readonly accepts: (value: unknown) => boolean;
+  readonly issues: (value: unknown) => readonly StandardSchemaV1.Issue[];
+}
+
+const stepOf = (rule: NominalSchema): Step | undefined => {
+  if (rule instanceof PatternSchema) {
+    return {
+      accepts: (value) => rule.accepts(value),
+      issues: (value) => patternIssues(rule, value),
+    };
+  }
+  if (rule instanceof PredicateSchema) {
+    return {
+      accepts: (value) => rule.check(value),
+      issues: (value) => predicateIssues(rule, value),
+    };
+  }
+  return undefined;
+};
+
+const mergeable = (rule: NominalSchema): rule is PatternSchema =>
+  rule instanceof PatternSchema &&
+  rule.pattern.source.startsWith('^') &&
+  !rule.pattern.source.includes('|');
+
+const mergedStep = (patterns: readonly PatternSchema[]): Step => {
+  const [first] = patterns;
+  if (patterns.length === 1 && first !== undefined) {
+    return {
+      accepts: (value) => first.accepts(value),
+      issues: (value) => patternIssues(first, value),
+    };
+  }
+  const combined = new RegExp(
+    `^${patterns.map((schema) => `(?=${schema.pattern.source})`).join('')}`,
+    first?.pattern.flags,
+  );
+  return {
+    accepts: (value) => typeof value === 'string' && combined.test(value),
+    issues: (value) => {
+      const failing = patterns.find((schema) => !schema.accepts(value)) ?? first;
+      return failing === undefined ? [] : patternIssues(failing, value);
+    },
+  };
+};
+
+const planOf = (rules: readonly NominalSchema[]): readonly Step[] | undefined => {
+  const steps: Step[] = [];
+  let run: PatternSchema[] = [];
+  const flush = (): void => {
+    if (run.length > 0) {
+      steps.push(mergedStep(run));
+      run = [];
+    }
+  };
+  for (const rule of rules) {
+    if (mergeable(rule) && (run[0] === undefined || run[0].pattern.flags === rule.pattern.flags)) {
+      run.push(rule);
+      continue;
+    }
+    flush();
+    if (mergeable(rule)) {
+      run.push(rule);
+      continue;
+    }
+    const step = stepOf(rule);
+    if (step === undefined) {
+      return undefined;
+    }
+    steps.push(step);
+  }
+  flush();
+  return steps;
+};
+
 /**
- * The schema of a subtype: the parent's schema, then a constraint on the value the parent accepted.
+ * The rules of every level of a type, run in order from the root down.
  *
  * @remarks
- * The constraint can only narrow what the parent accepts, never widen it. As JSON Schema the pair
- * becomes an `allOf` of both descriptions.
+ * Internal. Each rule sees the value the previous one produced and runs only if the previous one
+ * accepted, so a level can only narrow what the levels above it accept. When every rule is a
+ * pattern or a type guard, none of which change the value, the chain runs them as a flat list of
+ * checks, and folds neighbouring patterns that start with `^` and hold no `|` into one expression of
+ * lookaheads, which tests the string once; such patterns match only from the start, so testing them
+ * together at the start is the same as testing them apart. As JSON Schema the rules become an
+ * `allOf`.
  */
 export class ChainSchema {
-  public readonly parent: NominalSchema;
-  public readonly constraint: NominalSchema;
+  public readonly rules: readonly NominalSchema[];
+  public readonly plan: readonly Step[] | undefined;
   public readonly '~standard': StandardProps<unknown, unknown>;
 
-  public constructor(parent: NominalSchema, constraint: NominalSchema) {
-    this.parent = parent;
-    this.constraint = constraint;
+  public constructor(rules: readonly NominalSchema[]) {
+    this.rules = rules;
+    this.plan = planOf(rules);
     this['~standard'] = {
       version: 1,
       vendor: '@horizon-republic/nominal-types',
@@ -85,20 +183,8 @@ export class ChainSchema {
         return result instanceof Rejection ? { issues: result.issues } : { value: result };
       },
       jsonSchema: {
-        input: (options) =>
-          bothSides(
-            parent['~standard'].jsonSchema,
-            constraint['~standard'].jsonSchema,
-            'input',
-            options,
-          ),
-        output: (options) =>
-          bothSides(
-            parent['~standard'].jsonSchema,
-            constraint['~standard'].jsonSchema,
-            'output',
-            options,
-          ),
+        input: (options) => describeAll(rules, 'input', options),
+        output: (options) => describeAll(rules, 'output', options),
       },
     };
   }

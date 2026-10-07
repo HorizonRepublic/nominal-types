@@ -1,14 +1,30 @@
 import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 
 import { ChainSchema, runSchema } from './chain-schema.ts';
-import type { AnyNominalType, NominalSchema, NominalType, Parsed } from './contracts.ts';
+import type {
+  AnyNominalType,
+  InputOf,
+  NominalSchema,
+  NominalType,
+  Parsed,
+  ValueOf,
+} from './contracts.ts';
+import {
+  brandKeySlot,
+  descendsFrom,
+  isVariantPair,
+  levelOf,
+  levelSlot,
+  rulesOf,
+  variantSourceSlot,
+} from './hierarchy.ts';
 import { NominalError } from './nominal-error.ts';
 import { PatternSchema } from './pattern-schema.ts';
 import { Rejection } from './rejection.ts';
 import type { StandardProps, StandardSchema } from './standard-schema.ts';
 
 const namespace = '@horizon-republic/nominal-types';
-const brandKeySlot = Symbol('brandKey');
+const effectiveSchemas = new WeakMap<object, NominalSchema>();
 const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 const standardSchemas = new WeakMap<object, StandardSchema<unknown, NominalRoot>>();
 
@@ -22,9 +38,21 @@ const remember = (target: object, input: unknown, value: unknown): void => {
   pendingValue = value;
 };
 
+const effectiveSchemaOf = (target: typeof NominalRoot): NominalSchema => {
+  const cached = effectiveSchemas.get(target);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const rules = rulesOf(NominalRoot, target);
+  const [only] = rules;
+  const schema = rules.length === 1 && only !== undefined ? only : new ChainSchema(rules);
+  effectiveSchemas.set(target, schema);
+  return schema;
+};
+
 const run = (target: typeof NominalRoot, input: unknown): unknown => {
   try {
-    return runSchema(target.schema, input);
+    return runSchema(effectiveSchemaOf(target), input);
   } catch (error) {
     throw new TypeError(
       `${target.typeName}: ${error instanceof Error ? error.message : String(error)}`,
@@ -39,7 +67,7 @@ const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
   schema instanceof RegExp ? new PatternSchema(schema) : schema;
 
 const converterOf = (target: typeof NominalRoot): StandardJSONSchemaV1.Converter => {
-  const converter = target.schema['~standard'].jsonSchema;
+  const converter = effectiveSchemaOf(target)['~standard'].jsonSchema;
   if (converter === undefined) {
     throw new TypeError(`${target.typeName}: the schema cannot describe itself as JSON Schema`);
   }
@@ -99,7 +127,7 @@ class NominalRoot {
       if (input instanceof this) {
         return { ok: true, value: input };
       }
-      if (descendsFromTypeOf(this, input)) {
+      if (descendsFrom(NominalRoot, this, input) || isVariantPair(NominalRoot, this, input)) {
         return this.parse(Reflect.get(input, 'value'));
       }
     }
@@ -128,9 +156,23 @@ class NominalRoot {
   public static subtype(
     this: typeof NominalRoot,
     name: string,
-    constraint: NominalSchema | RegExp,
+    constraint?: NominalSchema | RegExp,
   ): typeof NominalRoot {
-    return derive(this, name, new ChainSchema(this.schema, toSchema(constraint)));
+    return derive(this, name, constraint === undefined ? undefined : toSchema(constraint), this);
+  }
+
+  public static variant(
+    this: typeof NominalRoot,
+    name: string,
+    rule: NominalSchema | RegExp,
+  ): typeof NominalRoot {
+    const level = levelOf(NominalRoot, this);
+    const derived = derive(this, name, toSchema(rule), level.base);
+    for (const key of level.keys) {
+      Object.defineProperty(derived.prototype, key, { value: false });
+    }
+    Object.defineProperty(derived, variantSourceSlot, { value: level.keys });
+    return derived;
   }
 
   public equals(other: unknown): boolean {
@@ -150,30 +192,23 @@ class NominalRoot {
   }
 }
 
-const descendsFromTypeOf = (target: typeof NominalRoot, instance: object): boolean => {
-  let ancestor: unknown = Object.getPrototypeOf(target);
-  while (typeof ancestor === 'function' && ancestor !== NominalRoot) {
-    if (instance instanceof ancestor) {
-      return true;
-    }
-    ancestor = Object.getPrototypeOf(ancestor);
-  }
-  return false;
-};
-
 const derive = (
-  base: typeof NominalRoot,
+  parent: typeof NominalRoot,
   name: string,
-  schema: NominalSchema,
+  rule: NominalSchema | undefined,
+  base?: object,
 ): typeof NominalRoot => {
-  const derived = class extends base {
+  const derived = class extends parent {
     public static override readonly typeName: string = name;
-    public static override readonly schema: NominalSchema = schema;
   };
   const key = Symbol.for(`${namespace}/${name}`);
   Object.defineProperty(derived, 'name', { value: name });
   Object.defineProperty(derived, brandKeySlot, { value: key });
+  Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
+  if (rule !== undefined) {
+    Object.defineProperty(derived, 'schema', { value: rule });
+  }
   return derived;
 };
 
@@ -211,11 +246,11 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
 export function Nominal<const Name extends string>(
   name: Name,
   pattern: RegExp,
-): NominalType<Name, PatternSchema>;
+): NominalType<Name, NominalSchema<string, string>>;
 export function Nominal<const Name extends string, Schema extends NominalSchema>(
   name: Name,
   schema: Schema,
-): NominalType<Name, Schema>;
+): NominalType<Name, NominalSchema<InputOf<Schema>, ValueOf<Schema>>>;
 export function Nominal(
   name: string,
   schema: NominalSchema | RegExp,

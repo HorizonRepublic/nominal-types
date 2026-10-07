@@ -1,11 +1,9 @@
-import type { NominalType } from '../core/contracts.ts';
+import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { matching } from '../core/pattern-schema.ts';
-import type { PatternSchema } from '../core/pattern-schema.ts';
+import { textRule } from './text-rule.ts';
 
-const declaredBelow = /(?!)/u;
-
-const UuidBase: NominalType<'Uuid', PatternSchema> = Nominal('Uuid', matching(declaredBelow));
+const UuidBase: NominalType<'Uuid', NominalSchema<string, string>> = Nominal('Uuid', textRule);
 
 /**
  * A UUID in its canonical 8-4-4-4-12 text form, any version from 1 to 8 plus the nil and max
@@ -28,7 +26,10 @@ export class Uuid extends UuidBase {
   public static readonly pattern: RegExp =
     /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
 
-  public static override readonly schema: PatternSchema = matching(this.pattern, 'a UUID');
+  public static override readonly schema: NominalSchema<string, string> = matching(
+    this.pattern,
+    'a UUID',
+  );
 
   /**
    * The version digit: 1 to 8, 0 for the nil UUID and 15 for the max UUID.

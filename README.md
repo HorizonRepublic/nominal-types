@@ -35,8 +35,7 @@ new Email('not an address'); // throws NominalError
 - [Guides](#guides)
   - [Declaring a type](#declaring-a-type)
   - [Adding behaviour](#adding-behaviour)
-  - [Declaring a subtype](#declaring-a-subtype)
-  - [Changing the rules of a built-in type](#changing-the-rules-of-a-built-in-type)
+  - [Building on a type](#building-on-a-type)
   - [Validating untrusted input](#validating-untrusted-input)
   - [Using a schema from another library](#using-a-schema-from-another-library)
   - [Embedding types in other validators](#embedding-types-in-other-validators)
@@ -173,9 +172,21 @@ export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
 new OrderNumber('ORD-20261007').year; // 2026
 ```
 
-### Declaring a subtype
+### Building on a type
 
-`subtype()` declares a distinct type that has to pass its parent's rules and one more constraint. An instance of the subtype is still an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:
+Building on an existing type comes down to one question: may the result go where the original is expected, and may the original go where the result is?
+
+| You want                                               | Write                             | Rules checked                                                                | Passes where the original is expected | The original passes where it is expected |
+| ------------------------------------------------------ | --------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------- |
+| A new type with stricter rules                         | `Original.subtype('Name', rule?)` | the original's, then `rule`                                                  | yes                                   | no                                       |
+| The same type with more behaviour                      | `class Name extends Original {}`  | the original's, then the class's own `schema` if it has one                  | yes                                   | yes                                      |
+| A new type with different rules and the same behaviour | `Original.variant('Name', rule)`  | the rules above the original's level, then `rule` in place of the original's | no                                    | no                                       |
+
+Neither `subtype()` nor `extends` can loosen what the original accepts, since every inherited rule still runs. Only `variant()` replaces rules, and it pays for that by becoming a separate type.
+
+#### Subtypes
+
+`subtype()` declares a new type that has to pass its parent's rules and, optionally, one more. An instance of the subtype is an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:
 
 ```ts
 export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-9/u) {}
@@ -187,45 +198,105 @@ new OrderNumber('ORD-20261007') instanceof ExpressOrderNumber; // false
 express.year; // 9000: behaviour is inherited
 ```
 
-The constraint runs on the value the parent accepted, and only when the parent accepted it, so a subtype can never let through something its parent refuses. It can be a pattern, `matching()` with a description, or a schema from any library:
+The rule runs on the value the parent accepted, and only when the parent accepted it. It can be a pattern, `matching()` or `satisfying()` with a description, or a schema from any library; a pattern only applies to a type whose value is a string. The built-in types keep their patterns as static fields, which helps when the extra rule builds on them:
 
 ```ts
-export class PriorityOrderNumber extends OrderNumber.subtype(
-  'PriorityOrderNumber',
-  matching(/^ORD-1/u, 'a priority order number'),
+export class CompanyEmail extends Email.subtype(
+  'CompanyEmail',
+  matching(/@example\.com$/u, 'a company address'),
 ) {}
 ```
 
-A pattern only constrains a type whose value is a string; for anything else, pass a schema. In JSON Schema a subtype becomes an `allOf` of its parent and its constraint.
-
-`parse()` also narrows an instance of the parent. It checks the parent's value against the subtype's rules and returns an instance of the subtype, or the issues if the value doesn't fit:
+Without a rule, `subtype()` gives a new type with exactly the parent's rules. That is how two kinds of identifier stay apart while being validated the same way:
 
 ```ts
-const order = new OrderNumber('ORD-90000001');
+export class UserId extends Uuid.subtype('UserId') {}
+export class OrderId extends Uuid.subtype('OrderId') {}
 
-ExpressOrderNumber.parse(order); // { ok: true, value: ExpressOrderNumber }
-ExpressOrderNumber.parse(new OrderNumber('ORD-20261007')); // { ok: false, issues: [...] }
+const load = (id: UserId) => {};
+load(new OrderId('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f')); // compile error
 ```
 
-Only types up the chain are narrowed. An instance of an unrelated type is rejected even when its value would pass.
+In JSON Schema a subtype becomes an `allOf` of every rule from the root down.
 
-### Changing the rules of a built-in type
+#### Extending the class
 
-A subclass that overrides `schema` validates with its own rules and stays the same type as the class it extends. The built-in types keep their patterns as static fields, so you can build on them:
+A plain `extends` gives you the same type with more behaviour:
 
 ```ts
-import { Email, matching } from '@horizon-republic/nominal-types';
+export class TrackedOrderNumber extends OrderNumber {
+  get trackingUrl(): string {
+    return `https://example.com/track/${this.value}`;
+  }
+}
+```
 
-export class CompanyEmail extends Email {
-  static override readonly pattern = /^[a-z.]+@example\.com$/u;
-  static override readonly schema = matching(CompanyEmail.pattern, 'a company address');
+A `static schema` in the subclass adds a rule on top of the parent's, and values built through the subclass have to pass both:
+
+```ts
+export class RecentOrderNumber extends OrderNumber {
+  static override readonly schema = matching(/^ORD-202/u, 'an order from the 2020s');
 }
 
-new CompanyEmail('jane.doe@example.com').mailbox; // 'jane.doe'
-new CompanyEmail('jane@elsewhere.com'); // throws NominalError
+new RecentOrderNumber('ORD-19990101'); // throws NominalError
 ```
 
-The schema is built once, when the class is defined, so a subclass that changes `pattern` overrides `schema` along with it. Use `subtype()` instead when the result should be a type of its own.
+> **The subclass is the same type as its parent, in both directions.** Its own rule applies when a value is built through the subclass, and promises nothing to code that receives one:
+>
+> ```ts
+> const archive = (order: RecentOrderNumber) => {};
+> archive(new OrderNumber('ORD-19990101')); // compiles, and the instance check passes too
+> ```
+>
+> When the stricter rule has to hold wherever the type is expected, declare a subtype.
+
+#### Variants
+
+`variant()` declares a type next to the original: it keeps the original's behaviour and the rules of the levels above it, and replaces the original's own rule. Neither passes for the other:
+
+```ts
+export class LegacyOrderNumber extends OrderNumber.variant(
+  'LegacyOrderNumber',
+  matching(/^ORD-\d{6}$/u, 'a six-digit legacy order number'),
+) {}
+
+const legacy = new LegacyOrderNumber('ORD-199912');
+
+legacy instanceof OrderNumber; // false
+legacy.year; // 1999
+```
+
+> **The inherited methods were written for the original's rules.** `OrderNumber.sequence` reads the digits from position eight, where a six-digit legacy number keeps its month:
+>
+> ```ts
+> legacy.sequence; // 12: the month, read as a sequence number
+> ```
+>
+> Check every inherited method against the variant's values, and override the ones that no longer hold.
+
+A variant of a subtype sits next to that subtype under the same parent, so it still passes where the parent is expected.
+
+#### Moving a value between types
+
+Never cast one nominal type to another. `parse()` moves a value instead: it checks the value against the target's rules and builds an instance of the target, or reports why it can't:
+
+```ts
+ExpressOrderNumber.parse(new OrderNumber('ORD-90000001')); // a parent narrowed to the subtype
+OrderNumber.parse(new LegacyOrderNumber('ORD-199912')); // { ok: false, issues: [...] }
+LegacyOrderNumber.parse(new OrderNumber('ORD-20261007')); // { ok: false, issues: [...] }
+```
+
+It works up and down a chain, between a variant and its original, and between types under a common parent. An instance of an unrelated type is rejected even when its value would pass.
+
+```ts
+send(legacy as unknown as OrderNumber); // compiles, and hands send() a value OrderNumber refuses
+```
+
+#### Ordering the rules
+
+Rules run from the root down and stop at the first that fails, so where a check sits decides how often it runs. Put the cheap checks at the top and the expensive ones below: a pattern on the root, a lookup or a computed check in a subtype. A value the pattern refuses never reaches the expensive rule.
+
+Neighbouring patterns that start with `^` and hold no `|` are folded into one regular expression and tested in one pass; a pattern that needs `|` or matches anywhere in the string is tested on its own.
 
 ### Validating untrusted input
 
@@ -443,16 +514,17 @@ A Standard Schema and Standard JSON Schema for the strings `pattern` matches. No
 
 ### Static members
 
-| Member                           | Description                                                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new Type(input)`                | Validates and builds an instance; throws `NominalError`                                                                                     |
-| `Type.parse(input)`              | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
-| `Type.is(value)`                 | Type guard                                                                                                                                  |
-| `Type.subtype(name, constraint)` | A distinct subtype: the parent's rules, then `constraint`, a pattern or a schema                                                            |
-| `Type.standard()`                | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
-| `Type['~standard']`              | Standard Schema and Standard JSON Schema properties                                                                                         |
-| `Type.schema`                    | The schema the type validates with                                                                                                          |
-| `Type.typeName`                  | The name given to `Nominal()`                                                                                                               |
+| Member                      | Description                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`           | Validates and builds an instance; throws `NominalError`                                                                                     |
+| `Type.parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
+| `Type.is(value)`            | Type guard                                                                                                                                  |
+| `Type.subtype(name, rule?)` | A new type with the parent's rules and, optionally, one more                                                                                |
+| `Type.variant(name, rule)`  | A new type with the parent's behaviour and `rule` in place of the parent's own                                                              |
+| `Type.standard()`           | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
+| `Type['~standard']`         | Standard Schema and Standard JSON Schema properties                                                                                         |
+| `Type.schema`               | The schema the type validates with                                                                                                          |
+| `Type.typeName`             | The name given to `Nominal()`                                                                                                               |
 
 ### Instance members
 
@@ -494,6 +566,7 @@ Whether a value is a nominal type class, including one loaded from another copy 
 | Type                                  | Description                                                    |
 | ------------------------------------- | -------------------------------------------------------------- |
 | `NominalType<Name, Schema>`           | A class returned by `Nominal()`                                |
+| `VariantOf<Source, Name>`             | A class returned by `variant()`                                |
 | `SubtypeOf<Parent, Name>`             | A class returned by `subtype()`                                |
 | `AnyNominalType`                      | Any nominal type class, for code that accepts them generically |
 | `NominalInstance<Name, Value>`        | What every instance offers                                     |

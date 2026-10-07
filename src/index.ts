@@ -8,6 +8,8 @@ export type {
   NominalType,
   Parsed,
   SubtypeOf,
+  VariantInstance,
+  VariantOf,
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';

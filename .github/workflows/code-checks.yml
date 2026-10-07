@@ -30,13 +30,11 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run bench:typia
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
-      - run: node bench/verify.ts
 
       - name: Coverage report
         if: ${{ !cancelled() && github.event_name == 'pull_request' && hashFiles('coverage/coverage-summary.json') != '' }}

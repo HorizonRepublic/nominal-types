@@ -46,14 +46,15 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tests && tsc --noEmit -p bench",
-    "lint": "oxlint",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
+    "lint": "oxlint --ignore-pattern 'bench/**'",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "bench:typia": "ttsc -p bench/typia/tsconfig.json",
-    "bench": "npm run bench:typia && node bench/verify.ts && node bench/run.ts"
+    "bench": "npm run bench:check && node bench/run.ts",
+    "bench:check": "npm run bench:typia && oxlint bench && tsc --noEmit -p bench && node bench/verify.ts"
   },
   "dependencies": {
     "@standard-schema/spec": "^1.1.0"

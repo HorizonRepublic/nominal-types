@@ -1,6 +1,3 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
-
-import { ChainSchema, runSchema } from './chain-schema.ts';
 import type {
   AnyNominalType,
   InputOf,
@@ -9,80 +6,27 @@ import type {
   Parsed,
   ValueOf,
 } from './contracts.ts';
-import { withValidExamples } from './examples.ts';
 import {
   brandKeySlot,
   descendsFrom,
   isVariantPair,
   levelOf,
   levelSlot,
-  rulesOf,
   variantSourceSlot,
 } from './hierarchy.ts';
 import { NominalError } from './nominal-error.ts';
 import { PatternSchema } from './pattern-schema.ts';
+import { remember, nothingPending, takePending } from './pending.ts';
 import { Rejection } from './rejection.ts';
+import { sameValue } from './same-value.ts';
+import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import { withoutImpliedString } from './string-rule.ts';
+import { describeType, runType } from './type-rules.ts';
 
-const namespace = '@horizon-republic/nominal-types';
-const effectiveSchemas = new WeakMap<object, NominalSchema>();
-const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
-
-let pendingTarget: object | undefined;
-let pendingInput: unknown;
-let pendingValue: unknown;
-
-const remember = (target: object, input: unknown, value: unknown): void => {
-  pendingTarget = target;
-  pendingInput = input;
-  pendingValue = value;
-};
-
-const effectiveSchemaOf = (target: typeof NominalRoot): NominalSchema => {
-  const cached = effectiveSchemas.get(target);
-  if (cached !== undefined) {
-    return cached;
-  }
-  const rules = withoutImpliedString(rulesOf(NominalRoot, target));
-  const [only] = rules;
-  const schema = rules.length === 1 && only !== undefined ? only : new ChainSchema(rules);
-  effectiveSchemas.set(target, schema);
-  return schema;
-};
-
-const run = (target: typeof NominalRoot, input: unknown): unknown => {
-  try {
-    return runSchema(effectiveSchemaOf(target), input);
-  } catch (error) {
-    throw new TypeError(
-      `${target.typeName}: ${error instanceof Error ? error.message : String(error)}`,
-      {
-        cause: error,
-      },
-    );
-  }
-};
+const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
 const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
   schema instanceof RegExp ? new PatternSchema(schema) : schema;
-
-const describe = (
-  target: typeof NominalRoot,
-  side: 'input' | 'output',
-  options: StandardJSONSchemaV1.Options,
-): Record<string, unknown> => {
-  const converter = effectiveSchemaOf(target)['~standard'].jsonSchema;
-  if (converter === undefined) {
-    throw new TypeError(`${target.typeName}: the schema cannot describe itself as JSON Schema`);
-  }
-  const { $schema, title, ...body } = converter[side](options);
-  return {
-    ...($schema === undefined ? {} : { $schema }),
-    title: title ?? target.typeName,
-    ...withValidExamples(body, options, (example) => !(run(target, example) instanceof Rejection)),
-  };
-};
 
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
@@ -91,12 +35,12 @@ class NominalRoot {
 
   public constructor(input: unknown) {
     const target = new.target;
-    if (pendingTarget === target && Object.is(pendingInput, input)) {
-      this.value = pendingValue;
-      pendingTarget = undefined;
+    const pending = takePending(target, input);
+    if (pending !== nothingPending) {
+      this.value = pending;
       return;
     }
-    const value = run(target, input);
+    const value = runType(NominalRoot, target, input);
     if (value instanceof Rejection) {
       throw new NominalError(target.typeName, value.issues);
     }
@@ -104,23 +48,15 @@ class NominalRoot {
   }
 
   public static get '~standard'(): StandardProps<unknown, NominalRoot> {
-    const cached = standardProps.get(this);
+    const cached = standardPropsOf.get(this);
     if (cached !== undefined) {
       return cached;
     }
-    const props: StandardProps<unknown, NominalRoot> = {
-      version: 1,
-      vendor: namespace,
-      validate: (value) => {
-        const parsed = this.parse(value);
-        return parsed.ok ? { value: parsed.value } : { issues: parsed.issues };
-      },
-      jsonSchema: {
-        input: (options) => describe(this, 'input', options),
-        output: (options) => describe(this, 'output', options),
-      },
-    };
-    standardProps.set(this, props);
+    const props = standardProps<unknown, NominalRoot>(
+      (input) => constructOwn(this, input),
+      (side, options) => describeType(NominalRoot, this, side, options),
+    );
+    standardPropsOf.set(this, props);
     return props;
   }
 
@@ -178,18 +114,6 @@ class NominalRoot {
   }
 }
 
-const hasEquals = (value: unknown): value is { equals: (other: unknown) => boolean } =>
-  typeof value === 'object' && value !== null && typeof Reflect.get(value, 'equals') === 'function';
-
-const sameValue = (left: unknown, right: unknown): boolean =>
-  Object.is(left, right) ||
-  (Array.isArray(left) &&
-    Array.isArray(right) &&
-    left.length === right.length &&
-    left.every((item: unknown, index) =>
-      hasEquals(item) ? item.equals(right[index]) : sameValue(item, right[index]),
-    ));
-
 const isOwnType = (value: unknown): value is typeof NominalRoot =>
   typeof value === 'function' && Object.prototype.isPrototypeOf.call(NominalRoot, value);
 
@@ -202,7 +126,7 @@ const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot |
       return constructOwn(target, Reflect.get(input, 'value'));
     }
   }
-  const value = run(target, input);
+  const value = runType(NominalRoot, target, input);
   if (value instanceof Rejection) {
     return value;
   }
@@ -235,7 +159,7 @@ const derive = (
   const derived = class extends parent {
     public static override readonly typeName: string = name;
   };
-  const key = Symbol.for(`${namespace}/${name}`);
+  const key = Symbol.for(`${vendor}/${name}`);
   Object.defineProperty(derived, 'name', { value: name });
   Object.defineProperty(derived, brandKeySlot, { value: key });
   Object.defineProperty(derived, levelSlot, { value: base });
@@ -257,7 +181,7 @@ const derive = (
 export const isNominalType = (value: unknown): value is AnyNominalType =>
   typeof value === 'function' &&
   value !== NominalRoot &&
-  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === namespace;
+  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === vendor;
 
 /**
  * Declares a nominal type: a class whose instances exist only for values the schema accepts.

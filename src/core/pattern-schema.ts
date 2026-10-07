@@ -1,7 +1,5 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
-import { describeValue, forTarget } from './schema-text.ts';
-import type { StandardProps } from './standard-schema.ts';
+import { mustBe } from './messages.ts';
+import { NativeSchema } from './native-schema.ts';
 
 /**
  * A Standard Schema that accepts the strings a regular expression matches.
@@ -12,10 +10,10 @@ import type { StandardProps } from './standard-schema.ts';
  * allowed: `g` and `y` make a pattern stateful, and JSON Schema patterns carry no flags, so the
  * generated schema could not keep the meaning of `i`, `m`, `s` or `v`.
  */
-export class PatternSchema {
+export class PatternSchema extends NativeSchema<string> {
   public readonly pattern: RegExp;
   public readonly description: string | undefined;
-  public readonly '~standard': StandardProps<string, string>;
+  public readonly accepts: (value: unknown) => value is string;
   readonly #json: Readonly<Record<string, unknown>>;
 
   public constructor(
@@ -23,6 +21,7 @@ export class PatternSchema {
     description?: string,
     json: Readonly<Record<string, unknown>> = {},
   ) {
+    super();
     if (pattern.flags !== '' && pattern.flags !== 'u') {
       throw new TypeError(
         `${String(pattern)}: only the u flag is supported, since JSON Schema patterns carry no flags`,
@@ -30,44 +29,24 @@ export class PatternSchema {
     }
     this.pattern = pattern;
     this.description = description;
+    this.accepts = (value): value is string => typeof value === 'string' && pattern.test(value);
     this.#json = json;
-    this['~standard'] = {
-      version: 1,
-      vendor: '@horizon-republic/nominal-types',
-      validate: (value) =>
-        this.accepts(value) ? { value } : { issues: [{ message: this.messageFor(value) }] },
-      jsonSchema: {
-        input: (options) => this.jsonSchema(options),
-        output: (options) => this.jsonSchema(options),
-      },
-    };
   }
 
-  /**
-   * Whether the value is a string the pattern matches.
-   */
-  public accepts(value: unknown): value is string {
-    return typeof value === 'string' && this.pattern.test(value);
-  }
-
-  /**
-   * The message a rejected value is reported with.
-   */
   public messageFor(value: unknown): string {
     if (typeof value !== 'string') {
-      return `must be a string (was ${describeValue(value)})`;
+      return mustBe('a string', value);
     }
-    const expected = this.description ?? `matched by ${this.pattern.source}`;
-    return `must be ${expected} (was ${describeValue(value)})`;
+    return mustBe(this.description ?? `matched by ${this.pattern.source}`, value);
   }
 
-  private jsonSchema(options: StandardJSONSchemaV1.Options): Record<string, unknown> {
-    return forTarget(options, {
+  protected jsonBody(): Record<string, unknown> {
+    return {
       type: 'string',
       pattern: this.pattern.source,
       ...this.#json,
       ...(this.description === undefined ? {} : { description: this.description }),
-    });
+    };
   }
 }
 
@@ -89,11 +68,3 @@ export const matching = (
   description?: string,
   json?: Readonly<Record<string, unknown>>,
 ): PatternSchema => new PatternSchema(pattern, description, json);
-
-/**
- * The issues a pattern schema reports for a value it rejects.
- */
-export const patternIssues = (
-  schema: PatternSchema,
-  value: unknown,
-): readonly StandardSchemaV1.Issue[] => [{ message: schema.messageFor(value) }];

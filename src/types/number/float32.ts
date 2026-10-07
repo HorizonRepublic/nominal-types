@@ -1,13 +1,13 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
-
-const isFloat32 = (value: unknown): value is number =>
-  typeof value === 'number' && Math.fround(value) === value;
+import { numberRule } from './number-rule.ts';
 
 const Float32Base: SubtypeOf<typeof FiniteNumber, 'Float32'> = FiniteNumber.subtype(
   'Float32',
-  satisfying(isFloat32, 'a 32-bit float', { type: 'number', format: 'float' }),
+  numberRule('a 32-bit float', (value) => Math.fround(value) === value, {
+    type: 'number',
+    format: 'float',
+  }),
 );
 
 /**

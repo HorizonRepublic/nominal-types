@@ -1,7 +1,5 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
-import { describeValue, forTarget } from './schema-text.ts';
-import type { StandardProps } from './standard-schema.ts';
+import { mustBe } from './messages.ts';
+import { NativeSchema } from './native-schema.ts';
 
 /**
  * A Standard Schema that accepts the values a type guard approves.
@@ -11,10 +9,9 @@ import type { StandardProps } from './standard-schema.ts';
  * type declared from a guard costs about as much as the guard itself. Without a JSON Schema body,
  * the schema refuses to describe itself.
  */
-export class PredicateSchema<Value> {
-  public readonly check: (value: unknown) => value is Value;
+export class PredicateSchema<Value> extends NativeSchema<Value> {
+  public readonly accepts: (value: unknown) => value is Value;
   public readonly description: string;
-  public readonly '~standard': StandardProps<Value, Value>;
   readonly #json: Readonly<Record<string, unknown>> | undefined;
 
   public constructor(
@@ -22,33 +19,21 @@ export class PredicateSchema<Value> {
     description: string,
     json?: Readonly<Record<string, unknown>>,
   ) {
-    this.check = check;
+    super();
+    this.accepts = check;
     this.description = description;
     this.#json = json;
-    this['~standard'] = {
-      version: 1,
-      vendor: '@horizon-republic/nominal-types',
-      validate: (value) =>
-        this.check(value) ? { value } : { issues: [{ message: this.messageFor(value) }] },
-      jsonSchema: {
-        input: (options) => this.jsonSchema(options),
-        output: (options) => this.jsonSchema(options),
-      },
-    };
   }
 
-  /**
-   * The message a rejected value is reported with.
-   */
   public messageFor(value: unknown): string {
-    return `must be ${this.description} (was ${describeValue(value)})`;
+    return mustBe(this.description, value);
   }
 
-  private jsonSchema(options: StandardJSONSchemaV1.Options): Record<string, unknown> {
+  protected jsonBody(): Record<string, unknown> {
     if (this.#json === undefined) {
       throw new TypeError('the schema cannot describe itself as JSON Schema');
     }
-    return forTarget(options, { ...this.#json, description: this.description });
+    return { ...this.#json, description: this.description };
   }
 }
 
@@ -76,11 +61,3 @@ export const satisfying = <Value>(
   description: string,
   json?: Readonly<Record<string, unknown>>,
 ): PredicateSchema<Value> => new PredicateSchema(check, description, json);
-
-/**
- * The issues a predicate schema reports for a value it rejects.
- */
-export const predicateIssues = (
-  schema: PredicateSchema<unknown>,
-  value: unknown,
-): readonly StandardSchemaV1.Issue[] => [{ message: schema.messageFor(value) }];

@@ -1,13 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { Integer } from './integer.ts';
-
-const inRange = (value: unknown): value is number =>
-  typeof value === 'number' && value >= 0 && value <= 255;
+import { integerBetween } from './number-rule.ts';
 
 const Uint8Base: SubtypeOf<typeof Integer, 'Uint8'> = Integer.subtype(
   'Uint8',
-  satisfying(inRange, 'an unsigned 8-bit integer', { type: 'integer', minimum: 0, maximum: 255 }),
+  integerBetween(0, 255, 'an unsigned 8-bit integer'),
 );
 
 /**

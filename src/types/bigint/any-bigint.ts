@@ -1,24 +1,22 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
+import { forTarget } from '../../core/json-target.ts';
+import { mustBe } from '../../core/messages.ts';
 import { Nominal } from '../../core/nominal.ts';
-import { describeValue, forTarget } from '../../core/schema-text.ts';
-import type { StandardProps } from '../../core/standard-schema.ts';
+import { Rejection } from '../../core/rejection.ts';
+import { runnableSchema } from '../../core/runner.ts';
 import { asText, defineTextForm } from '../../core/text-form.ts';
 
 const longestText = 1000;
 const integerText = /^(?:0|-?[1-9]\d*)$/u;
 
-const toBigInt = (value: unknown): StandardSchemaV1.Result<bigint> => {
+const toBigInt = (value: unknown): bigint | Rejection => {
   if (typeof value === 'bigint') {
-    return { value };
+    return value;
   }
   if (typeof value === 'string' && value.length <= longestText && integerText.test(value)) {
-    return { value: BigInt(value) };
+    return BigInt(value);
   }
-  return {
-    issues: [{ message: `must be a bigint or an integer string (was ${describeValue(value)})` }],
-  };
+  return new Rejection([{ message: mustBe('a bigint or an integer string', value) }]);
 };
 
 const json = {
@@ -28,17 +26,10 @@ const json = {
   description: 'an integer string',
 };
 
-const bigintRule: NominalSchema<bigint | string, bigint> = {
-  '~standard': {
-    version: 1,
-    vendor: '@horizon-republic/nominal-types',
-    validate: toBigInt,
-    jsonSchema: {
-      input: (options) => forTarget(options, json),
-      output: (options) => forTarget(options, json),
-    },
-  } satisfies StandardProps<bigint | string, bigint>,
-};
+const bigintRule: NominalSchema<bigint | string, bigint> = runnableSchema<bigint | string, bigint>(
+  toBigInt,
+  (_side, options) => forTarget(options, json),
+);
 
 const AnyBigIntBase: NominalType<'AnyBigInt', NominalSchema<bigint | string, bigint>> = Nominal(
   'AnyBigInt',

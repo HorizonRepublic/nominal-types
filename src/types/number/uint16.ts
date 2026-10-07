@@ -1,17 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { Integer } from './integer.ts';
-
-const inRange = (value: unknown): value is number =>
-  typeof value === 'number' && value >= 0 && value <= 65535;
+import { integerBetween } from './number-rule.ts';
 
 const Uint16Base: SubtypeOf<typeof Integer, 'Uint16'> = Integer.subtype(
   'Uint16',
-  satisfying(inRange, 'an unsigned 16-bit integer', {
-    type: 'integer',
-    minimum: 0,
-    maximum: 65535,
-  }),
+  integerBetween(0, 65535, 'an unsigned 16-bit integer'),
 );
 
 /**

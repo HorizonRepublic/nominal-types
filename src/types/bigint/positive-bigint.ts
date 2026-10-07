@@ -1,12 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { AnyBigInt } from './any-bigint.ts';
-
-const isPositive = (value: unknown): value is bigint => typeof value === 'bigint' && value > 0n;
+import { bigintRule } from './bigint-rule.ts';
 
 const PositiveBigIntBase: SubtypeOf<typeof AnyBigInt, 'PositiveBigInt'> = AnyBigInt.subtype(
   'PositiveBigInt',
-  satisfying(isPositive, 'a positive integer', {
+  bigintRule('a positive integer', (value) => value > 0n, {
     type: 'string',
     pattern: '^[1-9]\\d*$',
     examples: ['9007199254740993'],

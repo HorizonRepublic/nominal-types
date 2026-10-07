@@ -1,22 +1,16 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
-import { boundsOf, countMessage } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
+import { forTarget, withoutUri } from './json-target.ts';
+import { describeValue } from './messages.ts';
 import { construct, isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
-import { describeValue, forTarget, withoutUri } from './schema-text.ts';
+import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
+import type { Shape } from './shapes.ts';
+import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { textFormOf } from './text-form.ts';
 import type { TextForm } from './text-form.ts';
-
-type Run<Output> = (input: unknown) => Output | Rejection;
-
-type Describe = (
-  side: 'input' | 'output',
-  options: StandardJSONSchemaV1.Options,
-) => Record<string, unknown>;
 
 const arraySchemas = new WeakSet<object>();
 
@@ -36,8 +30,7 @@ export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unkno
   value !== null &&
   typeof Reflect.get(value, 'parse') === 'function' &&
   typeof Reflect.get(value, 'array') === 'function' &&
-  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') ===
-    '@horizon-republic/nominal-types';
+  Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === vendor;
 
 /**
  * A nominal type, or a shape around one, as a plain Standard Schema object: what `schemaOf()`
@@ -50,42 +43,25 @@ export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unkno
  */
 export class TypeSchema<Input, Output> {
   public readonly '~standard': StandardProps<Input, Output>;
-  readonly #run: Run<Output>;
-  readonly #describe: Describe;
+  readonly #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
 
   /**
    * Internal: built by `schemaOf()` and the methods below.
    */
-  public constructor(run: Run<Output>, describe: Describe, textForm?: TextForm) {
-    this.#run = run;
-    this.#describe = describe;
-    this.#textForm = textForm;
-    runners.set(this, run);
-    this['~standard'] = {
-      version: 1,
-      vendor: '@horizon-republic/nominal-types',
-      validate: (value) => {
-        const result = run(value);
-        return result instanceof Rejection ? { issues: result.issues } : { value: result };
-      },
-      jsonSchema: {
-        input: (options) => forTarget(options, describe('input', options)),
-        output: (options) => forTarget(options, describe('output', options)),
-      },
-    };
-  }
-
-  #wrap<WrappedInput, WrappedOutput>(
-    array: boolean,
-    run: Run<WrappedOutput>,
-    describe: Describe,
-  ): TypeSchema<WrappedInput, WrappedOutput> {
-    const wrapped = new TypeSchema<WrappedInput, WrappedOutput>(run, describe);
-    if (array) {
-      arraySchemas.add(wrapped);
+  public constructor(
+    shape: Shape<Output>,
+    options: { readonly textForm?: TextForm | undefined; readonly array?: boolean } = {},
+  ) {
+    this.#shape = shape;
+    this.#textForm = options.textForm;
+    this['~standard'] = standardProps(shape.run, (side, target) =>
+      forTarget(target, shape.describe(side, target)),
+    );
+    runners.set(this, shape.run);
+    if (options.array === true) {
+      arraySchemas.add(this);
     }
-    return wrapped;
   }
 
   /**
@@ -98,7 +74,7 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public parse(input: unknown): Parsed<Output> {
-    const result = this.#run(input);
+    const result = this.#shape.run(input);
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
@@ -121,42 +97,7 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public array(options: ArrayOptions = {}): TypeSchema<readonly Input[], readonly Output[]> {
-    const { min, max } = boundsOf(options);
-    const item = this.#run;
-    const describe = this.#describe;
-    return this.#wrap<readonly Input[], readonly Output[]>(
-      true,
-      (input) => {
-        if (!Array.isArray(input)) {
-          return new Rejection([{ message: `must be an array (was ${describeValue(input)})` }]);
-        }
-        const list: readonly unknown[] = input;
-        const count = list.length;
-        if (count < min || count > max) {
-          return new Rejection([{ message: countMessage(options, count) }]);
-        }
-        const values: Output[] = [];
-        let issues: StandardSchemaV1.Issue[] | undefined;
-        for (let index = 0; index < count; index += 1) {
-          const result = item(list[index]);
-          if (result instanceof Rejection) {
-            issues ??= [];
-            for (const issue of result.issues) {
-              issues.push({ message: issue.message, path: [index, ...(issue.path ?? [])] });
-            }
-          } else if (issues === undefined) {
-            values.push(result);
-          }
-        }
-        return issues === undefined ? Object.freeze(values) : new Rejection(issues);
-      },
-      (side, target) => ({
-        type: 'array',
-        items: describe(side, target),
-        ...(min > 0 ? { minItems: min } : {}),
-        ...(max === Number.POSITIVE_INFINITY ? {} : { maxItems: max }),
-      }),
-    );
+    return new TypeSchema(arrayShape(this.#shape, options), { array: true });
   }
 
   /**
@@ -186,11 +127,7 @@ export class TypeSchema<Input, Output> {
         'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable()',
       );
     }
-    const item = this.#run;
-    return new TypeSchema<Input | string, Output>(
-      (input) => item(typeof input === 'string' ? (form(input) ?? input) : input),
-      this.#describe,
-    );
+    return new TypeSchema<Input | string, Output>(textShape(this.#shape, form));
   }
 
   /**
@@ -201,12 +138,7 @@ export class TypeSchema<Input, Output> {
    * expressed by leaving it out of `required` in the object around it.
    */
   public optional(): TypeSchema<Input | undefined, Output | undefined> {
-    const item = this.#run;
-    return this.#wrap<Input | undefined, Output | undefined>(
-      isArraySchema(this),
-      (input) => (input === undefined ? undefined : item(input)),
-      this.#describe,
-    );
+    return new TypeSchema(optionalShape(this.#shape), { array: isArraySchema(this) });
   }
 
   /**
@@ -217,16 +149,7 @@ export class TypeSchema<Input, Output> {
    * `null` type, the value's schema with `nullable: true`.
    */
   public nullable(): TypeSchema<Input | null, Output | null> {
-    const item = this.#run;
-    const describe = this.#describe;
-    return this.#wrap<Input | null, Output | null>(
-      isArraySchema(this),
-      (input) => (input === null ? null : item(input)),
-      (side, options) =>
-        options.target === 'openapi-3.0'
-          ? { ...describe(side, options), nullable: true }
-          : { anyOf: [describe(side, options), { type: 'null' }] },
-    );
+    return new TypeSchema(nullableShape(this.#shape), { array: isArraySchema(this) });
   }
 }
 
@@ -255,11 +178,13 @@ export const schemaOf = <Type extends AnyNominalType>(
     throw new TypeError(`schemaOf() takes a nominal type (was ${describeValue(type)})`);
   }
   return new TypeSchema<InputOf<Type['rule']>, Type['prototype']>(
-    // construct() returns an instance of `type` or a Rejection; the compiler can't follow the
-    // class hierarchy that far, and parse() would allocate a result object per value.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    (input) => construct(type, input) as Type['prototype'] | Rejection,
-    (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
-    textFormOf(type),
+    {
+      // construct() returns an instance of `type` or a Rejection; the compiler can't follow the
+      // class hierarchy that far, and parse() would allocate a result object per value.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      run: (input) => construct(type, input) as Type['prototype'] | Rejection,
+      describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
+    },
+    { textForm: textFormOf(type) },
   );
 };

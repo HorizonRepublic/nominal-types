@@ -2,15 +2,13 @@ import { Transform } from 'class-transformer';
 import { registerDecorator } from 'class-validator';
 import type { ValidationArguments, ValidationOptions } from 'class-validator';
 
+import { issueText } from '../../core/issue-text.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
 import type { NominalTarget } from '../../core/target.ts';
 
 const messageOf = (target: NominalTarget, value: unknown, property: string): string => {
   const parsed = parseTarget(target, value);
-  const issues = parsed.ok ? [] : parsed.issues;
-  return issues
-    .map((issue) => `${[property, ...(issue.path ?? [])].map(String).join('.')}: ${issue.message}`)
-    .join('; ');
+  return (parsed.ok ? [] : parsed.issues).map((issue) => issueText(issue, property)).join('; ');
 };
 
 /**

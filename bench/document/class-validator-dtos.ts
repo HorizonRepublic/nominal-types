@@ -49,10 +49,19 @@ export const nominalWithClassValidator = (() => {
     Type(() => AddressDto),
   );
 
+  class PriceDto {}
+  decorate(PriceDto.prototype, 'amountMinor', NominalField(NonNegativeInteger));
+  decorate(PriceDto.prototype, 'currency', IsIn(['UAH', 'EUR', 'USD']));
+
   class ItemDto {}
   decorate(ItemDto.prototype, 'sku', NominalField(Sku));
   decorate(ItemDto.prototype, 'quantity', NominalField(PositiveInteger));
-  decorate(ItemDto.prototype, 'priceMinor', NominalField(NonNegativeInteger));
+  decorate(
+    ItemDto.prototype,
+    'price',
+    ValidateNested(),
+    Type(() => PriceDto),
+  );
 
   class OrderDto {}
   decorate(OrderDto.prototype, 'id', NominalField(Uuid));
@@ -105,10 +114,19 @@ export const plainClassValidator = (() => {
     Type(() => AddressDto),
   );
 
+  class PriceDto {}
+  decorate(PriceDto.prototype, 'amountMinor', IsInt(), Min(0));
+  decorate(PriceDto.prototype, 'currency', IsIn(['UAH', 'EUR', 'USD']));
+
   class ItemDto {}
   decorate(ItemDto.prototype, 'sku', Matches(/^SKU-\d{4}$/u));
   decorate(ItemDto.prototype, 'quantity', IsInt(), Min(1));
-  decorate(ItemDto.prototype, 'priceMinor', IsInt(), Min(0));
+  decorate(
+    ItemDto.prototype,
+    'price',
+    ValidateNested(),
+    Type(() => PriceDto),
+  );
 
   class OrderDto {}
   decorate(OrderDto.prototype, 'id', IsUUID('all'));

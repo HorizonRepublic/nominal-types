@@ -20,7 +20,7 @@ export interface ExportDocument {
     readonly items: ReadonlyArray<{
       readonly sku: string;
       readonly quantity: number;
-      readonly priceMinor: number;
+      readonly price: { readonly amountMinor: number; readonly currency: 'UAH' | 'EUR' | 'USD' };
     }>;
     readonly tags: readonly string[];
   }>;
@@ -34,10 +34,11 @@ const uuid = (seed: number): string => {
 
 const statuses = ['new', 'paid', 'shipped'] as const;
 const countries = ['UA', 'PL', 'DE', 'FR', 'US'];
+const currencies = ['UAH', 'EUR', 'USD'] as const;
 
 /**
- * Builds the document, about 2.9 MB as JSON: 3000 customers with two addresses each, and 5500
- * orders with five items.
+ * Builds the document, about 3 MB as JSON: 3000 customers with two addresses each, and 4300
+ * orders with five items, each item with a price object.
  */
 export const buildDocument = (): ExportDocument => ({
   exportId: uuid(1),
@@ -51,14 +52,17 @@ export const buildDocument = (): ExportDocument => ({
       line: `${index + 1} Main Street, apartment ${line + 1}`,
     })),
   })),
-  orders: Array.from({ length: 5500 }, (_, index) => ({
+  orders: Array.from({ length: 4300 }, (_, index) => ({
     id: uuid(100_000 + index),
     customerId: uuid(10_000 + (index % 3000)),
     status: statuses[index % statuses.length] ?? 'new',
     items: Array.from({ length: 5 }, (__, item) => ({
       sku: `SKU-${String((index * 5 + item) % 10_000).padStart(4, '0')}`,
       quantity: 1 + ((index + item) % 9),
-      priceMinor: 100 + ((index * 31 + item * 17) % 100_000),
+      price: {
+        amountMinor: 100 + ((index * 31 + item * 17) % 100_000),
+        currency: currencies[(index + item) % currencies.length] ?? 'UAH',
+      },
     })),
     tags: index % 4 === 0 ? ['priority', 'gift'] : ['standard'],
   })),

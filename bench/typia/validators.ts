@@ -25,7 +25,7 @@ interface Customer {
 interface Item {
   sku: string & tags.Pattern<'^SKU-\\d{4}$'>;
   quantity: number & tags.Type<'uint32'> & tags.Minimum<1>;
-  priceMinor: number & tags.Type<'uint32'>;
+  price: { amountMinor: number & tags.Type<'uint32'>; currency: 'UAH' | 'EUR' | 'USD' };
 }
 
 interface Order {

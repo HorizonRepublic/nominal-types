@@ -1,3 +1,4 @@
+import { brandCheck } from './compile.ts';
 import type {
   AnyNominalType,
   InputOf,
@@ -59,14 +60,6 @@ class NominalRoot {
     );
     standardPropsOf.set(this, props);
     return props;
-  }
-
-  public static [Symbol.hasInstance](value: unknown): boolean {
-    const key: unknown = Reflect.get(this, brandKeySlot);
-    if (typeof key !== 'symbol') {
-      return Function.prototype[Symbol.hasInstance].call(this, value);
-    }
-    return typeof value === 'object' && value !== null && Reflect.get(value, key) === true;
   }
 
   public static parse(this: typeof NominalRoot, input: unknown): Parsed<NominalRoot> {
@@ -132,19 +125,17 @@ const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot |
 };
 
 /**
- * Internal: the instance `target` makes of `input`, or a `Rejection`, with nothing else allocated
- * on the way.
- *
- * @remarks
- * Returns an instance of the target as it is, and checks an instance of a related type by its
- * value. A type from another copy of the package goes through its own `parse`.
+ * Internal: a function that makes instances of `target`, chosen once: straight to the constructor
+ * for a type of this copy of the package, through `parse` for one from another copy.
  */
-export const construct = (target: AnyNominalType, input: unknown): unknown => {
+export const constructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
   if (isOwnType(target)) {
-    return constructOwn(target, input);
+    return (input) => constructOwn(target, input);
   }
-  const parsed = target.parse(input);
-  return parsed.ok ? parsed.value : new Rejection(parsed.issues);
+  return (input) => {
+    const parsed = target.parse(input);
+    return parsed.ok ? parsed.value : new Rejection(parsed.issues);
+  };
 };
 
 const fingerprintOf = (rule: NominalSchema | undefined): string => {
@@ -175,6 +166,7 @@ const derive = (
   Object.defineProperty(derived, brandKeySlot, { value: key });
   Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
+  Object.defineProperty(derived, Symbol.hasInstance, { value: brandCheck(key) });
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
   }

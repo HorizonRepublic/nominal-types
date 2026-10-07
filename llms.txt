@@ -231,6 +231,10 @@ config.PORT.value; // 3000 for PORT=3000
 | `IpPrefix` | `nominal.IpPrefix` | CIDR `address/length` with host bits zero (JSON Schema can't check those); `version`, `address`, `length`, `contains(address or prefix)`, `canonical()`; `equals` compares the network | yes |
 | `Ipv4Prefix`, `Ipv6Prefix` | `nominal.…` | under `IpPrefix`, one version | yes |
 | `MacAddress` | `nominal.MacAddress` | EUI-48: six hex pairs, all `:` or all `-`; sensitive; `toBytes()`, `isMulticast`, `isLocallyAdministered`, `canonical()` (lowercase, colons), `pattern`; `equals` compares bytes | yes |
+| `Isbn` | `nominal.Isbn` | ISO 2108 ISBN-10 (mod 11, uppercase `X` last) or ISBN-13 (978, 979-1…9; 979-0 ISMN refused), compact digits only, hyphens and spaces refused (not stripped); `format` (10 or 13), `canonical()` (the ISBN-13), `toIsbn10()` (`undefined` for 979), `pattern`; `equals` holds between an ISBN-10 and its ISBN-13; JSON Schema can't check the digit | yes |
+| `Issn` | `nominal.Issn` | ISO 3297 `NNNN-NNNC`, hyphen required, mod 11 check, uppercase `X`; `pattern`; JSON Schema can't check the digit | yes |
+| `Gtin` | `nominal.Gtin` | GS1 GTIN-8, -12, -13 or -14 (EAN, UPC), digits only, mod 10 check, all zeros accepted; `format` (8, 12, 13, 14), `canonical()` (14 digits, zeros in front), `pattern`; `equals` compares the 14-digit form; JSON Schema can't check the digit | yes |
+| `Isin` | `nominal.Isin` | ISO 6166: 2 letters, 9 letters or digits, Luhn check digit on letters as 10–35, upper case only, prefix not checked against countries (`XS` passes); `prefix`, `nsin`, `pattern`; JSON Schema can't check the digit | yes |
 | `AnyNumber` | `nominal.AnyNumber` | any number | yes |
 | `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
 | `Float32` | `nominal.Float32` | a 32-bit float | yes |

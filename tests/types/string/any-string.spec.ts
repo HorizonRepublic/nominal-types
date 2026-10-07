@@ -7,6 +7,7 @@ import {
   CurrencyCode,
   DomainName,
   Email,
+  Gtin,
   Hostname,
   HttpUrl,
   IpAddress,
@@ -15,6 +16,9 @@ import {
   Ipv4Prefix,
   Ipv6Address,
   Ipv6Prefix,
+  Isbn,
+  Isin,
+  Issn,
   LanguageTag,
   MacAddress,
   matching,
@@ -90,6 +94,10 @@ describe('types under AnyString', () => {
     [IpPrefix, Ipv4Prefix, '192.0.2.0/24'],
     [IpPrefix, Ipv6Prefix, '2001:db8::/32'],
     [AnyString, MacAddress, '00:00:5e:00:53:01'],
+    [AnyString, Isbn, '9780306406157'],
+    [AnyString, Issn, '0378-5955'],
+    [AnyString, Gtin, '4006381333931'],
+    [AnyString, Isin, 'US0378331005'],
   ];
 
   it.each(
@@ -137,6 +145,10 @@ describe('types under AnyString', () => {
     [Ipv4Prefix, 'must be an IP prefix whose host bits are zero (was 42)'],
     [Ipv6Prefix, 'must be an IP prefix whose host bits are zero (was 42)'],
     [MacAddress, 'must be a string (was a number)'],
+    [Isbn, 'must be an ISBN with a valid check digit (was 42)'],
+    [Issn, 'must be an ISSN with a valid check digit (was 42)'],
+    [Gtin, 'must be a GTIN with a valid check digit (was 42)'],
+    [Isin, 'must be an ISIN with a valid check digit (was 42)'],
   ] as const)('reports a non-string to %o once', (type, message) => {
     expect(issuesOf(type.parse(42))).toStrictEqual([{ message }]);
   });

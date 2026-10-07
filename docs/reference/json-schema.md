@@ -158,5 +158,6 @@ JSON Schema can't express every rule. Then the schema accepts more than the type
 | `array({ unique: true })` of `Uuid` | that items differing only in case repeat; `uniqueItems` compares the text exactly |
 | `Hostname`, `DomainName`            | the check that an `xn--` label decodes                                            |
 | `IpPrefix` and its subtypes         | the check that the host bits are zero                                             |
+| `Isbn`, `Issn`, `Gtin`, `Isin`      | the check digit                                                                   |
 
 [← Reference](README.md)

@@ -26,6 +26,10 @@ AnyString                     any string
 │   ├── Ipv4Prefix
 │   └── Ipv6Prefix
 ├── MacAddress
+├── Isbn                      a book, such as 9780306406157
+├── Issn                      a journal, such as 0378-5955
+├── Gtin                      a bar code number, EAN or UPC
+├── Isin                      a security, such as US0378331005
 ├── CountryCode               ISO 3166-1, such as US
 ├── CurrencyCode              ISO 4217, such as EUR
 ├── LanguageTag               BCP 47, such as en-US
@@ -75,7 +79,7 @@ PlainDateTime                 a date and time without an offset
 
 | Page                           | Types                                                |
 | ------------------------------ | ---------------------------------------------------- |
-| [Strings](string.md)           | `AnyString` and the 27 types under it                |
+| [Strings](string.md)           | `AnyString` and the 31 types under it                |
 | [Numbers](number.md)           | `AnyNumber` and the 20 types under it                |
 | [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
 | [Booleans](boolean.md)         | `AnyBoolean`                                         |
@@ -98,6 +102,10 @@ PlainDateTime                 a date and time without an offset
 | a client or server IP address               | `IpAddress`, or `Ipv4Address` and `Ipv6Address` for one version | `isGlobal` tells internal addresses apart       |
 | a network for an allow list                 | `IpPrefix`                                                      | `contains()` checks an address                  |
 | a device's hardware address                 | `MacAddress`                                                    | `:` or `-` between the pairs                    |
+| a book                                      | `Isbn`                                                          | ISBN-10 or ISBN-13, check digit checked         |
+| a journal or a magazine                     | `Issn`                                                          | check digit checked                             |
+| the number under a product's bar code       | `Gtin`                                                          | EAN and UPC numbers, check digit checked        |
+| a share or a bond                           | `Isin`                                                          | check digit checked, upper case only            |
 | a required name or title                    | `NonBlankString`                                                | not `''` and not only spaces                    |
 | a required text that may be spaces          | `NonEmptyString`                                                | not `''`                                        |
 | a country                                   | `CountryCode`                                                   | ISO codes such as `US`, upper case only         |

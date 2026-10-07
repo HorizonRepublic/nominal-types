@@ -144,14 +144,15 @@ Adapters are separate entry points of this one package, such as `@horizon-republ
 
 The repository keeps `package-lock.json`, and `.node-version` names the Node.js release the checks run on. A pull request that adds or changes public behaviour updates this README in the same change.
 
-| Script              | What it does                                                        |
-| ------------------- | ------------------------------------------------------------------- |
-| `npm run build`     | Builds both formats into `dist` and checks how the package resolves |
-| `npm run typecheck` | Runs the TypeScript compiler without emitting                       |
-| `npm run lint`      | Runs oxlint with type-aware rules                                   |
-| `npm run format`    | Formats the tree with oxfmt; `format:check` only reports            |
-| `npm test`          | Runs the vitest suites; `test:coverage` adds a coverage report      |
-| `npm run bench`     | Compares the speed of nominal-types with nine other libraries       |
+| Script                   | What it does                                                        |
+| ------------------------ | ------------------------------------------------------------------- |
+| `npm run build`          | Builds both formats into `dist` and checks how the package resolves |
+| `npm run typecheck`      | Runs the TypeScript compiler without emitting                       |
+| `npm run lint`           | Runs oxlint with type-aware rules                                   |
+| `npm run format`         | Formats the tree with oxfmt; `format:check` only reports            |
+| `npm test`               | Runs the vitest suites; `test:coverage` adds a coverage report      |
+| `npm run bench`          | Compares the speed of nominal-types with nine other libraries       |
+| `npm run bench:document` | Validates a 2.9 MB document with seven setups                       |
 
 ## License
 

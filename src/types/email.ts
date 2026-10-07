@@ -4,17 +4,7 @@ import type { Type } from 'arktype';
 import type { NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 
-const atom = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
-const label = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?';
-const topLevel = '(?:[A-Za-z]{2,63}|xn--[A-Za-z0-9-]{1,59})';
-const address = new RegExp(
-  `^(?=.{6,254}$)(?=[^@]{1,64}@)${atom}(?:\\.${atom})*@(?:${label}\\.)+${topLevel}$`,
-  'u',
-);
-
-const emailSchema: Type<string> = type(address).describe('an email address');
-
-const EmailBase: NominalType<'Email', Type<string>> = Nominal('Email', emailSchema);
+const EmailBase: NominalType<'Email', Type<string>> = Nominal('Email', type('string'));
 
 /**
  * An email address in the dot-atom form RFC 5322 defines, with plus addressing understood.
@@ -32,6 +22,45 @@ const EmailBase: NominalType<'Email', Type<string>> = Nominal('Email', emailSche
  * ```
  */
 export class Email extends EmailBase {
+  /**
+   * The characters one dot-separated piece of the local part may hold, as a pattern fragment.
+   */
+  public static readonly atom: string = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
+
+  /**
+   * One domain label: letters, digits and inner hyphens, up to 63 characters.
+   */
+  public static readonly label: string = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?';
+
+  /**
+   * The top-level domain: letters, or punycode for an internationalised one.
+   */
+  public static readonly topLevel: string = '(?:[A-Za-z]{2,63}|xn--[A-Za-z0-9-]{1,59})';
+
+  /**
+   * The whole address, assembled from the fragments above with the RFC 5321 length limits.
+   *
+   * @remarks
+   * The schema is built from it once, when the class is defined, so a subclass that changes the
+   * pattern overrides `schema` as well.
+   *
+   * @example
+   * ```ts
+   * class CompanyEmail extends Email {
+   *   static override readonly pattern = /^[a-z.]+@example\.com$/u;
+   *   static override readonly schema = type(CompanyEmail.pattern);
+   * }
+   * ```
+   */
+  public static readonly pattern: RegExp = new RegExp(
+    `^(?=.{6,254}$)(?=[^@]{1,64}@)${this.atom}(?:\\.${this.atom})*@(?:${this.label}\\.)+${this.topLevel}$`,
+    'u',
+  );
+
+  public static override readonly schema: Type<string> = type(this.pattern).describe(
+    'an email address',
+  );
+
   /**
    * Everything before the `@`.
    */

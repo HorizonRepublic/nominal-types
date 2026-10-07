@@ -1,3 +1,4 @@
+import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
 import { Email, NominalError } from '../../src/index.ts';
@@ -61,6 +62,22 @@ describe('Email', () => {
 
     it('keeps everything after the first plus as the tag', () => {
       expect(new Email('jane+a+b@example.com').tag).toBe('a+b');
+    });
+  });
+
+  describe('overriding the pattern', () => {
+    class CompanyEmail extends Email {
+      public static override readonly pattern = /^[a-z.]+@example\.com$/u;
+      public static override readonly schema = type(CompanyEmail.pattern);
+    }
+
+    it('validates with the subclass pattern and keeps the behaviour', () => {
+      expect(new CompanyEmail('jane.doe@example.com').mailbox).toBe('jane.doe');
+      expect(() => new CompanyEmail('jane@elsewhere.com')).toThrow(NominalError);
+    });
+
+    it('builds on the fragments of the base pattern', () => {
+      expect(new RegExp(`^${Email.atom}$`, 'u').test("o'brien+x")).toBe(true);
     });
   });
 

@@ -4,11 +4,7 @@ import type { Type } from 'arktype';
 import type { NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 
-const uuidSchema: Type<string> = type(
-  /^(?:[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|f{8}-f{4}-f{4}-f{4}-f{12})$/iu,
-).describe('a UUID');
-
-const UuidBase: NominalType<'Uuid', Type<string>> = Nominal('Uuid', uuidSchema);
+const UuidBase: NominalType<'Uuid', Type<string>> = Nominal('Uuid', type('string'));
 
 /**
  * A UUID in its canonical 8-4-4-4-12 text form, any version from 1 to 8 plus the nil and max
@@ -19,6 +15,18 @@ const UuidBase: NominalType<'Uuid', Type<string>> = Nominal('Uuid', uuidSchema);
  * `canonical()` gives the lowercase form RFC 9562 recommends for output.
  */
 export class Uuid extends UuidBase {
+  /**
+   * Versions 1 to 8 with the RFC 9562 variant, or the nil and max values, in either case.
+   *
+   * @remarks
+   * The schema is built from it once, when the class is defined, so a subclass that changes the
+   * pattern overrides `schema` as well.
+   */
+  public static readonly pattern: RegExp =
+    /^(?:[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|f{8}-f{4}-f{4}-f{4}-f{12})$/iu;
+
+  public static override readonly schema: Type<string> = type(this.pattern).describe('a UUID');
+
   /**
    * The version digit: 1 to 8, 0 for the nil UUID and 15 for the max UUID.
    */

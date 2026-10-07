@@ -13,6 +13,8 @@ const config: UserConfig = {
     'adapters/typeorm/index': 'src/adapters/typeorm/index.ts',
     'adapters/drizzle/index': 'src/adapters/drizzle/index.ts',
     'adapters/sequelize/index': 'src/adapters/sequelize/index.ts',
+    'adapters/graphql/index': 'src/adapters/graphql/index.ts',
+    'adapters/superjson/index': 'src/adapters/superjson/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

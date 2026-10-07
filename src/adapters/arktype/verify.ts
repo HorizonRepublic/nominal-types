@@ -45,7 +45,7 @@ const withPath = (
 };
 
 /**
- * Internal: the constraints `constrain()` attached to an object node.
+ * Internal: the constraints `withConstraints()` attached to an object node.
  *
  * @throws TypeError for an id no constraint was registered under.
  */

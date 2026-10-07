@@ -66,10 +66,10 @@ A morph after `arkOf()` is not supported: `arkSchema()` throws a `TypeError`. Pu
 
 ## Checking one field against another
 
-Attach [constraints](checking-fields-together.md) to an ArkType object with `constrain()`. They run on that object wherever it sits, after the instances are built:
+Attach [constraints](checking-fields-together.md) to an ArkType object with `withConstraints()`. They run on that object wherever it sits, after the instances are built:
 
 ```ts
-import { constrain } from '@horizon-republic/nominal-types/adapters/arktype';
+import { withConstraints } from '@horizon-republic/nominal-types/adapters/arktype';
 import { constraint } from '@horizon-republic/nominal-types';
 
 const withinCapacity = constraint(
@@ -78,7 +78,7 @@ const withinCapacity = constraint(
   { path: 'guests' },
 );
 
-const Stay = constrain(
+const Stay = withConstraints(
   type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
   withinCapacity,
 );

@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it, vi } from 'vitest';
 
-import { arkOf, arkSchema, constrain } from '../../../src/adapters/arktype/index.ts';
+import { arkOf, arkSchema, withConstraints } from '../../../src/adapters/arktype/index.ts';
 import { constraint, PositiveInteger } from '../../../src/index.ts';
 import { issuesOf, valueOf } from '../../support/results.ts';
 
@@ -19,7 +19,7 @@ const atMostTen = constraint(
   },
 );
 
-const Stay = constrain(
+const Stay = withConstraints(
   type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
   withinCapacity,
 );
@@ -75,7 +75,7 @@ describe('constraints in arkSchema', () => {
   it('runs a constraint inside the matching branch of a union', () => {
     const Booking = arkSchema(
       type({
-        room: constrain(
+        room: withConstraints(
           type({
             kind: "'room'",
             guests: arkOf(PositiveInteger),
@@ -93,7 +93,7 @@ describe('constraints in arkSchema', () => {
   });
 
   it('runs every constraint and adds those attached twice', () => {
-    const Twice = arkSchema(constrain(Stay, atMostTen));
+    const Twice = arkSchema(withConstraints(Stay, atMostTen));
 
     expect(issuesOf(Twice.parse({ guests: 12, capacity: 11 }))).toStrictEqual([
       { message: 'must not exceed the capacity', path: ['guests'] },
@@ -124,8 +124,8 @@ describe('constraints in arkSchema', () => {
   });
 
   it('refuses to attach constraints to something other than an object', () => {
-    expect(() => constrain(type('string'), withinCapacity)).toThrow(
-      new TypeError('constrain: constraints attach to an ArkType object type'),
+    expect(() => withConstraints(type('string'), withinCapacity)).toThrow(
+      new TypeError('withConstraints: constraints attach to an ArkType object type'),
     );
   });
 

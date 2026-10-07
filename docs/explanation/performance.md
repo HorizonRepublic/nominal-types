@@ -88,19 +88,23 @@ Any morph makes ArkType leave its fast path, so `arkOf()` adds none: it is a one
 
 | Setup                                                 |  Valid | One error deep inside | Every hundredth email broken |
 | ----------------------------------------------------- | -----: | --------------------: | ---------------------------: |
-| Typia                                                 |  23 ms |                 25 ms |                        22 ms |
-| ArkType                                               |  24 ms |                 38 ms |                        33 ms |
-| Valibot                                               |  28 ms |                 27 ms |                        27 ms |
-| Zod                                                   |  30 ms |                 29 ms |                        26 ms |
-| class-validator                                       | 127 ms |                121 ms |                       123 ms |
-| nominal-types + class-validator                       | 131 ms |                130 ms |                       129 ms |
-| nominal-types + ArkType                               | 138 ms |                149 ms |                       226 ms |
+| Typia                                                 |  21 ms |                 24 ms |                        22 ms |
+| ArkType                                               |  21 ms |                 33 ms |                        31 ms |
+| Valibot                                               |  27 ms |                 26 ms |                        26 ms |
+| Zod                                                   |  27 ms |                 28 ms |                        27 ms |
+| nominal-types + ArkType adapter                       |  29 ms |                 35 ms |                        32 ms |
+| nominal-types + ArkType, `schemaOf()`                 | 128 ms |                124 ms |                       220 ms |
+| class-validator                                       | 129 ms |                122 ms |                       123 ms |
+| nominal-types + class-validator                       | 140 ms |                130 ms |                       131 ms |
 | class-validator, with 1000 other DTOs in the app      |  1.1 s |                 1.1 s |                        1.1 s |
 | nominal-types + class-validator, with 1000 other DTOs |  1.1 s |                 1.1 s |                        1.1 s |
+
+Measured on an Apple M4 Pro, Node.js 24.2, 7 Oct 2026.
 
 How to read it:
 
 - About 20 ms of every request is Fastify reading the body and `JSON.parse` on 3 MB, whatever validates it.
+- With the ArkType adapter, nominal types add about 8 ms to ArkType, and the request is as fast as with Zod or Valibot, while every value comes out as an instance.
 - class-validator gets slower as the app grows. The same document takes 0.13 s in an app with 5 DTOs and 1.1 s in an app with 1000 more. Its work per object grows with the number of decorated classes the whole app has registered, not only with the document. In a large app with a larger payload, that reaches minutes.
 - nominal types inside class-validator add only a few percent to it, in a small app and in a large one.
 

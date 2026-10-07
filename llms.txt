@@ -1,0 +1,84 @@
+# @horizon-republic/nominal-types
+
+> Runtime-validated nominal types for TypeScript. A type is a class with a rule: `new Email(text)` checks the text once, and every `Email` you hold is valid. Types don't mix at compile time, even when they wrap the same kind of value. Every type is a Standard Schema and a Standard JSON Schema, and adapters connect types to ArkType, NestJS, class-validator and Swagger.
+
+## Defaults to follow
+
+- Check a request body, a message or a config with an ArkType schema: `arkSchema(type({ field: arkOf(Type) }))` from `@horizon-republic/nominal-types/adapters/arktype`. It is the fastest way that gives instances, close to ArkType's own speed.
+- Name the schema and its value type the same: `export const X = arkSchema(…); export type X = ValueOf<typeof X>;`.
+- Use `Type.parse(input)` for input that may be wrong; it returns `{ ok: true, value }` or `{ ok: false, issues }`. Use `new Type(value)` only where a bad value is a bug; it throws `NominalError`.
+- Write a rule across fields once with `constraint()` and attach it: `arkSchema(type, rule)`, `arkObject(type, rule)` for a nested object, or `Nominal('Name', rule)` for a value with behaviour.
+- In NestJS, check route parameters and query values with `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, or `{ schema: Type }` on NestJS 12.
+- Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
+- Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `arkOf(Type)`, which is about 13 times faster.
+
+## Core API
+
+```ts
+import { constraint, Email, Nominal, PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+
+export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
+  get year(): number {
+    return Number(this.value.slice(4, 8));
+  }
+}
+
+export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
+
+OrderNumber.parse('42'); // { ok: false, issues: [{ message: 'must be matched by ^ORD-\d{8}$ (was "42")' }] }
+new OrderNumber('ORD-20261007').value; // 'ORD-20261007'
+
+schemaOf(Uuid).array({ min: 1 }).optional(); // a Standard Schema for an optional, non-empty list of Uuid
+
+export const withinCapacity = constraint(
+  { guests: PositiveInteger, capacity: PositiveInteger },
+  ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
+  { path: 'guests' },
+);
+```
+
+- A rule is a `RegExp`, `matching(pattern, description)`, `satisfying(guard, description, jsonSchema)` or any synchronous Standard Schema (ArkType, Zod, Valibot).
+- `subtype(name, rule?)` makes a narrower type that passes where its parent is expected. `variant(name, rule)` makes a sibling that passes for neither.
+- Instances compare by value: `end > start`, `Number(count)`, `` `${email}` ``. Compare an instance with a plain number through `.value`: `count.value <= 10`. An instance holding an object throws a `TypeError` in `>` or `+`; compare its fields through `.value`.
+- An object or array value is frozen; the input is copied first. `equals()` compares by value within one line of types.
+
+## ArkType adapter
+
+```ts
+import { type } from 'arktype';
+import { arkObject, arkOf, arkSchema } from '@horizon-republic/nominal-types/adapters/arktype';
+
+const Stay = arkObject(
+  type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+  withinCapacity,
+);
+
+export const CreateBooking = arkSchema(
+  type({
+    id: arkOf(Uuid),
+    email: type('string.trim').pipe(arkOf(Email)),
+    'backup?': arkOf(Email).or('null'),
+    stays: Stay.array(),
+  }),
+);
+
+CreateBooking.parse(body);
+// { ok: true, value: { id: Uuid, email: Email, stays: [{ guests: PositiveInteger, … }] } }
+// { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['stays', 0, 'guests'] }] }
+```
+
+- `arkOf(Type)` is a field, `arkObject(type, ...constraints)` an object with rules, `arkSchema(type, ...constraints)` the whole schema.
+- Supported around `arkOf()`: optional keys, `.or('null')`, arrays, tuples, records, unions told apart by type or by a literal field, morphs that end in `arkOf()`. `arkSchema()` throws a `TypeError` for a morph after `arkOf()` and for unions it can't tell apart.
+- The result is a Standard Schema with JSON Schema for `draft-2020-12`, `draft-07` and `openapi-3.0`; NestJS 12 takes it as `@Body({ schema: CreateBooking })`.
+
+## Built-in types
+
+Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`. Numbers: `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`. Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64` (written to JSON as decimal strings). Booleans: `AnyBoolean`.
+
+## Docs
+
+- [Choosing how to check input](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/choosing-an-approach.md): every way, the recommended one, and what each costs
+- [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): ArkType, NestJS, class-validator, Swagger, arrays and optional values, rules across fields, JSON Schema
+- [API reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/api.md)
+- [Built-in types](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/types/README.md)
+- [Performance](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/performance.md)

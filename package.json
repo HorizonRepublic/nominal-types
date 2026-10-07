@@ -18,7 +18,8 @@
     "url": "git+https://github.com/HorizonRepublic/nominal-types.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt"
   ],
   "type": "module",
   "sideEffects": false,

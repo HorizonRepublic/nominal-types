@@ -44,149 +44,97 @@ npm install @horizon-republic/nominal-types
 
 It works with both `import` and `require`, on Node.js 22.12 or later.
 
-## Your first type
+## Concepts
 
-A nominal type is a class with a name and a rule. The rule says what a valid value looks like. Here it starts from the built-in `AnyString`:
+### A type is a class with a rule
 
 ```ts
-import { AnyString } from '@horizon-republic/nominal-types';
+import { Nominal } from '@horizon-republic/nominal-types';
 
-export class OrderNumber extends AnyString.subtype('OrderNumber', /^ORD-\d{8}$/u) {}
+export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {}
 ```
 
-The pattern means `ORD-` followed by eight digits. Starting from a [built-in type](docs/reference/types/README.md) is optional: `Nominal('OrderNumber', /^ORD-\d{8}$/u)` works too. Base types just help keep related types together.
+The rule here is a regular expression: `ORD-` and eight digits. It can also be a type guard or a schema from another library.
 
-`new` checks the value. A valid value becomes an instance:
+### Every instance is valid
+
+`new` checks the value and throws if it is wrong. `parse()` returns a result instead, for input that may be wrong:
 
 ```ts
-const order = new OrderNumber('ORD-20261007');
+new OrderNumber('ORD-20261007').value; // 'ORD-20261007'
+new OrderNumber('42'); // throws NominalError: OrderNumber: must be matched by ^ORD-\d{8}$ (was "42")
 
-order.value; // 'ORD-20261007'
+OrderNumber.parse('42'); // { ok: false, issues: [{ message: 'must be matched by …' }] }
 ```
 
-An invalid value throws a `NominalError` that says what is wrong:
+### Types don't mix
+
+The compiler keeps every type apart, even when two types wrap the same kind of value:
 
 ```ts
-new OrderNumber('42');
-// NominalError: OrderNumber: must be matched by ^ORD-\d{8}$ (was "42")
-```
+const ship = (order: OrderNumber): void => {};
 
-A function that takes an `OrderNumber` can trust it. The compiler won't let a plain string in:
-
-```ts
-const ship = (order: OrderNumber): string => `shipping ${order.value}`;
-
-ship(order); // fine
+ship(new OrderNumber('ORD-20261007')); // fine
 ship('ORD-20261007'); // compile error
 ```
 
-The tutorial [Your first type](docs/tutorials/your-first-type.md) continues from here: methods on the type, checking user input and a narrower type.
+### Methods live on the type
+
+Add getters and methods to the class. They always work on a valid value:
+
+```ts
+export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
+  get year(): number {
+    return Number(this.value.slice(4, 8));
+  }
+}
+```
+
+### Types build on each other
+
+A subtype adds a rule and fits wherever its parent is expected:
+
+```ts
+export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
+```
+
+## Built-in types
+
+Each group starts from a base type. Using them is optional.
+
+| Group        | Types                                                                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Strings      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`                                                                                         |
+| Numbers      | `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, positive / negative / non-negative / non-positive, `Int8`–`Int32`, `Uint8`–`Uint32` |
+| Big integers | `AnyBigInt`, positive / negative / non-negative / non-positive, `Int64`, `Uint64`                                                      |
+| Booleans     | `AnyBoolean`                                                                                                                           |
+
+See [Built-in types](docs/reference/types/README.md) for each one.
+
+## Supported libraries
+
+Validation libraries:
+
+| Library                                                             | As a type's rule         | A nominal type inside its schemas |
+| ------------------------------------------------------------------- | ------------------------ | --------------------------------- |
+| [ArkType](https://arktype.io)                                       | yes, with JSON Schema    | yes, with `Type.standardSchema()` |
+| [Zod](https://zod.dev) 4                                            | yes, with JSON Schema    | no                                |
+| [Valibot](https://valibot.dev)                                      | yes, without JSON Schema | no                                |
+| any other synchronous [Standard Schema](https://standardschema.dev) | yes                      | depends on the library            |
+
+Frameworks:
+
+| Framework     | How                                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| NestJS 11, 12 | `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, see the [guide](docs/guides/nestjs.md) |
+| NestJS 12     | Nest's own `StandardSchemaValidationPipe` with `{ schema: Type }`                                          |
 
 ## Documentation
 
-### Tutorials
-
-Start here if you are new: a step-by-step lesson.
-
-- [Your first type](docs/tutorials/your-first-type.md)
-  - [Set up a project](docs/tutorials/your-first-type.md#set-up-a-project)
-  - [Declare the type](docs/tutorials/your-first-type.md#declare-the-type)
-  - [Build a value](docs/tutorials/your-first-type.md#build-a-value)
-  - [Try an invalid value](docs/tutorials/your-first-type.md#try-an-invalid-value)
-  - [Let the compiler keep it apart](docs/tutorials/your-first-type.md#let-the-compiler-keep-it-apart)
-  - [Give it behaviour](docs/tutorials/your-first-type.md#give-it-behaviour)
-  - [Check input that may be wrong](docs/tutorials/your-first-type.md#check-input-that-may-be-wrong)
-  - [Add a narrower type](docs/tutorials/your-first-type.md#add-a-narrower-type)
-  - [What we built](docs/tutorials/your-first-type.md#what-we-built)
-
-### How-to guides
-
-Short recipes for a task you already have.
-
-- [How to declare a type](docs/guides/declaring-types.md)
-  - [Picking a way](docs/guides/declaring-types.md#picking-a-way)
-  - [Declaring with a pattern](docs/guides/declaring-types.md#declaring-with-a-pattern)
-  - [Declaring with a type guard](docs/guides/declaring-types.md#declaring-with-a-type-guard)
-  - [Declaring with a schema from another library](docs/guides/declaring-types.md#declaring-with-a-schema-from-another-library)
-  - [Giving the type behaviour](docs/guides/declaring-types.md#giving-the-type-behaviour)
-- [How to build on a type](docs/guides/building-on-types.md)
-  - [Choosing how](docs/guides/building-on-types.md#choosing-how)
-  - [Starting from a base type](docs/guides/building-on-types.md#starting-from-a-base-type)
-  - [Adding a stricter rule](docs/guides/building-on-types.md#adding-a-stricter-rule)
-  - [Giving a type a second name](docs/guides/building-on-types.md#giving-a-type-a-second-name)
-  - [Adding behaviour without a new type](docs/guides/building-on-types.md#adding-behaviour-without-a-new-type)
-  - [Accepting different values with the same behaviour](docs/guides/building-on-types.md#accepting-different-values-with-the-same-behaviour)
-  - [Moving a value between types](docs/guides/building-on-types.md#moving-a-value-between-types)
-  - [Ordering the rules](docs/guides/building-on-types.md#ordering-the-rules)
-- [How to validate untrusted input](docs/guides/validating-input.md)
-  - [Using parse()](docs/guides/validating-input.md#using-parse)
-  - [Using is()](docs/guides/validating-input.md#using-is)
-- [How to use a type inside another validator](docs/guides/other-validators.md)
-  - [Libraries that read Standard Schema](docs/guides/other-validators.md#libraries-that-read-standard-schema)
-  - [ArkType and other schema builders](docs/guides/other-validators.md#arktype-and-other-schema-builders)
-- [How to generate JSON Schema](docs/guides/json-schema.md)
-  - [Getting a type's schema](docs/guides/json-schema.md#getting-a-types-schema)
-  - [Making your own type describable](docs/guides/json-schema.md#making-your-own-type-describable)
-  - [Keeping the schema and the type in step](docs/guides/json-schema.md#keeping-the-schema-and-the-type-in-step)
-- [How to validate NestJS route parameters](docs/guides/nestjs.md)
-  - [Validating every parameter](docs/guides/nestjs.md#validating-every-parameter)
-  - [Validating one parameter](docs/guides/nestjs.md#validating-one-parameter)
-  - [Shaping the error response](docs/guides/nestjs.md#shaping-the-error-response)
-  - [Validating headers](docs/guides/nestjs.md#validating-headers)
-
-### Reference
-
-Exact facts about every export and built-in type.
-
-- [API](docs/reference/api.md)
-  - [Functions](docs/reference/api.md#functions)
-  - [Static members](docs/reference/api.md#static-members)
-  - [Instance members](docs/reference/api.md#instance-members)
-  - [NominalError](docs/reference/api.md#nominalerror)
-  - [Messages](docs/reference/api.md#messages)
-  - [JSON Schema](docs/reference/api.md#json-schema)
-  - [Types](docs/reference/api.md#types)
-- [Glossary](docs/reference/glossary.md)
-- [Built-in types](docs/reference/types/README.md)
-  - [Strings](docs/reference/types/string.md)
-    - [AnyString](docs/reference/types/string.md#anystring)
-    - [Email](docs/reference/types/string.md#email)
-    - [Uuid](docs/reference/types/string.md#uuid)
-    - [Url](docs/reference/types/string.md#url)
-    - [HttpUrl](docs/reference/types/string.md#httpurl)
-  - [Numbers](docs/reference/types/number.md)
-    - [AnyNumber](docs/reference/types/number.md#anynumber)
-    - [FiniteNumber](docs/reference/types/number.md#finitenumber)
-    - [Sign types](docs/reference/types/number.md#sign-types)
-    - [Integer](docs/reference/types/number.md#integer)
-    - [Sized integers](docs/reference/types/number.md#sized-integers)
-    - [Float32](docs/reference/types/number.md#float32)
-  - [Big integers](docs/reference/types/bigint.md)
-    - [AnyBigInt](docs/reference/types/bigint.md#anybigint)
-    - [Sign types](docs/reference/types/bigint.md#sign-types)
-    - [Int64 and Uint64](docs/reference/types/bigint.md#int64-and-uint64)
-  - [Booleans](docs/reference/types/boolean.md)
-    - [AnyBoolean](docs/reference/types/boolean.md#anyboolean)
-
-### Explanation
-
-Why the package works the way it does.
-
-- [How it works](docs/explanation/how-it-works.md)
-  - [Classes rather than brands](docs/explanation/how-it-works.md#classes-rather-than-brands)
-  - [Behaviour on the type](docs/explanation/how-it-works.md#behaviour-on-the-type)
-  - [Validated once](docs/explanation/how-it-works.md#validated-once)
-  - [Nominal at compile time](docs/explanation/how-it-works.md#nominal-at-compile-time)
-  - [One identity across copies](docs/explanation/how-it-works.md#one-identity-across-copies)
-- [Type hierarchy](docs/explanation/type-hierarchy.md)
-  - [Why base types](docs/explanation/type-hierarchy.md#why-base-types)
-  - [Why three ways to build on a type](docs/explanation/type-hierarchy.md#why-three-ways-to-build-on-a-type)
-  - [Why limits are new types](docs/explanation/type-hierarchy.md#why-limits-are-new-types)
-  - [Why zero splits the sign types](docs/explanation/type-hierarchy.md#why-zero-splits-the-sign-types)
-  - [Why big integers travel as strings](docs/explanation/type-hierarchy.md#why-big-integers-travel-as-strings)
-- [Performance](docs/explanation/performance.md)
-  - [Measurements](docs/explanation/performance.md#measurements)
-  - [How a chain runs](docs/explanation/performance.md#how-a-chain-runs)
+- [Tutorial](docs/tutorials/your-first-type.md): build your first type step by step.
+- [Guides](docs/guides/README.md): recipes for common tasks.
+- [Reference](docs/reference/README.md): every export and built-in type.
+- [Explanation](docs/explanation/README.md): why it works the way it does.
 
 ## Contributing
 

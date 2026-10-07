@@ -50,4 +50,4 @@ AnyBoolean                    true or false
 - Values are never converted. The one exception is `AnyBigInt` and the types under it, which also accept a decimal string.
 - The JSON Schema of a type with several rules is an `allOf`, one entry per rule. The string check of `AnyString` is left out when the next rule checks for a string itself.
 
-[← Documentation](../../README.md)
+[← Reference](../README.md)

@@ -35,4 +35,4 @@ When all the rules are regular expressions or type guards, they run as a simple 
 
 A rule from another library ends the simple list. From then on, each rule runs through its own `validate`.
 
-[← Documentation](../README.md)
+[← Explanation](README.md)

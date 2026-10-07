@@ -75,4 +75,4 @@ new NominalPipe(Email, {
 
 Nest doesn't run pipes on `@Headers()`. Check header values inside the handler with `parse()`, as shown in [How to validate untrusted input](validating-input.md).
 
-[← Documentation](../README.md)
+[← Guides](README.md)

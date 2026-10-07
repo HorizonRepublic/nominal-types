@@ -60,4 +60,4 @@ JSON has no bigint. `JSON.stringify` throws on one, and most JSON parsers lose d
 
 `AnyBigInt` reads such a string and writes it back the same way.
 
-[← Documentation](../README.md)
+[← Explanation](README.md)

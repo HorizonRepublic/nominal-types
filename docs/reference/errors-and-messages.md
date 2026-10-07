@@ -111,7 +111,7 @@ These facts hold for a sensitive type:
 - Every check hides the value: `new`, `parse()`, `validate`, a field of `objectOf()`, an array item and the adapters.
 - For a type that holds an object, the values of all its fields are hidden.
 - Its subtypes and variants are sensitive too. `{ sensitive: false }` turns it off for one of them.
-- The built-in `Email` is sensitive.
+- The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
 
 Example:
 

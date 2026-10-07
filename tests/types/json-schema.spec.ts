@@ -4,10 +4,15 @@ import * as library from '../../src/index.ts';
 import {
   Base64,
   Base64Url,
+  DomainName,
   Email,
   HexColor,
+  Hostname,
+  Ipv4Address,
+  Ipv6Address,
   isNominalType,
   LanguageTag,
+  MacAddress,
   MediaType,
   NonBlankString,
   ObjectId,
@@ -101,6 +106,38 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
     ['v1.0.0', '1.0.0-01', `${Number.MAX_SAFE_INTEGER + 1}.0.0`, `1.0.0+${'b'.repeat(251)}`],
   ],
   [NonBlankString, ['a', ' a '], ['  ', '\t\n']],
+  [
+    Hostname,
+    ['localhost', 'api.example.com', '123.com', 'xn--bcher-kva.de'],
+    [
+      'example.com.',
+      'a..b',
+      'example.123',
+      'ab--c.com',
+      '_dmarc.example.com',
+      `${'a'.repeat(64)}.com`,
+    ],
+  ],
+  [
+    DomainName,
+    ['example.com', 'a.xn--p1ai', 'EXAMPLE.COM'],
+    ['localhost', 'example.c', 'example.c0m'],
+  ],
+  [
+    Ipv4Address,
+    ['0.0.0.0', '192.0.2.1', '255.255.255.255'],
+    ['010.0.0.1', '256.0.0.0', '1.2.3', '127.1', '::1'],
+  ],
+  [
+    Ipv6Address,
+    ['::', '2001:db8::1', '1:2:3:4:5:6:7::', '::ffff:192.0.2.1'],
+    ['fe80::1%eth0', '[::1]', '1::2::3', '1:2:3:4:5:6:7:8:9', '::ffff:01.2.3.4'],
+  ],
+  [
+    MacAddress,
+    ['00:00:5e:00:53:01', '00-00-5E-00-53-01'],
+    ['00:00-5e:00:53:01', '00005e005301', '0000.5e00.5301'],
+  ],
 ];
 
 describe('JSON Schema patterns', () => {

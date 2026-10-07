@@ -1,3 +1,5 @@
+import type { AnyNominalType } from '../../src/index.ts';
+
 const sameJson = (left: unknown, right: unknown): boolean => {
   if (Array.isArray(left) || Array.isArray(right)) {
     return (
@@ -149,4 +151,13 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
     typeof value === 'string' &&
     Array.from(value).length > maxLength
   );
+};
+
+/**
+ * The texts on which a type and the JSON Schema it describes itself with give different answers.
+ */
+export const disagreementsOf = (type: AnyNominalType, texts: readonly string[]): string[] => {
+  const schema = type['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+
+  return texts.filter((text) => satisfiesSchema(schema, text) !== type.parse(text).ok);
 };

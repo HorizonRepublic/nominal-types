@@ -156,5 +156,7 @@ JSON Schema can't express every rule. Then the schema accepts more than the type
 | a rule from `satisfying()`          | whatever the guard checks beyond the `json` you give                              |
 | a constraint                        | the `check` function                                                              |
 | `array({ unique: true })` of `Uuid` | that items differing only in case repeat; `uniqueItems` compares the text exactly |
+| `Hostname`, `DomainName`            | the check that an `xn--` label decodes                                            |
+| `IpPrefix` and its subtypes         | the check that the host bits are zero                                             |
 
 [← Reference](README.md)

@@ -1,9 +1,10 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { AnyString } from './any-string.ts';
+import { labelFragment } from './dns-name.ts';
 
 const atom = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
-const label = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?';
+const label = labelFragment;
 const topLevel = '(?:[A-Za-z]{2,63}|xn--[A-Za-z0-9-]{1,59})';
 const pattern = new RegExp(
   `^(?=.{6,254}$)(?=[^@]{1,64}@)${atom}(?:\\.${atom})*@(?:${label}\\.)+${topLevel}$`,

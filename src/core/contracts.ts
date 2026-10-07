@@ -49,14 +49,44 @@ export type Parsed<Instance> =
   | { readonly ok: false; readonly issues: readonly StandardSchemaV1.Issue[] };
 
 /**
+ * A value as a nominal type holds it: plain objects and arrays read-only all the way down, nominal
+ * instances, primitives and functions as they are.
+ *
+ * @remarks
+ * The runtime matches it: an object value is frozen when the instance is built.
+ */
+export type Immutable<Value> = unknown extends Value
+  ? Value
+  : Value extends
+        | NominalInstance<string, unknown>
+        | string
+        | number
+        | bigint
+        | boolean
+        | symbol
+        | null
+        | undefined
+        | ((...parameters: never[]) => unknown)
+    ? Value
+    : Value extends ReadonlyArray<infer Item>
+      ? ReadonlyArray<Immutable<Item>>
+      : { readonly [Key in keyof Value]: Immutable<Value[Key]> };
+
+/**
  * What every nominal value offers, whatever type it belongs to.
+ *
+ * @remarks
+ * An instance converts to its value where JavaScript asks for a primitive, so `end > start`, `n +
+ * 1` and template strings work on the value. An instance holding an object converts to its JSON
+ * text in a string and throws a `TypeError` anywhere else, since no single primitive stands for it.
  */
 export interface NominalInstance<Name extends string, Value> {
   readonly [brand]: Brand<Name>;
-  readonly value: Value;
+  readonly value: Immutable<Value>;
   equals(other: unknown): boolean;
   toJSON(): unknown;
   toString(): string;
+  [Symbol.toPrimitive](hint: string): Value extends object ? string : Value;
 }
 
 /**

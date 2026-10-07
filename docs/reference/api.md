@@ -126,12 +126,24 @@ What `parse()` does with different inputs:
 
 ## Instance members
 
-| Member          | Description                                                                                                                                                       |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`         | The checked value.                                                                                                                                                |
-| `equals(other)` | `true` for the same value in one line of types: the same type, a type under it or the type it is under. Siblings and variants are not equal. `Uuid` ignores case. |
-| `toJSON()`      | The value. `AnyBigInt` and its subtypes return a decimal string.                                                                                                  |
-| `toString()`    | `String(value)`                                                                                                                                                   |
+| Member          | Description                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | The checked value. An object or array value is frozen all the way down, and typed `Immutable<Value>`.                                                                                                         |
+| `equals(other)` | `true` for the same value in one line of types: the same type, a type under it or the type it is under. Siblings and variants are not equal. Objects and arrays are compared key by key. `Uuid` ignores case. |
+| `toJSON()`      | The value. `AnyBigInt` and its subtypes return a decimal string.                                                                                                                                              |
+| `toString()`    | `String(value)`, or JSON text for an object value.                                                                                                                                                            |
+
+An instance stands for its value where JavaScript needs a plain value:
+
+| Expression       | Value is a number, bigint, string or boolean | Value is an object       |
+| ---------------- | -------------------------------------------- | ------------------------ |
+| `end > start`    | compares the values                          | throws a `TypeError`     |
+| `Number(count)`  | the value as a number                        | throws a `TypeError`     |
+| `` `${email}` `` | the value as text                            | JSON text, `{"start":1}` |
+
+Compare the fields of an object value through `value`: `range.value.end > range.value.start`.
+
+When an object value is frozen, the input stays yours: the type copies it first. An input that is already frozen all the way down is kept without a copy.
 
 ## NominalError
 
@@ -193,6 +205,7 @@ Notes:
 | `PatternSchema` / `PredicateSchema`   | The classes `matching()` and `satisfying()` return; both have `accepts(value)` and `messageFor(value)` |
 | `Parsed<Instance>`                    | The result of `parse()`                                                                                |
 | `Brand<Name>`                         | The compile-time marker that keeps types apart                                                         |
+| `Immutable<Value>`                    | `Value` with its objects and arrays read-only all the way down                                         |
 | `InputOf<Schema>` / `ValueOf<Schema>` | The input and the value type of a schema                                                               |
 | `TypeSchema` / `ArrayOptions`         | What `schemaOf()` returns, and the options of `array()`                                                |
 | `StandardProps` / `StandardSchema`    | The shape of `~standard` and of a plain schema object                                                  |

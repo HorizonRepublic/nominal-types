@@ -1,17 +1,23 @@
 # API
 
-Everything `@horizon-republic/nominal-types` exports, apart from the [built-in types](types/README.md). The NestJS adapter is described in [NestJS](../guides/nestjs.md).
+Everything the package exports, except the [built-in types](types/README.md). For the NestJS pipe, see [How to validate NestJS route parameters](../guides/nestjs.md). Terms are explained in the [glossary](glossary.md).
 
 ## Functions
 
 ### Nominal()
 
 ```ts
-Nominal(name, pattern): NominalType
-Nominal(name, schema): NominalType
+Nominal(name, rule): NominalType
 ```
 
-Returns a class to extend. `name` has to be unique among the nominal types an application loads. `pattern` is a `RegExp` and stands for `matching(pattern)`. `schema` is any Standard Schema whose `validate` answers synchronously; a schema that answers with a Promise makes construction throw `TypeError: <name>: asynchronous schemas are not supported`.
+Returns a class to extend.
+
+| Parameter | Description                                                                                   |
+| --------- | --------------------------------------------------------------------------------------------- |
+| `name`    | The type's name. Must be unique in the application.                                           |
+| `rule`    | A `RegExp`, the result of `matching()` or `satisfying()`, or any synchronous Standard Schema. |
+
+A schema that answers asynchronously throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 
 ### matching()
 
@@ -19,7 +25,12 @@ Returns a class to extend. `name` has to be unique among the nominal types an ap
 matching(pattern, description?): PatternSchema
 ```
 
-A Standard Schema and Standard JSON Schema for the strings `pattern` matches. `pattern` may carry the `u` flag and no other; any other flag throws `TypeError` when the schema is built. `description` completes "must be …" in messages and goes into the JSON Schema.
+A rule for strings that match `pattern`.
+
+| Parameter     | Description                                                                  |
+| ------------- | ---------------------------------------------------------------------------- |
+| `pattern`     | A `RegExp` with the `u` flag or no flags. Any other flag throws `TypeError`. |
+| `description` | Optional. Ends the message `must be …`, and goes into the JSON Schema.       |
 
 ### satisfying()
 
@@ -27,7 +38,13 @@ A Standard Schema and Standard JSON Schema for the strings `pattern` matches. `p
 satisfying(check, description, jsonSchema?): PredicateSchema
 ```
 
-A Standard Schema for the values the type guard `check` approves. `description` completes "must be …" in messages. `jsonSchema` is the JSON Schema the rule is described with, with `description` added; without it, asking for JSON Schema throws `TypeError`.
+A rule for values that a type guard accepts.
+
+| Parameter     | Description                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| `check`       | A type guard, `(value: unknown) => value is T`.                                               |
+| `description` | Ends the message `must be …`.                                                                 |
+| `jsonSchema`  | Optional. The JSON Schema of the rule. Without it, asking for JSON Schema throws `TypeError`. |
 
 ### isNominalType()
 
@@ -35,46 +52,53 @@ A Standard Schema for the values the type guard `check` approves. `description` 
 isNominalType(value): value is AnyNominalType
 ```
 
-`true` for a nominal type class, including one loaded from another copy of this package, and `false` for anything else.
+`true` if `value` is a nominal type class, also one from another copy of the package.
 
 ## Static members
 
-| Member                      | Description                                                                                                                                                                                  |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new Type(input)`           | Validates and builds an instance; throws `NominalError`                                                                                                                                      |
-| `Type.parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`; never throws for a rejected value. Returns an instance of the type as is, and checks an instance of a related type by its value, see below |
-| `Type.is(value)`            | Type guard: whether `value` is an instance of the type                                                                                                                                       |
-| `Type.subtype(name, rule?)` | A new type: the parent's rules, then `rule`; its instances pass where the parent is expected                                                                                                 |
-| `Type.variant(name, rule)`  | A new type: the parent's behaviour, the rules above the parent's level, then `rule`                                                                                                          |
-| `Type.standard()`           | The Standard Schema as a plain object                                                                                                                                                        |
-| `Type['~standard']`         | Standard Schema and Standard JSON Schema properties                                                                                                                                          |
-| `Type.schema`               | The rule of the nearest class in the chain that declares one                                                                                                                                 |
-| `Type.typeName`             | The name given to `Nominal()`, `subtype()` or `variant()`                                                                                                                                    |
+| Member                      | Description                                                                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`           | Checks `input` and creates an instance. Throws `NominalError` if it's invalid.                                                           |
+| `Type.parse(input)`         | Returns `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                                                                 |
+| `Type.is(value)`            | `true` if `value` is an instance of the type.                                                                                            |
+| `Type.subtype(name, rule?)` | A new, narrower type. See [subtypes](../guides/building-on-types.md#adding-a-stricter-rule).                                             |
+| `Type.variant(name, rule)`  | A sibling type with a different rule. See [variants](../guides/building-on-types.md#accepting-different-values-with-the-same-behaviour). |
+| `Type.standard()`           | The type as a plain Standard Schema object.                                                                                              |
+| `Type['~standard']`         | The Standard Schema and Standard JSON Schema interface.                                                                                  |
+| `Type.schema`               | The type's own rule, or the closest parent's if the type adds none.                                                                      |
+| `Type.typeName`             | The type's name.                                                                                                                         |
 
-`parse()` checks an instance of another type by its value when the target is a subtype of that type, a variant of it or the type it is a variant of, or a sibling under a common parent. An instance of an unrelated type is rejected.
+What `parse()` does with different inputs:
+
+| Input                                           | Result                                        |
+| ----------------------------------------------- | --------------------------------------------- |
+| a plain value                                   | checked against all the type's rules          |
+| an instance of the same type or of a subtype    | returned as it is, without a check            |
+| an instance of a parent, a variant or a sibling | its value is checked against the type's rules |
+| an instance of an unrelated type                | rejected                                      |
 
 ## Instance members
 
-| Member          | Description                                                             |
-| --------------- | ----------------------------------------------------------------------- |
-| `value`         | The validated value                                                     |
-| `equals(other)` | Same type name and `Object.is` on the values; `Uuid` ignores case       |
-| `toJSON()`      | The value; `AnyBigInt` and the types under it return the decimal string |
-| `toString()`    | `String(value)`                                                         |
+| Member          | Description                                                       |
+| --------------- | ----------------------------------------------------------------- |
+| `value`         | The checked value.                                                |
+| `equals(other)` | `true` for the same type and the same value. `Uuid` ignores case. |
+| `toJSON()`      | The value. `AnyBigInt` and its subtypes return a decimal string.  |
+| `toString()`    | `String(value)`                                                   |
 
 ## NominalError
 
-Thrown by `new` for a rejected value. Extends `TypeError`.
+Thrown by `new` when a value is invalid. It extends `TypeError`.
 
 | Member     | Description                                      |
 | ---------- | ------------------------------------------------ |
-| `typeName` | The name of the type that rejected the value     |
-| `issues`   | Plain `{ message, path? }` objects               |
+| `typeName` | The name of the type that rejected the value.    |
+| `issues`   | A list of `{ message, path? }` objects.          |
 | `message`  | `'Email: must be an email address (was "nope")'` |
 
 ## Messages
 
-Messages produced by `matching()`, `satisfying()` and the built-in types read `must be <description> (was <value>)`. The value is written as follows:
+Messages from `matching()`, `satisfying()` and the built-in types look like `must be <description> (was <value>)`. The value is shown like this:
 
 | Value         | Written as             |
 | ------------- | ---------------------- |
@@ -84,11 +108,15 @@ Messages produced by `matching()`, `satisfying()` and the built-in types read `m
 | a boolean     | `true`                 |
 | anything else | its `typeof`, `object` |
 
-A pattern without a description reads `must be matched by <source>`; a pattern given a value that is not a string reads `must be a string`. Issues from other libraries keep their messages; their paths become plain keys.
+Special cases:
+
+- A pattern without a description: `must be matched by <pattern>`.
+- A pattern given a value that isn't a string: `must be a string (was …)`.
+- Rules from other libraries keep their own messages.
 
 ## JSON Schema
 
-`Type['~standard'].jsonSchema.input(options)` and `.output(options)` take `options.target`:
+Get a schema with `Type['~standard'].jsonSchema.input({ target })` or `.output({ target })`. The targets are:
 
 | Target          | `$schema`                                      |
 | --------------- | ---------------------------------------------- |
@@ -96,7 +124,11 @@ A pattern without a description reads `must be matched by <source>`; a pattern g
 | `draft-07`      | `http://json-schema.org/draft-07/schema#`      |
 | `openapi-3.0`   | none                                           |
 
-Any other target throws `TypeError: JSON Schema target <target> is not supported`. A type with several rules is described as an `allOf` of them from the root down, with `$schema` once at the top. A type with a rule that cannot describe itself throws `TypeError`.
+Notes:
+
+- Any other target throws `TypeError: JSON Schema target <target> is not supported`.
+- A type with several rules gets an `allOf`, one entry per rule, with `$schema` once at the top.
+- If a rule can't describe itself, the call throws `TypeError`.
 
 ## Types
 

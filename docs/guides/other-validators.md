@@ -1,10 +1,31 @@
 # How to use a type inside another validator
 
-This guide shows how to put nominal types into a schema from another library, so the library hands back instances.
+This guide shows how to put nominal types inside a schema from another library. The library then gives you back instances, such as an `Email`, instead of strings.
 
-For a library that reads `~standard`, such as NestJS 12's `@Body({ schema: Email })`, pass the class itself; every nominal type is a Standard Schema.
+## Libraries that read Standard Schema
 
-For a library that parses its own definitions, such as ArkType, pass the plain object `standard()` returns, since such libraries treat a class as a definition of their own:
+Some libraries accept any [Standard Schema](https://standardschema.dev). Every nominal type is a Standard Schema, so pass the class itself.
+
+For example, NestJS 12 with its own `StandardSchemaValidationPipe`:
+
+```ts
+import { Controller, Get, Query, StandardSchemaValidationPipe } from '@nestjs/common';
+import { Email } from '@horizon-republic/nominal-types';
+
+app.useGlobalPipes(new StandardSchemaValidationPipe());
+
+@Controller('users')
+export class UsersController {
+  @Get()
+  search(@Query('email', { schema: Email }) email: Email) {}
+}
+```
+
+For NestJS 11 and 12 there is also `NominalPipe`, which needs no `schema` option. See [How to validate NestJS route parameters](nestjs.md).
+
+## ArkType and other schema builders
+
+Libraries such as ArkType treat a class as something of their own. Pass `Type.standard()` instead, which returns a plain schema object:
 
 ```ts
 import { type } from 'arktype';

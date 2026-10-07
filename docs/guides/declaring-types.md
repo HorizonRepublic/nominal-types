@@ -1,12 +1,20 @@
 # How to declare a type
 
-This guide shows how to write the rule a type checks, in each of the three forms, and how to put behaviour on it.
+This guide shows the three ways to write a type's rule, and how to add methods to a type.
 
-When one of the [built-in types](../reference/types/README.md) already covers the kind of value, such as `AnyString` or `PositiveInteger`, declare the type under it instead, as [How to build on a type](building-on-types.md#starting-from-a-base-type) shows; the rules below then go into `subtype()`.
+## Picking a way
+
+| Your rule                                    | Use                  | Example                 |
+| -------------------------------------------- | -------------------- | ----------------------- |
+| A string format                              | a regular expression | an order number, a slug |
+| Anything a regular expression can't say      | a type guard         | a number from 0 to 100  |
+| A schema you already have in another library | that schema          | a Zod or ArkType schema |
+
+The examples here use `Nominal()`, which starts a type from scratch. You can also start from a [built-in type](../reference/types/README.md) like `AnyString` or `PositiveInteger` with `subtype()`, as shown in [How to build on a type](building-on-types.md#starting-from-a-base-type). That is optional. It only helps keep related types together. The rules on this page work the same way in both.
 
 ## Declaring with a pattern
 
-For a string format, pass `Nominal()` a unique name and a regular expression:
+Pass `Nominal()` a name and a regular expression:
 
 ```ts
 import { matching, Nominal } from '@horizon-republic/nominal-types';
@@ -15,15 +23,17 @@ export class Slug extends Nominal('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
 export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
 ```
 
-Wrap the pattern in `matching()` to give it a description, which messages then use: `must be a SKU (was "x")` instead of the pattern's source.
+`matching()` adds a description for error messages. With it, a bad value reads `must be a SKU (was "x")`. Without it, the message shows the pattern itself.
 
-Give a pattern the `u` flag and no other; any other flag is refused when the type is declared. Where case doesn't matter, spell both cases out in the character class, as in `[A-Fa-f]`, rather than using `i`.
+Keep in mind:
 
-Keep the name unique among the nominal types one application loads: it identifies the type at runtime.
+- Use the `u` flag and no other. Other flags are refused.
+- To ignore case, list both cases, like `[A-Fa-f]`, instead of the `i` flag.
+- Give each type a unique name. The name identifies the type at runtime.
 
 ## Declaring with a type guard
 
-For a rule a pattern can't express, pass `satisfying()` a type guard, a description and, if the type should describe itself as JSON Schema, the schema the guard corresponds to:
+A type guard is a function that returns `true` for a valid value. Pass it to `satisfying()` with a description:
 
 ```ts
 import { Nominal, satisfying } from '@horizon-republic/nominal-types';
@@ -37,11 +47,14 @@ export class Percentage extends Nominal(
 ) {}
 ```
 
+The third argument is optional. It is the JSON Schema for the same rule, used by [JSON Schema generation](json-schema.md).
+
 ## Declaring with a schema from another library
 
-To reuse a schema you already have, pass any [Standard Schema](https://standardschema.dev) that answers synchronously:
+Pass the schema as the rule. It has to support [Standard Schema](https://standardschema.dev), as Zod, Valibot and ArkType do:
 
 ```ts
+import { Nominal } from '@horizon-republic/nominal-types';
 import { type } from 'arktype';
 import { z } from 'zod';
 
@@ -49,20 +62,16 @@ export class Percentage extends Nominal('Percentage', type('0 <= number <= 100')
 export class Sku extends Nominal('Sku', z.string().regex(/^SKU-\d{4}$/u)) {}
 ```
 
-Issues come back as plain `{ message, path }` objects whichever library produced them. A schema that validates asynchronously, such as one from Yup, can't define a type.
+Error messages come from that library. A library that only validates asynchronously, such as Yup, can't be used.
 
 ## Giving the type behaviour
 
-Add getters and methods to the class. They read `this.value`, which always holds a value the rule accepted, so they need no checks of their own:
+Add getters and methods to the class:
 
 ```ts
 export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
   get year(): number {
     return Number(this.value.slice(4, 8));
-  }
-
-  get sequence(): number {
-    return Number(this.value.slice(8));
   }
 
   get isExpress(): boolean {
@@ -76,6 +85,8 @@ order.year; // 2026
 order.isExpress; // false
 ```
 
-A method that produces another value of the type should return an instance, so the result is checked too, the way `email.withoutTag()` returns an `Email`. For why the code belongs on the type, see [How it works](../explanation/how-it-works.md#behaviour-on-the-type).
+`this.value` always holds a value that passed the rule, so methods don't need to check it.
+
+If a method creates a new value of the same kind, return a new instance. Then the result is checked too. For example, `email.withoutTag()` returns an `Email`, not a string.
 
 [← Documentation](../README.md)

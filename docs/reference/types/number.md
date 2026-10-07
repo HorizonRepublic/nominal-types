@@ -2,7 +2,11 @@
 
 [Built-in types](README.md) › Numbers
 
-Every number type takes only values of type `number`. Strings such as `'1'` and wrapper objects such as `new Number(1)` are rejected, and no value is rounded or converted. A rejected value is quoted as written: `must be a positive integer (was -0)`.
+Rules for all number types:
+
+- Only values of type `number` are accepted. `'1'` and `new Number(1)` are rejected.
+- Values are never rounded or converted.
+- Messages show the rejected value: `must be a positive integer (was -0)`.
 
 ## AnyNumber
 

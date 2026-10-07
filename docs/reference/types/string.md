@@ -21,7 +21,11 @@ new AnyString('').value; // ''
 
 `AnyString` › `Email`
 
-An email address in the dot-atom form RFC 5322 defines, at most 64 characters before the `@` and 254 in all, with plus addressing understood. Quoted local parts, IP-literal domains and Unicode domains are rejected; a Unicode domain passes once converted to punycode.
+An email address like `jane.doe+news@example.com`.
+
+- Up to 64 characters before the `@`, and up to 254 in total.
+- A `+tag` before the `@` is understood, see `tag` below.
+- Not accepted: quoted names (`"jane"@example.com`), IP addresses (`jane@[127.0.0.1]`) and non-Latin domains. Convert a non-Latin domain to punycode first (`xn--…`).
 
 | Property    | Value                                               |
 | ----------- | --------------------------------------------------- |
@@ -56,7 +60,10 @@ const email = new Email('Jane.Doe+news@Example.com');
 
 `AnyString` › `Uuid`
 
-A UUID in its 8-4-4-4-12 text form: versions 1 to 8, the nil and the max value, in either case.
+A UUID like `0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f`.
+
+- Versions 1 to 8, plus the all-zero and all-`f` values.
+- Upper and lower case are both accepted and kept as given.
 
 | Property    | Value                                              |
 | ----------- | -------------------------------------------------- |
@@ -83,7 +90,10 @@ const id = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
 
 `AnyString` › `Url`
 
-An absolute URL as the WHATWG URL standard parses it, with any scheme, `mailto:` and `javascript:` included. The value keeps the text as given, while the accessors read the parsed form.
+An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accepts.
+
+- Any scheme is accepted, including `mailto:` and `javascript:`. Use `HttpUrl` for web addresses only.
+- `value` keeps the text as given. The members below read the parsed URL.
 
 | Property    | Value                                                            |
 | ----------- | ---------------------------------------------------------------- |

@@ -13,6 +13,8 @@
 | variant         | A sibling type made with `variant()`. Same methods as the original, a different rule, and the two don't mix.              |
 | level           | One step in a chain of types, such as `Integer` in `AnyNumber` › `FiniteNumber` › `Integer`.                              |
 | brand           | The hidden marker that makes the compiler tell types apart.                                                               |
+| `schemaOf()`    | Turns a type into a plain schema object, to build lists and optional values from: `schemaOf(Uuid).array()`.               |
+| `fromString()`  | A step that reads a number or boolean from text first, such as `'2'` from a query string.                                 |
 | Standard Schema | A common interface for validators, [standardschema.dev](https://standardschema.dev). Zod, Valibot and ArkType support it. |
 | JSON Schema     | A JSON format for describing data, used by OpenAPI and many tools.                                                        |
 

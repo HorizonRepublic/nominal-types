@@ -101,6 +101,23 @@ search(@Query() query: SearchDto) {
 }
 ```
 
+## Sending DTOs in responses
+
+Nest writes a response with `JSON.stringify`, which turns every nominal instance into its value. That needs nothing extra.
+
+`ClassSerializerInterceptor` works differently: it turns the DTO into a plain object with class-transformer first, and class-transformer doesn't use `toJSON()`. `@NominalField()` handles that, so a decorated property comes out as its value:
+
+```ts
+app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+@Get()
+find(): AccountDto {
+  return account; // { "contact": "jane@example.com", "teams": ["0190f1c2-…"] }
+}
+```
+
+> **Warning:** with `ClassSerializerInterceptor`, a nominal instance in a property without `@NominalField()` comes out as `{ "value": "jane@example.com" }`. Decorate every such property.
+
 ## Changing the message
 
 The second argument takes class-validator's own options, such as `message` or `groups`:

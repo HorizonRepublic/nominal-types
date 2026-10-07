@@ -1,5 +1,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
+import { issueText } from './issue-text.ts';
+
 /**
  * Thrown when a nominal type is constructed from a value its schema rejects.
  *
@@ -12,7 +14,7 @@ export class NominalError extends TypeError {
   public readonly issues: readonly StandardSchemaV1.Issue[];
 
   public constructor(typeName: string, issues: readonly StandardSchemaV1.Issue[]) {
-    super(`${typeName}: ${issues.map((issue) => issue.message).join('; ')}`);
+    super(`${typeName}: ${issues.map((issue) => issueText(issue)).join('; ')}`);
     this.name = 'NominalError';
     this.typeName = typeName;
     this.issues = issues;

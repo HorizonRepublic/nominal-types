@@ -17,7 +17,18 @@ export { NominalError } from './core/nominal-error.ts';
 export { matching, PatternSchema } from './core/pattern-schema.ts';
 export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
+export { isConstraint, Constraint, constraint } from './core/constraint.ts';
+export type {
+  ConstraintField,
+  ConstraintInput,
+  ConstraintInputs,
+  ConstraintOptions,
+  ConstraintValue,
+  ConstraintValues,
+  ConstraintVerdict,
+} from './core/constraint.ts';
 export { schemaOf, TypeSchema } from './core/type-schema.ts';
+export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';
 export { AnyBigInt } from './types/bigint/any-bigint.ts';
 export { AnyNumber } from './types/number/any-number.ts';

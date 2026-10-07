@@ -4,6 +4,12 @@
 
 A branded string exists only in the compiler: a cast gets around it, and it has no methods. Instances are only ever built from values their constructor accepted. They have methods such as `email.mailbox` and keep their identity through generic code. The price is one small object per value.
 
+## Behaviour on the type
+
+Without a type, the code that works on a kind of value ends up in helpers that take a plain string: `orderYear(orderNumber: string)`, `isExpressOrder(orderNumber: string)`. Every caller has to know the helpers exist, and nothing stops one from passing a customer name.
+
+On the type, the same code is found by autocompletion and only ever runs on a value that passed the rule, so it needs no checks of its own. Methods that produce another value of the type return an instance, which keeps the result checked: `email.withoutTag()` is an `Email`, not a string that used to be one.
+
 ## Validated once
 
 The constructor is the only place a value is checked. Holding an instance means holding a valid value, so passing it on, storing it or handing it to `parse()` again costs no validation.

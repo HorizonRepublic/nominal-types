@@ -44,12 +44,12 @@ It ships ES modules and CommonJS and runs on Node.js 22.12 or later.
 
 ## Your first type
 
-A nominal type is a class declared with `Nominal()`: a name, and what a valid value looks like.
+A nominal type is a class with a name and a rule for what a valid value looks like. Most start under one of the [built-in types](docs/reference/types/README.md):
 
 ```ts
-import { Nominal } from '@horizon-republic/nominal-types';
+import { AnyString } from '@horizon-republic/nominal-types';
 
-export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {}
+export class OrderNumber extends AnyString.subtype('OrderNumber', /^ORD-\d{8}$/u) {}
 ```
 
 Constructing it validates the value. A valid value becomes an instance:
@@ -60,7 +60,7 @@ const order = new OrderNumber('ORD-20261007');
 order.value; // 'ORD-20261007'
 ```
 
-An invalid one throws a `NominalError` that lists what is wrong:
+An invalid one throws a `NominalError` that says what is wrong:
 
 ```ts
 new OrderNumber('42');
@@ -76,33 +76,107 @@ ship(order); // fine
 ship('ORD-20261007'); // compile error
 ```
 
-JSON and template strings get the bare value:
-
-```ts
-JSON.stringify({ order }); // '{"order":"ORD-20261007"}'
-`${order}`; // 'ORD-20261007'
-```
+[Your first type](docs/tutorials/your-first-type.md) continues from here: behaviour on the type, checking untrusted input and a narrower type.
 
 ## Documentation
 
-**Guides**
+### Tutorials
 
-- [Declaring types](docs/guides/declaring-types.md): patterns, type guards, schemas from validation libraries, and behaviour on the type.
-- [Building on a type](docs/guides/building-on-types.md): `subtype()`, `extends` and `variant()`, moving values between types, and ordering rules.
-- [Validating untrusted input](docs/guides/validating-input.md): `parse()` and `is()` where bad input is expected.
-- [Embedding types in other validators](docs/guides/other-validators.md): nominal types inside ArkType, Zod and other schemas.
-- [Generating JSON Schema](docs/guides/json-schema.md): describing types to OpenAPI and documentation tools.
-- [NestJS](docs/guides/nestjs.md): validating route parameters with `NominalPipe`.
+Lessons that take you from nothing to a working result.
 
-**Reference**
+- [Your first type](docs/tutorials/your-first-type.md)
+  - [Set up a project](docs/tutorials/your-first-type.md#set-up-a-project)
+  - [Declare the type](docs/tutorials/your-first-type.md#declare-the-type)
+  - [Build a value](docs/tutorials/your-first-type.md#build-a-value)
+  - [Try an invalid value](docs/tutorials/your-first-type.md#try-an-invalid-value)
+  - [Let the compiler keep it apart](docs/tutorials/your-first-type.md#let-the-compiler-keep-it-apart)
+  - [Give it behaviour](docs/tutorials/your-first-type.md#give-it-behaviour)
+  - [Check input that may be wrong](docs/tutorials/your-first-type.md#check-input-that-may-be-wrong)
+  - [Add a narrower type](docs/tutorials/your-first-type.md#add-a-narrower-type)
+  - [What we built](docs/tutorials/your-first-type.md#what-we-built)
 
-- [Built-in types](docs/reference/built-in-types.md): the base types for strings, numbers, big integers and booleans, and the types under them, from `Email` to `Uint64`.
-- [API](docs/reference/api.md): every function, member and type the package exports.
+### How-to guides
 
-**Explanation**
+Recipes for a task you already have in mind.
 
-- [How it works](docs/explanation/how-it-works.md): why classes, validating once, nominal typing and identity across copies.
-- [Performance](docs/explanation/performance.md): what each operation costs.
+- [How to declare a type](docs/guides/declaring-types.md)
+  - [Declaring with a pattern](docs/guides/declaring-types.md#declaring-with-a-pattern)
+  - [Declaring with a type guard](docs/guides/declaring-types.md#declaring-with-a-type-guard)
+  - [Declaring with a schema from another library](docs/guides/declaring-types.md#declaring-with-a-schema-from-another-library)
+  - [Giving the type behaviour](docs/guides/declaring-types.md#giving-the-type-behaviour)
+- [How to build on a type](docs/guides/building-on-types.md)
+  - [Choosing how](docs/guides/building-on-types.md#choosing-how)
+  - [Starting from a base type](docs/guides/building-on-types.md#starting-from-a-base-type)
+  - [Adding a stricter rule](docs/guides/building-on-types.md#adding-a-stricter-rule)
+  - [Giving a type a second name](docs/guides/building-on-types.md#giving-a-type-a-second-name)
+  - [Adding behaviour without a new type](docs/guides/building-on-types.md#adding-behaviour-without-a-new-type)
+  - [Accepting different values with the same behaviour](docs/guides/building-on-types.md#accepting-different-values-with-the-same-behaviour)
+  - [Moving a value between types](docs/guides/building-on-types.md#moving-a-value-between-types)
+  - [Ordering the rules](docs/guides/building-on-types.md#ordering-the-rules)
+- [How to validate untrusted input](docs/guides/validating-input.md)
+- [How to use a type inside another validator](docs/guides/other-validators.md)
+- [How to generate JSON Schema](docs/guides/json-schema.md)
+  - [Getting a type's schema](docs/guides/json-schema.md#getting-a-types-schema)
+  - [Making your own type describable](docs/guides/json-schema.md#making-your-own-type-describable)
+  - [Keeping the schema and the type in step](docs/guides/json-schema.md#keeping-the-schema-and-the-type-in-step)
+- [How to validate NestJS route parameters](docs/guides/nestjs.md)
+  - [Validating every parameter](docs/guides/nestjs.md#validating-every-parameter)
+  - [Validating one parameter](docs/guides/nestjs.md#validating-one-parameter)
+  - [Shaping the error response](docs/guides/nestjs.md#shaping-the-error-response)
+  - [Validating headers](docs/guides/nestjs.md#validating-headers)
+
+### Reference
+
+What every export and built-in type does, in full.
+
+- [API](docs/reference/api.md)
+  - [Functions](docs/reference/api.md#functions)
+  - [Static members](docs/reference/api.md#static-members)
+  - [Instance members](docs/reference/api.md#instance-members)
+  - [NominalError](docs/reference/api.md#nominalerror)
+  - [Messages](docs/reference/api.md#messages)
+  - [JSON Schema](docs/reference/api.md#json-schema)
+  - [Types](docs/reference/api.md#types)
+- [Built-in types](docs/reference/types/README.md)
+  - [Strings](docs/reference/types/string.md)
+    - [AnyString](docs/reference/types/string.md#anystring)
+    - [Email](docs/reference/types/string.md#email)
+    - [Uuid](docs/reference/types/string.md#uuid)
+    - [Url](docs/reference/types/string.md#url)
+    - [HttpUrl](docs/reference/types/string.md#httpurl)
+  - [Numbers](docs/reference/types/number.md)
+    - [AnyNumber](docs/reference/types/number.md#anynumber)
+    - [FiniteNumber](docs/reference/types/number.md#finitenumber)
+    - [Sign types](docs/reference/types/number.md#sign-types)
+    - [Integer](docs/reference/types/number.md#integer)
+    - [Sized integers](docs/reference/types/number.md#sized-integers)
+    - [Float32](docs/reference/types/number.md#float32)
+  - [Big integers](docs/reference/types/bigint.md)
+    - [AnyBigInt](docs/reference/types/bigint.md#anybigint)
+    - [Sign types](docs/reference/types/bigint.md#sign-types)
+    - [Int64 and Uint64](docs/reference/types/bigint.md#int64-and-uint64)
+  - [Booleans](docs/reference/types/boolean.md)
+    - [AnyBoolean](docs/reference/types/boolean.md#anyboolean)
+
+### Explanation
+
+Why the package works the way it does.
+
+- [How it works](docs/explanation/how-it-works.md)
+  - [Classes rather than brands](docs/explanation/how-it-works.md#classes-rather-than-brands)
+  - [Behaviour on the type](docs/explanation/how-it-works.md#behaviour-on-the-type)
+  - [Validated once](docs/explanation/how-it-works.md#validated-once)
+  - [Nominal at compile time](docs/explanation/how-it-works.md#nominal-at-compile-time)
+  - [One identity across copies](docs/explanation/how-it-works.md#one-identity-across-copies)
+- [Type hierarchy](docs/explanation/type-hierarchy.md)
+  - [Why base types](docs/explanation/type-hierarchy.md#why-base-types)
+  - [Why three ways to build on a type](docs/explanation/type-hierarchy.md#why-three-ways-to-build-on-a-type)
+  - [Why limits are new types](docs/explanation/type-hierarchy.md#why-limits-are-new-types)
+  - [Why zero splits the sign types](docs/explanation/type-hierarchy.md#why-zero-splits-the-sign-types)
+  - [Why big integers travel as strings](docs/explanation/type-hierarchy.md#why-big-integers-travel-as-strings)
+- [Performance](docs/explanation/performance.md)
+  - [Measurements](docs/explanation/performance.md#measurements)
+  - [How a chain runs](docs/explanation/performance.md#how-a-chain-runs)
 
 ## Contributing
 

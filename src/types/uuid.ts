@@ -19,11 +19,13 @@ export class Uuid extends UuidBase {
    * Versions 1 to 8 with the RFC 9562 variant, or the nil and max values, in either case.
    *
    * @remarks
-   * The schema is built from it once, when the class is defined, so a subclass that changes the
-   * pattern overrides `schema` as well.
+   * Case is spelled out in the character classes rather than with the `i` flag, because JSON Schema
+   * patterns carry no flags and the generated schema has to accept what the type accepts. The
+   * schema is built from it once, when the class is defined, so a subclass that changes the pattern
+   * overrides `schema` as well.
    */
   public static readonly pattern: RegExp =
-    /^(?:[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|f{8}-f{4}-f{4}-f{4}-f{12})$/iu;
+    /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
 
   public static override readonly schema: Type<string> = type(this.pattern).describe('a UUID');
 

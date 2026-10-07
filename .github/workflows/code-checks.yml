@@ -40,14 +40,18 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'pull_request' && hashFiles('coverage/coverage-summary.json') != '' }}
         uses: davelosert/vitest-coverage-report-action@v2.13.0
 
+  # The matrices run on pull requests only, and only for what `checks` doesn't cover: it already
+  # runs every test on the Node.js release in .node-version and every adapter on the Nest release
+  # in devDependencies. After a merge, `checks` alone runs on main.
   runtimes:
     name: Tests on Node ${{ matrix.node }}
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24, 26]
+        node: [22, 26]
     steps:
       - uses: actions/checkout@v7
 
@@ -61,12 +65,13 @@ jobs:
 
   nest:
     name: Nest adapter on Nest ${{ matrix.nest }}
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        nest: [11, 12]
+        nest: [11]
     steps:
       - uses: actions/checkout@v7
 

@@ -1,24 +1,12 @@
-import swc from 'unplugin-swc';
 import type { ViteUserConfig } from 'vitest/config';
 
 const config: ViteUserConfig = {
-  plugins: [
-    swc.vite({
-      jsc: {
-        parser: { syntax: 'typescript', decorators: true },
-        transform: {
-          legacyDecorator: true,
-          decoratorMetadata: true,
-          useDefineForClassFields: true,
-        },
-        target: 'es2022',
-      },
-      module: { type: 'es6' },
-    }),
-  ],
-  oxc: false,
+  oxc: {
+    decorator: { legacy: true, emitDecoratorMetadata: true },
+  },
   test: {
     include: ['tests/**/*.spec.ts'],
+    isolate: false,
     passWithNoTests: true,
     coverage: {
       provider: 'v8',

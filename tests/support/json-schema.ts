@@ -14,6 +14,15 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
     return false;
   }
 
+  const choices = keyword('anyOf');
+
+  if (
+    Array.isArray(choices) &&
+    !choices.some((choice: unknown) => satisfiesSchema(choice, value))
+  ) {
+    return false;
+  }
+
   const type = keyword('type');
 
   if (type === 'string' && typeof value !== 'string') {

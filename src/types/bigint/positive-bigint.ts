@@ -5,8 +5,8 @@ import { bigintRule } from './bigint-rule.ts';
 const PositiveBigIntBase: SubtypeOf<typeof AnyBigInt, 'nominal.PositiveBigInt'> = AnyBigInt.subtype(
   'nominal.PositiveBigInt',
   bigintRule('a positive integer', (value) => value > 0n, {
-    type: 'string',
-    pattern: '^[1-9]\\d*$',
+    string: { type: 'string', pattern: '^[1-9]\\d*$' },
+    integer: { type: 'integer', minimum: 1 },
     examples: ['9007199254740993'],
   }),
 );

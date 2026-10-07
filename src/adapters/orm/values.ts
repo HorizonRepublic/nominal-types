@@ -3,9 +3,7 @@ import { NominalError } from '../../core/nominal-error.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { textFormOf } from '../../core/text-form.ts';
 import { instanceParserFor, trustedConstructorFor } from '../../core/type-functions.ts';
-import { AnyBigInt } from '../../types/bigint/any-bigint.ts';
 import type { ColumnKind } from './column.ts';
-import { isUnder } from './column.ts';
 
 /**
  * Options every ORM adapter takes.
@@ -40,10 +38,6 @@ const plainFrom = (raw: unknown, column: ColumnKind, target: AnyNominalType): un
     return booleanFrom(raw);
   }
 
-  if (isUnder(AnyBigInt, target)) {
-    return typeof raw === 'number' && Number.isInteger(raw) ? BigInt(raw) : raw;
-  }
-
   if (typeof raw === 'string' && column.kind !== 'text' && column.kind !== 'uuid') {
     const form = textFormOf(target);
 
@@ -62,7 +56,8 @@ const storedOf = (instance: unknown): unknown => {
 
 /**
  * Internal: turns a stored value into an instance: `null` and `undefined` as they are, numbers and
- * booleans read from the text or integers some drivers return, then checked unless `trusted`.
+ * booleans read from the text or integers some drivers return, then checked unless `trusted`. A
+ * driver's number beyond 2^53 - 1 is refused by big integer types, since it has lost digits.
  *
  * @throws NominalError naming the type for a stored value it doesn't accept.
  */

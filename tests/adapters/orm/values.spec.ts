@@ -40,6 +40,12 @@ describe('reading stored values', () => {
     expect(() => reader(AnyBoolean)(2)).toThrow(NominalError);
   });
 
+  it('refuses a big integer the driver returned as a number that lost digits', () => {
+    expect(reader(Int64)(Number.MAX_SAFE_INTEGER)).toStrictEqual(new Int64(2n ** 53n - 1n));
+    expect(() => reader(Int64)(2 ** 53)).toThrow(NominalError);
+    expect(() => reader(Int64, true)(2 ** 53)).toThrow(NominalError);
+  });
+
   it('builds without a check when trusted', () => {
     expect(reader(Email, true)('bad')).toBeInstanceOf(Email);
   });

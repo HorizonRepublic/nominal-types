@@ -79,7 +79,7 @@ CreateBooking.parse(body);
 
 ## Built-in types
 
-Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`. Numbers: `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`. Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64` (written to JSON as decimal strings). Booleans: `AnyBoolean`.
+Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`. Numbers: `AnyNumber`, `FiniteNumber`, `Integer`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`. Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64` (read from a bigint, a decimal string or a whole number up to 2^53 - 1; written to JSON as decimal strings). Booleans: `AnyBoolean`.
 
 ## Docs
 

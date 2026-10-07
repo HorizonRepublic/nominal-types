@@ -5,6 +5,7 @@ import { Nominal } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { runnableSchema } from '../../core/runner.ts';
 import { asText, defineTextForm } from '../../core/text-form.ts';
+import { bigintJsonOf } from './bigint-rule.ts';
 
 const longestText = 1000;
 const integerText = /^(?:0|-?[1-9]\d*)$/u;
@@ -18,39 +19,53 @@ const toBigInt = (value: unknown): bigint | Rejection => {
     return BigInt(value);
   }
 
-  return new Rejection([{ message: mustBe('a bigint or an integer string', value) }]);
+  if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    return BigInt(value);
+  }
+
+  // A number beyond 2^53 - 1 may already have lost digits, so it is refused rather than guessed.
+  const expected = Number.isInteger(value)
+    ? 'a bigint or an integer string, since a number this large may have lost digits'
+    : 'a bigint, an integer string or a safe integer';
+
+  return new Rejection([{ message: mustBe(expected, value) }]);
 };
 
 const json = {
-  type: 'string',
-  pattern: integerText.source,
-  maxLength: longestText,
-  description: 'an integer string',
+  string: { type: 'string', pattern: integerText.source, maxLength: longestText },
+  integer: {
+    type: 'integer',
+    minimum: Number.MIN_SAFE_INTEGER,
+    maximum: Number.MAX_SAFE_INTEGER,
+  },
 };
 
-const bigintRule: NominalSchema<bigint | string, bigint> = runnableSchema<bigint | string, bigint>(
-  toBigInt,
-  (_side, options) => forTarget(options, json),
+const anyBigIntRule: NominalSchema<bigint | string | number, bigint> = runnableSchema<
+  bigint | string | number,
+  bigint
+>(toBigInt, (side, options) =>
+  forTarget(options, { ...bigintJsonOf(json, side), description: 'an integer' }),
 );
 
 const AnyBigIntBase: NominalType<
   'nominal.AnyBigInt',
-  NominalSchema<bigint | string, bigint>
-> = Nominal('nominal.AnyBigInt', bigintRule);
+  NominalSchema<bigint | string | number, bigint>
+> = Nominal('nominal.AnyBigInt', anyBigIntRule);
 
 /**
  * Any integer as a `bigint`: the root of the integer types that outgrow `number`, such as
  * database `bigint` columns.
  *
  * @remarks
- * JSON has no bigint, so the type also takes the integer as a decimal string, `'-42'`, and
- * writes one back from `toJSON`; its JSON Schema describes that string. A string is refused
- * beyond 1000 characters before it is converted, since conversion slows down faster than the
- * length grows.
+ * JSON has no bigint, so the type also takes the integer as a decimal string, `'-42'`, or as a
+ * number up to 2^53 - 1 either way, and writes a string back from `toJSON`. A larger number is
+ * refused, since it may already have lost digits. A string is refused beyond 1000 characters
+ * before it is converted, since conversion slows down faster than the length grows.
  *
  * @example
  * ```ts
  * new AnyBigInt('9007199254740993').value; // 9007199254740993n
+ * new AnyBigInt(42).value; // 42n
  * JSON.stringify({ id: new AnyBigInt(42n) }); // '{"id":"42"}'
  * ```
  */

@@ -47,7 +47,7 @@ AnyBoolean                    true or false
 ## Common to every built-in type
 
 - Rules run from the root down and stop at the first failure. The error names the type and gives that rule's message.
-- Values are never converted. The one exception is `AnyBigInt` and the types under it, which also accept a decimal string.
+- Values are never converted. The one exception is `AnyBigInt` and the types under it, which also accept a decimal string or a whole number up to `2^53 - 1`.
 - The JSON Schema of every type has its name as `title`. A type with several rules gets an `allOf`, one entry per rule. The string check of `AnyString` is left out when the next rule checks for a string itself.
 
 [← Reference](../README.md)

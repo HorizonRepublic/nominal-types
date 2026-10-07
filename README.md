@@ -122,14 +122,15 @@ Validation libraries:
 | [Valibot](https://valibot.dev)                                      | yes, without JSON Schema | no                                |
 | any other synchronous [Standard Schema](https://standardschema.dev) | yes                      | depends on the library            |
 
-Frameworks:
+Frameworks and DTO libraries:
 
-| Framework     | How                                                                                                        |
-| ------------- | ---------------------------------------------------------------------------------------------------------- |
-| NestJS 11, 12 | `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, see the [guide](docs/guides/nestjs.md) |
-| NestJS 12     | Nest's own `StandardSchemaValidationPipe` with `{ schema: Type }`                                          |
+| Integration     | How                                                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| NestJS 11, 12   | `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, see the [guide](docs/guides/nestjs.md)                         |
+| NestJS 12       | Nest's own `StandardSchemaValidationPipe` with `{ schema: Type }`                                                                  |
+| class-validator | `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator`, see the [guide](docs/guides/class-validator.md) |
 
-Adapters are separate entry points of this one package, such as `@horizon-republic/nominal-types/adapters/nest`. Their frameworks are optional peer dependencies: nothing from NestJS is installed or loaded unless you import the adapter.
+Adapters are separate entry points of this one package, such as `@horizon-republic/nominal-types/adapters/nest`. Their libraries are optional peer dependencies: nothing from NestJS or class-validator is installed or loaded unless you import the adapter.
 
 ## Documentation
 

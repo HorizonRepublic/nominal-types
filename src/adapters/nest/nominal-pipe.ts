@@ -2,16 +2,16 @@ import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { AnyNominalType, Parsed } from '../../core/contracts.ts';
 import { isNominalType } from '../../core/nominal.ts';
+import { isTarget, parseTarget } from '../../core/target.ts';
+import type { NominalTarget } from '../../core/target.ts';
 import { textFormOf } from '../../core/text-form.ts';
-import { isArraySchema, isTypeSchema } from '../../core/type-schema.ts';
-import type { TypeSchema } from '../../core/type-schema.ts';
+import { isArraySchema } from '../../core/type-schema.ts';
 
 /**
  * What `NominalPipe` checks a value against: a nominal type, or a schema built by `schemaOf()`.
  */
-export type NominalPipeTarget = AnyNominalType | TypeSchema<unknown, unknown>;
+export type NominalPipeTarget = NominalTarget;
 
 /**
  * Turns the issues of a rejected value into the exception the request fails with.
@@ -47,12 +47,6 @@ const badRequest: NominalExceptionFactory = (issues, metadata) =>
     error: 'Bad Request',
     message: issues.map((issue) => describeIssue(issue, metadata)),
   });
-
-const isTarget = (value: unknown): value is NominalPipeTarget =>
-  isNominalType(value) || isTypeSchema(value);
-
-const parse = (target: NominalPipeTarget, input: unknown): Parsed<unknown> =>
-  isTypeSchema(target) ? target.parse(input) : target.parse(input);
 
 const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => {
   const declared: unknown = Reflect.get(metadata, 'schema');
@@ -111,7 +105,7 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     if (target === undefined) {
       return value;
     }
-    const parsed = parse(target, this.#inputOf(target, value, metadata));
+    const parsed = parseTarget(target, this.#inputOf(target, value, metadata));
     if (parsed.ok) {
       return parsed.value;
     }

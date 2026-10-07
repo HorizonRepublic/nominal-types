@@ -83,4 +83,4 @@ jobs:
           @nestjs/testing@${{ matrix.nest }}
           @nestjs/platform-fastify@${{ matrix.nest }}
           @nestjs/microservices@${{ matrix.nest }}
-      - run: npx vitest run tests/adapters/nest
+      - run: npx vitest run tests/adapters

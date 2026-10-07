@@ -9,7 +9,13 @@ import {
   isNominalType,
   LanguageTag,
   MediaType,
+  NonBlankString,
+  ObjectId,
+  SemVer,
+  Ulid,
   Uuid,
+  UuidV4,
+  UuidV7,
 } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
@@ -69,6 +75,32 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
   [HexColor, ['#fff', '#FFF8', '#1e90ff', '#1E90FF80'], ['fff', '#ff', '#fffff', '#fffffffff']],
   [Base64, ['', 'Zg==', 'Zm8=', 'Zm9v', '+/+/'], ['QR==', 'QUJ=', 'Zg', 'Zg=', '====', '-_-_']],
   [Base64Url, ['', 'Zg', 'Zm8', 'Zm9v', '-_-_'], ['QR', 'QUJ', 'Zg==', 'Q', '+/+/']],
+  [
+    UuidV4,
+    ['6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718', '6F1C2A3E-8B9D-4E5F-A1B2-C3D4E5F60718'],
+    ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '00000000-0000-0000-0000-000000000000'],
+  ],
+  [
+    UuidV7,
+    ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F'],
+    ['6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718', 'ffffffff-ffff-ffff-ffff-ffffffffffff'],
+  ],
+  [
+    Ulid,
+    ['01ARZ3NDEKTSV4RRFFQ69G5FAV', '01arz3ndektsv4rrffq69g5fav', `7${'Z'.repeat(25)}`],
+    [`8${'0'.repeat(25)}`, '01ARZ3NDEKTSV4RRFFQ69G5FAI', '01ARZ3NDEKTSV4RRFFQ69G5FA'],
+  ],
+  [
+    ObjectId,
+    ['507f1f77bcf86cd799439011', '507F1F77BCF86CD799439011'],
+    ['507f1f77bcf86cd79943901', '507f1f77bcf86cd79943901g'],
+  ],
+  [
+    SemVer,
+    ['0.0.0', '1.0.0-alpha.1+build.01', `${Number.MAX_SAFE_INTEGER}.0.0`],
+    ['v1.0.0', '1.0.0-01', `${Number.MAX_SAFE_INTEGER + 1}.0.0`, `1.0.0+${'b'.repeat(251)}`],
+  ],
+  [NonBlankString, ['a', ' a '], ['  ', '\t\n']],
 ];
 
 describe('JSON Schema patterns', () => {

@@ -7,14 +7,14 @@ This guide shows how to turn text into number and boolean types: query strings, 
 Call `.fromString()` on `schemaOf(Type)`:
 
 ```ts
-import { schemaOf, Uint16 } from '@horizon-republic/nominal-types';
+import { Port, schemaOf } from '@horizon-republic/nominal-types';
 
-const Port = schemaOf(Uint16).fromString();
+const PortText = schemaOf(Port).fromString();
 
-Port.parse('8080'); // { ok: true, value: Uint16 { value: 8080 } }
-Port.parse('70000'); // { ok: false, issues: [{ message: 'must be an unsigned 16-bit integer (was 70000)' }] }
-Port.parse('80a'); // { ok: false, issues: [{ message: 'must be a number (was "80a")' }] }
-Port.parse(8080); // { ok: true, value: Uint16 { value: 8080 } }
+PortText.parse('8080'); // { ok: true, value: Port { value: 8080 } }
+PortText.parse('0'); // { ok: false, issues: [{ message: 'must be a port from 1 to 65535 (was 0)' }] }
+PortText.parse('80a'); // { ok: false, issues: [{ message: 'must be a number (was "80a")' }] }
+PortText.parse(8080); // { ok: true, value: Port { value: 8080 } }
 ```
 
 Without `fromString()`, the text `'8080'` is rejected: `must be a number (was "8080")`.

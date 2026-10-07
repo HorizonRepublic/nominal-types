@@ -326,9 +326,7 @@ Invite.strict().parse({ email: 'jane@example.com', seats: 2, admin: true });
 Example with `fromEnv()`:
 
 ```ts
-import { AnyBoolean, objectOf, PositiveInteger, Url } from '@horizon-republic/nominal-types';
-
-class Port extends PositiveInteger.subtype('app.Port') {}
+import { AnyBoolean, objectOf, Port, Url } from '@horizon-republic/nominal-types';
 
 const Config = objectOf({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv();
 

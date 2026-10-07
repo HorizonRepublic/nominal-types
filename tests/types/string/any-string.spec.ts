@@ -10,9 +10,16 @@ import {
   LanguageTag,
   matching,
   NominalError,
+  NonBlankString,
+  NonEmptyString,
+  ObjectId,
   satisfying,
+  SemVer,
+  Ulid,
   Url,
   Uuid,
+  UuidV4,
+  UuidV7,
 } from '../../../src/index.ts';
 import type { AnyNominalType } from '../../../src/index.ts';
 import { issuesOf, thrownBy, valueOf } from '../../support/results.ts';
@@ -58,6 +65,13 @@ describe('types under AnyString', () => {
     [AnyString, CurrencyCode, 'EUR'],
     [AnyString, LanguageTag, 'en-US'],
     [Url, HttpUrl, 'https://example.com'],
+    [AnyString, NonEmptyString, ' '],
+    [NonEmptyString, NonBlankString, 'a'],
+    [Uuid, UuidV4, '6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718'],
+    [Uuid, UuidV7, '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
+    [AnyString, Ulid, '01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+    [AnyString, ObjectId, '507f1f77bcf86cd799439011'],
+    [AnyString, SemVer, '1.0.0'],
   ];
 
   it.each(
@@ -90,6 +104,12 @@ describe('types under AnyString', () => {
     [CountryCode, 'must be an ISO 3166-1 alpha-2 country code (was 42)'],
     [CurrencyCode, 'must be an ISO 4217 currency code (was 42)'],
     [LanguageTag, 'must be a BCP 47 language tag (was 42)'],
+    [NonEmptyString, 'must be a non-empty string (was 42)'],
+    [NonBlankString, 'must be a non-empty string (was 42)'],
+    [UuidV4, 'must be a string (was 42)'],
+    [Ulid, 'must be a string (was 42)'],
+    [ObjectId, 'must be a string (was 42)'],
+    [SemVer, 'must be a string (was 42)'],
   ] as const)('reports a non-string to %o once', (type, message) => {
     expect(issuesOf(type.parse(42))).toStrictEqual([{ message }]);
   });

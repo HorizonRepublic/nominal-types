@@ -148,7 +148,7 @@ Fix: call `fromString()` first, as in `schemaOf(PositiveInteger).fromString().ar
 
 Cause: the field is wrapped in `schemaOf()`, for example to make it optional. `fromEnv()` reads only plain type fields from text.
 
-Fix: add `fromString()` to the field: `schemaOf(Uint16).fromString().optional()`. See [How to read configuration from environment variables](read-config.md).
+Fix: add `fromString()` to the field: `schemaOf(Port).fromString().optional()`. See [How to read configuration from environment variables](read-config.md).
 
 ### TypeError: a constraint reads a field which the object does not declare
 

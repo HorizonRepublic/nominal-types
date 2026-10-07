@@ -6,8 +6,15 @@ The built-in types are optional. Any type can be declared from scratch with [`No
 
 ```text
 AnyString                     any string
+├── NonEmptyString            at least one character
+│   └── NonBlankString            not only white space
 ├── Email
-├── Uuid
+├── Uuid                      any version
+│   ├── UuidV4                    random
+│   └── UuidV7                    starts with the time
+├── Ulid
+├── ObjectId                  a MongoDB id
+├── SemVer                    a version such as 1.4.2
 ├── Url
 │   └── HttpUrl
 ├── CountryCode               ISO 3166-1, such as US
@@ -25,13 +32,17 @@ AnyNumber                     any number, NaN and the infinities included
     ├── NonNegativeNumber         ≥ 0
     ├── NonPositiveNumber         ≤ 0
     ├── Float32                   exact as a 32-bit float
+    ├── Latitude                  -90 to 90
+    ├── Longitude                 -180 to 180
     └── Integer                   a safe integer
         ├── PositiveInteger           ≥ 1
         ├── NegativeInteger           ≤ -1
         ├── NonNegativeInteger        ≥ 0
         ├── NonPositiveInteger        ≤ 0
         ├── Int8, Int16, Int32
-        └── Uint8, Uint16, Uint32
+        ├── Uint8, Uint32
+        └── Uint16                    0 to 65,535
+            └── Port                      1 to 65,535
 
 AnyBigInt                     any integer, as a bigint
 ├── PositiveBigInt                ≥ 1
@@ -44,12 +55,12 @@ AnyBigInt                     any integer, as a bigint
 AnyBoolean                    true or false
 ```
 
-| Page                      | Types                                                                                                                                        |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Strings](string.md)      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url` |
-| [Numbers](number.md)      | `AnyNumber` and the 17 types under it                                                                                                        |
-| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                                                                               |
-| [Booleans](boolean.md)    | `AnyBoolean`                                                                                                                                 |
+| Page                      | Types                                          |
+| ------------------------- | ---------------------------------------------- |
+| [Strings](string.md)      | `AnyString` and the 18 types under it          |
+| [Numbers](number.md)      | `AnyNumber` and the 20 types under it          |
+| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64` |
+| [Booleans](boolean.md)    | `AnyBoolean`                                   |
 
 ## Which built-in type do I pick?
 
@@ -57,7 +68,14 @@ AnyBoolean                    true or false
 | ------------------------------------ | ------------------------------------------------------- | ----------------------------------------------- |
 | an email address                     | `Email`                                                 | checks the address and hides it in messages     |
 | an id made as a UUID                 | `Uuid`                                                  | any version, any case                           |
+| a UUID made by `crypto.randomUUID()` | `UuidV4`                                                | version 4 only                                  |
+| a UUID that sorts by time            | `UuidV7`                                                | version 7 only, with its `timestamp`            |
+| an id made as a ULID                 | `Ulid`                                                  | any case, with its `timestamp`                  |
+| a MongoDB `_id`                      | `ObjectId`                                              | 24 hex digits, any case                         |
+| a version of a package or an API     | `SemVer`                                                | sorts with `compare()`                          |
 | a link to a web page                 | `HttpUrl`                                               | `http` and `https` only; `Url` takes any scheme |
+| a required name or title             | `NonBlankString`                                        | not `''` and not only spaces                    |
+| a required text that may be spaces   | `NonEmptyString`                                        | not `''`                                        |
 | a country                            | `CountryCode`                                           | ISO codes such as `US`, upper case only         |
 | a currency                           | `CurrencyCode`                                          | ISO codes such as `EUR`, with `minorUnits`      |
 | a language or locale                 | `LanguageTag`                                           | tags such as `en-US`, any case                  |
@@ -68,7 +86,8 @@ AnyBoolean                    true or false
 | free text                            | `AnyString`                                             | any string, `''` included                       |
 | a count of items, such as a quantity | `PositiveInteger`                                       | 1 and up                                        |
 | an amount in cents, an index         | `NonNegativeInteger`                                    | 0 and up                                        |
-| a network port                       | `Uint16`                                                | 0 to 65,535                                     |
+| a network port                       | `Port`                                                  | 1 to 65,535; `Uint16` also takes 0              |
+| a position on a map                  | `Latitude` and `Longitude`                              | -90 to 90 and -180 to 180                       |
 | a database `integer` column          | `Int32`                                                 | the range of a 32-bit integer                   |
 | a database `bigint` id               | `Int64`                                                 | the range of a 64-bit integer, as a `bigint`    |
 | a price, a weight, a temperature     | `FiniteNumber`, or a sign type such as `PositiveNumber` | any number JSON can carry                       |

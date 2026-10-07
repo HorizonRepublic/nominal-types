@@ -201,8 +201,14 @@ config.PORT.value; // 3000 for PORT=3000
 | Type | Name | Accepts | Text form |
 | --- | --- | --- | --- |
 | `AnyString` | `nominal.AnyString` | any string | yes |
+| `NonEmptyString` | `nominal.NonEmptyString` | a string other than `''`; never trimmed | yes |
+| `NonBlankString` | `nominal.NonBlankString` | under `NonEmptyString`: a string with a character outside Unicode `White_Space` (U+0085 is white space, U+FEFF and U+200B are not); never trimmed | yes |
 | `Email` | `nominal.Email` | an RFC 5322 dot-atom address, up to 254 characters; sensitive; `local`, `domain`, `mailbox`, `tag`, `withTag()`, `withoutTag()`, `canonical()`, `isSameMailbox()` | yes |
 | `Uuid` | `nominal.Uuid` | a UUID in any case; `version`, `timestamp`, `isNil`, `isMax`, `canonical()`; `equals` ignores case | yes |
+| `UuidV4`, `UuidV7` | `nominal.…` | under `Uuid`: RFC 9562 version 4 or 7, nil and max refused; `UuidV7#timestamp` is always a `Date`; `canonical()` keeps the type | yes |
+| `Ulid` | `nominal.Ulid` | 26 Crockford base32 characters, first `0`–`7`, `I`/`L`/`O`/`U` refused, any case; `timestamp`, `canonical()` (uppercase); `equals` ignores case | yes |
+| `ObjectId` | `nominal.ObjectId` | a MongoDB ObjectId, 24 hex digits in any case; `timestamp` (seconds), `canonical()` (lowercase); `equals` ignores case | yes |
+| `SemVer` | `nominal.SemVer` | Semantic Versioning 2.0.0, no `v` prefix, up to 256 characters, numbers up to `Number.MAX_SAFE_INTEGER`; `major`, `minor`, `patch`, `prerelease`, `build`, `isPrerelease`, `compare(other)` (precedence, build ignored), `isNewerThan(other)`; `equals` compares the text | yes |
 | `Url` | `nominal.Url` | an absolute URL; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
 | `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code, upper case (`UK`, `EU`, `XK` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
@@ -220,6 +226,8 @@ config.PORT.value; // 3000 for PORT=3000
 | `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger` | `nominal.…` | a safe integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int8`, `Int16`, `Int32` | `nominal.…` | signed 8-, 16-, 32-bit integers | yes |
 | `Uint8`, `Uint16`, `Uint32` | `nominal.…` | unsigned 8-, 16-, 32-bit integers | yes |
+| `Port` | `nominal.Port` | under `Uint16`: a port from 1 to 65535, 0 refused | yes |
+| `Latitude`, `Longitude` | `nominal.…` | under `FiniteNumber`: -90 to 90 and -180 to 180 degrees, ends included | yes |
 | `AnyBigInt` | `nominal.AnyBigInt` | a bigint, a decimal string up to 1000 characters, or a safe integer number; `value` is a `bigint`; `toJSON()` writes the decimal string | yes |
 | `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt` | `nominal.…` | a big integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int64`, `Uint64` | `nominal.…` | signed and unsigned 64-bit integers | yes |
@@ -350,7 +358,7 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256), integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.

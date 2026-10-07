@@ -8,9 +8,7 @@ List the variables with `objectOf()`, call `.fromEnv()`, and make a type of it w
 
 ```ts
 // config.ts
-import { AnyBoolean, HttpUrl, Nominal, objectOf, schemaOf, Uint16 } from '@horizon-republic/nominal-types';
-
-export class Port extends Uint16.subtype('app.Port') {}
+import { AnyBoolean, HttpUrl, Nominal, objectOf, Port, schemaOf } from '@horizon-republic/nominal-types';
 
 export class Config extends Nominal(
   'app.Config',
@@ -68,13 +66,13 @@ Wrap the type in `schemaOf()`, then call `.fromString()` before `.optional()`, a
 Without `.fromString()`, a number in an optional variable is rejected:
 
 ```ts
-import { objectOf, schemaOf, Uint16 } from '@horizon-republic/nominal-types';
+import { objectOf, Port, schemaOf } from '@horizon-republic/nominal-types';
 
-const Wrong = objectOf({ PORT: schemaOf(Uint16).optional() }).fromEnv();
-const Right = objectOf({ PORT: schemaOf(Uint16).fromString().optional() }).fromEnv();
+const Wrong = objectOf({ PORT: schemaOf(Port).optional() }).fromEnv();
+const Right = objectOf({ PORT: schemaOf(Port).fromString().optional() }).fromEnv();
 
 Wrong.parse({ PORT: '3000' }); // { ok: false, issues: [{ message: 'must be a number (was "3000")', path: ['PORT'] }] }
-Right.parse({ PORT: '3000' }); // { ok: true, value: { PORT: Uint16 { value: 3000 } } }
+Right.parse({ PORT: '3000' }); // { ok: true, value: { PORT: Port { value: 3000 } } }
 Right.parse({}); // { ok: true, value: {} }
 ```
 

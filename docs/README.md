@@ -13,7 +13,7 @@ Start with the [README](../README.md) for installation and a first type.
 
 ## Reference
 
-- [Built-in types](reference/built-in-types.md): `Email`, `Uuid`, `Url` and `HttpUrl`.
+- [Built-in types](reference/built-in-types.md): the base types for strings, numbers, big integers and booleans, and the types under them, from `Email` to `Uint64`.
 - [API](reference/api.md): every function, member and type the package exports.
 
 ## Explanation

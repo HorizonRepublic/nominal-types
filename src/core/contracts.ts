@@ -55,7 +55,7 @@ export interface NominalInstance<Name extends string, Value> {
   readonly [brand]: Brand<Name>;
   readonly value: Value;
   equals(other: unknown): boolean;
-  toJSON(): Value;
+  toJSON(): unknown;
   toString(): string;
 }
 

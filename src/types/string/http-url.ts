@@ -1,5 +1,5 @@
-import type { SubtypeOf } from '../core/contracts.ts';
-import { matching } from '../core/pattern-schema.ts';
+import type { SubtypeOf } from '../../core/contracts.ts';
+import { matching } from '../../core/pattern-schema.ts';
 import { Url } from './url.ts';
 
 const HttpUrlBase: SubtypeOf<typeof Url, 'HttpUrl'> = Url.subtype(

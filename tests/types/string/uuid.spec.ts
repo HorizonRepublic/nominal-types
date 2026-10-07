@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { NominalError, Uuid } from '../../src/index.ts';
+import { NominalError, Uuid } from '../../../src/index.ts';
 
 describe('Uuid', () => {
   it.each([

@@ -1,13 +1,14 @@
-import type { NominalSchema, NominalType } from '../core/contracts.ts';
-import { Nominal } from '../core/nominal.ts';
-import { satisfying } from '../core/predicate-schema.ts';
+import type { SubtypeOf } from '../../core/contracts.ts';
+import { satisfying } from '../../core/predicate-schema.ts';
+import { stringOnly } from '../../core/string-rule.ts';
+import { AnyString } from './any-string.ts';
 
 const isAbsoluteUrl = (value: unknown): value is string =>
   typeof value === 'string' && URL.canParse(value);
 
-const UrlBase: NominalType<'Url', NominalSchema<string, string>> = Nominal(
+const UrlBase: SubtypeOf<typeof AnyString, 'Url'> = AnyString.subtype(
   'Url',
-  satisfying(isAbsoluteUrl, 'a URL', { type: 'string', format: 'uri' }),
+  stringOnly(satisfying(isAbsoluteUrl, 'a URL', { type: 'string', format: 'uri' })),
 );
 
 /**

@@ -1,9 +1,8 @@
-import type { NominalSchema, NominalType } from '../core/contracts.ts';
-import { Nominal } from '../core/nominal.ts';
-import { matching } from '../core/pattern-schema.ts';
-import { textRule } from './text-rule.ts';
+import type { NominalSchema, SubtypeOf } from '../../core/contracts.ts';
+import { matching } from '../../core/pattern-schema.ts';
+import { AnyString } from './any-string.ts';
 
-const EmailBase: NominalType<'Email', NominalSchema<string, string>> = Nominal('Email', textRule);
+const EmailBase: SubtypeOf<typeof AnyString, 'Email'> = AnyString.subtype('Email');
 
 /**
  * An email address in the dot-atom form RFC 5322 defines, with plus addressing understood.

@@ -34,7 +34,7 @@ describe('PredicateSchema', () => {
   );
 
   it.each([
-    [3, 'must be an even number (was number)'],
+    [3, 'must be an even number (was 3)'],
     ['4', 'must be an even number (was "4")'],
     [null, 'must be an even number (was object)'],
   ])('reports %j in words', (input, message) => {
@@ -94,8 +94,6 @@ describe('PredicateSchema', () => {
     ) {}
 
     expect(valueOf(SmallEven.parse(new EvenNumber(4)))).toBeInstanceOf(SmallEven);
-    expect(issuesOf(SmallEven.parse(12))).toStrictEqual([
-      { message: 'must be below 10 (was number)' },
-    ]);
+    expect(issuesOf(SmallEven.parse(12))).toStrictEqual([{ message: 'must be below 10 (was 12)' }]);
   });
 });

@@ -7,10 +7,21 @@ const schemaUris: Readonly<Record<string, string | undefined>> = {
 };
 
 /**
- * How a rejected value appears in a message: a string quoted, anything else by its kind.
+ * How a rejected value appears in a message: a string quoted, a number, a bigint or a boolean as written,
+ * anything else by its kind.
  */
-export const describeValue = (value: unknown): string =>
-  typeof value === 'string' ? JSON.stringify(value) : typeof value;
+export const describeValue = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+  if (typeof value === 'number') {
+    return Object.is(value, -0) ? '-0' : String(value);
+  }
+  if (typeof value === 'bigint') {
+    return `${value}n`;
+  }
+  return typeof value === 'boolean' ? String(value) : typeof value;
+};
 
 /**
  * Puts the `$schema` of the requested target in front of a JSON Schema body.

@@ -2,6 +2,8 @@
 
 A nominal type has two parts: a rule saying what a valid value looks like, and the behaviour that belongs to such a value.
 
+`Nominal()` declares a type from scratch, with the rule as its only check. A type can also start from one of the [built-in types](../reference/built-in-types.md), such as `AnyString` or `PositiveInteger`, which is covered in [Building on a type](building-on-types.md#starting-from-a-base-type).
+
 ## With a pattern
 
 Pass `Nominal()` a unique name and a regular expression. For a string format it is enough, and it is also the fastest option:

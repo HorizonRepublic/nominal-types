@@ -10,6 +10,33 @@ Building on an existing type comes down to one question: may the result go where
 
 Neither `subtype()` nor `extends` can loosen what the original accepts, since every inherited rule still runs. Only `variant()` replaces rules, and it pays for that by becoming a separate type.
 
+## Starting from a base type
+
+The package has a base type for each kind of value, `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`, and a family of narrower types under each; see [Built-in types](../reference/built-in-types.md). Declaring a type as a subtype of the closest one gives it that type's checks and lets it pass where that type is expected:
+
+```ts
+export class Slug extends AnyString.subtype('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
+export class Quantity extends PositiveInteger.subtype('Quantity') {}
+export class Port extends Uint16.subtype('Port') {}
+
+const sum = (values: Integer[]): number => values.reduce((total, next) => total + next.value, 0);
+
+sum([new Quantity(3), new Port(8080)]); // both are integers
+```
+
+A limit of your own is a subtype too, rather than an option on an existing type. The limit then has a name, shows in the type and in its JSON Schema, and holds wherever the type is expected:
+
+```ts
+const isSmall = (value: unknown): value is number => typeof value === 'number' && value <= 100;
+
+export class Percentage extends NonNegativeInteger.subtype(
+  'Percentage',
+  satisfying(isSmall, 'at most 100', { type: 'integer', maximum: 100 }),
+) {}
+```
+
+The rule added under a base sees a value the base already accepted, so `isSmall` only has to compare.
+
 ## Subtypes
 
 `subtype()` declares a new type that has to pass its parent's rules and, optionally, one more. An instance of the subtype is an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:

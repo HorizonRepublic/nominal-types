@@ -1,10 +1,12 @@
 # How to validate NestJS route parameters
 
-This guide shows how to turn route parameters, query values and bodies into nominal types with `NominalPipe`, on Nest 11 or 12. The pipe comes from `@horizon-republic/nominal-types/adapters/nest`; `@nestjs/common` is an optional peer dependency, so the core installs nothing from Nest.
+This guide shows how to turn route parameters and query values into nominal types with `NominalPipe`. It works on Nest 11 and 12.
+
+The pipe comes from a separate entry point, `@horizon-republic/nominal-types/adapters/nest`. You only need `@nestjs/common` if you import it.
 
 ## Validating every parameter
 
-Bind the pipe globally and declare parameters with a nominal type. The pipe turns each such value into an instance:
+Register the pipe once, globally:
 
 ```ts
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
@@ -12,38 +14,54 @@ import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 app.useGlobalPipes(new NominalPipe());
 ```
 
+Then declare parameters with a nominal type. The handler gets an instance that is already checked:
+
 ```ts
+import { Controller, Get, Param } from '@nestjs/common';
+import { Uuid } from '@horizon-republic/nominal-types';
+
 @Controller('users')
 export class UsersController {
   @Get(':id')
   find(@Param('id') id: Uuid) {
-    return id.version; // an instance, already validated
+    return id.version; // id is a Uuid
   }
 }
 ```
 
-Arguments declared with any other type pass through untouched, so the global pipe can sit next to other pipes. It reads the declared type through `emitDecoratorMetadata`, which Nest projects enable by default.
+Parameters of any other type are left alone, so the pipe is safe next to your other pipes.
+
+The pipe learns the parameter's type from `emitDecoratorMetadata`. A project made with the Nest CLI has it on already.
 
 ## Validating one parameter
 
-To validate one parameter, or one declared with another type, pass the type to the pipe:
+Pass the type to the pipe:
 
 ```ts
-@Get()
-search(@Query('email', new NominalPipe(Email)) email: Email) {}
+import { Controller, Get, Query } from '@nestjs/common';
+import { Email } from '@horizon-republic/nominal-types';
+import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+
+@Controller('users')
+export class UsersController {
+  @Get()
+  search(@Query('email', new NominalPipe(Email)) email: Email) {}
+}
 ```
 
 ## Shaping the error response
 
-By default, a rejected value fails the request with a 400 in the shape of Nest's own Standard Schema pipe:
+A bad value fails the request with status 400. The body looks like the one from Nest's own validation:
 
 ```json
 { "statusCode": 400, "error": "Bad Request", "message": ["id: must be a UUID (was \"nope\")"] }
 ```
 
-To answer differently, pass `exceptionFactory`, globally or per parameter:
+To send something else, pass `exceptionFactory`. It works globally and for one parameter:
 
 ```ts
+import { BadRequestException, UnprocessableEntityException } from '@nestjs/common';
+
 new NominalPipe({
   exceptionFactory: (issues) => new UnprocessableEntityException(issues),
 });
@@ -55,6 +73,6 @@ new NominalPipe(Email, {
 
 ## Validating headers
 
-Nest runs no pipes on `@Headers()`. Validate header values in the handler with `parse()`, as in [How to validate untrusted input](validating-input.md).
+Nest doesn't run pipes on `@Headers()`. Check header values inside the handler with `parse()`, as shown in [How to validate untrusted input](validating-input.md).
 
 [← Documentation](../README.md)

@@ -2,24 +2,39 @@
 
 ## Classes rather than brands
 
-A branded string exists only in the compiler: a cast gets around it, and it has no methods. Instances are only ever built from values their constructor accepted. They have methods such as `email.mailbox` and keep their identity through generic code. The price is one small object per value.
+A common way to get nominal types in TypeScript is a brand: `string & { __brand: 'Email' }`. A brand exists only for the compiler. At runtime it is a plain string, so nothing can tell a checked email from any other string, and it can't carry methods.
+
+This package uses classes instead. An instance:
+
+- exists at runtime, so `instanceof Email` works;
+- is only ever created from a value that passed the rule;
+- has methods, such as `email.mailbox`.
+
+The cost is one small object per value.
 
 ## Behaviour on the type
 
-Without a type, the code that works on a kind of value ends up in helpers that take a plain string: `orderYear(orderNumber: string)`, `isExpressOrder(orderNumber: string)`. Every caller has to know the helpers exist, and nothing stops one from passing a customer name.
+Without a type, code that works on a kind of value ends up in helpers like `orderYear(orderNumber: string)`. Two problems follow:
 
-On the type, the same code is found by autocompletion and only ever runs on a value that passed the rule, so it needs no checks of its own. Methods that produce another value of the type return an instance, which keeps the result checked: `email.withoutTag()` is an `Email`, not a string that used to be one.
+- every caller has to know the helper exists;
+- nothing stops a caller from passing a customer name.
+
+On the type, the same code shows up in autocompletion. It only runs on values that passed the rule, so it needs no checks.
 
 ## Validated once
 
-The constructor is the only place a value is checked. Holding an instance means holding a valid value, so passing it on, storing it or handing it to `parse()` again costs no validation.
+A value is checked when the instance is created, and never again. Holding an instance means holding a valid value. Passing it on, storing it or giving it to `parse()` again costs no extra check.
 
 ## Nominal at compile time
 
-Each type has a phantom brand keyed by its name, so two types that wrap a string do not mix. A subtype has its parent's key and its own, which makes it assignable to the parent and not the other way round.
+Each type carries a hidden brand with its name. That is why the compiler keeps `Email` and `Uuid` apart, even though both wrap a string.
+
+A subtype carries its parent's brand and its own. So a subtype fits where the parent is expected, and not the other way round.
 
 ## One identity across copies
 
-An application can load this package twice, once as ES modules and once as CommonJS. Each type marks its instances with a key from `Symbol.for`, and `instanceof` checks that key, so one copy recognises an instance the other built.
+An application can load this package twice: once through `import` and once through `require`. Each copy has its own classes.
+
+To keep `instanceof` working anyway, each type marks its instances with a key from `Symbol.for`, which is shared across copies. `instanceof` checks that key, so an `Email` made by one copy is an `Email` for the other.
 
 [← Documentation](../README.md)

@@ -1,22 +1,27 @@
 # How to generate JSON Schema
 
-This guide shows how to get the JSON Schema of a type, for OpenAPI documents, form generators or a validator in another language.
+This guide shows how to get a JSON Schema for a type. You can use it in OpenAPI documents, form generators or validators in other languages.
 
 ## Getting a type's schema
 
-Call `jsonSchema.input()` on the type's `~standard` with the target you need:
+Call `['~standard'].jsonSchema.input()` and name the format you need:
 
 ```ts
+import { Uuid } from '@horizon-republic/nominal-types';
+
 Uuid['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 // { type: 'string', pattern: '^(?:[\\dA-Fa-f]{8}-…)$', description: 'a UUID' }
-
-Uuid['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
-// the same, with $schema: 'https://json-schema.org/draft/2020-12/schema' first
 ```
 
-The targets are `draft-2020-12`, `draft-07` and `openapi-3.0`. Use `output()` for the shape a response carries. For the built-in types both are the same; a schema from a library that converts values may describe them differently.
+| `target`        | Use it for                             |
+| --------------- | -------------------------------------- |
+| `openapi-3.0`   | OpenAPI 3.0 documents                  |
+| `draft-2020-12` | current JSON Schema tools, OpenAPI 3.1 |
+| `draft-07`      | older JSON Schema tools                |
 
-A type with several rules is described as an `allOf` of them, from the root down:
+There is also `output()`, for the shape a response carries. For the built-in types it gives the same result as `input()`.
+
+A type with several rules gets an `allOf`, one entry per rule:
 
 ```ts
 PositiveInteger['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
@@ -25,9 +30,11 @@ PositiveInteger['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 
 ## Making your own type describable
 
-Patterns describe themselves. A `satisfying()` rule needs the JSON Schema it corresponds to as its third argument:
+Regular expressions describe themselves. A type guard needs its JSON Schema as the third argument of `satisfying()`:
 
 ```ts
+import { Integer, satisfying } from '@horizon-republic/nominal-types';
+
 const isEven = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value % 2 === 0;
 
@@ -37,10 +44,17 @@ export class EvenNumber extends Integer.subtype(
 ) {}
 ```
 
-A schema from a library describes itself if the library supports [Standard JSON Schema](https://standardschema.dev), as ArkType does. Asking for the schema of a type with a rule that can't describe itself throws a `TypeError`.
+A schema from another library works if that library supports [Standard JSON Schema](https://standardschema.dev), as ArkType does.
+
+If any rule of a type can't describe itself, asking for the schema throws a `TypeError`.
 
 ## Keeping the schema and the type in step
 
-JSON Schema can't express every rule. Where it can't, the schema accepts more than the type, and the type rejects the rest when the value arrives: `Float32` is described as a plain number, and `Int64` limits the length of its string rather than its range. [Built-in types](../reference/types/README.md) notes each such case.
+JSON Schema can't express every rule. In those cases the schema is looser than the type, and the type rejects the rest at runtime. Two examples:
+
+- `Float32` is described as a plain number.
+- `Int64` limits the length of the string, not the value.
+
+[Built-in types](../reference/types/README.md) notes each such case.
 
 [← Documentation](../README.md)

@@ -2,38 +2,62 @@
 
 ## Why base types
 
-A value usually belongs to more than one kind at once. A port is a 16-bit unsigned integer, which is an integer, which is a finite number. Code that sums integers shouldn't care that one of them is a port, while code that opens a socket should accept nothing else.
+A value often belongs to several kinds at once. A port is a 16-bit unsigned integer, which is an integer, which is a number.
 
-A tree of types expresses exactly that. Each type sits under the most specific type it is a case of, inherits that type's checks, and passes wherever any type above it is expected. Declaring `Port` under `Uint16` costs one line and answers both needs: `total(ports)` compiles, `listen(new Uint16(80))` doesn't.
+Different code cares about different levels:
 
-The roots are the kinds of value JavaScript has: strings, numbers, big integers and booleans. They are called `AnyString` and so on rather than `String`, because those names belong to JavaScript's own wrappers, and because "any" says what they accept.
+- code that adds up integers should accept a port;
+- code that opens a socket should accept only a port.
+
+A tree of types gives you both. Each type sits under the closest kind it belongs to. It gets that kind's checks, and it fits wherever that kind is expected. `Port` under `Uint16` takes one line.
+
+The base types are optional. `Nominal()` creates a type from scratch, and it is just as valid. Base types are one way to keep code tidy: related types live in one tree, and common checks are written once.
+
+The roots are named `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`. Names like `String` already belong to JavaScript, and "any" says what the root accepts.
 
 ## Why three ways to build on a type
 
-Two questions decide what a derived type is: may it go where the original is expected, and may the original go where it is expected? Three of the four answers are useful, and each has its own tool.
+Two questions describe how a new type relates to the original:
 
-A **subtype** answers yes and no. It is a narrower case of the original, the way an express order is an order, so it passes for the original but not the other way round. This is the default, and the only one that keeps both the compiler and the runtime honest about what a value has been checked against.
+1. Can the new type go where the original is expected?
+2. Can the original go where the new type is expected?
 
-**`extends`** answers yes and yes. It is the same type, and the class is only a place to put more behaviour. Since the original passes for the subclass, a rule the subclass adds can't promise anything to the code that receives one. That is why the guide warns about it, and why a stricter rule belongs in a subtype instead.
+Each tool answers them differently:
 
-A **variant** answers no and no. It is a sibling with the original's behaviour and its own rule, for cases such as a legacy number format the same methods still apply to. Replacing a rule is what makes it a separate type: if a variant passed for the original, code relying on the original's rule would get values that never passed it.
+| Tool        | 1   | 2   | What it is                                 |
+| ----------- | --- | --- | ------------------------------------------ |
+| `subtype()` | yes | no  | a narrower case, like an express order     |
+| `extends`   | yes | yes | the same type with more methods            |
+| `variant()` | no  | no  | a sibling with the same methods, new rules |
 
-The fourth answer, no and yes, would be a type that the original passes for but that doesn't pass for the original. Nothing in practice wants that, so there is no tool for it.
+`subtype()` is the default. It is the only one where both the compiler and the runtime know exactly what was checked.
+
+`extends` keeps the same type. Because any original passes for the subclass, a rule added in the subclass can't be relied on by code that receives it.
+
+`variant()` replaces a rule, so it has to be a separate type. If it passed for the original, code relying on the original's rule would get values that never passed it.
+
+The fourth combination, "no" then "yes", has no practical use, so there is no tool for it.
 
 ## Why limits are new types
 
-A built-in type has no options such as a maximum length or an upper bound. A limit is declared as a subtype instead, for three reasons. The limit gets a name, which is how the rest of the code refers to it. It shows in the brand, so a function that needs values up to 100 can say so in its signature. And it holds wherever the type travels, including in its JSON Schema, where an option set at one call site would be lost.
+Built-in types have no options like a maximum. A limit is a subtype instead. That gives three things:
 
-The one fixed limit, the 1000 characters of an `AnyBigInt` string, sits on the root because it has to act before the string is converted. A subtype only ever sees the converted `bigint`.
+- the limit has a name, such as `Percentage`;
+- the name shows in function signatures, so `(value: Percentage)` says what it needs;
+- the limit travels with the type, including into its JSON Schema.
+
+There is one fixed limit: an `AnyBigInt` string can be at most 1000 characters. It sits on the root because it must run before the string is turned into a `bigint`. A subtype only sees the result.
 
 ## Why zero splits the sign types
 
-`Positive` and `NonNegative` differ by one value, and that value is the one that matters most often. A quantity in an order can't be zero, while a stock count can. Folding them into one type would make one of the two checks impossible to express, so each sign comes in a form without zero and one with it.
+`Positive` and `NonNegative` differ by one value: zero. Zero matters often. A quantity in an order can't be zero, but a stock count can. So each sign comes in two forms, without zero and with it.
 
-`-0` is treated as zero: it is neither positive nor negative, and the types that take zero take it too. Its sign is kept in `value`, because the package doesn't convert values; `equals()` uses `Object.is`, which tells `-0` and `0` apart and treats `NaN` as equal to itself.
+`-0` counts as zero. It keeps its sign in `value`, because the package never changes values. `equals()` uses `Object.is`, so `-0` is not equal to `0`, and `NaN` is equal to `NaN`.
 
 ## Why big integers travel as strings
 
-JSON has no bigint, `JSON.stringify` throws on one, and a JSON number past 2^53 loses digits in most parsers. A decimal string survives every hop, which is why database drivers and APIs commonly send 64-bit integers that way. `AnyBigInt` takes that string as input and writes it back, so a value read from JSON and written again stays the same.
+JSON has no bigint. `JSON.stringify` throws on one, and most JSON parsers lose digits after 2^53. A decimal string survives every step. That is why database drivers and APIs often send 64-bit integers as strings.
+
+`AnyBigInt` reads such a string and writes it back the same way.
 
 [← Documentation](../README.md)

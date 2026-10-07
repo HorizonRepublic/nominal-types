@@ -8,12 +8,14 @@
 
 Runtime-validated nominal types for TypeScript.
 
-A string that holds an email address is still just a `string` to the compiler. This package turns such values into classes that check them once, when they come in:
+To TypeScript, an email address is just a `string`. Nothing stops you from passing a user ID where an email is expected, or a string that was never checked.
 
-- an `Email` you receive is always a valid address, with no need to check it again;
-- an `Email` can't be passed where a `Uuid` or a plain `string` is expected;
-- the code that works on a value lives on its type, as `email.domain` or `uuid.timestamp`;
-- a type is defined with a regular expression or with a schema from Zod, Valibot, ArkType or any other [Standard Schema](https://standardschema.dev) library.
+This package turns such values into small classes:
+
+- `new Email(text)` checks the text once. Every `Email` you hold is valid.
+- An `Email` can't be passed where a `Uuid` or a plain `string` is expected.
+- Helpers live on the type: `email.domain`, `uuid.timestamp`.
+- A rule is a regular expression, or a schema from Zod, Valibot, ArkType or another [Standard Schema](https://standardschema.dev) library.
 
 ## Example
 
@@ -40,11 +42,11 @@ new Email('not an address'); // throws NominalError
 npm install @horizon-republic/nominal-types
 ```
 
-It ships ES modules and CommonJS and runs on Node.js 22.12 or later.
+It works with both `import` and `require`, on Node.js 22.12 or later.
 
 ## Your first type
 
-A nominal type is a class with a name and a rule for what a valid value looks like. Most start under one of the [built-in types](docs/reference/types/README.md):
+A nominal type is a class with a name and a rule. The rule says what a valid value looks like. Here it starts from the built-in `AnyString`:
 
 ```ts
 import { AnyString } from '@horizon-republic/nominal-types';
@@ -52,7 +54,9 @@ import { AnyString } from '@horizon-republic/nominal-types';
 export class OrderNumber extends AnyString.subtype('OrderNumber', /^ORD-\d{8}$/u) {}
 ```
 
-Constructing it validates the value. A valid value becomes an instance:
+The pattern means `ORD-` followed by eight digits. Starting from a [built-in type](docs/reference/types/README.md) is optional: `Nominal('OrderNumber', /^ORD-\d{8}$/u)` works too. Base types just help keep related types together.
+
+`new` checks the value. A valid value becomes an instance:
 
 ```ts
 const order = new OrderNumber('ORD-20261007');
@@ -60,14 +64,14 @@ const order = new OrderNumber('ORD-20261007');
 order.value; // 'ORD-20261007'
 ```
 
-An invalid one throws a `NominalError` that says what is wrong:
+An invalid value throws a `NominalError` that says what is wrong:
 
 ```ts
 new OrderNumber('42');
 // NominalError: OrderNumber: must be matched by ^ORD-\d{8}$ (was "42")
 ```
 
-A function that takes an `OrderNumber` can rely on it being valid. The compiler won't accept a plain string there, or another nominal type that also wraps a string:
+A function that takes an `OrderNumber` can trust it. The compiler won't let a plain string in:
 
 ```ts
 const ship = (order: OrderNumber): string => `shipping ${order.value}`;
@@ -76,13 +80,13 @@ ship(order); // fine
 ship('ORD-20261007'); // compile error
 ```
 
-[Your first type](docs/tutorials/your-first-type.md) continues from here: behaviour on the type, checking untrusted input and a narrower type.
+The tutorial [Your first type](docs/tutorials/your-first-type.md) continues from here: methods on the type, checking user input and a narrower type.
 
 ## Documentation
 
 ### Tutorials
 
-Lessons that take you from nothing to a working result.
+Start here if you are new: a step-by-step lesson.
 
 - [Your first type](docs/tutorials/your-first-type.md)
   - [Set up a project](docs/tutorials/your-first-type.md#set-up-a-project)
@@ -97,9 +101,10 @@ Lessons that take you from nothing to a working result.
 
 ### How-to guides
 
-Recipes for a task you already have in mind.
+Short recipes for a task you already have.
 
 - [How to declare a type](docs/guides/declaring-types.md)
+  - [Picking a way](docs/guides/declaring-types.md#picking-a-way)
   - [Declaring with a pattern](docs/guides/declaring-types.md#declaring-with-a-pattern)
   - [Declaring with a type guard](docs/guides/declaring-types.md#declaring-with-a-type-guard)
   - [Declaring with a schema from another library](docs/guides/declaring-types.md#declaring-with-a-schema-from-another-library)
@@ -114,7 +119,11 @@ Recipes for a task you already have in mind.
   - [Moving a value between types](docs/guides/building-on-types.md#moving-a-value-between-types)
   - [Ordering the rules](docs/guides/building-on-types.md#ordering-the-rules)
 - [How to validate untrusted input](docs/guides/validating-input.md)
+  - [Using parse()](docs/guides/validating-input.md#using-parse)
+  - [Using is()](docs/guides/validating-input.md#using-is)
 - [How to use a type inside another validator](docs/guides/other-validators.md)
+  - [Libraries that read Standard Schema](docs/guides/other-validators.md#libraries-that-read-standard-schema)
+  - [ArkType and other schema builders](docs/guides/other-validators.md#arktype-and-other-schema-builders)
 - [How to generate JSON Schema](docs/guides/json-schema.md)
   - [Getting a type's schema](docs/guides/json-schema.md#getting-a-types-schema)
   - [Making your own type describable](docs/guides/json-schema.md#making-your-own-type-describable)
@@ -127,7 +136,7 @@ Recipes for a task you already have in mind.
 
 ### Reference
 
-What every export and built-in type does, in full.
+Exact facts about every export and built-in type.
 
 - [API](docs/reference/api.md)
   - [Functions](docs/reference/api.md#functions)
@@ -137,6 +146,7 @@ What every export and built-in type does, in full.
   - [Messages](docs/reference/api.md#messages)
   - [JSON Schema](docs/reference/api.md#json-schema)
   - [Types](docs/reference/api.md#types)
+- [Glossary](docs/reference/glossary.md)
 - [Built-in types](docs/reference/types/README.md)
   - [Strings](docs/reference/types/string.md)
     - [AnyString](docs/reference/types/string.md#anystring)

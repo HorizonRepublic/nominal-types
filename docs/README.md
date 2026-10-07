@@ -1,10 +1,12 @@
 # Documentation
 
-Start with the [README](../README.md) for installation, or with [Your first type](tutorials/your-first-type.md) for a guided first run. The pages are grouped the [Diátaxis](https://diataxis.fr) way, by what you need at the moment.
+New here? Start with [Your first type](tutorials/your-first-type.md). Installation is in the [README](../README.md).
+
+The pages are split into four groups, following [Diátaxis](https://diataxis.fr).
 
 ## Tutorials
 
-Lessons that take you from nothing to a working result.
+Start here if you are new: a step-by-step lesson.
 
 - [Your first type](tutorials/your-first-type.md)
   - [Set up a project](tutorials/your-first-type.md#set-up-a-project)
@@ -19,9 +21,10 @@ Lessons that take you from nothing to a working result.
 
 ## How-to guides
 
-Recipes for a task you already have in mind.
+Short recipes for a task you already have.
 
 - [How to declare a type](guides/declaring-types.md)
+  - [Picking a way](guides/declaring-types.md#picking-a-way)
   - [Declaring with a pattern](guides/declaring-types.md#declaring-with-a-pattern)
   - [Declaring with a type guard](guides/declaring-types.md#declaring-with-a-type-guard)
   - [Declaring with a schema from another library](guides/declaring-types.md#declaring-with-a-schema-from-another-library)
@@ -36,7 +39,11 @@ Recipes for a task you already have in mind.
   - [Moving a value between types](guides/building-on-types.md#moving-a-value-between-types)
   - [Ordering the rules](guides/building-on-types.md#ordering-the-rules)
 - [How to validate untrusted input](guides/validating-input.md)
+  - [Using parse()](guides/validating-input.md#using-parse)
+  - [Using is()](guides/validating-input.md#using-is)
 - [How to use a type inside another validator](guides/other-validators.md)
+  - [Libraries that read Standard Schema](guides/other-validators.md#libraries-that-read-standard-schema)
+  - [ArkType and other schema builders](guides/other-validators.md#arktype-and-other-schema-builders)
 - [How to generate JSON Schema](guides/json-schema.md)
   - [Getting a type's schema](guides/json-schema.md#getting-a-types-schema)
   - [Making your own type describable](guides/json-schema.md#making-your-own-type-describable)
@@ -49,7 +56,7 @@ Recipes for a task you already have in mind.
 
 ## Reference
 
-What every export and built-in type does, in full.
+Exact facts about every export and built-in type.
 
 - [API](reference/api.md)
   - [Functions](reference/api.md#functions)
@@ -59,6 +66,7 @@ What every export and built-in type does, in full.
   - [Messages](reference/api.md#messages)
   - [JSON Schema](reference/api.md#json-schema)
   - [Types](reference/api.md#types)
+- [Glossary](reference/glossary.md)
 - [Built-in types](reference/types/README.md)
   - [Strings](reference/types/string.md)
     - [AnyString](reference/types/string.md#anystring)

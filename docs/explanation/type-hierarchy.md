@@ -60,4 +60,6 @@ JSON has no bigint. `JSON.stringify` throws on one, and most JSON parsers lose d
 
 `AnyBigInt` reads such a string and writes it back the same way.
 
+It also reads a number, as long as the number is exact. Every whole number up to `2^53 - 1` is, so an ID sent as `42` works. A larger number may already have lost digits by the time it arrives. `AnyBigInt` can't tell, so it refuses the number and asks for a string.
+
 [← Explanation](README.md)

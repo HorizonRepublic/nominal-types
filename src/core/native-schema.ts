@@ -19,7 +19,7 @@ export abstract class NativeSchema<Value> {
   protected constructor() {
     this['~standard'] = standardProps<Value, Value>(
       (value) => (this.accepts(value) ? value : new Rejection(this.issuesFor(value))),
-      (_side, options) => forTarget(options, this.jsonBody()),
+      (side, options) => forTarget(options, this.jsonBody(side)),
     );
   }
 
@@ -40,5 +40,9 @@ export abstract class NativeSchema<Value> {
     return [{ message: this.messageFor(value) }];
   }
 
-  protected abstract jsonBody(): Record<string, unknown>;
+  /**
+   * The JSON Schema body for the input the rule takes or the output it gives; most rules describe
+   * both the same way.
+   */
+  protected abstract jsonBody(side: 'input' | 'output'): Record<string, unknown>;
 }

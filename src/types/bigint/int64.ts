@@ -8,9 +8,8 @@ const highest = 2n ** 63n - 1n;
 const Int64Base: SubtypeOf<typeof AnyBigInt, 'nominal.Int64'> = AnyBigInt.subtype(
   'nominal.Int64',
   bigintRule('a signed 64-bit integer', (value) => value >= lowest && value <= highest, {
-    type: 'string',
-    format: 'int64',
-    maxLength: 20,
+    string: { type: 'string', format: 'int64', maxLength: 20 },
+    integer: { type: 'integer' },
     examples: ['-9223372036854775808'],
   }),
 );

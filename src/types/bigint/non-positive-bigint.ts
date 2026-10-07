@@ -6,8 +6,8 @@ const NonPositiveBigIntBase: SubtypeOf<typeof AnyBigInt, 'nominal.NonPositiveBig
   AnyBigInt.subtype(
     'nominal.NonPositiveBigInt',
     bigintRule('a non-positive integer', (value) => value <= 0n, {
-      type: 'string',
-      pattern: '^(?:0|-[1-9]\\d*)$',
+      string: { type: 'string', pattern: '^(?:0|-[1-9]\\d*)$' },
+      integer: { type: 'integer', maximum: 0 },
       examples: ['-9007199254740993'],
     }),
   );

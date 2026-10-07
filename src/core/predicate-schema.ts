@@ -29,7 +29,7 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
     return mustBe(this.description, value);
   }
 
-  protected jsonBody(): Record<string, unknown> {
+  protected jsonBody(_side: 'input' | 'output'): Record<string, unknown> {
     if (this.#json === undefined) {
       throw new TypeError('the schema cannot describe itself as JSON Schema');
     }

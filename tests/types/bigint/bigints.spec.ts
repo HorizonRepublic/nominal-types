@@ -32,6 +32,9 @@ const values = [
   -(10n ** 100n),
 ];
 
+// The safe integers at the edges and around zero; every one of them fits a number exactly.
+const numbers = [0, 1, -1, 42, Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
+
 const shortEnough = (value: bigint): boolean => value.toString().length <= 20;
 
 const expectations: ReadonlyArray<
@@ -78,6 +81,32 @@ describe.each(
     expect(satisfiesSchema(schema, value.toString())).toBe(schemaAccepts(value));
   });
 
+  it.each(numbers)('answers the number %s like its bigint', (value) => {
+    expect(type.parse(value).ok).toBe(accepts(BigInt(value)));
+  });
+
+  it.each(numbers)('agrees with its JSON Schema on the number %s', (value) => {
+    const schema = type['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+
+    expect(satisfiesSchema(schema, value)).toBe(accepts(BigInt(value)));
+  });
+
+  it.each([2 ** 53, -(2 ** 53), 1e21, 1.5, Number.NaN])(
+    'refuses the number %s, and so does its JSON Schema',
+    (value) => {
+      const schema = type['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+
+      expect(type.parse(value).ok).toBe(false);
+      expect(satisfiesSchema(schema, value)).toBe(false);
+    },
+  );
+
+  it('describes its JSON output as a string only', () => {
+    const schema = type['~standard'].jsonSchema.output({ target: 'draft-2020-12' });
+
+    expect(satisfiesSchema(schema, 1)).toBe(false);
+  });
+
   it('writes a decimal string to JSON', () => {
     const value = values.find((candidate) => accepts(candidate));
 
@@ -102,9 +131,10 @@ describe('AnyBigInt input', () => {
     '1n',
     '١',
     '-',
-    1,
     1.5,
     Number.NaN,
+    Number.POSITIVE_INFINITY,
+    2 ** 53,
     null,
     undefined,
     true,
@@ -131,25 +161,44 @@ describe('AnyBigInt input', () => {
     expect(performance.now() - started).toBeLessThan(50);
   });
 
+  it('takes a safe integer as a number', () => {
+    expect(new AnyBigInt(Number.MAX_SAFE_INTEGER).value).toBe(2n ** 53n - 1n);
+    expect(new AnyBigInt(Number.MIN_SAFE_INTEGER).value).toBe(-(2n ** 53n - 1n));
+    expect(new AnyBigInt(-0).value).toBe(0n);
+    expect(new Int64(123).equals(new Int64('123'))).toBe(true);
+  });
+
   it('reports what it got', () => {
     expect(issuesOf(AnyBigInt.parse(1.5))).toStrictEqual([
-      { message: 'must be a bigint or an integer string (was 1.5)' },
+      { message: 'must be a bigint, an integer string or a safe integer (was 1.5)' },
+    ]);
+    expect(issuesOf(AnyBigInt.parse(2 ** 53))).toStrictEqual([
+      {
+        message:
+          'must be a bigint or an integer string, since a number this large may have lost digits (was 9007199254740992)',
+      },
     ]);
     expect(issuesOf(Int64.parse(2n ** 63n))).toStrictEqual([
       { message: 'must be a signed 64-bit integer (was 9223372036854775808n)' },
     ]);
   });
 
-  it('describes its input and its JSON output as the same string', () => {
+  it('describes its input as a string or a safe integer, and its JSON output as the string', () => {
     const { input, output } = AnyBigInt['~standard'].jsonSchema;
+    const string = { type: 'string', pattern: '^(?:0|-?[1-9]\\d*)$', maxLength: 1000 };
 
-    expect(output({ target: 'draft-07' })).toStrictEqual(input({ target: 'draft-07' }));
     expect(input({ target: 'openapi-3.0' })).toStrictEqual({
       title: 'nominal.AnyBigInt',
-      type: 'string',
-      pattern: '^(?:0|-?[1-9]\\d*)$',
-      maxLength: 1000,
-      description: 'an integer string',
+      anyOf: [
+        string,
+        { type: 'integer', minimum: -9_007_199_254_740_991, maximum: 9_007_199_254_740_991 },
+      ],
+      description: 'an integer',
+    });
+    expect(output({ target: 'openapi-3.0' })).toStrictEqual({
+      title: 'nominal.AnyBigInt',
+      ...string,
+      description: 'an integer',
     });
   });
 

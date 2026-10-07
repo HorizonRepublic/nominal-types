@@ -59,7 +59,10 @@ describe('objectOf().fromEnv()', () => {
       { message: 'must be a number (was "abc")', path: ['PORT'] },
       { message: 'must be a boolean (was "yes")', path: ['DEBUG'] },
       { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
-      { message: 'must be a bigint or an integer string (was "1.5")', path: ['LIMIT'] },
+      {
+        message: 'must be a bigint, an integer string or a safe integer (was "1.5")',
+        path: ['LIMIT'],
+      },
     ]);
   });
 

@@ -99,6 +99,9 @@ describe('toGraphQL', () => {
     expect(await run('query ($e: Email) { email(value: $e) }', { e: 'a@b.co' })).toEqual({
       data: { email: 'a@b.co' },
     });
+    expect(await run('query ($b: Int64) { big(value: $b) }', { b: 42 })).toEqual({
+      data: { big: '42' },
+    });
   });
 
   it('refuses bad literals and variables with the type message', async () => {

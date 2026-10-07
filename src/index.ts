@@ -11,6 +11,7 @@ export type {
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';
+export { matching, PatternSchema } from './core/pattern-schema.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
 export { Email } from './types/email.ts';
 export { HttpUrl } from './types/http-url.ts';

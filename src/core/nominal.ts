@@ -2,6 +2,8 @@ import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/sp
 
 import type { AnyNominalType, NominalSchema, NominalType, Parsed } from './contracts.ts';
 import { NominalError } from './nominal-error.ts';
+import { PatternSchema, patternIssues } from './pattern-schema.ts';
+import { Rejection } from './rejection.ts';
 import type { StandardProps, StandardSchema } from './standard-schema.ts';
 
 const namespace = '@horizon-republic/nominal-types';
@@ -9,9 +11,9 @@ const brandKeySlot = Symbol('brandKey');
 const standardProps = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 const standardSchemas = new WeakMap<object, StandardSchema<unknown, NominalRoot>>();
 
-let pending:
-  | { readonly target: object; readonly input: unknown; readonly value: unknown }
-  | undefined;
+let pendingTarget: object | undefined;
+let pendingInput: unknown;
+let pendingValue: unknown;
 
 const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
   issue.path === undefined || issue.path.length === 0
@@ -21,12 +23,22 @@ const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
         path: issue.path.map((segment) => (typeof segment === 'object' ? segment.key : segment)),
       };
 
-const check = (target: typeof NominalRoot, input: unknown): StandardSchemaV1.Result<unknown> => {
-  const result = target.schema['~standard'].validate(input);
+const remember = (target: object, input: unknown, value: unknown): void => {
+  pendingTarget = target;
+  pendingInput = input;
+  pendingValue = value;
+};
+
+const run = (target: typeof NominalRoot, input: unknown): unknown => {
+  const schema = target.schema;
+  if (schema instanceof PatternSchema) {
+    return schema.accepts(input) ? input : new Rejection(patternIssues(schema, input));
+  }
+  const result = schema['~standard'].validate(input);
   if (result instanceof Promise) {
     throw new TypeError(`${target.typeName}: asynchronous schemas are not supported`);
   }
-  return result.issues === undefined ? result : { issues: result.issues.map(plainIssue) };
+  return result.issues === undefined ? result.value : new Rejection(result.issues.map(plainIssue));
 };
 
 const converterOf = (target: typeof NominalRoot): StandardJSONSchemaV1.Converter => {
@@ -44,16 +56,16 @@ class NominalRoot {
 
   public constructor(input: unknown) {
     const target = new.target;
-    if (pending !== undefined && pending.target === target && Object.is(pending.input, input)) {
-      this.value = pending.value;
-      pending = undefined;
+    if (pendingTarget === target && Object.is(pendingInput, input)) {
+      this.value = pendingValue;
+      pendingTarget = undefined;
       return;
     }
-    const result = check(target, input);
-    if (result.issues !== undefined) {
-      throw new NominalError(target.typeName, result.issues);
+    const value = run(target, input);
+    if (value instanceof Rejection) {
+      throw new NominalError(target.typeName, value.issues);
     }
-    this.value = result.value;
+    this.value = value;
   }
 
   public static get '~standard'(): StandardProps<unknown, NominalRoot> {
@@ -94,11 +106,11 @@ class NominalRoot {
         return this.parse(Reflect.get(input, 'value'));
       }
     }
-    const result = check(this, input);
-    if (result.issues !== undefined) {
-      return { ok: false, issues: result.issues };
+    const value = run(this, input);
+    if (value instanceof Rejection) {
+      return { ok: false, issues: value.issues };
     }
-    pending = { target: this, input, value: result.value };
+    remember(this, input, value);
     return { ok: true, value: new this(input) };
   }
 
@@ -188,21 +200,28 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  * Extend the result to add behaviour. The name brands the type at compile time and identifies it
  * at runtime across ESM and CommonJS copies of this package, so it has to be unique among the
  * nominal types one application loads. A subclass that overrides `schema` stays the same type;
- * `refine` makes a distinct one.
+ * `subtype` makes a distinct one. A regular expression stands for `matching(pattern)`.
  *
  * @example
  * ```ts
- * export class OrderNumber extends Nominal('OrderNumber', type(/^ORD-\d{8}$/)) {
+ * export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
  *   get sequence(): number {
  *     return Number(this.value.slice(4));
  *   }
  * }
  * ```
  */
+export function Nominal<const Name extends string>(
+  name: Name,
+  pattern: RegExp,
+): NominalType<Name, PatternSchema>;
 export function Nominal<const Name extends string, Schema extends NominalSchema>(
   name: Name,
   schema: Schema,
 ): NominalType<Name, Schema>;
-export function Nominal(name: string, schema: NominalSchema): typeof NominalRoot | AnyNominalType {
-  return derive(NominalRoot, name, schema);
+export function Nominal(
+  name: string,
+  schema: NominalSchema | RegExp,
+): typeof NominalRoot | AnyNominalType {
+  return derive(NominalRoot, name, schema instanceof RegExp ? new PatternSchema(schema) : schema);
 }

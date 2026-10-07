@@ -5,10 +5,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { toTypeOrm } from '../../../src/adapters/typeorm/index.ts';
 import {
   AnyBoolean,
+  AnyNumber,
   Email,
   Int64,
   NominalError,
   PositiveInteger,
+  Uint64,
+  Url,
   Uuid,
 } from '../../../src/index.ts';
 
@@ -34,6 +37,15 @@ class Account {
 
   @Column(toTypeOrm(Email, { type: 'varchar', length: 64, nullable: true, trusted: true }))
   public nickname!: Email | null;
+
+  @Column(toTypeOrm(Url, { nullable: true }))
+  public site!: Url | null;
+
+  @Column(toTypeOrm(Uint64, { nullable: true }))
+  public supply!: Uint64 | null;
+
+  @Column(toTypeOrm(AnyNumber, { nullable: true }))
+  public rating!: AnyNumber | null;
 }
 
 let source: DataSource;
@@ -65,6 +77,9 @@ beforeAll(async () => {
       balance: new Int64(42n),
       active: new AnyBoolean(true),
       nickname: null,
+      site: new Url('https://example.com'),
+      supply: new Uint64(20n),
+      rating: new AnyNumber(4.5),
     }),
   );
 });
@@ -81,6 +96,9 @@ describe('toTypeOrm', () => {
     expect(sql).toContain('"visits" bigint NOT NULL');
     expect(sql).toContain('"active" boolean NOT NULL');
     expect(sql).toContain('"nickname" varchar(64)');
+    expect(sql).toContain('"site" text');
+    expect(sql).toContain('"supply" decimal(20,0)');
+    expect(sql).toContain('"rating" double precision');
   });
 
   it('reads instances back, and null as null', async () => {
@@ -91,6 +109,8 @@ describe('toTypeOrm', () => {
     expect(account.balance).toStrictEqual(new Int64(42n));
     expect(account.active).toStrictEqual(new AnyBoolean(true));
     expect(account.referrer).toBeNull();
+    expect(account.supply).toStrictEqual(new Uint64(20n));
+    expect(account.rating?.value).toBe(4.5);
   });
 
   it('serializes find values as it stores them, and passes patterns through', async () => {

@@ -47,6 +47,10 @@ The column comes from the type, as in [the MikroORM guide](mikro-orm.md#the-colu
 - A value read back becomes an instance, checked by the type. A value it refuses throws a `NominalError`; `trusted: true` builds instances without the check.
 - `null` stays `null`.
 
+## SQLite and big integers
+
+As with MikroORM, SQLite reads integers past `2^53` imprecisely and keeps numbers past `2^63` as floating point; such values throw a `NominalError` when read. See [the MikroORM guide](mikro-orm.md#sqlite-and-big-integers) for what to do.
+
 ## Querying
 
 Find conditions take instances and plain values the type accepts, both stored the same way. A plain value the type refuses, such as a `Like` pattern, reaches the query as it is:

@@ -4,10 +4,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { toMikroOrm } from '../../../src/adapters/mikro-orm/index.ts';
 import {
   AnyBoolean,
+  AnyNumber,
   Email,
+  Int16,
   Int64,
   NominalError,
   PositiveInteger,
+  Uint64,
+  Url,
   Uuid,
 } from '../../../src/index.ts';
 
@@ -21,6 +25,10 @@ const User = defineEntity({
     balance: p.type(toMikroOrm(Int64)),
     active: p.type(toMikroOrm(AnyBoolean)),
     nickname: p.type(toMikroOrm(Email, { column: 'varchar(64)', trusted: true })).nullable(),
+    site: p.type(toMikroOrm(Url)).nullable(),
+    supply: p.type(toMikroOrm(Uint64)).nullable(),
+    rating: p.type(toMikroOrm(AnyNumber)).nullable(),
+    level: p.type(toMikroOrm(Int16)).nullable(),
   }),
 });
 
@@ -40,6 +48,10 @@ beforeAll(async () => {
     balance: new Int64(42n),
     active: new AnyBoolean(true),
     nickname: null,
+    site: new Url('https://example.com'),
+    supply: new Uint64(20n),
+    rating: new AnyNumber(4.5),
+    level: new Int16(-3),
   });
   await em.flush();
 });
@@ -55,6 +67,11 @@ describe('toMikroOrm', () => {
     expect(sql).toContain('`visits` bigint not null');
     expect(sql).toContain('`active` integer not null');
     expect(sql).toContain('`nickname` varchar(64) null');
+    expect(sql).toContain('`site` text null');
+    expect(sql).toContain('`supply` numeric(20,0) null');
+    expect(sql).toContain('`rating` double null');
+    expect(sql).toContain('`level` integer null');
+    expect(sql).toContain('`referrer` text null');
   });
 
   it('reads instances back, and null as null', async () => {
@@ -66,6 +83,8 @@ describe('toMikroOrm', () => {
     expect(user.balance).toStrictEqual(new Int64(42n));
     expect(user.active).toStrictEqual(new AnyBoolean(true));
     expect(user.referrer).toBeNull();
+    expect(user.site?.value).toBe('https://example.com');
+    expect(user.rating?.value).toBe(4.5);
   });
 
   it('serializes query values, instances and plain ones, as it stores them', async () => {

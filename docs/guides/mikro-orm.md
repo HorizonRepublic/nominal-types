@@ -76,6 +76,11 @@ await em.find(User, { email: { $like: '%@example.com' } });
 
 ## SQLite and big integers
 
-SQLite's driver returns integers as JavaScript numbers, which lose precision past `2^53`. For `Int64` values that large, enable `safeIntegers` in the driver. PostgreSQL returns them as text, which is read exactly.
+SQLite loses precision on large integers in two places, and reading such a value back throws a `NominalError` rather than handing over a wrong one:
+
+- Its driver returns integers as JavaScript numbers, exact only up to `2^53`. For larger `Int64` values, enable `safeIntegers` in the driver.
+- It keeps numbers past `2^63` as floating point. For `Uint64` values that large, store them as text: `toMikroOrm(Uint64, { column: 'varchar(20)' })`.
+
+PostgreSQL returns `bigint` and `numeric` as text, which is read exactly.
 
 [← Guides](README.md)

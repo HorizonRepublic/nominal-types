@@ -21,6 +21,10 @@ describe('Standard Schema', () => {
       expect(schema).toMatchObject({ type: 'string', pattern: '^SKU-\\d{4}$' });
     });
 
+    it('hands out the same schema object on every call', () => {
+      expect(Sku.standard()).toBe(Sku.standard());
+    });
+
     it('embeds into an ArkType object and yields instances', () => {
       const order = type({ sku: Sku.standard() });
 

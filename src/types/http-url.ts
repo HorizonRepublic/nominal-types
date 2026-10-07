@@ -1,8 +1,10 @@
 import type { SubtypeOf } from '../core/contracts.ts';
+import { matching } from '../core/pattern-schema.ts';
 import { Url } from './url.ts';
 
-const HttpUrlBase: SubtypeOf<typeof Url, 'HttpUrl'> = Url.subtype('HttpUrl', (schema) =>
-  schema.and(/^https?:\/\//iu).describe('an http or https URL'),
+const HttpUrlBase: SubtypeOf<typeof Url, 'HttpUrl'> = Url.subtype(
+  'HttpUrl',
+  matching(/^[Hh][Tt][Tt][Pp][Ss]?:\/\//u, 'an http or https URL'),
 );
 
 /**

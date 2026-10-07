@@ -131,9 +131,10 @@ describe('PatternSchema', () => {
 
   describe('narrowing', () => {
     it('narrows a parent built from a pattern', () => {
-      class EvenCode extends Code.subtype('PatternEvenCode', (schema) => schema) {}
+      class EvenCode extends Code.subtype('PatternEvenCode', /[02468]$/u) {}
 
       expect(valueOf(EvenCode.parse(new Code('C-002')))).toBeInstanceOf(EvenCode);
+      expect(EvenCode.parse(new Code('C-001')).ok).toBe(false);
     });
   });
 });

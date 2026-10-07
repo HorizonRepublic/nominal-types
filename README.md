@@ -76,13 +76,12 @@ Any package manager works. The package ships ES modules and CommonJS side by sid
 
 ### Your first type
 
-A nominal type is a class declared with `Nominal()`: a name and a schema.
+A nominal type is a class declared with `Nominal()`: a name, and what a valid value looks like.
 
 ```ts
-import { type } from 'arktype';
 import { Nominal } from '@horizon-republic/nominal-types';
 
-export class OrderNumber extends Nominal('OrderNumber', type(/^ORD-\d{8}$/u)) {}
+export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {}
 ```
 
 Constructing it validates the value. A valid value becomes an instance:
@@ -146,7 +145,7 @@ The name brands the type at compile time and identifies it at runtime, so keep i
 Add getters and methods to the class. They read `this.value`, the validated value:
 
 ```ts
-export class OrderNumber extends Nominal('OrderNumber', type(/^ORD-\d{8}$/u)) {
+export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
   get year(): number {
     return Number(this.value.slice(4, 8));
   }
@@ -161,12 +160,10 @@ new OrderNumber('ORD-20261007').year; // 2026
 
 ### Declaring a subtype
 
-`subtype()` declares a distinct type with a stricter schema. An instance of the subtype is still an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:
+`subtype()` declares a distinct type that has to pass its parent's rules and one more constraint. An instance of the subtype is still an instance of its parent, while a parent instance is not one of the subtype, both in the compiler and at runtime:
 
 ```ts
-export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', (schema) =>
-  schema.and(/^ORD-9/u),
-) {}
+export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-9/u) {}
 
 const express = new ExpressOrderNumber('ORD-90000001');
 
@@ -175,9 +172,18 @@ new OrderNumber('ORD-20261007') instanceof ExpressOrderNumber; // false
 express.year; // 9000: behaviour is inherited
 ```
 
-The callback receives the parent's schema, so you can call ArkType methods such as `and` or `narrow` on it.
+The constraint runs on the value the parent accepted, and only when the parent accepted it, so a subtype can never let through something its parent refuses. It can be a pattern, `matching()` with a description, or a schema from any library:
 
-`parse()` also narrows an instance of the parent. It checks the parent's value against the stricter schema and returns an instance of the subtype, or the issues if the value doesn't fit:
+```ts
+export class PriorityOrderNumber extends OrderNumber.subtype(
+  'PriorityOrderNumber',
+  matching(/^ORD-1/u, 'a priority order number'),
+) {}
+```
+
+A pattern only constrains a type whose value is a string; for anything else, pass a schema. In JSON Schema a subtype becomes an `allOf` of its parent and its constraint.
+
+`parse()` also narrows an instance of the parent. It checks the parent's value against the subtype's rules and returns an instance of the subtype, or the issues if the value doesn't fit:
 
 ```ts
 const order = new OrderNumber('ORD-90000001');
@@ -423,16 +429,16 @@ A Standard Schema and Standard JSON Schema for the strings `pattern` matches. No
 
 ### Static members
 
-| Member                       | Description                                                                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new Type(input)`            | Validates and builds an instance; throws `NominalError`                                                                                     |
-| `Type.parse(input)`          | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
-| `Type.is(value)`             | Type guard                                                                                                                                  |
-| `Type.subtype(name, narrow)` | A distinct subtype validated by `narrow(schema)`                                                                                            |
-| `Type.standard()`            | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
-| `Type['~standard']`          | Standard Schema and Standard JSON Schema properties                                                                                         |
-| `Type.schema`                | The schema the type validates with                                                                                                          |
-| `Type.typeName`              | The name given to `Nominal()`                                                                                                               |
+| Member                           | Description                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`                | Validates and builds an instance; throws `NominalError`                                                                                     |
+| `Type.parse(input)`              | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
+| `Type.is(value)`                 | Type guard                                                                                                                                  |
+| `Type.subtype(name, constraint)` | A distinct subtype: the parent's rules, then `constraint`, a pattern or a schema                                                            |
+| `Type.standard()`                | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
+| `Type['~standard']`              | Standard Schema and Standard JSON Schema properties                                                                                         |
+| `Type.schema`                    | The schema the type validates with                                                                                                          |
+| `Type.typeName`                  | The name given to `Nominal()`                                                                                                               |
 
 ### Instance members
 

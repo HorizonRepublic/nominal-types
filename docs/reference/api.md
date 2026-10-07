@@ -122,10 +122,11 @@ What it does with an input:
 
 `ObjectSchema` is a `TypeSchema`, so `array()`, `optional()` and `nullable()` work on it, as do `parse()` and `~standard`. It adds:
 
-| Member     | Description                                                        |
-| ---------- | ------------------------------------------------------------------ |
-| `strict()` | The same schema, refusing undeclared keys instead of dropping them |
-| `keys`     | The field names, in the order they were declared                   |
+| Member      | Description                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `strict()`  | The same schema, refusing undeclared keys instead of dropping them                                                                   |
+| `fromEnv()` | The same schema, reading each field of a nominal type with a text form from a string; for `process.env` and other records of strings |
+| `keys`      | The field names, in the order they were declared                                                                                     |
 
 Its JSON Schema is `{ type: 'object', properties, required }`. The output side, and the input side of a strict schema, add `additionalProperties: false`.
 

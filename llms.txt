@@ -5,6 +5,7 @@
 ## Defaults to follow
 
 - Check a request body, a message or a config with `objectOf({ field: Type, list: schemaOf(Type).array(), maybe: schemaOf(Type).optional() })`. No other library needed; every field comes out as an instance; unknown keys are dropped (`.strict()` refuses them). In a project that already uses ArkType, or for unions, recursion and transforms, use `fromArk(type({ field: toArk(Type) }))` from `@horizon-republic/nominal-types/adapters/arktype`.
+- Read configuration with `class Config extends Nominal('app.Config', objectOf({ PORT: Port, DEBUG: AnyBoolean }).fromEnv())` and `new Config(process.env)`: fields with a text form are read from strings, other variables are dropped, and one `NominalError` lists every bad variable.
 - Make a value object of several fields with `class Stay extends Nominal('booking.Stay', objectOf({ … }, constraint))`: getters per field (`stay.guests`), `stay.copyWith({ guests: 3 })` returns a checked copy and throws `NominalError` when a rule breaks.
 - Name the schema and its value type the same: `export const X = fromArk(…); export type X = ValueOf<typeof X>;`.
 - Use `Type.parse(input)` for input that may be wrong; it returns `{ ok: true, value }` or `{ ok: false, issues }`. Use `new Type(value)` only where a bad value is a bug; it throws `NominalError`.

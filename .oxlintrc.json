@@ -120,7 +120,6 @@
         "contexts": ["TSInterfaceDeclaration", "TSTypeAliasDeclaration", "TSEnumDeclaration"]
       }
     ],
-    "typescript/method-signature-style": ["error", "property"],
     "typescript/array-type": [
       "error",
       {
@@ -135,7 +134,10 @@
       {
         "case": "kebabCase"
       }
-    ]
+    ],
+    "jsdoc/require-returns": "off",
+    "jsdoc/require-param": "off",
+    "jsdoc/require-throws-type": "off"
   },
   "overrides": [
     {

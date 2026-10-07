@@ -91,7 +91,22 @@
     "no-var": "error",
     "prefer-const": "error",
     "no-await-in-loop": "off",
-    "eslint/no-underscore-dangle": "error"
+    "eslint/no-underscore-dangle": "error",
+    "func-style": [
+      "error",
+      "expression",
+      {
+        "allowArrowFunctions": true
+      }
+    ],
+    "prefer-arrow-callback": "error",
+    "max-classes-per-file": [
+      "error",
+      {
+        "max": 1,
+        "ignoreExpressions": true
+      }
+    ]
   },
   "overrides": [
     {

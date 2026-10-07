@@ -41,6 +41,10 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "@standard-schema/spec": "^1.1.0",
+    "arktype": "^2.2.7"
+  },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
     "@vitest/coverage-v8": "^5.0.3",

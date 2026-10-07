@@ -27,6 +27,9 @@ import { describeType, runType } from './type-rules.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
+const jsonReplacer = (_key: string, value: unknown): unknown =>
+  typeof value === 'bigint' ? String(value) : value;
+
 const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
   schema instanceof RegExp ? new PatternSchema(schema) : schema;
 
@@ -113,7 +116,23 @@ class NominalRoot {
   }
 
   public toString(): string {
-    return String(this.value);
+    return typeof this.value === 'object' && this.value !== null
+      ? JSON.stringify(this, jsonReplacer)
+      : String(this.value);
+  }
+
+  public [Symbol.toPrimitive](hint: string): unknown {
+    if (typeof this.value !== 'object' || this.value === null) {
+      return hint === 'string' ? String(this.value) : this.value;
+    }
+
+    if (hint === 'string') {
+      return this.toString();
+    }
+
+    throw new TypeError(
+      `${String(Reflect.get(this.constructor, 'typeName'))} holds an object and has no primitive value; compare its fields through .value`,
+    );
   }
 }
 

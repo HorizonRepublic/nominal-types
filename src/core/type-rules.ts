@@ -4,6 +4,7 @@ import { compileRun } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
 import { foreignRunner } from './foreign-runner.ts';
+import { frozen } from './frozen.ts';
 import { rulesOf } from './hierarchy.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
@@ -46,7 +47,8 @@ const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown
  * Internal: runs every rule of a type on a value, returning the value or a `Rejection`.
  *
  * @remarks
- * Each type runs one function generated for its rules, rules from other libraries included.
+ * Each type runs one function generated for its rules, rules from other libraries included. An
+ * object value comes back frozen all the way down.
  *
  * @throws TypeError naming the type when a rule fails to run, such as an asynchronous schema.
  */
@@ -58,7 +60,9 @@ export const runType = (root: object, target: TypeClass, input: unknown): unknow
     typeRunners.set(target, runner);
   }
 
-  return runner(input);
+  const value = runner(input);
+
+  return typeof value === 'object' && value !== null ? frozen(value) : value;
 };
 
 /**

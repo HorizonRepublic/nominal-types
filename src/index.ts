@@ -2,6 +2,7 @@ export { isNominalType, Nominal } from './core/nominal.ts';
 export type {
   AnyNominalType,
   Brand,
+  Immutable,
   InputOf,
   NominalInstance,
   NominalSchema,

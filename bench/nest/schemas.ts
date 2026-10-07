@@ -1,26 +1,17 @@
-import 'reflect-metadata';
+import {
+  Email,
+  NonNegativeInteger,
+  PositiveInteger,
+  schemaOf,
+  Uuid,
+} from '@horizon-republic/nominal-types';
 import { type } from 'arktype';
 import * as v from 'valibot';
 import { z } from 'zod';
 
-import { Email, NonNegativeInteger, PositiveInteger, schemaOf, Uuid } from '../../src/index.ts';
-import * as typia from '../typia/dist/validators.js';
-import { nominalWithClassValidator, plainClassValidator } from './class-validator-dtos.ts';
-import { CountryCode, Postcode, Sku } from './types.ts';
+import { CountryCode, Postcode, Sku } from './nominal-dtos.ts';
 
-/**
- * How one library validates the whole document, and how to tell whether it accepted it.
- */
-export interface DocumentLibrary {
-  readonly name: string;
-  readonly validate: (input: unknown) => unknown;
-  readonly accepted: (result: unknown) => boolean;
-}
-
-const field = (result: unknown, key: string): unknown =>
-  typeof result === 'object' && result !== null ? Reflect.get(result, key) : undefined;
-
-const nominalWithArkType = type({
+export const nominalWithArkType = type({
   exportId: schemaOf(Uuid),
   customers: type({
     id: schemaOf(Uuid),
@@ -45,7 +36,7 @@ const nominalWithArkType = type({
   }).array(),
 });
 
-const plainArkType = type({
+export const arkType = type({
   exportId: 'string.uuid',
   customers: type({
     id: 'string.uuid',
@@ -66,7 +57,7 @@ const plainArkType = type({
   }).array(),
 });
 
-const zodDocument = z.object({
+export const zodDocument = z.object({
   exportId: z.uuid(),
   customers: z.array(
     z.object({
@@ -102,7 +93,7 @@ const zodDocument = z.object({
   ),
 });
 
-const valibotDocument = v.object({
+export const valibotDocument = v.object({
   exportId: v.pipe(v.string(), v.uuid()),
   customers: v.array(
     v.object({
@@ -137,40 +128,3 @@ const valibotDocument = v.object({
     }),
   ),
 });
-
-const classValidatorAccepted = (result: unknown): boolean =>
-  Array.isArray(result) && result.length === 0;
-
-export const documentLibraries: readonly DocumentLibrary[] = [
-  {
-    name: 'nominal-types + ArkType',
-    validate: nominalWithArkType,
-    accepted: (result) => !(result instanceof type.errors),
-  },
-  {
-    name: 'nominal-types + class-validator',
-    validate: nominalWithClassValidator,
-    accepted: classValidatorAccepted,
-  },
-  {
-    name: 'typia',
-    validate: typia.validateDocument,
-    accepted: (result) => field(result, 'success') === true,
-  },
-  {
-    name: 'arktype',
-    validate: plainArkType,
-    accepted: (result) => !(result instanceof type.errors),
-  },
-  {
-    name: 'zod',
-    validate: (input) => zodDocument.safeParse(input),
-    accepted: (result) => field(result, 'success') === true,
-  },
-  {
-    name: 'valibot',
-    validate: (input) => v.safeParse(valibotDocument, input),
-    accepted: (result) => field(result, 'success') === true,
-  },
-  { name: 'class-validator', validate: plainClassValidator, accepted: classValidatorAccepted },
-];

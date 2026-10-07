@@ -52,23 +52,45 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 
 ## A large document
 
-`npm run bench:document` validates a 2.9 MB export: 3000 customers with addresses, and 5500 orders with five items each, about 112,000 values to check. Each library describes the same document. nominal-types doesn't validate objects itself yet, so it appears inside ArkType and inside class-validator DTOs. Measured on an Apple M4 Pro, Node.js 25.3, 7 Oct 2026, median of five runs:
+`npm run bench:document` validates a 3 MB export: 3000 customers with two addresses each, and 4300 orders with five items, each item with a nested price. That is about 112,000 values to check. Each library describes the same document. nominal-types doesn't validate objects itself yet, so it appears inside ArkType and inside class-validator DTOs. Measured on an Apple M4 Pro, Node.js 25.3, 7 Oct 2026, median of five runs:
 
 | Library                         | Valid document | One error deep inside | Every hundredth email broken |
 | ------------------------------- | -------------: | --------------------: | ---------------------------: |
-| Typia                           |         2.8 ms |                7.0 ms |                       3.9 ms |
+| Typia                           |         2.5 ms |                6.0 ms |                       3.6 ms |
 | ArkType                         |         3.7 ms |                 18 ms |                        15 ms |
-| Valibot                         |         7.1 ms |                7.1 ms |                       7.1 ms |
-| Zod                             |         8.2 ms |                8.0 ms |                       7.4 ms |
-| class-validator                 |          94 ms |                 94 ms |                        96 ms |
-| nominal-types + class-validator |          98 ms |                 99 ms |                       101 ms |
-| nominal-types + ArkType         |         110 ms |                110 ms |                       214 ms |
+| Zod                             |         6.5 ms |                6.7 ms |                       6.4 ms |
+| Valibot                         |         7.3 ms |                7.1 ms |                       7.0 ms |
+| class-validator                 |         105 ms |                105 ms |                       106 ms |
+| nominal-types + class-validator |         112 ms |                110 ms |                       111 ms |
+| nominal-types + ArkType         |         112 ms |                111 ms |                       204 ms |
 
 How to read it:
 
 - Inside class-validator, nominal types add about 5% to its own time.
 - Inside ArkType, they make it about 30 times slower. ArkType compiles its own schemas, but a nominal type is a foreign Standard Schema to it, and it runs every such field through a slower path. The checks themselves are not the cost: 112,000 values at about 50 ns each take about 6 ms.
 - So nominal types are fast per value, and as fast as the library around them for whole documents.
+
+## In a NestJS app
+
+`npm run bench:nest` posts the same 3 MB document as a JSON body to a NestJS 12 app on Fastify, the way a real endpoint receives it. DTOs use real decorators and `ValidationPipe({ transform: true })`. The other libraries go through `@Body({ schema })` and Nest's `StandardSchemaValidationPipe`. Every setup runs in a process of its own, so no library warms up or slows down another, and nominal-types is loaded from its build. Median time per request:
+
+| Setup                                                 |  Valid | One error deep inside | Every hundredth email broken |
+| ----------------------------------------------------- | -----: | --------------------: | ---------------------------: |
+| Typia                                                 |  23 ms |                 25 ms |                        22 ms |
+| ArkType                                               |  24 ms |                 38 ms |                        33 ms |
+| Valibot                                               |  28 ms |                 27 ms |                        27 ms |
+| Zod                                                   |  30 ms |                 29 ms |                        26 ms |
+| class-validator                                       | 127 ms |                121 ms |                       123 ms |
+| nominal-types + class-validator                       | 131 ms |                130 ms |                       129 ms |
+| nominal-types + ArkType                               | 138 ms |                149 ms |                       226 ms |
+| class-validator, with 1000 other DTOs in the app      |  1.1 s |                 1.1 s |                        1.1 s |
+| nominal-types + class-validator, with 1000 other DTOs |  1.1 s |                 1.1 s |                        1.1 s |
+
+How to read it:
+
+- About 20 ms of every request is Fastify reading the body and `JSON.parse` on 3 MB, whatever validates it.
+- class-validator gets slower as the app grows. The same document takes 0.13 s in an app with 5 DTOs and 1.1 s in an app with 1000 more. Its work per object grows with the number of decorated classes the whole app has registered, not only with the document. In a large app with a larger payload, that reaches minutes.
+- nominal types inside class-validator add only a few percent to it, in a small app and in a large one.
 
 ## How a chain runs
 

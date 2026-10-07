@@ -23,6 +23,12 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
     return false;
   }
 
+  const allowed = keyword('enum');
+
+  if (Array.isArray(allowed) && !allowed.includes(value)) {
+    return false;
+  }
+
   const type = keyword('type');
 
   if (type === 'string' && typeof value !== 'string') {

@@ -8,8 +8,11 @@ The built-in types are optional. Any type can be declared from scratch with [`No
 AnyString                     any string
 ├── Email
 ├── Uuid
-└── Url
-    └── HttpUrl
+├── Url
+│   └── HttpUrl
+├── CountryCode               ISO 3166-1, such as US
+├── CurrencyCode              ISO 4217, such as EUR
+└── LanguageTag               BCP 47, such as en-US
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
@@ -37,12 +40,12 @@ AnyBigInt                     any integer, as a bigint
 AnyBoolean                    true or false
 ```
 
-| Page                      | Types                                          |
-| ------------------------- | ---------------------------------------------- |
-| [Strings](string.md)      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl` |
-| [Numbers](number.md)      | `AnyNumber` and the 17 types under it          |
-| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64` |
-| [Booleans](boolean.md)    | `AnyBoolean`                                   |
+| Page                      | Types                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| [Strings](string.md)      | `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `LanguageTag` |
+| [Numbers](number.md)      | `AnyNumber` and the 17 types under it                                                        |
+| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                               |
+| [Booleans](boolean.md)    | `AnyBoolean`                                                                                 |
 
 ## Which built-in type do I pick?
 
@@ -51,6 +54,9 @@ AnyBoolean                    true or false
 | an email address                     | `Email`                                                 | checks the address and hides it in messages     |
 | an id made as a UUID                 | `Uuid`                                                  | any version, any case                           |
 | a link to a web page                 | `HttpUrl`                                               | `http` and `https` only; `Url` takes any scheme |
+| a country                            | `CountryCode`                                           | ISO codes such as `US`, upper case only         |
+| a currency                           | `CurrencyCode`                                          | ISO codes such as `EUR`, with `minorUnits`      |
+| a language or locale                 | `LanguageTag`                                           | tags such as `en-US`, any case                  |
 | free text                            | `AnyString`                                             | any string, `''` included                       |
 | a count of items, such as a quantity | `PositiveInteger`                                       | 1 and up                                        |
 | an amount in cents, an index         | `NonNegativeInteger`                                    | 0 and up                                        |

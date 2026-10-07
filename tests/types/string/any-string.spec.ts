@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { stringOnly, stringRule, withoutImpliedString } from '../../../src/core/string-rule.ts';
 import {
   AnyString,
+  CountryCode,
+  CurrencyCode,
   Email,
   HttpUrl,
+  LanguageTag,
   matching,
   NominalError,
   satisfying,
@@ -51,6 +54,9 @@ describe('types under AnyString', () => {
     [AnyString, Email, 'jane@example.com'],
     [AnyString, Uuid, '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
     [AnyString, Url, 'https://example.com'],
+    [AnyString, CountryCode, 'US'],
+    [AnyString, CurrencyCode, 'EUR'],
+    [AnyString, LanguageTag, 'en-US'],
     [Url, HttpUrl, 'https://example.com'],
   ];
 
@@ -81,6 +87,9 @@ describe('types under AnyString', () => {
     [Uuid, 'must be a string (was 42)'],
     [Url, 'must be a URL (was 42)'],
     [HttpUrl, 'must be a URL (was 42)'],
+    [CountryCode, 'must be an ISO 3166-1 alpha-2 country code (was 42)'],
+    [CurrencyCode, 'must be an ISO 4217 currency code (was 42)'],
+    [LanguageTag, 'must be a BCP 47 language tag (was 42)'],
   ] as const)('reports a non-string to %o once', (type, message) => {
     expect(issuesOf(type.parse(42))).toStrictEqual([{ message }]);
   });

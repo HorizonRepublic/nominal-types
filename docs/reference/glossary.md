@@ -8,6 +8,7 @@ The terms these pages use, in alphabetical order.
 | aggregate                   | In domain-driven design, a group of entities changed together as one unit, such as an order and its lines.                                                             |
 | another copy of the package | The package loaded twice in one application, such as once with `import` and once with `require`. Types, instances and schemas from both copies work together.          |
 | base type                   | One of the roots `AnyString`, `AnyNumber`, `AnyBigInt`, `AnyBoolean`. Types under them have a text form.                                                               |
+| BCP 47                      | The standard for language tags such as `en-US`: a language, then an optional script, region and other parts, joined by `-`.                                            |
 | boundary                    | A place where data enters your code, such as an HTTP request, an environment variable or a database row.                                                               |
 | bounded context             | In domain-driven design, a part of a system with its own meaning for its words. A type name such as `billing.Email` names it.                                          |
 | brand                       | The hidden marker that makes the compiler tell types apart.                                                                                                            |
@@ -22,10 +23,13 @@ The terms these pages use, in alphabetical order.
 | frozen                      | Made read-only with `Object.freeze`. An object or array value of an instance is frozen all the way down.                                                               |
 | instance                    | An object made by `new Email(…)` or `Email.parse(…)`. It always holds a valid value.                                                                                   |
 | invariant                   | A rule that always holds for a value, such as a stay's guests never exceeding its capacity.                                                                            |
+| ISO 3166-1                  | The standard list of country codes. Its two-letter codes, such as `US` and `UA`, are the ones `CountryCode` takes.                                                     |
+| ISO 4217                    | The standard list of three-letter currency codes, such as `EUR` and `JPY`, with their minor units.                                                                     |
 | issue                       | One reason a value was rejected: `{ message, path? }`.                                                                                                                 |
 | JSON Schema                 | A JSON format for describing data, used by OpenAPI and many tools.                                                                                                     |
 | level                       | One step in a line of types, such as `Integer` in `AnyNumber` › `FiniteNumber` › `Integer`.                                                                            |
 | line of types               | A type with the types above and below it. Instances of one line compare with `equals()`. Siblings and variants are in other lines.                                     |
+| minor units                 | How many digits an amount of a currency has after the decimal point: 2 for the euro (cents), 0 for the yen.                                                            |
 | morph                       | In ArkType, a step that turns the checked value into another value.                                                                                                    |
 | nominal type                | A type told apart by its name, not its shape. `Email` and `Uuid` both wrap a string but don't mix.                                                                     |
 | object schema               | What `objectOf()` returns: a schema for an object whose fields are checked by their own schemas.                                                                       |

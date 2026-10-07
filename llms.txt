@@ -205,6 +205,9 @@ config.PORT.value; // 3000 for PORT=3000
 | `Uuid` | `nominal.Uuid` | a UUID in any case; `version`, `timestamp`, `isNil`, `isMax`, `canonical()`; `equals` ignores case | yes |
 | `Url` | `nominal.Url` | an absolute URL; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
+| `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code, upper case (`UK`, `EU`, `XK` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
+| `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |
+| `LanguageTag` | `nominal.LanguageTag` | a well-formed BCP 47 tag in any case that `Intl` also takes (`en_US`, `french`, `zh-yue`, `i-klingon` refused); `language`, `script`, `region`, `canonical()` via `Intl.getCanonicalLocales`; `equals` ignores case | yes |
 | `AnyNumber` | `nominal.AnyNumber` | any number | yes |
 | `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
 | `Float32` | `nominal.Float32` | a 32-bit float | yes |
@@ -343,7 +346,7 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.

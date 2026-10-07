@@ -4,6 +4,14 @@ This guide shows how to check a request body, a message or a config with [ArkTyp
 
 The helpers come from a separate entry point, `@horizon-republic/nominal-types/adapters/arktype`. You only need `arktype` if you import it. It works with ArkType 2.2 and later.
 
+The adapter has three functions, one for each level:
+
+| Function                    | Wraps                                                                    |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `arkOf(Type)`               | a field: a nominal type as an ArkType node                               |
+| `arkObject(type, ...rules)` | an object, with [constraints](checking-fields-together.md) on its fields |
+| `arkSchema(type, ...rules)` | the whole schema: checks, builds instances, runs the constraints         |
+
 ## Writing a schema
 
 Put `arkOf(Type)` where a field holds a nominal type, then wrap the whole schema in `arkSchema()`:
@@ -66,10 +74,10 @@ A morph after `arkOf()` is not supported: `arkSchema()` throws a `TypeError`. Pu
 
 ## Checking one field against another
 
-Attach [constraints](checking-fields-together.md) to an ArkType object with `constrain()`. They run on that object wherever it sits, after the instances are built:
+Attach [constraints](checking-fields-together.md) to an ArkType object with `arkObject()`. They run on that object wherever it sits, after the instances are built:
 
 ```ts
-import { constrain } from '@horizon-republic/nominal-types/adapters/arktype';
+import { arkObject } from '@horizon-republic/nominal-types/adapters/arktype';
 import { constraint } from '@horizon-republic/nominal-types';
 
 const withinCapacity = constraint(
@@ -78,7 +86,7 @@ const withinCapacity = constraint(
   { path: 'guests' },
 );
 
-const Stay = constrain(
+const Stay = arkObject(
   type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
   withinCapacity,
 );

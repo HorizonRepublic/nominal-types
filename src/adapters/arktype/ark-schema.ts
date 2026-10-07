@@ -24,13 +24,16 @@ import { constraintId, constraintsKey } from './registry.ts';
  *
  * @example
  * ```ts
- * const Stay = constrain(type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }), withinCapacity);
+ * const Stay = arkObject(
+ *   type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
+ *   withinCapacity,
+ * );
  * const CreateBooking = arkSchema(type({ hotel: 'string', stays: Stay.array() }));
  * ```
  */
-export const constrain = <Ark extends Type>(ark: Ark, ...constraints: AnyConstraint[]): Ark => {
+export const arkObject = <Ark extends Type>(ark: Ark, ...constraints: AnyConstraint[]): Ark => {
   if (!isObjectNode(ark.json)) {
-    throw new TypeError('constrain: constraints attach to an ArkType object type');
+    throw new TypeError('arkObject: constraints attach to an ArkType object type');
   }
 
   const known: unknown = Reflect.get(ark.meta, constraintsKey);
@@ -134,8 +137,8 @@ export class ArkSchema<Input, Output> {
  *
  * @remarks
  * ArkType checks the input on its own fast path, then one pass builds the instances and runs the
- * constraints given here and those `constrain()` attached inside. The result is a Standard Schema
- * and a Standard JSON Schema, where each `arkOf()` field is described by its type.
+ * constraints given here and those `arkObject()` attached inside. The result is a Standard
+ * Schema and a Standard JSON Schema, where each `arkOf()` field is described by its type.
  *
  * @throws TypeError when an `arkOf()` node sits in a union whose branches can't be told apart at
  * runtime.
@@ -155,4 +158,4 @@ export const arkSchema = <Ark extends Type>(
   ark: Ark,
   ...constraints: AnyConstraint[]
 ): ArkSchema<Ark['inferIn'], Built<Ark['t']>> =>
-  new ArkSchema(constraints.length === 0 ? ark : constrain(ark, ...constraints));
+  new ArkSchema(constraints.length === 0 ? ark : arkObject(ark, ...constraints));

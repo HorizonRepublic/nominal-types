@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { arkOf, arkSchema, constrain } from '../../../src/adapters/arktype/index.ts';
+import { arkOf, arkSchema, arkObject } from '../../../src/adapters/arktype/index.ts';
 import { describeArk } from '../../../src/adapters/arktype/json.ts';
 import { planOf } from '../../../src/adapters/arktype/plan.ts';
 import { constraint, Email, PositiveInteger, Uuid } from '../../../src/index.ts';
@@ -37,7 +37,7 @@ const problemOf = (node: { readonly meta: object }, data: unknown): unknown => {
 };
 
 const positive = constraint({ count: PositiveInteger }, () => false, { message: 'never' });
-const Counted = constrain(type({ count: arkOf(PositiveInteger) }), positive);
+const Counted = arkObject(type({ count: arkOf(PositiveInteger) }), positive);
 
 describe('plan internals', () => {
   it('leaves a value of the wrong kind as it is', () => {
@@ -52,7 +52,7 @@ describe('plan internals', () => {
   });
 
   it('runs field constraints and its own on one object', () => {
-    const Outer = constrain(type({ inner: Counted }), positive);
+    const Outer = arkObject(type({ inner: Counted }), positive);
 
     expect(issuesOf(arkSchema(Outer).parse({ inner: { count: 1 } }))).toStrictEqual([
       { message: 'never', path: ['inner'] },

@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { arkOf, arkSchema, constrain } from '../../../src/adapters/arktype/index.ts';
+import { arkOf, arkSchema, arkObject } from '../../../src/adapters/arktype/index.ts';
 import { constraint, Email, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { satisfiesSchema } from '../../support/json-schema.ts';
 
@@ -16,7 +16,7 @@ const Booking = arkSchema(
     email: type('string.trim').pipe(arkOf(Email)),
     'backup?': arkOf(Email).or('null'),
     status: "'new' | 'paid'",
-    stays: constrain(
+    stays: arkObject(
       type({ guests: arkOf(PositiveInteger), capacity: arkOf(PositiveInteger) }),
       withinCapacity,
     ).array(),

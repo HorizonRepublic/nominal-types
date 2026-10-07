@@ -205,7 +205,8 @@ export const isConstraint = (value: unknown): value is AnyConstraint =>
  * that failed on its own reports its own issue and nothing more. Return `true` when the fields
  * agree, `false` for the message in the options, or a message.
  *
- * The result is a Standard Schema over the object, so a nominal type takes it as its rule.
+ * The result is a Standard Schema over the object. Give it to `objectOf()`, or to an adapter's
+ * `constrain…()`.
  *
  * @example
  * ```ts
@@ -215,10 +216,13 @@ export const isConstraint = (value: unknown): value is AnyConstraint =>
  *   { path: 'guests' },
  * );
  *
- * class Occupancy extends Nominal('Occupancy', withinCapacity) {}
+ * class Occupancy extends Nominal(
+ *   'booking.Occupancy',
+ *   objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+ * ) {}
  *
  * new Occupancy({ guests: 3, capacity: 2 });
- * // NominalError: Occupancy: guests: must not exceed the capacity
+ * // NominalError: booking.Occupancy: guests: must not exceed the capacity
  * ```
  */
 export const constraint = <const Fields extends Readonly<Record<string, ConstraintField>>>(

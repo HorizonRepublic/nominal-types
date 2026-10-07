@@ -26,38 +26,17 @@ export class InvoiceNumber extends Nominal('billing.InvoiceNumber', /^INV-(\d{4}
 }
 ```
 
-## Invariants across fields
-
-An invariant is a rule that must always hold, often across several fields: a stay ends after it starts, guests fit the room. Write it once as a `constraint()` and make a type of it:
-
-```ts
-import { constraint, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
-
-export class Occupancy extends Nominal(
-  'booking.Occupancy',
-  constraint(
-    { guests: PositiveInteger, capacity: PositiveInteger },
-    ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
-    { path: 'guests' },
-  ),
-) {
-  public get free(): number {
-    return this.value.capacity.value - this.value.guests.value;
-  }
-}
-```
-
-An `Occupancy` that breaks the rule can't be built, so the domain code never checks it again.
-
 ## Value objects of several fields
 
-A value object often has more than one field: an amount and its currency, a stay with its guests and capacity. Build it on `objectOf()`, with the invariant as a constraint:
+A value object often has more than one field: an amount and its currency, a stay with its guests and capacity. Its invariant is a rule that must always hold across those fields: a stay ends after it starts, guests fit the room.
+
+Build it on `objectOf()`, with the invariant as a `constraint()`:
 
 ```ts
 import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
 
-export class Stay extends Nominal(
-  'booking.Stay',
+export class Occupancy extends Nominal(
+  'booking.Occupancy',
   objectOf(
     { guests: PositiveInteger, capacity: PositiveInteger },
     constraint(
@@ -66,15 +45,19 @@ export class Stay extends Nominal(
       { path: 'guests' },
     ),
   ),
-) {}
+) {
+  public get free(): number {
+    return this.capacity.value - this.guests.value;
+  }
+}
 
-const stay = new Stay({ guests: 2, capacity: 3 });
+const occupancy = new Occupancy({ guests: 2, capacity: 3 });
 
-stay.guests; // PositiveInteger
-stay.copyWith({ guests: 3 }); // a new Stay, checked; stay itself never changes
+occupancy.guests; // PositiveInteger
+occupancy.copyWith({ guests: 3 }); // a new Occupancy, checked; occupancy itself never changes
 ```
 
-`copyWith()` is how a value object changes in DDD: it never changes in place, and every new value is checked against the same invariant.
+An `Occupancy` that breaks the rule can't be built, so the domain code never checks it again. `copyWith()` is how a value object changes in DDD: never in place, and every new value is checked against the same invariant.
 
 ## Bounded contexts and names
 

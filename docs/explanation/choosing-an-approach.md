@@ -97,39 +97,32 @@ Use it where no adapter exists yet, or in a schema that runs rarely, such as a c
 
 ## Giving an object behaviour
 
-Sometimes an object is a value of its own: a date range, an amount with its currency, an occupancy. It has rules across its fields and methods that belong to it. Make it a nominal type:
+Sometimes an object is a value of its own: a date range, an amount with its currency, an occupancy. It has rules across its fields and methods that belong to it. Make it a nominal type on `objectOf()`, with the rules as constraints:
 
 ```ts
-import { constraint, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
+import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const withinCapacity = constraint(
+  { guests: PositiveInteger, capacity: PositiveInteger },
+  ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
+  { path: 'guests' },
+);
 
 export class Occupancy extends Nominal(
-  'Occupancy',
-  constraint(
-    { guests: PositiveInteger, capacity: PositiveInteger },
-    ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
-    { path: 'guests' },
-  ),
+  'booking.Occupancy',
+  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
 ) {
   public get free(): number {
-    return this.value.capacity.value - this.value.guests.value;
+    return this.capacity.value - this.guests.value;
   }
 }
+
+new Occupancy({ guests: 2, capacity: 3 }).copyWith({ guests: 3 }).free; // 0
 ```
 
-With `objectOf()` as the rule, the class gets a getter for each field and `copyWith()`:
+The class gets a getter for each field and `copyWith()`, and its value is frozen.
 
-```ts
-export class Stay extends Nominal(
-  'booking.Stay',
-  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
-) {}
-
-new Stay({ guests: 2, capacity: 3 }).copyWith({ guests: 3 }).guests; // PositiveInteger
-```
-
-The rule can also be a `constraint()` alone, as in `Occupancy` above, or an ArkType schema. Then the fields are read through `value`, such as `occupancy.value.guests`.
-
-Don't make every request body a class this way. A body is checked once and taken apart. A plain object from `fromArk()` is simpler to use, and its fields are instances already.
+Don't make every request body a class this way. A body is checked once and taken apart. A plain object from `objectOf()` is simpler to use, and its fields are instances already.
 
 ## Rules across fields
 

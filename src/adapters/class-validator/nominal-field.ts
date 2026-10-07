@@ -6,6 +6,16 @@ import { issueText } from '../../core/issue-text.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
 import type { NominalTarget } from '../../core/target.ts';
 
+const hasToJson = (value: unknown): value is { toJSON: () => unknown } =>
+  typeof value === 'object' && value !== null && typeof Reflect.get(value, 'toJSON') === 'function';
+
+const toPlain = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item: unknown) => toPlain(item));
+  }
+  return hasToJson(value) ? toPlain(value.toJSON()) : value;
+};
+
 const messageOf = (target: NominalTarget, value: unknown, property: string): string => {
   const parsed = parseTarget(target, value);
   return (parsed.ok ? [] : parsed.issues).map((issue) => issueText(issue, property)).join('; ');
@@ -19,8 +29,10 @@ const messageOf = (target: NominalTarget, value: unknown, property: string): str
  * Takes a nominal type or a `schemaOf()` schema, so `schemaOf(Uuid).array()` and
  * `schemaOf(Email).optional()` describe lists and optional properties. The value becomes an
  * instance only when the DTO is built with `plainToInstance`, which NestJS's `ValidationPipe` does
- * with `transform: true`; validation works either way. The property counts as known for
- * `whitelist`. `options` are class-validator's own, such as `message` or `groups`.
+ * with `transform: true`; validation works either way. Turning the DTO back into a plain object
+ * with `instanceToPlain`, as NestJS's `ClassSerializerInterceptor` does, gives each instance's
+ * value again. The property counts as known for `whitelist`. `options` are class-validator's own,
+ * such as `message` or `groups`.
  *
  * @throws TypeError when `target` is neither a nominal type nor a `schemaOf()` schema.
  *
@@ -40,12 +52,19 @@ export const NominalField = (
   if (!isTarget(target)) {
     throw new TypeError('NominalField() takes a nominal type or a schemaOf() schema');
   }
-  const toInstance = Transform(({ value }: { value: unknown }) => {
-    const parsed = parseTarget(target, value);
-    return parsed.ok ? parsed.value : value;
+  const toInstance = Transform(
+    ({ value }: { value: unknown }) => {
+      const parsed = parseTarget(target, value);
+      return parsed.ok ? parsed.value : value;
+    },
+    { toClassOnly: true },
+  );
+  const toValue = Transform(({ value }: { value: unknown }) => toPlain(value), {
+    toPlainOnly: true,
   });
   return (prototype, property) => {
     toInstance(prototype, property);
+    toValue(prototype, property);
     registerDecorator({
       name: 'nominalField',
       target: prototype.constructor,

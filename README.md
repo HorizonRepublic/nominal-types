@@ -1,5 +1,11 @@
 # @horizon-republic/nominal-types
 
+[![Code checks](https://github.com/HorizonRepublic/nominal-types/actions/workflows/code-checks.yml/badge.svg?branch=main)](https://github.com/HorizonRepublic/nominal-types/actions/workflows/code-checks.yml)
+[![npm](https://img.shields.io/npm/v/@horizon-republic/nominal-types)](https://www.npmjs.com/package/@horizon-republic/nominal-types)
+[![License](https://img.shields.io/github/license/HorizonRepublic/nominal-types)](LICENSE)
+![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![Node](https://img.shields.io/badge/node-%E2%89%A522.12-339933)
+
 Runtime-validated nominal types for TypeScript.
 
 An email address, a UUID and a username are all `string` to the compiler. Nothing stops you from passing one where another is expected, and every function that receives one has to decide whether to check it again.

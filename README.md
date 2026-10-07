@@ -151,6 +151,7 @@ The repository keeps `package-lock.json`, and `.node-version` names the Node.js 
 | `npm run lint`      | Runs oxlint with type-aware rules                                   |
 | `npm run format`    | Formats the tree with oxfmt; `format:check` only reports            |
 | `npm test`          | Runs the vitest suites; `test:coverage` adds a coverage report      |
+| `npm run bench`     | Compares the speed of nominal-types with nine other libraries       |
 
 ## License
 

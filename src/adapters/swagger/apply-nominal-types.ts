@@ -1,7 +1,7 @@
 import type { AnyNominalType } from '../../core/contracts.ts';
 import { withoutUri } from '../../core/json-target.ts';
 import { isNominalType } from '../../core/nominal.ts';
-import { typeNamed } from '../../core/registry.ts';
+import { typeForSchemaName } from '../../core/registry.ts';
 
 /**
  * The part of an OpenAPI document this adapter reads and fills.
@@ -12,7 +12,7 @@ export interface OpenApiDocument {
 }
 
 const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
-  const type = typeNamed(name);
+  const type = typeForSchemaName(name);
 
   return isNominalType(type) ? type : undefined;
 };

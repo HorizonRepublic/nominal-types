@@ -10,8 +10,8 @@ const numberFromText = (text: string): number | undefined =>
 
 const isNumber = (value: unknown): value is number => typeof value === 'number';
 
-const AnyNumberBase: NominalType<'AnyNumber', NominalSchema<number, number>> = Nominal(
-  'AnyNumber',
+const AnyNumberBase: NominalType<'nominal.AnyNumber', NominalSchema<number, number>> = Nominal(
+  'nominal.AnyNumber',
   satisfying(isNumber, 'a number', { type: 'number' }),
 );
 

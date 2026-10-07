@@ -10,8 +10,8 @@ const pattern = new RegExp(
   'u',
 );
 
-const EmailBase: SubtypeOf<typeof AnyString, 'Email'> = AnyString.subtype(
-  'Email',
+const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtype(
+  'nominal.Email',
   matching(pattern, 'an email address', {
     format: 'email',
     minLength: 6,

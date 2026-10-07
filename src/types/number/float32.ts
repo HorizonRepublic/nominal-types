@@ -2,8 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
-const Float32Base: SubtypeOf<typeof FiniteNumber, 'Float32'> = FiniteNumber.subtype(
-  'Float32',
+const Float32Base: SubtypeOf<typeof FiniteNumber, 'nominal.Float32'> = FiniteNumber.subtype(
+  'nominal.Float32',
   numberRule('a 32-bit float', (value) => Math.fround(value) === value, {
     type: 'number',
     format: 'float',

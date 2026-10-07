@@ -28,7 +28,7 @@ describe('constraint', () => {
       expect(schema).toMatchObject({
         $schema: 'https://json-schema.org/draft/2020-12/schema',
         type: 'object',
-        properties: { min: { title: 'Uint8' }, max: { title: 'Uint8' } },
+        properties: { min: { title: 'nominal.Uint8' }, max: { title: 'nominal.Uint8' } },
         required: ['max'],
       });
       expect(schema['properties']).not.toHaveProperty('min.$schema');

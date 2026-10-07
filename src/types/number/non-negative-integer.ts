@@ -2,10 +2,11 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
 import { numberRule } from './number-rule.ts';
 
-const NonNegativeIntegerBase: SubtypeOf<typeof Integer, 'NonNegativeInteger'> = Integer.subtype(
-  'NonNegativeInteger',
-  numberRule('a non-negative integer', (value) => value >= 0, { type: 'integer', minimum: 0 }),
-);
+const NonNegativeIntegerBase: SubtypeOf<typeof Integer, 'nominal.NonNegativeInteger'> =
+  Integer.subtype(
+    'nominal.NonNegativeInteger',
+    numberRule('a non-negative integer', (value) => value >= 0, { type: 'integer', minimum: 0 }),
+  );
 
 /**
  * A safe integer from 0 up, for counts that may be zero, offsets and indexes.

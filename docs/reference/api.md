@@ -12,10 +12,14 @@ Nominal(name, rule): NominalType
 
 Returns a class to extend.
 
-| Parameter | Description                                                                                   |
-| --------- | --------------------------------------------------------------------------------------------- |
-| `name`    | The type's name. Must be unique in the application.                                           |
-| `rule`    | A `RegExp`, the result of `matching()` or `satisfying()`, or any synchronous Standard Schema. |
+| Parameter | Description                                                                                                                                |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`    | The type's name. Must be unique in the application. Parts of letters, digits, `_` and `-`, joined by dots: `Sku`, `billing.InvoiceNumber`. |
+| `rule`    | A `RegExp`, the result of `matching()` or `satisfying()`, or any synchronous Standard Schema.                                              |
+
+Any other name, such as `billing/Email` or one with a space, throws a `TypeError` when the type is declared. The name becomes the schema name in OpenAPI, which allows no other characters. The same rule holds for `subtype()` and `variant()`.
+
+The built-in types are named under `nominal.`, such as `nominal.Email`, so a type of your own may be called `Email`.
 
 A schema that answers asynchronously throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 
@@ -188,11 +192,11 @@ When an object value is frozen, the input stays yours: the type copies it first.
 
 Thrown by `new` when a value is invalid. It extends `TypeError`.
 
-| Member     | Description                                                                                                                                |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `typeName` | The name of the type that rejected the value.                                                                                              |
-| `issues`   | A list of `{ message, path? }` objects.                                                                                                    |
-| `message`  | `'Email: must be an email address (was "nope")'`; an issue with a path shows it first: `'Occupancy: guests: must not exceed the capacity'` |
+| Member     | Description                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `typeName` | The name of the type that rejected the value.                                                                                                      |
+| `issues`   | A list of `{ message, path? }` objects.                                                                                                            |
+| `message`  | `'nominal.Email: must be an email address (was "nope")'`; an issue with a path shows it first: `'Occupancy: guests: must not exceed the capacity'` |
 
 ## Messages
 

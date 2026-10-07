@@ -10,6 +10,7 @@
 - Write a rule across fields once with `constraint()` and attach it: `arkSchema(type, rule)`, `arkObject(type, rule)` for a nested object, or `Nominal('Name', rule)` for a value with behaviour.
 - In NestJS, check route parameters and query values with `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, or `{ schema: Type }` on NestJS 12.
 - Use `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator` only in projects that already use class-validator.
+- Name types with the part of the system in front and a dot: `Nominal('billing.InvoiceNumber', …)`, class named like the last part (`class InvoiceNumber`). Names allow letters, digits, `_` and `-` in each part; `/` and spaces throw. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on.
 - Use `schemaOf(Type)` inside libraries that have no adapter; inside ArkType prefer `arkOf(Type)`, which is about 20 times faster.
 
 ## Core API
@@ -17,13 +18,13 @@
 ```ts
 import { constraint, Email, Nominal, PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
 
-export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
+export class OrderNumber extends Nominal('sales.OrderNumber', /^ORD-\d{8}$/u) {
   get year(): number {
     return Number(this.value.slice(4, 8));
   }
 }
 
-export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
+export class ExpressOrderNumber extends OrderNumber.subtype('sales.ExpressOrderNumber', /^ORD-\d{4}9/u) {}
 
 OrderNumber.parse('42'); // { ok: false, issues: [{ message: 'must be matched by ^ORD-\d{8}$ (was "42")' }] }
 new OrderNumber('ORD-20261007').value; // 'ORD-20261007'
@@ -77,6 +78,7 @@ Strings: `AnyString`, `Email`, `Uuid`, `Url`, `HttpUrl`. Numbers: `AnyNumber`, `
 
 ## Docs
 
+- [Nominal types in domain-driven design](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/domain-driven-design.md): value objects, invariants, names per bounded context
 - [Choosing how to check input](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/choosing-an-approach.md): every way, the recommended one, and what each costs
 - [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): ArkType, NestJS, class-validator, Swagger, arrays and optional values, rules across fields, JSON Schema
 - [API reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/api.md)

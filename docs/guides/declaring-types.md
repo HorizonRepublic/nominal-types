@@ -29,7 +29,28 @@ Keep in mind:
 
 - Use the `u` flag and no other. Other flags are refused.
 - To ignore case, list both cases, like `[A-Fa-f]`, instead of the `i` flag.
-- Give each type a unique name. The name identifies the type at runtime, and declaring two different types with one name prints a warning.
+- Give each type a unique name. See [Naming a type](#naming-a-type).
+
+## Naming a type
+
+The name identifies the type at runtime: in error messages, in JSON Schema and in Swagger. Two different types with one name pass for each other, and the package prints a warning.
+
+In a larger codebase, put the part of the system in front, with a dot:
+
+```ts
+export class InvoiceNumber extends Nominal('billing.InvoiceNumber', /^INV-\d{8}$/u) {}
+export class Email extends AnyString.subtype('billing.Email', /^.+@billing\.example$/u) {}
+```
+
+The rules for a name:
+
+| Rule                                     | Why                                                 |
+| ---------------------------------------- | --------------------------------------------------- |
+| parts of letters, digits, `_` and `-`    | the name becomes a schema name in OpenAPI           |
+| a dot between parts, never `/` or spaces | other characters throw a `TypeError` at declaration |
+| the class named like the last part       | Swagger finds the type by the class name            |
+
+The built-in types are named under `nominal.`, such as `nominal.Email`. Your own `billing.Email`, or even a plain `Email`, doesn't clash with them.
 
 ## Declaring with a type guard
 

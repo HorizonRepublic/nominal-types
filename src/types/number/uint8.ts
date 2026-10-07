@@ -2,8 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
 import { integerBetween } from './number-rule.ts';
 
-const Uint8Base: SubtypeOf<typeof Integer, 'Uint8'> = Integer.subtype(
-  'Uint8',
+const Uint8Base: SubtypeOf<typeof Integer, 'nominal.Uint8'> = Integer.subtype(
+  'nominal.Uint8',
   integerBetween(0, 255, 'an unsigned 8-bit integer'),
 );
 

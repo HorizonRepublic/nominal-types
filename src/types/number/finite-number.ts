@@ -4,8 +4,8 @@ import { AnyNumber } from './any-number.ts';
 
 const isFinite = (value: unknown): value is number => Number.isFinite(value);
 
-const FiniteNumberBase: SubtypeOf<typeof AnyNumber, 'FiniteNumber'> = AnyNumber.subtype(
-  'FiniteNumber',
+const FiniteNumberBase: SubtypeOf<typeof AnyNumber, 'nominal.FiniteNumber'> = AnyNumber.subtype(
+  'nominal.FiniteNumber',
   satisfying(isFinite, 'a finite number', { type: 'number', format: 'double' }),
 );
 

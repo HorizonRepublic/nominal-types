@@ -30,6 +30,7 @@ New here? Start with the tutorial. Checking request bodies? See [Choosing how to
 ## [Explanation](explanation/README.md)
 
 - [Choosing how to check input](explanation/choosing-an-approach.md)
+- [Nominal types in domain-driven design](explanation/domain-driven-design.md)
 - [How it works](explanation/how-it-works.md)
 - [Type hierarchy](explanation/type-hierarchy.md)
 - [Performance](explanation/performance.md)

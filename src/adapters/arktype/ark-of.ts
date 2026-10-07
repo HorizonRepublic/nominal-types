@@ -42,7 +42,12 @@ export const arkOf = <Target extends AnyNominalType>(target: Target): ArkOf<Targ
   };
 
   // A one-argument predicate keeps ArkType on its fast path; the message is built on failure only.
-  const meta = { [typeKey]: typeIdOf(target), description: target.typeName, problem };
+  const description: unknown = Reflect.get(target.rule, 'description');
+  const meta = {
+    [typeKey]: typeIdOf(target),
+    description: typeof description === 'string' ? description : target.typeName,
+    problem,
+  };
   const node = type('unknown')
     .narrow((value) => !(check(value) instanceof Rejection))
     .configure(meta);

@@ -31,13 +31,13 @@ describe('AnyString', () => {
 
   it('names the type in the error', () => {
     expect(thrownBy(() => Reflect.construct(AnyString, [42]))).toStrictEqual(
-      new NominalError('AnyString', [{ message: 'must be a string (was 42)' }]),
+      new NominalError('nominal.AnyString', [{ message: 'must be a string (was 42)' }]),
     );
   });
 
   it('describes itself as a string', () => {
     expect(AnyString['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
-      title: 'AnyString',
+      title: 'nominal.AnyString',
       type: 'string',
       description: 'a string',
     });
@@ -102,7 +102,7 @@ describe('types under AnyString', () => {
 
   it('describes a type with one rule left without allOf', () => {
     expect(Email['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
-      title: 'Email',
+      title: 'nominal.Email',
       type: 'string',
       pattern: Email.pattern.source,
       format: 'email',

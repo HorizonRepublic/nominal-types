@@ -18,7 +18,7 @@ describe('AnyBoolean', () => {
 
   it('describes itself as a boolean', () => {
     expect(AnyBoolean['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
-      title: 'AnyBoolean',
+      title: 'nominal.AnyBoolean',
       type: 'boolean',
       description: 'a boolean',
     });

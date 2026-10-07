@@ -2,9 +2,9 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
-const NonPositiveNumberBase: SubtypeOf<typeof FiniteNumber, 'NonPositiveNumber'> =
+const NonPositiveNumberBase: SubtypeOf<typeof FiniteNumber, 'nominal.NonPositiveNumber'> =
   FiniteNumber.subtype(
-    'NonPositiveNumber',
+    'nominal.NonPositiveNumber',
     numberRule('a non-positive number', (value) => value <= 0, { type: 'number', maximum: 0 }),
   );
 

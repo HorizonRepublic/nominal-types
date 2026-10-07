@@ -4,8 +4,8 @@ import { FiniteNumber } from './finite-number.ts';
 
 const isSafeInteger = (value: unknown): value is number => Number.isSafeInteger(value);
 
-const IntegerBase: SubtypeOf<typeof FiniteNumber, 'Integer'> = FiniteNumber.subtype(
-  'Integer',
+const IntegerBase: SubtypeOf<typeof FiniteNumber, 'nominal.Integer'> = FiniteNumber.subtype(
+  'nominal.Integer',
   satisfying(isSafeInteger, 'a safe integer', {
     type: 'integer',
     minimum: Number.MIN_SAFE_INTEGER,

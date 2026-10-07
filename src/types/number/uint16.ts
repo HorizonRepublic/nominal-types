@@ -2,8 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
 import { integerBetween } from './number-rule.ts';
 
-const Uint16Base: SubtypeOf<typeof Integer, 'Uint16'> = Integer.subtype(
-  'Uint16',
+const Uint16Base: SubtypeOf<typeof Integer, 'nominal.Uint16'> = Integer.subtype(
+  'nominal.Uint16',
   integerBetween(0, 65535, 'an unsigned 16-bit integer'),
 );
 

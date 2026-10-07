@@ -144,7 +144,7 @@ class NominalRoot {
     return value instanceof this;
   }
 
-  public static standard(this: typeof NominalRoot): StandardSchema<unknown, NominalRoot> {
+  public static standardSchema(this: typeof NominalRoot): StandardSchema<unknown, NominalRoot> {
     const cached = standardSchemas.get(this);
     if (cached !== undefined) {
       return cached;

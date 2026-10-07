@@ -91,7 +91,9 @@ describe('PatternSchema', () => {
     });
 
     it('embeds into an ArkType object', () => {
-      expect(type({ code: Code.standard() }).assert({ code: 'C-001' }).code).toBeInstanceOf(Code);
+      expect(type({ code: Code.standardSchema() }).assert({ code: 'C-001' }).code).toBeInstanceOf(
+        Code,
+      );
     });
   });
 

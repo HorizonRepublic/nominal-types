@@ -69,7 +69,15 @@ export interface AnyNominalType {
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
   parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
   is<Type extends AnyNominalType>(this: Type, value: unknown): value is Type['prototype'];
-  standard<Type extends AnyNominalType>(
+  /**
+   * The whole type as a plain Standard Schema object, for libraries that treat a class as a
+   * definition of their own, such as ArkType.
+   *
+   * @remarks
+   * Not to be confused with `schema`, which is only the rule of one level. The object is created
+   * once per type and returned on every call.
+   */
+  standardSchema<Type extends AnyNominalType>(
     this: Type,
   ): StandardSchema<InputOf<Type['schema']>, Type['prototype']>;
 }
@@ -81,7 +89,7 @@ export interface AnyNominalType {
  * @remarks
  * The class is a Standard Schema and a Standard JSON Schema through its static `~standard`, so
  * consumers that call `~standard` accept the class itself. Consumers that parse definitions treat
- * any function as their own construct, and take the plain object `standard()` returns instead.
+ * any function as their own construct, and take the plain object `standardSchema()` returns instead.
  */
 export interface NominalType<
   Name extends string,

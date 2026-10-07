@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { inOneLine } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
 
 const pattern =
@@ -76,9 +77,14 @@ export class Uuid extends UuidBase {
   }
 
   /**
-   * Whether the other value is a Uuid with the same digits, ignoring case.
+   * Whether the other value has the same digits, ignoring case, and belongs to this type, a type
+   * under it or the type it is under, like `equals()` on every type.
    */
   public override equals(other: unknown): boolean {
-    return other instanceof Uuid && other.value.toLowerCase() === this.value.toLowerCase();
+    return (
+      inOneLine(this, other) &&
+      other instanceof Uuid &&
+      other.value.toLowerCase() === this.value.toLowerCase()
+    );
   }
 }

@@ -19,7 +19,7 @@ import { PatternSchema } from './pattern-schema.ts';
 import { remember, nothingPending, takePending } from './pending.ts';
 import { registerType, typeNamed } from './registry.ts';
 import { Rejection } from './rejection.ts';
-import { sameValue } from './same-value.ts';
+import { inOneLine, sameValue } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { describeType, runType } from './type-rules.ts';
@@ -99,11 +99,7 @@ class NominalRoot {
   }
 
   public equals(other: unknown): boolean {
-    return (
-      other instanceof NominalRoot &&
-      Reflect.get(other.constructor, 'typeName') === Reflect.get(this.constructor, 'typeName') &&
-      sameValue(other.value, this.value)
-    );
+    return inOneLine(this, other) && sameValue(Reflect.get(other, 'value'), this.value);
   }
 
   public toJSON(): unknown {
@@ -151,6 +147,20 @@ export const construct = (target: AnyNominalType, input: unknown): unknown => {
   return parsed.ok ? parsed.value : new Rejection(parsed.issues);
 };
 
+const fingerprintOf = (rule: NominalSchema | undefined): string => {
+  if (rule === undefined) {
+    return '';
+  }
+  const pattern: unknown = Reflect.get(rule, 'pattern');
+  if (pattern instanceof RegExp) {
+    return `pattern:${pattern.source}`;
+  }
+  const description: unknown = Reflect.get(rule, 'description');
+  return typeof description === 'string'
+    ? `rule:${description}`
+    : `schema:${rule['~standard'].vendor}`;
+};
+
 const derive = (
   parent: typeof NominalRoot,
   name: string,
@@ -168,7 +178,11 @@ const derive = (
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
   }
-  registerType(name, derived);
+  registerType(
+    name,
+    derived,
+    `${parent.typeName}|${String(base === parent)}|${fingerprintOf(rule)}`,
+  );
   return derived;
 };
 

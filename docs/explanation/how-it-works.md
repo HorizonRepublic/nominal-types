@@ -49,4 +49,6 @@ An application can load this package twice: once through `import` and once throu
 
 To keep `instanceof` working anyway, each type marks its instances with a key from `Symbol.for`, which is shared across copies. `instanceof` checks that key, so an `Email` made by one copy is an `Email` for the other.
 
+The rest of what the copies need to agree on, such as which type has which name and how a type reads text, lives in one object on `globalThis` under a `Symbol.for` key. So an adapter loaded through `require` works with types loaded through `import`.
+
 [← Explanation](README.md)

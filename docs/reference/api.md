@@ -126,12 +126,12 @@ What `parse()` does with different inputs:
 
 ## Instance members
 
-| Member          | Description                                                       |
-| --------------- | ----------------------------------------------------------------- |
-| `value`         | The checked value.                                                |
-| `equals(other)` | `true` for the same type and the same value. `Uuid` ignores case. |
-| `toJSON()`      | The value. `AnyBigInt` and its subtypes return a decimal string.  |
-| `toString()`    | `String(value)`                                                   |
+| Member          | Description                                                                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | The checked value.                                                                                                                                                |
+| `equals(other)` | `true` for the same value in one line of types: the same type, a type under it or the type it is under. Siblings and variants are not equal. `Uuid` ignores case. |
+| `toJSON()`      | The value. `AnyBigInt` and its subtypes return a decimal string.                                                                                                  |
+| `toString()`    | `String(value)`                                                                                                                                                   |
 
 ## NominalError
 

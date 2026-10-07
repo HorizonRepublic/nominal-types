@@ -7,12 +7,13 @@ import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
 import type { Shape } from './shapes.ts';
+import { shared } from './shared.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import { textFormOf } from './text-form.ts';
 import type { TextForm } from './text-form.ts';
 
-const arraySchemas = new WeakSet<object>();
+const { arraySchemas } = shared;
 
 /**
  * Internal: whether a schema accepts an array at its top, also behind `optional()` and

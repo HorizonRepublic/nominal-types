@@ -12,6 +12,12 @@ export const brandKeySlot: unique symbol = Symbol('brandKey');
 export const levelSlot: unique symbol = Symbol('levelBase');
 
 /**
+ * Internal: on a class declared with the `sensitive` option, whether its rejected values are left
+ * out of messages; a class without its own inherits it from the class it extends.
+ */
+export const sensitiveSlot: unique symbol = Symbol('sensitive');
+
+/**
  * Internal: on a variant, the brand keys of the level it was made from.
  */
 export const variantSourceSlot: unique symbol = Symbol('variantSource');

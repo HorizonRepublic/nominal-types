@@ -5,7 +5,8 @@ import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { frozen } from './frozen.ts';
-import { rulesOf } from './hierarchy.ts';
+import { hideValues } from './hidden-values.ts';
+import { rulesOf, sensitiveSlot } from './hierarchy.ts';
 import { NativeSchema } from './native-schema.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
@@ -44,12 +45,25 @@ export const onlyChecks = (root: object, target: TypeClass): boolean =>
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 
-const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) =>
-  compileRun(
+const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
+  const run = compileRun(
     stepsOf(rulesFor(root, target), (rule) => ({
       convert: foreignRunner(rule, target.typeName),
     })),
   );
+
+  if (Reflect.get(target, sensitiveSlot) !== true) {
+    return run;
+  }
+
+  return function runHidingValues(input: unknown): unknown {
+    const value = run(input);
+
+    return typeof value === 'object' && value instanceof Rejection
+      ? new Rejection(hideValues(value.issues))
+      : value;
+  };
+};
 
 /**
  * Internal: the function generated for a type's rules, returning the value or a `Rejection`, with

@@ -87,6 +87,21 @@ describe('NominalPipe', () => {
       expect(() => pipe.transform('nope', param(String))).toThrow(RangeError);
     });
 
+    it('leaves values out of the messages for every type with hideValues', () => {
+      const pipe = new NominalPipe({
+        hideValues: true,
+        exceptionFactory: (issues) => new RangeError(issues.map((issue) => issue.message).join()),
+      });
+
+      expect(() => pipe.transform('secret-password-123', param(Uuid))).toThrow(
+        new RangeError('must be a UUID (was a string of 19 characters)'),
+      );
+      expect(thrownBy(() => new NominalPipe().transform('nope', param(Uuid)))).toHaveProperty(
+        'response.message',
+        ['id: must be a UUID (was "nope")'],
+      );
+    });
+
     it('takes options alone when bound globally', () => {
       const pipe = new NominalPipe({ exceptionFactory: () => new RangeError('custom') });
 

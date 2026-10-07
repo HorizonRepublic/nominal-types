@@ -127,6 +127,18 @@ export interface ObjectCopy<Input> {
 }
 
 /**
+ * Options for `Nominal()`, `subtype()` and `variant()`.
+ */
+export interface NominalOptions {
+  /**
+   * Leaves the rejected value out of the type's messages, for values such as passwords or personal
+   * data: `must be an email address (was a string of 12 characters)`. Subtypes and variants
+   * inherit it; `false` turns it off for one of them.
+   */
+  readonly sensitive?: boolean;
+}
+
+/**
  * Any nominal type class, for code that accepts nominal types generically, such as adapters.
  */
 export interface AnyNominalType {
@@ -163,6 +175,7 @@ export interface NominalType<
       | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
       | (ValueOf<Type['rule']> extends string ? RegExp : never)
       | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
+    options?: NominalOptions,
   ): SubtypeOf<Type, SubtypeName>;
   variant<Type extends AnyNominalType, const VariantName extends string>(
     this: Type,
@@ -171,6 +184,7 @@ export interface NominalType<
       | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
       | (ValueOf<Type['rule']> extends string ? RegExp : never)
       | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
+    options?: NominalOptions,
   ): VariantOf<Type, VariantName>;
 }
 

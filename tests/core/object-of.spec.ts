@@ -86,10 +86,10 @@ describe('objectOf', () => {
       expect(
         issuesOf(Order.parse({ email: 'x', items: [{ sku: 1, quantity: 0 }], backup: 'y' })),
       ).toStrictEqual([
-        { message: 'must be an email address (was "x")', path: ['email'] },
+        { message: 'must be an email address (was a string of 1 character)', path: ['email'] },
         { message: 'must be a string (was 1)', path: ['items', 0, 'sku'] },
         { message: 'must be a positive integer (was 0)', path: ['items', 0, 'quantity'] },
-        { message: 'must be an email address (was "y")', path: ['backup'] },
+        { message: 'must be an email address (was a string of 1 character)', path: ['backup'] },
       ]);
     });
 

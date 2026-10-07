@@ -13,6 +13,7 @@ New here? Start with the tutorial. Checking request bodies? See [Choosing how to
 - [How to validate arrays and optional values](guides/arrays-and-optional.md)
 - [How to read values from strings](guides/reading-strings.md)
 - [How to validate untrusted input](guides/validating-input.md)
+- [How to keep values out of error messages](guides/hiding-values.md)
 - [How to check one field against another](guides/checking-fields-together.md)
 - [How to check an object with objectOf()](guides/objects.md)
 - [How to use nominal types in ArkType schemas](guides/arktype.md)

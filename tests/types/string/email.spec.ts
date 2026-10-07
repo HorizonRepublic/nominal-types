@@ -38,7 +38,7 @@ describe('Email', () => {
   it('reports the rejection in words', () => {
     expect(Email.parse('nope')).toMatchObject({
       ok: false,
-      issues: [{ message: 'must be an email address (was "nope")' }],
+      issues: [{ message: 'must be an email address (was a string of 4 characters)' }],
     });
   });
 

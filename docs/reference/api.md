@@ -7,7 +7,7 @@ Everything the package exports, except the [built-in types](types/README.md). Fo
 ### Nominal()
 
 ```ts
-Nominal(name, rule): NominalType
+Nominal(name, rule, options?): NominalType
 ```
 
 Returns a class to extend.
@@ -16,6 +16,7 @@ Returns a class to extend.
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`    | The type's name. Must be unique in the application. Parts of letters, digits, `_` and `-`, joined by dots: `Sku`, `billing.InvoiceNumber`. |
 | `rule`    | A `RegExp`, the result of `matching()` or `satisfying()`, or any synchronous Standard Schema.                                              |
+| `options` | `{ sensitive?: boolean }`. `sensitive: true` leaves rejected values out of the type's messages. Subtypes and variants inherit it.          |
 
 Any other name, such as `billing/Email` or one with a space, throws a `TypeError` when the type is declared. The name becomes the schema name in OpenAPI, which allows no other characters. The same rule holds for `subtype()` and `variant()`.
 
@@ -191,16 +192,16 @@ isNominalType(value): value is AnyNominalType
 
 ## Static members
 
-| Member                      | Description                                                                                                                              |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `new Type(input)`           | Checks `input` and creates an instance. Throws `NominalError` if it's invalid.                                                           |
-| `Type.parse(input)`         | Returns `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                                                                 |
-| `value instanceof Type`     | `true` if `value` is an instance of the type, also one created by another copy of the package.                                           |
-| `Type.subtype(name, rule?)` | A new, narrower type. See [subtypes](../guides/building-on-types.md#adding-a-stricter-rule).                                             |
-| `Type.variant(name, rule)`  | A sibling type with a different rule. See [variants](../guides/building-on-types.md#accepting-different-values-with-the-same-behaviour). |
-| `Type['~standard']`         | The Standard Schema and Standard JSON Schema interface.                                                                                  |
-| `Type.rule`                 | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `schemaOf(Type)`.                |
-| `Type.typeName`             | The type's name.                                                                                                                         |
+| Member                                | Description                                                                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`                     | Checks `input` and creates an instance. Throws `NominalError` if it's invalid.                                                           |
+| `Type.parse(input)`                   | Returns `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw.                                                                 |
+| `value instanceof Type`               | `true` if `value` is an instance of the type, also one created by another copy of the package.                                           |
+| `Type.subtype(name, rule?, options?)` | A new, narrower type. See [subtypes](../guides/building-on-types.md#adding-a-stricter-rule).                                             |
+| `Type.variant(name, rule, options?)`  | A sibling type with a different rule. See [variants](../guides/building-on-types.md#accepting-different-values-with-the-same-behaviour). |
+| `Type['~standard']`                   | The Standard Schema and Standard JSON Schema interface.                                                                                  |
+| `Type.rule`                           | Only the rule of the type's own level, or the closest parent's if it adds none. For the whole type, use `schemaOf(Type)`.                |
+| `Type.typeName`                       | The type's name.                                                                                                                         |
 
 What `parse()` does with different inputs:
 
@@ -245,11 +246,11 @@ When an object value is frozen, the input stays yours: the type copies it first.
 
 Thrown by `new` when a value is invalid. It extends `TypeError`.
 
-| Member     | Description                                                                                                                                        |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `typeName` | The name of the type that rejected the value.                                                                                                      |
-| `issues`   | A list of `{ message, path? }` objects.                                                                                                            |
-| `message`  | `'nominal.Email: must be an email address (was "nope")'`; an issue with a path shows it first: `'Occupancy: guests: must not exceed the capacity'` |
+| Member     | Description                                                                                                                                                          |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `typeName` | The name of the type that rejected the value.                                                                                                                        |
+| `issues`   | A list of `{ message, path? }` objects.                                                                                                                              |
+| `message`  | `'nominal.Email: must be an email address (was a string of 4 characters)'`; an issue with a path shows it first: `'Occupancy: guests: must not exceed the capacity'` |
 
 ## Messages
 
@@ -268,6 +269,15 @@ Special cases:
 - A pattern without a description: `must be matched by <pattern>`.
 - A pattern given a value that isn't a string: `must be a string (was …)`.
 - Rules from other libraries keep their own messages.
+- A type declared with `sensitive: true` writes its value by kind: `(was a string of 7 characters)`, `(was a number)`. So does the built-in `Email`.
+
+### hideValues()
+
+```ts
+hideValues(issues): issues
+```
+
+Returns the issues with the value at the end of each message replaced by its kind, as for a sensitive type. It reads `(was "x")` and Valibot's `received "x"`, and leaves other messages as they are. See [How to keep values out of error messages](../guides/hiding-values.md).
 
 ## JSON Schema
 

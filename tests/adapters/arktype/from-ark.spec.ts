@@ -74,7 +74,7 @@ describe('fromArk', () => {
       expect(
         issuesOf(Profile.parse({ id: 'x', email: 'nope', manager: 1, name: 2 })),
       ).toStrictEqual([
-        { message: 'must be an email address (was "nope")', path: ['email'] },
+        { message: 'must be an email address (was a string of 4 characters)', path: ['email'] },
         { message: 'must be a UUID (was "x")', path: ['id'] },
         { message: 'must be a UUID or null (was 1)', path: ['manager'] },
         { message: 'must be a string (was a number)', path: ['name'] },

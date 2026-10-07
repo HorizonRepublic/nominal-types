@@ -30,7 +30,7 @@ An email address like `jane.doe+news@example.com`.
 | Property    | Value                                                                                                               |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
 | JSON Schema | `{ type: 'string', pattern: Email.pattern.source, format: 'email', minLength: 6, maxLength: 254 }`, with an example |
-| Message     | `must be an email address (was "x")`                                                                                |
+| Message     | `must be an email address (was a string of 1 character)`                                                            |
 
 ```ts
 const email = new Email('Jane.Doe+news@Example.com');

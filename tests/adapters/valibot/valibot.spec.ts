@@ -54,8 +54,8 @@ describe('toValibot', () => {
       issues(v.safeParse(Booking, { id: 'x', email: 'nope', backup: 1, stays: [{ guests: 0 }] })),
     ).toStrictEqual([
       { message: 'must be a UUID (was "x")', path: ['id'] },
-      { message: 'must be an email address (was "nope")', path: ['email'] },
-      { message: 'must be a string (was 1)', path: ['backup'] },
+      { message: 'must be an email address (was a string of 4 characters)', path: ['email'] },
+      { message: 'must be a string (was a number)', path: ['backup'] },
       { message: 'must be a positive integer (was 0)', path: ['stays', 0, 'guests'] },
       {
         message: 'Invalid key: Expected "capacity" but received undefined',
@@ -87,7 +87,7 @@ describe('toValibot', () => {
     expect(schema['~standard'].vendor).toBe('valibot');
     expect(schema['~standard'].validate('a@b.co')).toStrictEqual({ value: new Email('a@b.co') });
     expect(schema['~standard'].validate('x')).toStrictEqual({
-      issues: [{ message: 'must be an email address (was "x")' }],
+      issues: [{ message: 'must be an email address (was a string of 1 character)' }],
     });
     expect(
       Booking['~standard'].validate({ id, email: 'a@b.co', stays: [{ guests: 1 }] }),

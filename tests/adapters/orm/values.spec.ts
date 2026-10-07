@@ -35,7 +35,9 @@ describe('reading stored values', () => {
 
   it('throws a NominalError for a stored value the type refuses', () => {
     expect(() => reader(Email)('bad')).toThrow(
-      new NominalError('nominal.Email', [{ message: 'must be an email address (was "bad")' }]),
+      new NominalError('nominal.Email', [
+        { message: 'must be an email address (was a string of 3 characters)' },
+      ]),
     );
     expect(() => reader(AnyBoolean)(2)).toThrow(NominalError);
   });

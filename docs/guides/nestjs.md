@@ -123,6 +123,15 @@ new NominalPipe(Email, {
 });
 ```
 
+To keep rejected values out of the response and your logs, pass `hideValues`:
+
+```ts
+new NominalPipe({ hideValues: true });
+// "message": ["ids.1: must be a UUID (was a string of 4 characters)"]
+```
+
+See [How to keep values out of error messages](hiding-values.md).
+
 ## Validating message payloads
 
 In a microservice, put the pipe on `@Payload()` and answer with an `RpcException`:

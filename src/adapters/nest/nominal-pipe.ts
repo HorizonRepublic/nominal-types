@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
+import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { isNominalType } from '../../core/nominal.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
@@ -33,6 +34,12 @@ export interface NominalPipeOptions {
    * through its own `fromString()`.
    */
   readonly fromString?: boolean;
+  /**
+   * Leaves rejected values out of the messages for every type, before the exception factory sees
+   * them, so they don't reach responses or logs. Types declared `sensitive` leave them out anyway.
+   * Off by default.
+   */
+  readonly hideValues?: boolean;
 }
 
 const badRequest: NominalExceptionFactory = (issues, metadata) =>
@@ -82,6 +89,7 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
   readonly #target: NominalPipeTarget | undefined;
   readonly #exceptionFactory: NominalExceptionFactory;
   readonly #fromString: boolean;
+  readonly #hideValues: boolean;
 
   public constructor(options?: NominalPipeOptions);
   public constructor(target: NominalPipeTarget, options?: NominalPipeOptions);
@@ -95,6 +103,7 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     this.#target = target;
     this.#exceptionFactory = settings.exceptionFactory ?? badRequest;
     this.#fromString = settings.fromString ?? true;
+    this.#hideValues = settings.hideValues ?? false;
   }
 
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {
@@ -110,7 +119,10 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
       return parsed.value;
     }
 
-    throw this.#exceptionFactory(parsed.issues, metadata);
+    throw this.#exceptionFactory(
+      this.#hideValues ? hideValues(parsed.issues) : parsed.issues,
+      metadata,
+    );
   }
 
   #inputOf(target: NominalPipeTarget, value: unknown, metadata: ArgumentMetadata): unknown {

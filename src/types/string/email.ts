@@ -18,6 +18,7 @@ const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtyp
     maxLength: 254,
     examples: ['jane.doe@example.com'],
   }),
+  { sensitive: true },
 );
 
 /**
@@ -27,6 +28,8 @@ const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtyp
  * Quoted local parts, IP-literal domains and Unicode domains are rejected; a Unicode domain passes
  * once converted to punycode. Local parts stay as written, since the standard leaves their case to
  * the receiving server; `canonical()` lowers it for comparing people rather than strings.
+ * An address is personal data, so messages leave it out: `must be an email address (was a string of
+ * 4 characters)`.
  *
  * @example
  * ```ts

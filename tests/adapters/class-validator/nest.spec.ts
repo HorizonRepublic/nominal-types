@@ -103,9 +103,9 @@ describe('NominalField with ValidationPipe', () => {
         statusCode: 400,
         error: 'Bad Request',
         message: [
-          'contact: must be an email address (was "nope")',
+          'contact: must be an email address (was a string of 4 characters)',
           'items.0: must be a UUID (was "x")',
-          'billing.email: must be an email address (was "y")',
+          'billing.email: must be an email address (was a string of 1 character)',
         ],
       },
     });

@@ -14,14 +14,5 @@
       }
     }
   ],
-  "ignorePatterns": [
-    "node_modules/",
-    "dist/",
-    "coverage/",
-    "docs/",
-    "CLAUDE.md",
-    ".claude/",
-    ".serena/",
-    "CHANGELOG.md"
-  ]
+  "ignorePatterns": ["node_modules/", "dist/", "coverage/", "CHANGELOG.md"]
 }

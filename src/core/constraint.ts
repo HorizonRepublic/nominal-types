@@ -1,76 +1,20 @@
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { AnyNominalType, InputOf } from './contracts.ts';
+import type {
+  ConstraintField,
+  ConstraintValues,
+  ConstraintInputs,
+  ConstraintVerdict,
+  ConstraintOptions,
+  AnyConstraint,
+} from './constraint-types.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { forTarget } from './json-target.ts';
 import { mustBe } from './messages.ts';
+import { constructorFor, isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import type { NominalTarget, TargetValue } from './target.ts';
-import type { TypeSchema } from './type-schema.ts';
-
-/**
- * What a field of a constraint is checked against: a nominal type, a `schemaOf()` schema or any
- * synchronous Standard Schema, for fields that are no nominal type.
- */
-export type ConstraintField = NominalTarget | StandardSchemaV1;
-
-/**
- * The value a constraint's check receives for a field: an instance, what a `schemaOf()` schema
- * gives, or the output of another schema.
- */
-export type ConstraintValue<Field extends ConstraintField> = Field extends NominalTarget
-  ? TargetValue<Field>
-  : Field extends StandardSchemaV1
-    ? StandardSchemaV1.InferOutput<Field>
-    : never;
-
-/**
- * The values a constraint's check receives, one for each field it lists.
- */
-export type ConstraintValues<Fields extends Readonly<Record<string, ConstraintField>>> = {
-  readonly [Key in keyof Fields]: ConstraintValue<Fields[Key]>;
-};
-
-/**
- * What a constraint accepts for a field: what its type or schema takes as input.
- */
-export type ConstraintInput<Field extends ConstraintField> =
-  Field extends TypeSchema<infer Input, unknown>
-    ? Input
-    : Field extends AnyNominalType
-      ? InputOf<Field['rule']> | Field['prototype']
-      : Field extends StandardSchemaV1
-        ? StandardSchemaV1.InferInput<Field>
-        : never;
-
-/**
- * What a constraint accepts: an object with an input for each field it lists.
- */
-export type ConstraintInputs<Fields extends Readonly<Record<string, ConstraintField>>> = {
-  readonly [Key in keyof Fields]: ConstraintInput<Fields[Key]>;
-};
-
-/**
- * What a constraint's check answers: `true` when the fields agree, `false` for the default message,
- * or the message itself.
- */
-export type ConstraintVerdict = boolean | string;
-
-/**
- * Options of `constraint()`.
- */
-export interface ConstraintOptions<Key extends string> {
-  /**
-   * The field the issue belongs to, or a path to it; without one, the issue belongs to the object.
-   */
-  readonly path?: Key | readonly PropertyKey[];
-  /**
-   * The message when the check answers `false`.
-   */
-  readonly message?: string;
-}
 
 const constraintMark = Symbol.for('@horizon-republic/nominal-types/constraint');
 
@@ -79,6 +23,9 @@ interface FieldRunner {
   readonly field: ConstraintField;
   readonly run: (value?: unknown) => unknown;
 }
+
+const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
+  isNominalType(field) ? constructorFor(field) : foreignRunner(field, 'constraint');
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -154,7 +101,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
     this.#runners = Object.entries(listed).map(([key, field]) => ({
       key,
       field,
-      run: foreignRunner(field, 'constraint'),
+      run: runnerOf(field),
     }));
     this['~standard'] = standardProps<ConstraintInputs<Fields>, ConstraintValues<Fields>>(
       (input) => this.#run(input),
@@ -181,26 +128,49 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
 
   /**
    * Internal: an object with each listed field checked against its type, or a `Rejection` with
-   * the issues of the fields that failed, each under its key.
+   * the issues of the fields that failed, each under its key; the input itself when every field
+   * already holds its value, such as an instance.
    */
   public valuesOf(input: Readonly<Record<string, unknown>>): ConstraintValues<Fields> | Rejection {
-    const values: Record<string, unknown> = { ...input };
+    let values: Record<string, unknown> | undefined;
     let issues: StandardSchemaV1.Issue[] | undefined;
 
     for (const { key, run } of this.#runners) {
-      const value = run(input[key]);
+      const item = input[key];
+      const value = run(item);
 
       if (value instanceof Rejection) {
         issues ??= [];
         issues.push(...prefixed(key, value.issues));
-      } else {
+      } else if (value !== item) {
+        values ??= { ...input };
         values[key] = value;
       }
     }
 
+    if (issues !== undefined) {
+      return new Rejection(issues);
+    }
+
     // Every listed key now holds a value its field accepted, which is what the type describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    return issues === undefined ? (values as ConstraintValues<Fields>) : new Rejection(issues);
+    return (values ?? input) as ConstraintValues<Fields>;
+  }
+
+  /**
+   * Internal: the issues of an object whose fields an adapter's validator has accepted: those of
+   * listed fields that still fail their types, or the constraint's own, or none.
+   */
+  public issuesOf(input: Readonly<Record<string, unknown>>): readonly StandardSchemaV1.Issue[] {
+    const values = this.valuesOf(input);
+
+    if (values instanceof Rejection) {
+      return values.issues;
+    }
+
+    const issue = this.issueFor(values);
+
+    return issue === undefined ? [] : [issue];
   }
 
   #run(input: unknown): ConstraintValues<Fields> | Rejection {
@@ -241,9 +211,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
 /**
  * Whether a value is a constraint, also one built by another copy of this package.
  */
-export const isConstraint = (
-  value: unknown,
-): value is Constraint<Readonly<Record<string, ConstraintField>>> =>
+export const isConstraint = (value: unknown): value is AnyConstraint =>
   typeof value === 'object' && value !== null && Reflect.get(value, constraintMark) === true;
 
 /**

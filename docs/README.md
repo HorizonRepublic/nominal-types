@@ -14,6 +14,7 @@ New here? Start with the tutorial.
 - [How to read values from strings](guides/reading-strings.md)
 - [How to validate untrusted input](guides/validating-input.md)
 - [How to check one field against another](guides/checking-fields-together.md)
+- [How to use nominal types in ArkType schemas](guides/arktype.md)
 - [How to use a type inside another validator](guides/other-validators.md)
 - [How to generate JSON Schema](guides/json-schema.md)
 - [How to validate NestJS route parameters](guides/nestjs.md)

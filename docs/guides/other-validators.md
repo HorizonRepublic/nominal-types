@@ -25,7 +25,9 @@ For NestJS 11 and 12 there is also `NominalPipe`, which needs no `schema` option
 
 ## ArkType and other schema builders
 
-Libraries such as ArkType treat a class as something of their own. Pass `schemaOf(Type)` instead, which returns a plain schema object:
+For ArkType, use the adapter: see [How to use nominal types in ArkType schemas](arktype.md). It keeps ArkType on its fast path.
+
+Without an adapter, libraries such as ArkType treat a class as something of their own. Pass `schemaOf(Type)` instead, which returns a plain schema object:
 
 ```ts
 import { type } from 'arktype';

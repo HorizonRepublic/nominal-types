@@ -23,3 +23,9 @@ export const describeValue = (value: unknown): string => {
  */
 export const mustBe = (expected: string, value: unknown): string =>
   `must be ${expected} (was ${describeValue(value)})`;
+
+/**
+ * Internal: a value as JSON text, with bigints written as decimal strings.
+ */
+export const jsonText = (value: unknown): string =>
+  JSON.stringify(value, (_key, item: unknown) => (typeof item === 'bigint' ? String(item) : item));

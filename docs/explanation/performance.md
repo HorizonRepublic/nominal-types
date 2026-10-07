@@ -52,23 +52,35 @@ The second table of the run gives the cost of each level of a type, from `AnyNum
 
 ## A large document
 
-`npm run bench:document` validates a 3 MB export: 3000 customers with two addresses each, and 4300 orders with five items, each item with a nested price. That is about 112,000 values to check. Each library describes the same document. nominal-types doesn't validate objects itself yet, so it appears inside ArkType and inside class-validator DTOs. Measured on an Apple M4 Pro, Node.js 25.3, 7 Oct 2026, median of five runs:
+`npm run bench:document` validates a 3 MB export: 3000 customers with two addresses each, and 4300 orders with five items, each item with a nested price. That is about 112,000 values to check. Each library describes the same document. nominal-types doesn't validate objects itself, so it appears inside ArkType, with and without the [ArkType adapter](../guides/arktype.md), and inside class-validator DTOs. Measured on an Apple M4 Pro, Node.js 24.2, 7 Oct 2026, median of five runs:
 
-| Library                         | Valid document | One error deep inside | Every hundredth email broken |
-| ------------------------------- | -------------: | --------------------: | ---------------------------: |
-| Typia                           |         2.5 ms |                6.0 ms |                       3.6 ms |
-| ArkType                         |         3.7 ms |                 18 ms |                        15 ms |
-| Zod                             |         6.5 ms |                6.7 ms |                       6.4 ms |
-| Valibot                         |         7.3 ms |                7.1 ms |                       7.0 ms |
-| class-validator                 |         105 ms |                105 ms |                       106 ms |
-| nominal-types + class-validator |         112 ms |                110 ms |                       111 ms |
-| nominal-types + ArkType         |         112 ms |                111 ms |                       204 ms |
+| Library                               | Valid document | One error deep inside | Every hundredth email broken |
+| ------------------------------------- | -------------: | --------------------: | ---------------------------: |
+| ArkType                               |         1.4 ms |                 15 ms |                        14 ms |
+| Typia                                 |         2.4 ms |                5.8 ms |                       3.3 ms |
+| Zod                                   |         6.8 ms |                7.0 ms |                       6.8 ms |
+| Valibot                               |         7.1 ms |                7.2 ms |                       7.2 ms |
+| nominal-types + ArkType adapter       |         8.2 ms |                 17 ms |                        15 ms |
+| class-validator                       |         105 ms |                103 ms |                       105 ms |
+| nominal-types + class-validator       |         110 ms |                111 ms |                       109 ms |
+| nominal-types + ArkType, `schemaOf()` |         110 ms |                111 ms |                       201 ms |
 
 How to read it:
 
+- Only the nominal-types rows build instances: 112,000 objects such as `Email` and `PositiveInteger`, ready to use. The other libraries return plain values.
+- With the adapter, ArkType checks every field on its own compiled path, and one pass builds the instances afterwards. That pass is most of the gap to plain ArkType.
+- With `schemaOf()` inside ArkType, it is about 13 times slower. A nominal type is then a foreign Standard Schema to ArkType, and every such field goes through a slower path.
 - Inside class-validator, nominal types add about 5% to its own time.
-- Inside ArkType, they make it about 30 times slower. ArkType compiles its own schemas, but a nominal type is a foreign Standard Schema to it, and it runs every such field through a slower path. The checks themselves are not the cost: 112,000 values at about 50 ns each take about 6 ms.
-- So nominal types are fast per value, and as fast as the library around them for whole documents.
+
+How the adapter gets there, on an object with a UUID, an email and a count:
+
+| Setup                              |   Time |
+| ---------------------------------- | -----: |
+| ArkType alone, plain values        |  97 ns |
+| the adapter, with instances        | 287 ns |
+| `schemaOf()` fields inside ArkType | 1.9 µs |
+
+Any morph makes ArkType leave its fast path, so `arkOf()` adds none: it is a one-argument `.narrow()` with the type's own check, which ArkType compiles in. A two-argument predicate costs three times more, since ArkType then builds a context for it.
 
 ## In a NestJS app
 

@@ -42,6 +42,10 @@
       "import": "./dist/adapters/swagger/index.js",
       "require": "./dist/adapters/swagger/index.cjs"
     },
+    "./adapters/arktype": {
+      "import": "./dist/adapters/arktype/index.js",
+      "require": "./dist/adapters/arktype/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -99,6 +103,7 @@
   "peerDependencies": {
     "@nestjs/common": "^11.0.0 || ^12.0.0",
     "@nestjs/swagger": "^11.0.0 || ^12.0.0",
+    "arktype": "^2.2.0",
     "class-transformer": "^0.5.0",
     "class-validator": "^0.14.0 || ^0.15.0"
   },
@@ -113,6 +118,9 @@
       "optional": true
     },
     "@nestjs/swagger": {
+      "optional": true
+    },
+    "arktype": {
       "optional": true
     }
   },

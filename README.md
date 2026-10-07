@@ -6,7 +6,7 @@
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522.12-339933)
 
-Runtime-validated nominal types for TypeScript.
+Runtime-validated nominal types for TypeScript, for the validators and frameworks you already use.
 
 To TypeScript, an email address is just a `string`. Nothing stops you from passing a user ID where an email is expected, or a string that was never checked.
 
@@ -15,7 +15,7 @@ This package turns such values into small classes:
 - `new Email(text)` checks the text once. Every `Email` you hold is valid.
 - An `Email` can't be passed where a `Uuid` or a plain `string` is expected.
 - Helpers live on the type: `email.domain`, `uuid.timestamp`.
-- A rule is a regular expression, or a schema from Zod, Valibot, ArkType or another [Standard Schema](https://standardschema.dev) library.
+- The same types work across your stack: ArkType, NestJS, class-validator, Swagger and any [Standard Schema](https://standardschema.dev) library. See [Supported libraries](#supported-libraries).
 
 ## Example
 
@@ -43,6 +43,22 @@ npm install @horizon-republic/nominal-types
 ```
 
 It works with both `import` and `require`, on Node.js 22.12 or later.
+
+## Supported libraries
+
+A nominal type works with other libraries in three ways: as a library's field type, as a rule written with that library, or through an adapter, a separate entry point of this package.
+
+| Library                                                         | Fields of its schemas                                                    | Rules for a type      | Guide                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------- | --------------------------------------------------- |
+| [ArkType](https://arktype.io)                                   | yes, with the adapter `arkOf()`, at ArkType's speed                      | yes, with JSON Schema | [ArkType](docs/guides/arktype.md)                   |
+| [NestJS](https://nestjs.com) 11, 12                             | parameters, bodies and message payloads, with the adapter `NominalPipe`  | —                     | [NestJS](docs/guides/nestjs.md)                     |
+| [class-validator](https://github.com/typestack/class-validator) | DTO properties, with the adapter `@NominalField()`                       | —                     | [class-validator](docs/guides/class-validator.md)   |
+| [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) | full schemas in the document, with the adapter `applyNominalTypes()`     | —                     | [Swagger](docs/guides/swagger.md)                   |
+| [Zod](https://zod.dev) 4                                        | no                                                                       | yes, with JSON Schema | [Declaring a type](docs/guides/declaring-types.md)  |
+| [Valibot](https://valibot.dev)                                  | no                                                                       | yes, no JSON Schema   | [Declaring a type](docs/guides/declaring-types.md)  |
+| any [Standard Schema](https://standardschema.dev) consumer      | yes, the type itself or `schemaOf(Type)`, such as NestJS 12 `{ schema }` | yes                   | [Other validators](docs/guides/other-validators.md) |
+
+Adapters are entry points such as `@horizon-republic/nominal-types/adapters/arktype`. Their libraries are optional peer dependencies: nothing from ArkType, NestJS, class-validator or Swagger is installed or loaded unless you import the adapter.
 
 ## Concepts
 
@@ -98,6 +114,20 @@ A subtype adds a rule and fits wherever its parent is expected:
 export class ExpressOrderNumber extends OrderNumber.subtype('ExpressOrderNumber', /^ORD-\d{4}9/u) {}
 ```
 
+### Rules can span fields
+
+A constraint checks fields of an object against each other, like a `CHECK` constraint in SQL:
+
+```ts
+import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+
+export const withinCapacity = constraint(
+  { guests: PositiveInteger, capacity: PositiveInteger },
+  ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
+  { path: 'guests' },
+);
+```
+
 ## Built-in types
 
 Each group starts from a base type. Using them is optional.
@@ -110,28 +140,6 @@ Each group starts from a base type. Using them is optional.
 | Booleans     | `AnyBoolean`                                                                                                                           |
 
 See [Built-in types](docs/reference/types/README.md) for each one.
-
-## Supported libraries
-
-Validation libraries:
-
-| Library                                                             | As a type's rule         | A nominal type inside its schemas |
-| ------------------------------------------------------------------- | ------------------------ | --------------------------------- |
-| [ArkType](https://arktype.io)                                       | yes, with JSON Schema    | yes, with `schemaOf(Type)`        |
-| [Zod](https://zod.dev) 4                                            | yes, with JSON Schema    | no                                |
-| [Valibot](https://valibot.dev)                                      | yes, without JSON Schema | no                                |
-| any other synchronous [Standard Schema](https://standardschema.dev) | yes                      | depends on the library            |
-
-Frameworks and DTO libraries:
-
-| Integration     | How                                                                                                                                                |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NestJS 11, 12   | `NominalPipe` from `@horizon-republic/nominal-types/adapters/nest`, see the [guide](docs/guides/nestjs.md)                                         |
-| NestJS 12       | Nest's own `StandardSchemaValidationPipe` with `{ schema: Type }`                                                                                  |
-| class-validator | `@NominalField()` from `@horizon-republic/nominal-types/adapters/class-validator`, see the [guide](docs/guides/class-validator.md)                 |
-| @nestjs/swagger | `applyNominalTypes()` and `@ApiNominalProperty()` from `@horizon-republic/nominal-types/adapters/swagger`, see the [guide](docs/guides/swagger.md) |
-
-Adapters are separate entry points of this one package, such as `@horizon-republic/nominal-types/adapters/nest`. Their libraries are optional peer dependencies: nothing from NestJS, class-validator or Swagger is installed or loaded unless you import the adapter.
 
 ## Documentation
 
@@ -152,7 +160,7 @@ The repository keeps `package-lock.json`, and `.node-version` names the Node.js 
 | `npm run format`         | Formats the tree with oxfmt; `format:check` only reports            |
 | `npm test`               | Runs the vitest suites; `test:coverage` adds a coverage report      |
 | `npm run bench`          | Compares the speed of nominal-types with nine other libraries       |
-| `npm run bench:document` | Validates a 2.9 MB document with seven setups                       |
+| `npm run bench:document` | Validates a 3 MB document with eight setups                         |
 
 ## License
 

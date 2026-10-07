@@ -149,15 +149,17 @@ Invite['~standard'].jsonSchema.output({ target: 'openapi-3.0' });
 
 JSON Schema can't express every rule. Then the schema accepts more than the type, and the type rejects the rest at runtime.
 
-| Type                                | What the schema leaves out                                                        |
-| ----------------------------------- | --------------------------------------------------------------------------------- |
-| `Float32`                           | exactness as a 32-bit float; the schema is `{ type: 'number', format: 'float' }`  |
-| `Int64`, `Uint64`                   | the range; the schema limits the length of the string only                        |
-| a rule from `satisfying()`          | whatever the guard checks beyond the `json` you give                              |
-| a constraint                        | the `check` function                                                              |
-| `array({ unique: true })` of `Uuid` | that items differing only in case repeat; `uniqueItems` compares the text exactly |
-| `Hostname`, `DomainName`            | the check that an `xn--` label decodes                                            |
-| `IpPrefix` and its subtypes         | the check that the host bits are zero                                             |
-| `Isbn`, `Issn`, `Gtin`, `Isin`      | the check digit                                                                   |
+| Type                                                                                                                 | What the schema leaves out                                                         |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `Float32`                                                                                                            | exactness as a 32-bit float; the schema is `{ type: 'number', format: 'float' }`   |
+| `Int64`, `Uint64`                                                                                                    | the range; the schema limits the length of the string only                         |
+| a rule from `satisfying()`                                                                                           | whatever the guard checks beyond the `json` you give                               |
+| a constraint                                                                                                         | the `check` function                                                               |
+| `array({ unique: true })` of a type whose `equals()` ignores how the value is written, such as `Uuid` or `IpAddress` | that items written differently can repeat; `uniqueItems` compares the text exactly |
+| `LanguageTag`                                                                                                        | that a variant or an extension is not written twice                                |
+| `MediaType`                                                                                                          | that a parameter name is not given twice                                           |
+| `Hostname`, `DomainName`                                                                                             | the check that an `xn--` label decodes                                             |
+| `IpPrefix` and its subtypes                                                                                          | the check that the host bits are zero                                              |
+| `Isbn`, `Issn`, `Gtin`, `Isin`                                                                                       | the check digit                                                                    |
 
 [← Reference](README.md)

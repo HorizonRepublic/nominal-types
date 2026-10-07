@@ -53,6 +53,39 @@ Accepts any number but `NaN`, `Infinity` and `-Infinity`: the numbers JSON can c
 
 `-0` keeps its sign in `value`. `equals()` compares with `Object.is`, so `-0` does not equal `0`, and `NaN` equals `NaN`.
 
+## Float32
+
+`AnyNumber` › `FiniteNumber` › `Float32`
+
+Accepts a number a 32-bit float holds exactly, where `Math.fround(value) === value`: `0.5`, `0.25`, `16777216`, `Math.fround(0.1)`. Rejects `0.1`, `16777217` and anything beyond about 3.4 × 10^38.
+
+| Property    | Value                                                                            |
+| ----------- | -------------------------------------------------------------------------------- |
+| JSON Schema | adds `{ type: 'number', format: 'float' }`; exactness is checked at runtime only |
+| Message     | `must be a 32-bit float (was 0.1)`                                               |
+
+## Latitude and Longitude
+
+`AnyNumber` › `FiniteNumber` › `Latitude`, and `AnyNumber` › `FiniteNumber` › `Longitude`
+
+A position on Earth in decimal degrees, as GPS and GeoJSON write it. Both ends of each range are accepted.
+
+| Type        | Accepts     | Adds to JSON Schema                               | Message ends with              |
+| ----------- | ----------- | ------------------------------------------------- | ------------------------------ |
+| `Latitude`  | -90 to 90   | `{ type: 'number', minimum: -90, maximum: 90 }`   | `a latitude from -90 to 90`    |
+| `Longitude` | -180 to 180 | `{ type: 'number', minimum: -180, maximum: 180 }` | `a longitude from -180 to 180` |
+
+-180 and 180 are the same line on Earth, but `equals()` tells them apart.
+
+```ts
+import { Latitude, Longitude, objectOf } from '@horizon-republic/nominal-types';
+
+const Place = objectOf({ lat: Latitude, lon: Longitude });
+
+Place.parse({ lat: 51.5072, lon: -0.1276 }).ok; // true
+Place.parse({ lat: 91, lon: 0 }); // { ok: false, issues: [{ message: 'must be a latitude from -90 to 90 (was 91)', path: ['lat'] }] }
+```
+
 ## Integer
 
 `AnyNumber` › `FiniteNumber` › `Integer`
@@ -97,38 +130,5 @@ new Port(8080).value; // 8080
 schemaOf(Port).fromString().parse('443'); // { ok: true, value: Port { value: 443 } }
 schemaOf(Port).fromString().parse('+80'); // { ok: false, issues: [{ message: 'must be a number (was "+80")' }] }
 ```
-
-## Latitude and Longitude
-
-`AnyNumber` › `FiniteNumber` › `Latitude`, and `AnyNumber` › `FiniteNumber` › `Longitude`
-
-A position on Earth in decimal degrees, as GPS and GeoJSON write it. Both ends of each range are accepted.
-
-| Type        | Accepts     | Adds to JSON Schema                               | Message ends with              |
-| ----------- | ----------- | ------------------------------------------------- | ------------------------------ |
-| `Latitude`  | -90 to 90   | `{ type: 'number', minimum: -90, maximum: 90 }`   | `a latitude from -90 to 90`    |
-| `Longitude` | -180 to 180 | `{ type: 'number', minimum: -180, maximum: 180 }` | `a longitude from -180 to 180` |
-
--180 and 180 are the same line on Earth, but `equals()` tells them apart.
-
-```ts
-import { Latitude, Longitude, objectOf } from '@horizon-republic/nominal-types';
-
-const Place = objectOf({ lat: Latitude, lon: Longitude });
-
-Place.parse({ lat: 51.5072, lon: -0.1276 }).ok; // true
-Place.parse({ lat: 91, lon: 0 }); // { ok: false, issues: [{ message: 'must be a latitude from -90 to 90 (was 91)', path: ['lat'] }] }
-```
-
-## Float32
-
-`AnyNumber` › `FiniteNumber` › `Float32`
-
-Accepts a number a 32-bit float holds exactly, where `Math.fround(value) === value`: `0.5`, `0.25`, `16777216`, `Math.fround(0.1)`. Rejects `0.1`, `16777217` and anything beyond about 3.4 × 10^38.
-
-| Property    | Value                                                                            |
-| ----------- | -------------------------------------------------------------------------------- |
-| JSON Schema | adds `{ type: 'number', format: 'float' }`; exactness is checked at runtime only |
-| Message     | `must be a 32-bit float (was 0.1)`                                               |
 
 [← Built-in types](README.md)

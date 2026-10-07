@@ -39,17 +39,20 @@ The terms these pages use, in alphabetical order.
 | JSON Schema                 | A JSON format for describing data, used by OpenAPI and many tools.                                                                                                     |
 | level                       | One step in a line of types, such as `Integer` in `AnyNumber` › `FiniteNumber` › `Integer`.                                                                            |
 | line of types               | A type with the types above and below it. Instances of one line compare with `equals()`. Siblings and variants are in other lines.                                     |
-| minor units                 | How many digits an amount of a currency has after the decimal point: 2 for the euro (cents), 0 for the yen.                                                            |
+| MAC address                 | The hardware address of a network device, six pairs of hex digits such as `00:00:5e:00:53:01`. Also called EUI-48.                                                     |
 | media type                  | The kind of content of a body or a file, such as `application/json`, sent in the `Content-Type` header. Also called a MIME type.                                       |
+| minor units                 | How many digits an amount of a currency has after the decimal point: 2 for the euro (cents), 0 for the yen.                                                            |
 | morph                       | In ArkType, a step that turns the checked value into another value.                                                                                                    |
 | nominal type                | A type told apart by its name, not its shape. `Email` and `Uuid` both wrap a string but don't mix.                                                                     |
 | object schema               | What `objectOf()` returns: a schema for an object whose fields are checked by their own schemas.                                                                       |
+| offset                      | How far a local time is ahead of or behind UTC, such as `+02:00`. `Z` means an offset of zero.                                                                         |
 | OpenAPI                     | A format that describes an HTTP API, read by tools such as Swagger UI. Its schemas are JSON Schema.                                                                    |
 | ORM                         | Object-relational mapper: a library that maps database rows to objects, such as MikroORM or TypeORM.                                                                   |
 | parent                      | The type a subtype was made from. `AnyString` is the parent of `Email`.                                                                                                |
 | path                        | The part of an issue that says where the value was: field keys and array indexes, such as `['items', 0]`.                                                              |
 | peer dependency             | A package you install yourself next to this one, such as `zod` for the Zod adapter. The core needs none.                                                               |
 | pipe                        | In NestJS, a class that checks or converts an argument before the handler runs, such as `NominalPipe`.                                                                 |
+| polyfill                    | A package that adds a missing feature to an older runtime, such as `temporal-polyfill` for `Temporal` on Node.js 22 and 24.                                            |
 | Punycode                    | The way a Unicode label is written in plain letters for DNS, after `xn--`: `bücher` becomes `xn--bcher-kva`.                                                           |
 | RFC 3339                    | The standard format for dates and times on the internet, such as `2024-05-01T09:30:00Z`. JSON Schema's `date-time` and `date` formats follow it.                       |
 | rule                        | What a valid value looks like: a regular expression, a type guard or a schema from another library.                                                                    |

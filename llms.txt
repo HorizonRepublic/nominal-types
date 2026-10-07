@@ -237,14 +237,14 @@ config.PORT.value; // 3000 for PORT=3000
 | `Isin` | `nominal.Isin` | ISO 6166: 2 letters, 9 letters or digits, Luhn check digit on letters as 10–35, upper case only, prefix not checked against countries (`XS` passes); `prefix`, `nsin`, `pattern`; JSON Schema can't check the digit | yes |
 | `AnyNumber` | `nominal.AnyNumber` | any number | yes |
 | `FiniteNumber` | `nominal.FiniteNumber` | a finite number | yes |
-| `Float32` | `nominal.Float32` | a 32-bit float | yes |
 | `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber` | `nominal.…` | a finite number `> 0`, `< 0`, `≥ 0`, `≤ 0` | yes |
+| `Float32` | `nominal.Float32` | a 32-bit float | yes |
+| `Latitude`, `Longitude` | `nominal.…` | under `FiniteNumber`: -90 to 90 and -180 to 180 degrees, ends included | yes |
 | `Integer` | `nominal.Integer` | a safe integer | yes |
 | `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger` | `nominal.…` | a safe integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int8`, `Int16`, `Int32` | `nominal.…` | signed 8-, 16-, 32-bit integers | yes |
 | `Uint8`, `Uint16`, `Uint32` | `nominal.…` | unsigned 8-, 16-, 32-bit integers | yes |
 | `Port` | `nominal.Port` | under `Uint16`: a port from 1 to 65535, 0 refused | yes |
-| `Latitude`, `Longitude` | `nominal.…` | under `FiniteNumber`: -90 to 90 and -180 to 180 degrees, ends included | yes |
 | `AnyBigInt` | `nominal.AnyBigInt` | a bigint, a decimal string up to 1000 characters, or a safe integer number; `value` is a `bigint`; `toJSON()` writes the decimal string | yes |
 | `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt` | `nominal.…` | a big integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int64`, `Uint64` | `nominal.…` | signed and unsigned 64-bit integers | yes |
@@ -394,7 +394,7 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256), integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`, `Instant` `timestamptz`, `PlainDate` `date`, `PlainTime` `time`, `PlainDateTime` `timestamp`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256, `Isbn` 13, `Issn` 9, `Gtin` 14, `Isin` 12, `Hostname` and `DomainName` 253, `IpAddress` and `Ipv6Address` 45, `Ipv4Address` 15, `IpPrefix` and `Ipv6Prefix` 49, `Ipv4Prefix` 18, `MacAddress` 17), other strings `text`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`, `Instant` `timestamptz`, `PlainDate` `date`, `PlainTime` `time`, `PlainDateTime` `timestamp`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`. On PostgreSQL, choose `inet` for the IP address types, `cidr` for the prefix types and `macaddr` for `MacAddress`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.

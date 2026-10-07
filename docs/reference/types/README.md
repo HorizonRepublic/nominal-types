@@ -17,6 +17,13 @@ AnyString                     any string
 ├── SemVer                    a version such as 1.4.2
 ├── Url
 │   └── HttpUrl
+├── CountryCode               ISO 3166-1, such as US
+├── CurrencyCode              ISO 4217, such as EUR
+├── LanguageTag               BCP 47, such as en-US
+├── MediaType                 text/html; charset=utf-8
+├── HexColor                  #1e90ff
+├── Base64                    bytes as text, + and / with = padding
+├── Base64Url                 bytes as text, - and _ without padding
 ├── Hostname                  localhost, api.example.com
 │   └── DomainName                with a top-level domain
 ├── IpAddress                 IPv4 or IPv6
@@ -29,14 +36,7 @@ AnyString                     any string
 ├── Isbn                      a book, such as 9780306406157
 ├── Issn                      a journal, such as 0378-5955
 ├── Gtin                      a bar code number, EAN or UPC
-├── Isin                      a security, such as US0378331005
-├── CountryCode               ISO 3166-1, such as US
-├── CurrencyCode              ISO 4217, such as EUR
-├── LanguageTag               BCP 47, such as en-US
-├── MediaType                 text/html; charset=utf-8
-├── HexColor                  #1e90ff
-├── Base64                    bytes as text, + and / with = padding
-└── Base64Url                 bytes as text, - and _ without padding
+└── Isin                      a security, such as US0378331005
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
@@ -97,6 +97,13 @@ PlainDateTime                 a date and time without an offset
 | a MongoDB `_id`                             | `ObjectId`                                                      | 24 hex digits, any case                         |
 | a version of a package or an API            | `SemVer`                                                        | sorts with `compare()`                          |
 | a link to a web page                        | `HttpUrl`                                                       | `http` and `https` only; `Url` takes any scheme |
+| a country                                   | `CountryCode`                                                   | ISO codes such as `US`, upper case only         |
+| a currency                                  | `CurrencyCode`                                                  | ISO codes such as `EUR`, with `minorUnits`      |
+| a language or locale                        | `LanguageTag`                                                   | tags such as `en-US`, any case                  |
+| a `Content-Type`, the type of a file        | `MediaType`                                                     | `essence` and `parameters` read it for you      |
+| a color from a color picker                 | `HexColor`                                                      | `#` required; channels as numbers               |
+| a file or a key inside JSON                 | `Base64`                                                        | `toBytes()` gives the bytes                     |
+| a part of a token or of a URL               | `Base64Url`                                                     | `-` and `_`, no `=` padding                     |
 | a server name, such as a database host      | `Hostname`                                                      | `localhost` too; no URL, port or trailing dot   |
 | a domain a user owns, such as `example.com` | `DomainName`                                                    | needs a top-level domain                        |
 | a client or server IP address               | `IpAddress`, or `Ipv4Address` and `Ipv6Address` for one version | `isGlobal` tells internal addresses apart       |
@@ -108,13 +115,6 @@ PlainDateTime                 a date and time without an offset
 | a share or a bond                           | `Isin`                                                          | check digit checked, upper case only            |
 | a required name or title                    | `NonBlankString`                                                | not `''` and not only spaces                    |
 | a required text that may be spaces          | `NonEmptyString`                                                | not `''`                                        |
-| a country                                   | `CountryCode`                                                   | ISO codes such as `US`, upper case only         |
-| a currency                                  | `CurrencyCode`                                                  | ISO codes such as `EUR`, with `minorUnits`      |
-| a language or locale                        | `LanguageTag`                                                   | tags such as `en-US`, any case                  |
-| a `Content-Type`, the type of a file        | `MediaType`                                                     | `essence` and `parameters` read it for you      |
-| a color from a color picker                 | `HexColor`                                                      | `#` required; channels as numbers               |
-| a file or a key inside JSON                 | `Base64`                                                        | `toBytes()` gives the bytes                     |
-| a part of a token or of a URL               | `Base64Url`                                                     | `-` and `_`, no `=` padding                     |
 | free text                                   | `AnyString`                                                     | any string, `''` included                       |
 | a count of items, such as a quantity        | `PositiveInteger`                                               | 1 and up                                        |
 | an amount in cents, an index                | `NonNegativeInteger`                                            | 0 and up                                        |

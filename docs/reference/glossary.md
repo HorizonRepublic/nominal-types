@@ -8,7 +8,7 @@ The terms these pages use, in alphabetical order.
 | aggregate                   | In domain-driven design, a group of entities changed together as one unit, such as an order and its lines.                                                             |
 | another copy of the package | The package loaded twice in one application, such as once with `import` and once with `require`. Types, instances and schemas from both copies work together.          |
 | base64                      | Bytes written as text: letters, digits, two more characters and `=` at the end, such as `aGVsbG8=` for `hello`. Base64url uses `-` and `_`, without `=`.               |
-| base type                   | One of the roots `AnyString`, `AnyNumber`, `AnyBigInt`, `AnyBoolean`. Types under them have a text form.                                                               |
+| base type                   | One of the roots `AnyString`, `AnyNumber`, `AnyBigInt`, `AnyBoolean`, and the date and time types. Types under them have a text form.                                  |
 | BCP 47                      | The standard for language tags such as `en-US`: a language, then an optional script, region and other parts, joined by `-`.                                            |
 | boundary                    | A place where data enters your code, such as an HTTP request, an environment variable or a database row.                                                               |
 | bounded context             | In domain-driven design, a part of a system with its own meaning for its words. A type name such as `billing.Email` names it.                                          |
@@ -41,6 +41,7 @@ The terms these pages use, in alphabetical order.
 | path                        | The part of an issue that says where the value was: field keys and array indexes, such as `['items', 0]`.                                                              |
 | peer dependency             | A package you install yourself next to this one, such as `zod` for the Zod adapter. The core needs none.                                                               |
 | pipe                        | In NestJS, a class that checks or converts an argument before the handler runs, such as `NominalPipe`.                                                                 |
+| RFC 3339                    | The standard format for dates and times on the internet, such as `2024-05-01T09:30:00Z`. JSON Schema's `date-time` and `date` formats follow it.                       |
 | rule                        | What a valid value looks like: a regular expression, a type guard or a schema from another library.                                                                    |
 | safe integer                | A whole number from `-(2^53 - 1)` to `2^53 - 1`. JavaScript numbers hold every one of them exactly; beyond that, digits can be lost.                                   |
 | scalar                      | In GraphQL, a type for a single value, such as `String`. The GraphQL adapter makes one per nominal type.                                                               |
@@ -55,13 +56,14 @@ The terms these pages use, in alphabetical order.
 | Standard Schema             | A shared interface for validators, [standardschema.dev](https://standardschema.dev). Zod, Valibot and ArkType support it, so they accept each other's schemas.         |
 | `strict()`                  | The method of an object schema that refuses keys it doesn't declare instead of dropping them.                                                                          |
 | subtype                     | A narrower type made with `subtype()`. It fits where its parent is expected, not the other way round.                                                                  |
+| Temporal                    | The date and time API of JavaScript, with objects such as `Temporal.Instant` and `Temporal.PlainDate`. Node.js 26 has it; older versions need a polyfill.              |
 | text form                   | How a type reads its value from a string, for `fromString()` and `fromEnv()`. Types under a base type have one; types made with `Nominal()` don't.                     |
 | `trusted`                   | An option of the database adapters: `true` skips checking values read from the database.                                                                               |
 | type guard                  | A function `(value: unknown) => value is T` that returns `true` for a valid value.                                                                                     |
 | type name                   | The name given to `Nominal()`, such as `billing.InvoiceNumber`. It names the type in errors, JSON Schema and Swagger.                                                  |
 | ULID                        | An id of 26 letters and digits whose first part is the time it was made, so ids sort by time. See the [ULID specification](https://github.com/ulid/spec).              |
 | union                       | A value that may have one of several shapes, such as a payment by card or by bank transfer.                                                                            |
-| value                       | What an instance wraps, read through `instance.value`: a string, number, bigint or boolean, or a frozen object or array.                                               |
+| value                       | What an instance wraps, read through `instance.value`: a string, number, bigint or boolean, a frozen object or array, or a Temporal object.                            |
 | value object                | In domain-driven design, a value defined by its fields, such as a stay of guests and capacity. It is always valid, can't change, and compares by value.                |
 | variant                     | A sibling type made with `variant()`. It has the methods of its source and a different rule, and the two don't mix.                                                    |
 | white space                 | Characters that show as empty space: spaces, tabs, line breaks and 22 others that Unicode marks as `White_Space`.                                                      |

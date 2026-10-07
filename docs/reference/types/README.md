@@ -55,12 +55,22 @@ AnyBigInt                     any integer, as a bigint
 AnyBoolean                    true or false
 ```
 
-| Page                      | Types                                          |
-| ------------------------- | ---------------------------------------------- |
-| [Strings](string.md)      | `AnyString` and the 18 types under it          |
-| [Numbers](number.md)      | `AnyNumber` and the 20 types under it          |
-| [Big integers](bigint.md) | `AnyBigInt`, its sign types, `Int64`, `Uint64` |
-| [Booleans](boolean.md)    | `AnyBoolean`                                   |
+The date and time types come from `@horizon-republic/nominal-types/temporal`. Each is a root of its own:
+
+```text
+Instant                       a moment, written with an offset
+PlainDate                     a calendar date
+PlainTime                     a time of day
+PlainDateTime                 a date and time without an offset
+```
+
+| Page                           | Types                                                |
+| ------------------------------ | ---------------------------------------------------- |
+| [Strings](string.md)           | `AnyString` and the 18 types under it                |
+| [Numbers](number.md)           | `AnyNumber` and the 20 types under it                |
+| [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
+| [Booleans](boolean.md)         | `AnyBoolean`                                         |
+| [Dates and times](temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` |
 
 ## Which built-in type do I pick?
 
@@ -92,13 +102,17 @@ AnyBoolean                    true or false
 | a database `bigint` id               | `Int64`                                                 | the range of a 64-bit integer, as a `bigint`    |
 | a price, a weight, a temperature     | `FiniteNumber`, or a sign type such as `PositiveNumber` | any number JSON can carry                       |
 | a flag                               | `AnyBoolean`                                            | `true` or `false`                               |
+| a moment, such as `paidAt`           | `Instant`                                               | an offset is required, so the moment is exact   |
+| a birthday, a due date               | `PlainDate`                                             | a real calendar day, no time and no zone        |
+| an opening hour                      | `PlainTime`                                             | a time of day, no zone                          |
+| a meeting in local time              | `PlainDateTime`                                         | a date and time, no zone                        |
 
 Declare your own type under the one you pick, so it carries its own meaning: `class Quantity extends PositiveInteger.subtype('shop.Quantity') {}`.
 
 ## Common to every built-in type
 
 - Rules run from the root down and stop at the first failure. The error names the type and gives that rule's message.
-- Values are never converted. `AnyBigInt` and the types under it are the exception: they also take a decimal string or a safe integer. To read a number or boolean from text, use [`fromString()`](../schemas.md#fromstring).
+- Values are never converted. `AnyBigInt` and the types under it are an exception: they also take a decimal string or a safe integer. The date and time types are another: they turn text into a Temporal object. To read a number or boolean from text, use [`fromString()`](../schemas.md#fromstring).
 - A long, crafted input can't make a built-in check slow.
 - The JSON Schema has the type name as `title`, such as `nominal.Email`. See [JSON Schema](../json-schema.md).
 

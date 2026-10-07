@@ -1,4 +1,8 @@
 import type { AnyNominalType } from '../../core/contracts.ts';
+import { Instant } from '../../temporal/instant.ts';
+import { PlainDateTime } from '../../temporal/plain-date-time.ts';
+import { PlainDate } from '../../temporal/plain-date.ts';
+import { PlainTime } from '../../temporal/plain-time.ts';
 import { AnyBigInt } from '../../types/bigint/any-bigint.ts';
 import { AnyBoolean } from '../../types/boolean/any-boolean.ts';
 import { AnyNumber } from '../../types/number/any-number.ts';
@@ -14,7 +18,11 @@ export type ColumnKind =
   | { readonly kind: 'bigint' }
   | { readonly kind: 'decimal'; readonly precision: number }
   | { readonly kind: 'double' }
-  | { readonly kind: 'boolean' };
+  | { readonly kind: 'boolean' }
+  | { readonly kind: 'timestamptz' }
+  | { readonly kind: 'date' }
+  | { readonly kind: 'time' }
+  | { readonly kind: 'timestamp' };
 
 /**
  * Internal: whether a type is a base type or declared under it.
@@ -63,13 +71,27 @@ const textKind = (target: AnyNominalType): ColumnKind => {
   return lengths.length === 0 ? { kind: 'text' } : { kind: 'text', length: Math.min(...lengths) };
 };
 
+const temporalKinds: ReadonlyArray<readonly [object, ColumnKind]> = [
+  [Instant, { kind: 'timestamptz' }],
+  [PlainDate, { kind: 'date' }],
+  [PlainTime, { kind: 'time' }],
+  [PlainDateTime, { kind: 'timestamp' }],
+];
+
 /**
  * Internal: the column a type is stored in by default. The family comes from the base type it is
  * declared under; the size is found by asking the type itself about values at the edges: `integer`
  * when it refuses everything past 32 bits, `bigint` within 64 bits, `decimal(20)` for unsigned
  * 64-bit values, `double` for fractions; `uuid` for a UUID and text with the type's longest length.
+ * The Temporal types take the SQL type of their kind: `timestamptz`, `date`, `time`, `timestamp`.
  */
 export const columnKindOf = (target: AnyNominalType): ColumnKind => {
+  const temporal = temporalKinds.find(([root]) => isUnder(root, target));
+
+  if (temporal !== undefined) {
+    return temporal[1];
+  }
+
   if (isUnder(AnyBoolean, target) || accepts(target, true)) {
     return { kind: 'boolean' };
   }

@@ -227,6 +227,7 @@ How values are compared:
 | a plain object             | key by key                                                     |
 | an instance inside a value | its own `equals()`                                             |
 | a `Uuid`                   | ignoring case                                                  |
+| a date or time type        | Temporal's `equals()`: the same moment, date or time           |
 
 A variant and its source are not equal. A plain value, such as a string, is never equal to an instance.
 
@@ -252,10 +253,10 @@ instance.toJSON(): unknown
 instance.toString(): string
 ```
 
-| Method       | Returns                                                                |
-| ------------ | ---------------------------------------------------------------------- |
-| `toJSON()`   | The value. `AnyBigInt` and the types under it return a decimal string. |
-| `toString()` | `String(value)`, or JSON text for an object or array value.            |
+| Method       | Returns                                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `toJSON()`   | The value. `AnyBigInt` and the types under it return a decimal string. The date and time types return their text. |
+| `toString()` | `String(value)`, or JSON text for an object or array value. The date and time types return their text.            |
 
 Example:
 
@@ -281,6 +282,8 @@ An instance stands for its value where JavaScript asks for a plain value:
 | `Number(a)`      | the value as a number                        | throws a `TypeError`        |
 
 The `TypeError` reads `booking.Stay holds an object and has no primitive value; compare its fields through .value`.
+
+The [date and time types](types/temporal.md) give their text in a string. Elsewhere they throw a `TypeError` that names the function to compare with: `nominal.Instant holds a Temporal.Instant and has no primitive value; compare with Temporal.Instant.compare(a.value, b.value)`.
 
 TypeScript accepts `>` and `<` between two instances. It refuses them between an instance and a plain number, and it refuses `+`, `-`, `*` and `/` on an instance. Read `.value` there.
 

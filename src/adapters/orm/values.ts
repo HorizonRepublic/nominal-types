@@ -33,9 +33,17 @@ const booleanFrom = (raw: unknown): unknown => {
   return raw === 0 || raw === '0' || raw === 'false' || raw === 'f' ? false : raw;
 };
 
+// A driver's `Date` is a moment, so it is read for an instant only: for a date or a timestamp
+// without time zone it stands for local midnight or local time, which the process zone can shift.
+const isMoment = (raw: unknown): raw is Date => raw instanceof Date && !Number.isNaN(raw.getTime());
+
 const plainFrom = (raw: unknown, column: ColumnKind, target: AnyNominalType): unknown => {
   if (column.kind === 'boolean') {
     return booleanFrom(raw);
+  }
+
+  if (column.kind === 'timestamptz' && isMoment(raw)) {
+    return raw.toISOString();
   }
 
   if (typeof raw === 'string' && column.kind !== 'text' && column.kind !== 'uuid') {
@@ -56,7 +64,8 @@ const storedOf = (instance: unknown): unknown => {
 
 /**
  * Internal: turns a stored value into an instance: `null` and `undefined` as they are, numbers and
- * booleans read from the text or integers some drivers return, then checked unless `trusted`. A
+ * booleans read from the text or integers some drivers return, a driver's `Date` as an instant,
+ * then checked unless `trusted`. A
  * driver's number beyond 2^53 - 1 is refused by big integer types, since it has lost digits.
  *
  * @throws NominalError naming the type for a stored value it doesn't accept.

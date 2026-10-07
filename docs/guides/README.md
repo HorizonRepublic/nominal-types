@@ -16,6 +16,7 @@ Your own types, and checking input with no other library.
 | check one field against another               | [How to check one field against another](core/check-fields-together.md)           |
 | make a value object of several fields         | [How to make a value object](core/make-a-value-object.md)                         |
 | read numbers and booleans from strings        | [How to read numbers and booleans from text](core/read-text-values.md)            |
+| check dates and times                         | [How to use dates and times](core/use-dates-and-times.md)                         |
 | read configuration from environment variables | [How to read configuration from environment variables](core/read-config.md)       |
 | keep values out of error messages             | [How to keep values out of error messages](core/hide-values.md)                   |
 | test code that takes nominal types            | [How to test code that takes nominal types](core/write-tests.md)                  |

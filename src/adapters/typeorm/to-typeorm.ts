@@ -21,6 +21,10 @@ const simpleColumns: Readonly<
   bigint: { type: 'bigint' },
   double: { type: 'double precision' },
   boolean: { type: 'boolean' },
+  timestamptz: { type: 'timestamptz' },
+  date: { type: 'date' },
+  time: { type: 'time' },
+  timestamp: { type: 'timestamp' },
 };
 
 const columnOptions = (column: ColumnKind): ColumnOptions => {

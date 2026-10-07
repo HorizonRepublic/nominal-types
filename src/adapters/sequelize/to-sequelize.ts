@@ -20,6 +20,10 @@ const simpleTypes: Readonly<Record<Exclude<ColumnKind['kind'], 'text' | 'decimal
   bigint: DataTypes.BIGINT,
   double: DataTypes.DOUBLE,
   boolean: DataTypes.BOOLEAN,
+  timestamptz: DataTypes.DATE,
+  date: DataTypes.DATEONLY,
+  time: DataTypes.TIME,
+  timestamp: 'TIMESTAMP',
 };
 
 const dataTypeOf = (column: ColumnKind): DataType => {

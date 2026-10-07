@@ -15,7 +15,7 @@ A tree of types gives you both. Each type sits under the closest kind it belongs
 
 Your own rule sees only values that passed the checks above it. Under `NonNegativeInteger`, it gets whole numbers from 0 up and needs no checks of its own for that.
 
-The roots are `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`. They are the [base types](../reference/glossary.md). Their names start with `Any`, because `String` and `Number` already belong to JavaScript.
+The roots are `AnyString`, `AnyNumber`, `AnyBigInt` and `AnyBoolean`, and the four date and time types. They are the [base types](../reference/glossary.md). Their names start with `Any`, because `String` and `Number` already belong to JavaScript.
 
 ## Why start under a base type
 

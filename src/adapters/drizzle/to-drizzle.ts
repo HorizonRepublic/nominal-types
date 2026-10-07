@@ -37,6 +37,10 @@ const sqlTypes: Readonly<Record<Exclude<ColumnKind['kind'], 'text' | 'decimal'>,
   bigint: 'bigint',
   double: 'double precision',
   boolean: 'boolean',
+  timestamptz: 'timestamptz',
+  date: 'date',
+  time: 'time',
+  timestamp: 'timestamp',
 };
 
 const sqlTypeOf = (column: ColumnKind): string => {

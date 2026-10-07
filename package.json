@@ -159,31 +159,37 @@
     "zod": "^4.0.0"
   },
   "peerDependenciesMeta": {
-    "graphql": {
-      "optional": true
-    },
-    "sequelize": {
-      "optional": true
-    },
     "@mikro-orm/core": {
       "optional": true
     },
-    "typeorm": {
-      "optional": true
-    },
     "@nestjs/common": {
-      "optional": true
-    },
-    "class-validator": {
-      "optional": true
-    },
-    "class-transformer": {
       "optional": true
     },
     "@nestjs/swagger": {
       "optional": true
     },
     "arktype": {
+      "optional": true
+    },
+    "class-transformer": {
+      "optional": true
+    },
+    "class-validator": {
+      "optional": true
+    },
+    "graphql": {
+      "optional": true
+    },
+    "sequelize": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    },
+    "valibot": {
+      "optional": true
+    },
+    "zod": {
       "optional": true
     }
   },

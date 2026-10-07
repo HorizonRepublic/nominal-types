@@ -151,7 +151,8 @@
           {
             "allow": ["reflect-metadata"]
           }
-        ]
+        ],
+        "public-docs/require-jsdoc": "off"
       }
     },
     {

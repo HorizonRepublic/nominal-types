@@ -86,8 +86,13 @@ class NominalRoot {
   }
 
   public static parse(this: typeof NominalRoot, input: unknown): Parsed<NominalRoot> {
-    if (typeof input === 'object' && input !== null && input instanceof this) {
-      return { ok: true, value: input };
+    if (typeof input === 'object' && input !== null) {
+      if (input instanceof this) {
+        return { ok: true, value: input };
+      }
+      if (descendsFromTypeOf(this, input)) {
+        return this.parse(Reflect.get(input, 'value'));
+      }
     }
     const result = check(this, input);
     if (result.issues !== undefined) {
@@ -135,6 +140,17 @@ class NominalRoot {
     return String(this.value);
   }
 }
+
+const descendsFromTypeOf = (target: typeof NominalRoot, instance: object): boolean => {
+  let ancestor: unknown = Object.getPrototypeOf(target);
+  while (typeof ancestor === 'function' && ancestor !== NominalRoot) {
+    if (instance instanceof ancestor) {
+      return true;
+    }
+    ancestor = Object.getPrototypeOf(ancestor);
+  }
+  return false;
+};
 
 const derive = (
   base: typeof NominalRoot,

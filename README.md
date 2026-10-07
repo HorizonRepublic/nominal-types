@@ -167,6 +167,17 @@ express.year; // 9000: behaviour is inherited
 
 The callback receives the parent's schema, so you can call ArkType methods such as `and` or `narrow` on it.
 
+`parse()` also narrows an instance of the parent. It checks the parent's value against the stricter schema and returns an instance of the subtype, or the issues if the value doesn't fit:
+
+```ts
+const order = new OrderNumber('ORD-90000001');
+
+ExpressOrderNumber.parse(order); // { ok: true, value: ExpressOrderNumber }
+ExpressOrderNumber.parse(new OrderNumber('ORD-20261007')); // { ok: false, issues: [...] }
+```
+
+Only types up the chain are narrowed. An instance of an unrelated type is rejected even when its value would pass.
+
 ### Changing the rules of a built-in type
 
 A subclass that overrides `schema` validates with its own rules and stays the same type as the class it extends. The built-in types keep their patterns as static fields, so you can build on them:
@@ -393,16 +404,16 @@ Returns a class to extend. `name` has to be unique within an application; `schem
 
 ### Static members
 
-| Member                      | Description                                                                                        |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| `new Type(input)`           | Validates and builds an instance; throws `NominalError`                                            |
-| `Type.parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is |
-| `Type.is(value)`            | Type guard                                                                                         |
-| `Type.refine(name, narrow)` | A distinct subtype validated by `narrow(schema)`                                                   |
-| `Type.standard()`           | The Standard Schema as a plain object, for libraries that parse definitions                        |
-| `Type['~standard']`         | Standard Schema and Standard JSON Schema properties                                                |
-| `Type.schema`               | The schema the type validates with                                                                 |
-| `Type.typeName`             | The name given to `Nominal()`                                                                      |
+| Member                      | Description                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Type(input)`           | Validates and builds an instance; throws `NominalError`                                                                                     |
+| `Type.parse(input)`         | `{ ok: true, value }` or `{ ok: false, issues }`; never throws; returns an existing instance as is and narrows an instance of a parent type |
+| `Type.is(value)`            | Type guard                                                                                                                                  |
+| `Type.refine(name, narrow)` | A distinct subtype validated by `narrow(schema)`                                                                                            |
+| `Type.standard()`           | The Standard Schema as a plain object, for libraries that parse definitions                                                                 |
+| `Type['~standard']`         | Standard Schema and Standard JSON Schema properties                                                                                         |
+| `Type.schema`               | The schema the type validates with                                                                                                          |
+| `Type.typeName`             | The name given to `Nominal()`                                                                                                               |
 
 ### Instance members
 

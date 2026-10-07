@@ -35,7 +35,7 @@ const valueOf = <Instance>(parsed: Parsed<Instance>): Instance => {
   return parsed.value;
 };
 
-const issuesOf = (parsed: Parsed<unknown>): ReadonlyArray<StandardSchemaV1.Issue> => {
+const issuesOf = (parsed: Parsed<unknown>): readonly StandardSchemaV1.Issue[] => {
   if (parsed.ok) {
     throw new Error('expected issues');
   }

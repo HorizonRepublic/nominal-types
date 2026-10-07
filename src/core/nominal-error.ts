@@ -9,9 +9,9 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
  */
 export class NominalError extends TypeError {
   public readonly typeName: string;
-  public readonly issues: ReadonlyArray<StandardSchemaV1.Issue>;
+  public readonly issues: readonly StandardSchemaV1.Issue[];
 
-  public constructor(typeName: string, issues: ReadonlyArray<StandardSchemaV1.Issue>) {
+  public constructor(typeName: string, issues: readonly StandardSchemaV1.Issue[]) {
     super(`${typeName}: ${issues.map((issue) => issue.message).join('; ')}`);
     this.name = 'NominalError';
     this.typeName = typeName;

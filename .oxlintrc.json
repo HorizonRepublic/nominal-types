@@ -106,6 +106,35 @@
         "max": 1,
         "ignoreExpressions": true
       }
+    ],
+    "public-docs/require-jsdoc": [
+      "error",
+      {
+        "publicOnly": true,
+        "require": {
+          "ArrowFunctionExpression": true,
+          "ClassDeclaration": true,
+          "FunctionDeclaration": true,
+          "MethodDefinition": false
+        },
+        "contexts": ["TSInterfaceDeclaration", "TSTypeAliasDeclaration", "TSEnumDeclaration"]
+      }
+    ],
+    "typescript/method-signature-style": ["error", "property"],
+    "typescript/array-type": [
+      "error",
+      {
+        "default": "array-simple",
+        "readonly": "array-simple"
+      }
+    ],
+    "typescript/consistent-indexed-object-style": ["error", "record"],
+    "typescript/explicit-member-accessibility": "error",
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "kebabCase"
+      }
     ]
   },
   "overrides": [
@@ -121,15 +150,16 @@
       "files": ["*.config.ts"],
       "rules": {
         "import/no-default-export": "off",
-        "import/no-nodejs-modules": "off"
-      }
-    },
-    {
-      "files": ["src/index.ts"],
-      "rules": {
-        "unicorn/no-empty-file": "off"
+        "import/no-nodejs-modules": "off",
+        "public-docs/require-jsdoc": "off"
       }
     }
   ],
-  "ignorePatterns": ["node_modules", "dist", "coverage"]
+  "ignorePatterns": ["node_modules", "dist", "coverage"],
+  "jsPlugins": [
+    {
+      "name": "public-docs",
+      "specifier": "eslint-plugin-jsdoc"
+    }
+  ]
 }

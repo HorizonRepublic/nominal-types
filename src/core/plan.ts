@@ -3,7 +3,6 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { NominalSchema } from './contracts.ts';
 import { NativeSchema } from './native-schema.ts';
 import { PatternSchema } from './pattern-schema.ts';
-import { Rejection } from './rejection.ts';
 
 /**
  * Internal: one check of a flat plan, and the issues it reports when it fails.
@@ -41,25 +40,15 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
   };
 };
 
-const allNative = (
-  rules: readonly NominalSchema[],
-): rules is ReadonlyArray<NativeSchema<unknown>> =>
-  rules.every((rule) => rule instanceof NativeSchema);
-
 /**
- * Internal: the rules of a chain as a flat list of checks, or `undefined` when a rule comes from
- * another library and has to run through `validate`.
+ * Internal: patterns and type guards as a flat list of checks.
  *
  * @remarks
  * Neighbouring patterns that start with `^`, hold no `|` and share their flags are folded into one
  * expression of lookaheads, which tests the string once; such patterns match only from the start,
  * so testing them together there is the same as testing them apart.
  */
-export const planOf = (rules: readonly NominalSchema[]): readonly Step[] | undefined => {
-  if (!allNative(rules)) {
-    return undefined;
-  }
-
+export const planOf = (rules: ReadonlyArray<NativeSchema<unknown>>): readonly Step[] => {
   const steps: Step[] = [];
   let group: PatternSchema[] = [];
 
@@ -91,19 +80,6 @@ export const planOf = (rules: readonly NominalSchema[]): readonly Step[] | undef
 };
 
 /**
- * Internal: runs a flat plan, returning the value or the `Rejection` of the first failing step.
- */
-export const runPlan = (plan: readonly Step[], input: unknown): unknown => {
-  for (const step of plan) {
-    if (!step.accepts(input)) {
-      return new Rejection(step.issues(input));
-    }
-  }
-
-  return input;
-};
-
-/**
  * Internal: a rule from another library inside a type's rules, which may change the value; it
  * returns the value the next rule sees, or a `Rejection`.
  */
@@ -120,10 +96,10 @@ export const stepsOf = (
   convertOf: (rule: NominalSchema) => ConvertStep,
 ): ReadonlyArray<Step | ConvertStep> => {
   const steps: Array<Step | ConvertStep> = [];
-  let native: NominalSchema[] = [];
+  let native: Array<NativeSchema<unknown>> = [];
 
   const flush = (): void => {
-    steps.push(...(planOf(native) ?? []));
+    steps.push(...planOf(native));
     native = [];
   };
 

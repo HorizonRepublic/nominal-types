@@ -59,7 +59,7 @@ When all the rules are regular expressions or type guards, they run as a simple 
 - The string check is skipped before a regular expression, which rejects anything that isn't a string anyway. So `Email` and `Uuid` run only one check.
 - Neighbouring patterns that start with `^` and have no `|` are joined into one regular expression and tested in one pass. If it fails, each pattern is tested on its own, so the error names the right one.
 
-A rule from another library ends the simple list. From then on, each rule runs through its own `validate`.
+A rule from another library doesn't end the list: it becomes a step that runs its `validate` and passes the value it produced to the next step.
 
 ## Checks generated per type
 

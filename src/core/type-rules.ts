@@ -1,13 +1,13 @@
 import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 
-import { ChainSchema } from './chain-schema.ts';
 import { compileRun } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
+import { foreignRunner } from './foreign-runner.ts';
 import { rulesOf } from './hierarchy.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
-import { foreignRunner } from './run-schema.ts';
+import { describeRules } from './rules-json.ts';
 import { withoutImpliedString } from './string-rule.ts';
 
 /**
@@ -17,29 +17,27 @@ export interface TypeClass {
   readonly typeName: string;
 }
 
-const effectiveSchemas = new WeakMap<object, NominalSchema>();
+const typeRules = new WeakMap<object, readonly NominalSchema[]>();
 
-const effectiveSchemaOf = (root: object, target: TypeClass): NominalSchema => {
-  const cached = effectiveSchemas.get(target);
+const rulesFor = (root: object, target: TypeClass): readonly NominalSchema[] => {
+  const cached = typeRules.get(target);
 
   if (cached !== undefined) {
     return cached;
   }
 
   const rules = withoutImpliedString(rulesOf(root, target));
-  const [only] = rules;
-  const schema = rules.length === 1 && only !== undefined ? only : new ChainSchema(rules);
 
-  effectiveSchemas.set(target, schema);
+  typeRules.set(target, rules);
 
-  return schema;
+  return rules;
 };
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 
 const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) =>
   compileRun(
-    stepsOf(withoutImpliedString(rulesOf(root, target)), (rule) => ({
+    stepsOf(rulesFor(root, target), (rule) => ({
       convert: foreignRunner(rule, target.typeName),
     })),
   );
@@ -74,13 +72,12 @@ export const describeType = (
   side: 'input' | 'output',
   options: StandardJSONSchemaV1.Options,
 ): Record<string, unknown> => {
-  const converter = effectiveSchemaOf(root, target)['~standard'].jsonSchema;
-
-  if (converter === undefined) {
-    throw new TypeError(`${target.typeName}: the schema cannot describe itself as JSON Schema`);
-  }
-
-  const { $schema, title, ...body } = converter[side](options);
+  const { $schema, title, ...body } = describeRules(
+    target.typeName,
+    rulesFor(root, target),
+    side,
+    options,
+  );
   const accepts = (example: unknown): boolean =>
     !(runType(root, target, example) instanceof Rejection);
 

@@ -8,13 +8,12 @@
 
 Runtime-validated nominal types for TypeScript.
 
-An email address, a UUID and a username are all `string` to the compiler. Nothing stops you from passing one where another is expected, and every function that receives one has to decide whether to check it again.
+A string that holds an email address is still just a `string` to the compiler. This package turns such values into classes that check them once, when they come in:
 
-Here each of them is a class. You validate a value once, when it comes in, by constructing it. After that the compiler won't let you mix it up with other strings, and code that receives an `Email` knows it already holds a valid address.
-
-A type also carries the code that works on its values. Instead of helpers scattered across a project that take a string and hope it is the right kind, `email.domain`, `email.withoutTag()` or `uuid.timestamp` live on the type, are found by autocompletion, and only ever run on a value that passed the rule.
-
-Types work with any library that accepts [Standard Schema](https://standardschema.dev), and a NestJS pipe validates route parameters with them. The package has no runtime dependencies, and constructing an `Email` takes about 85 ns.
+- an `Email` you receive is always a valid address, with no need to check it again;
+- an `Email` can't be passed where a `Uuid` or a plain `string` is expected;
+- the code that works on a value lives on its type, as `email.domain` or `uuid.timestamp`;
+- a type is defined with a regular expression or with a schema from Zod, Valibot, ArkType or any other [Standard Schema](https://standardschema.dev) library.
 
 ## Example
 
@@ -41,7 +40,7 @@ new Email('not an address'); // throws NominalError
 npm install @horizon-republic/nominal-types
 ```
 
-Any package manager works. The package ships ES modules and CommonJS side by side, each with its own type declarations, and runs on Node.js 22.12 or later. It has no runtime dependencies: the only package it lists, `@standard-schema/spec`, holds type definitions alone.
+It ships ES modules and CommonJS and runs on Node.js 22.12 or later.
 
 ## Your first type
 

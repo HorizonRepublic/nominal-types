@@ -28,7 +28,7 @@ class User extends Model {
   declare public level: Int16 | null;
 }
 
-const sequelize = new Sequelize('sqlite::memory:', { logging: false });
+const sequelize = new Sequelize({ dialect: 'sqlite', storage: ':memory:', logging: false });
 
 User.init(
   {

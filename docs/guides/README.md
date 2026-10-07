@@ -10,7 +10,8 @@ Short recipes. Each one solves one task.
 | read numbers and booleans from env vars, query strings or CSV  | [How to read values from strings](reading-strings.md)                  |
 | check user input without `try`/`catch`                         | [How to validate untrusted input](validating-input.md)                 |
 | check one field against another, such as guests and capacity   | [How to check one field against another](checking-fields-together.md)  |
-| put a nominal type inside an ArkType or NestJS schema          | [How to use a type inside another validator](other-validators.md)      |
+| check request bodies and configs with ArkType                  | [How to use nominal types in ArkType schemas](arktype.md)              |
+| put a nominal type inside another library's schema             | [How to use a type inside another validator](other-validators.md)      |
 | get a JSON Schema for OpenAPI                                  | [How to generate JSON Schema](json-schema.md)                          |
 | turn NestJS parameters and message payloads into nominal types | [How to validate NestJS route parameters](nestjs.md)                   |
 | use nominal types in class-validator DTOs                      | [How to use nominal types in class-validator DTOs](class-validator.md) |

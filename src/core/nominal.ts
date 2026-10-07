@@ -7,6 +7,7 @@ import type {
   Parsed,
   ValueOf,
 } from './contracts.ts';
+import { fingerprintOf } from './fingerprint.ts';
 import {
   brandKeySlot,
   descendsFrom,
@@ -15,23 +16,18 @@ import {
   levelSlot,
   variantSourceSlot,
 } from './hierarchy.ts';
+import { jsonText } from './messages.ts';
 import { NominalError } from './nominal-error.ts';
-import { PatternSchema } from './pattern-schema.ts';
+import { asRule } from './pattern-schema.ts';
 import { remember, nothingPending, takePending } from './pending.ts';
-import { registerType, typeNamed } from './registry.ts';
+import { registerType } from './registry.ts';
 import { Rejection } from './rejection.ts';
 import { inOneLine, sameValue } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import { describeType, runType } from './type-rules.ts';
+import { describeType, onlyChecks, runType } from './type-rules.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
-
-const jsonReplacer = (_key: string, value: unknown): unknown =>
-  typeof value === 'bigint' ? String(value) : value;
-
-const toSchema = (schema: NominalSchema | RegExp): NominalSchema =>
-  schema instanceof RegExp ? new PatternSchema(schema) : schema;
 
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
@@ -87,7 +83,7 @@ class NominalRoot {
     name: string,
     constraint?: NominalSchema | RegExp,
   ): typeof NominalRoot {
-    return derive(this, name, constraint === undefined ? undefined : toSchema(constraint), this);
+    return derive(this, name, constraint === undefined ? undefined : asRule(constraint), this);
   }
 
   public static variant(
@@ -96,7 +92,7 @@ class NominalRoot {
     rule: NominalSchema | RegExp,
   ): typeof NominalRoot {
     const level = levelOf(NominalRoot, this);
-    const derived = derive(this, name, toSchema(rule), level.base);
+    const derived = derive(this, name, asRule(rule), level.base);
 
     for (const key of level.keys) {
       Object.defineProperty(derived.prototype, key, { value: false });
@@ -117,17 +113,17 @@ class NominalRoot {
 
   public toString(): string {
     return typeof this.value === 'object' && this.value !== null
-      ? JSON.stringify(this, jsonReplacer)
+      ? jsonText(this)
       : String(this.value);
   }
 
   public [Symbol.toPrimitive](hint: string): unknown {
-    if (typeof this.value !== 'object' || this.value === null) {
-      return hint === 'string' ? String(this.value) : this.value;
-    }
-
     if (hint === 'string') {
       return this.toString();
+    }
+
+    if (typeof this.value !== 'object' || this.value === null) {
+      return this.value;
     }
 
     throw new TypeError(
@@ -177,22 +173,41 @@ export const constructorFor = (target: AnyNominalType): ((input: unknown) => unk
   };
 };
 
-const fingerprintOf = (rule: NominalSchema | undefined): string => {
-  if (rule === undefined) {
-    return '';
+/**
+ * Internal: a function that checks a value against `target` without making an instance: a
+ * `Rejection`, or anything else when the value is accepted.
+ */
+export const checkerFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
+  if (!isOwnType(target)) {
+    return constructorFor(target);
   }
 
-  const pattern: unknown = Reflect.get(rule, 'pattern');
+  return (input) =>
+    typeof input === 'object' && input !== null
+      ? constructOwn(target, input)
+      : runType(NominalRoot, target, input);
+};
 
-  if (pattern instanceof RegExp) {
-    return `pattern:${pattern.source}`;
+/**
+ * Internal: a function that makes instances of `target` from values a checker of it accepted, and
+ * skips checking a primitive again where the type's rules only check.
+ */
+export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
+  const build = constructorFor(target);
+
+  if (!isOwnType(target) || !onlyChecks(NominalRoot, target)) {
+    return build;
   }
 
-  const description: unknown = Reflect.get(rule, 'description');
+  return (input) => {
+    if (typeof input === 'object' && input !== null) {
+      return build(input);
+    }
 
-  return typeof description === 'string'
-    ? `rule:${description}`
-    : `schema:${rule['~standard'].vendor}`;
+    remember(target, input, input);
+
+    return new target(input);
+  };
 };
 
 const derive = (
@@ -239,20 +254,6 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
   Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === vendor;
 
 /**
- * Internal: finds a nominal type by the name it was declared with, for adapters that only see names, such
- * as an OpenAPI document whose schemas are named after classes.
- *
- * @remarks
- * Only types declared through this copy of the package are found. A class that merely extends a
- * type shares its name and is found as that type.
- */
-export const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
-  const type = typeNamed(name);
-
-  return isNominalType(type) ? type : undefined;
-};
-
-/**
  * Declares a nominal type: a class whose instances exist only for values the schema accepts.
  *
  * @remarks
@@ -282,5 +283,5 @@ export function Nominal(
   name: string,
   schema: NominalSchema | RegExp,
 ): typeof NominalRoot | AnyNominalType {
-  return derive(NominalRoot, name, toSchema(schema));
+  return derive(NominalRoot, name, asRule(schema));
 }

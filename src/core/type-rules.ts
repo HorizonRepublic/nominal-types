@@ -6,6 +6,7 @@ import { withValidExamples } from './examples.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { frozen } from './frozen.ts';
 import { rulesOf } from './hierarchy.ts';
+import { NativeSchema } from './native-schema.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
 import { describeRules } from './rules-json.ts';
@@ -33,6 +34,13 @@ const rulesFor = (root: object, target: TypeClass): readonly NominalSchema[] => 
 
   return rules;
 };
+
+/**
+ * Internal: whether every rule of a type only checks values, so the value a type holds is the
+ * input itself whenever the input is a primitive.
+ */
+export const onlyChecks = (root: object, target: TypeClass): boolean =>
+  rulesFor(root, target).every((rule) => rule instanceof NativeSchema);
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 

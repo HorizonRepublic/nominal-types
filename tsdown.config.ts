@@ -6,6 +6,7 @@ const config: UserConfig = {
     'adapters/nest/index': 'src/adapters/nest/index.ts',
     'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
     'adapters/swagger/index': 'src/adapters/swagger/index.ts',
+    'adapters/arktype/index': 'src/adapters/arktype/index.ts',
   },
   format: ['esm', 'cjs'],
   platform: 'neutral',

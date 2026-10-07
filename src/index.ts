@@ -19,6 +19,7 @@ export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
 export { isConstraint, Constraint, constraint } from './core/constraint.ts';
 export type {
+  AnyConstraint,
   ConstraintField,
   ConstraintInput,
   ConstraintInputs,
@@ -26,7 +27,7 @@ export type {
   ConstraintValue,
   ConstraintValues,
   ConstraintVerdict,
-} from './core/constraint.ts';
+} from './core/constraint-types.ts';
 export { schemaOf, TypeSchema } from './core/type-schema.ts';
 export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';

@@ -3,6 +3,7 @@ import { type } from 'arktype';
 import * as v from 'valibot';
 import { z } from 'zod';
 
+import { arkOf, arkSchema } from '../../src/adapters/arktype/index.ts';
 import { Email, NonNegativeInteger, PositiveInteger, schemaOf, Uuid } from '../../src/index.ts';
 import * as typia from '../typia/dist/validators.js';
 import { nominalWithClassValidator, plainClassValidator } from './class-validator-dtos.ts';
@@ -44,6 +45,33 @@ const nominalWithArkType = type({
     tags: 'string[]',
   }).array(),
 });
+
+const nominalArkAdapter = arkSchema(
+  type({
+    exportId: arkOf(Uuid),
+    customers: type({
+      id: arkOf(Uuid),
+      email: arkOf(Email),
+      name: 'string > 0',
+      addresses: type({
+        country: arkOf(CountryCode),
+        postcode: arkOf(Postcode),
+        line: 'string > 0',
+      }).array(),
+    }).array(),
+    orders: type({
+      id: arkOf(Uuid),
+      customerId: arkOf(Uuid),
+      status: "'new' | 'paid' | 'shipped'",
+      items: type({
+        sku: arkOf(Sku),
+        quantity: arkOf(PositiveInteger),
+        price: type({ amountMinor: arkOf(NonNegativeInteger), currency: "'UAH' | 'EUR' | 'USD'" }),
+      }).array(),
+      tags: 'string[]',
+    }).array(),
+  }),
+);
 
 const plainArkType = type({
   exportId: 'string.uuid',
@@ -146,6 +174,11 @@ export const documentLibraries: readonly DocumentLibrary[] = [
     name: 'nominal-types + ArkType',
     validate: nominalWithArkType,
     accepted: (result) => !(result instanceof type.errors),
+  },
+  {
+    name: 'nominal-types + ArkType adapter',
+    validate: (input) => nominalArkAdapter.parse(input),
+    accepted: (result) => field(result, 'ok') === true,
   },
   {
     name: 'nominal-types + class-validator',

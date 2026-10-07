@@ -1,5 +1,7 @@
+import type { AnyNominalType } from '../../core/contracts.ts';
 import { withoutUri } from '../../core/json-target.ts';
-import { nominalTypeNamed } from '../../core/nominal.ts';
+import { isNominalType } from '../../core/nominal.ts';
+import { typeNamed } from '../../core/registry.ts';
 
 /**
  * The part of an OpenAPI document this adapter reads and fills.
@@ -8,6 +10,12 @@ export interface OpenApiDocument {
   readonly openapi?: string;
   readonly components?: { readonly schemas?: Readonly<Record<string, unknown>> } | undefined;
 }
+
+const nominalTypeNamed = (name: string): AnyNominalType | undefined => {
+  const type = typeNamed(name);
+
+  return isNominalType(type) ? type : undefined;
+};
 
 const isEmpty = (value: unknown): boolean =>
   value === undefined ||

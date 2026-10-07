@@ -1,3 +1,4 @@
+import type { NominalSchema } from './contracts.ts';
 import { mustBe } from './messages.ts';
 import { NativeSchema } from './native-schema.ts';
 
@@ -71,3 +72,10 @@ export const matching = (
   description?: string,
   json?: Readonly<Record<string, unknown>>,
 ): PatternSchema => new PatternSchema(pattern, description, json);
+
+/**
+ * Internal: a rule as `Nominal()`, `subtype()` and `variant()` take it, with a bare pattern turned
+ * into a `PatternSchema`.
+ */
+export const asRule = (rule: NominalSchema | RegExp): NominalSchema =>
+  rule instanceof RegExp ? new PatternSchema(rule) : rule;

@@ -106,17 +106,32 @@ describe('toGraphQL', () => {
 
   it('refuses bad literals and variables with the type message', async () => {
     expect((await run('{ email(value: "nope") }')).errors?.[0]?.message).toBe(
-      'Email: must be an email address (was "nope")',
+      'Email: must be an email address (was a string of 4 characters)',
     );
     expect(
       (await run('query ($e: Email) { email(value: $e) }', { e: 'nope' })).errors?.[0]?.message,
-    ).toBe('Variable "$e" has invalid value: Email: must be an email address (was "nope")');
+    ).toBe(
+      'Variable "$e" has invalid value: Email: must be an email address (was a string of 4 characters)',
+    );
   });
 
   it('sends a plain result the type accepts, and refuses one it does not', async () => {
     expect(await run('{ raw }')).toEqual({ data: { raw: 'jane@example.com' } });
     expect((await run('{ bad }')).errors?.[0]?.message).toBe(
-      'Email: must be an email address (was "nope")',
+      'Email: must be an email address (was a string of 4 characters)',
+    );
+  });
+
+  it('leaves values out of error messages with hideValues', () => {
+    const hidden = toGraphQL(PositiveInteger, { hideValues: true });
+
+    // oxlint-disable-next-line typescript/no-deprecated
+    expect(() => hidden.parseValue(-5)).toThrow(
+      'PositiveInteger: must be a positive integer (was a number)',
+    );
+    // oxlint-disable-next-line typescript/no-deprecated
+    expect(() => CountScalar.parseValue(-5)).toThrow(
+      'PositiveInteger: must be a positive integer (was -5)',
     );
   });
 

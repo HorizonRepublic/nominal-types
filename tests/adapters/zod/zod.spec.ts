@@ -60,8 +60,8 @@ describe('toZod', () => {
       issues(Booking.safeParse({ id: 'x', email: 'nope', backup: 1, stays: [{ guests: 0 }] })),
     ).toStrictEqual([
       { message: 'must be a UUID (was "x")', path: ['id'] },
-      { message: 'must be an email address (was "nope")', path: ['email'] },
-      { message: 'must be a string (was 1)', path: ['backup'] },
+      { message: 'must be an email address (was a string of 4 characters)', path: ['email'] },
+      { message: 'must be a string (was a number)', path: ['backup'] },
       { message: 'must be a positive integer (was 0)', path: ['stays', 0, 'guests'] },
       { message: 'must be a number (was undefined)', path: ['stays', 0, 'capacity'] },
     ]);

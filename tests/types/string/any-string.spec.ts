@@ -77,7 +77,7 @@ describe('types under AnyString', () => {
   });
 
   it.each([
-    [Email, 'must be a string (was 42)'],
+    [Email, 'must be a string (was a number)'],
     [Uuid, 'must be a string (was 42)'],
     [Url, 'must be a URL (was 42)'],
     [HttpUrl, 'must be a URL (was 42)'],

@@ -4,6 +4,7 @@ import type {
   ObjectInstance,
   ObjectRule,
   InputOf,
+  NominalOptions,
   NominalSchema,
   NominalType,
   Parsed,
@@ -15,6 +16,7 @@ import {
   isVariantPair,
   levelOf,
   levelSlot,
+  sensitiveSlot,
   variantSourceSlot,
 } from './hierarchy.ts';
 import { jsonText } from './messages.ts';
@@ -85,17 +87,25 @@ class NominalRoot {
     this: typeof NominalRoot,
     name: string,
     constraint?: NominalSchema | RegExp,
+    options?: NominalOptions,
   ): typeof NominalRoot {
-    return derive(this, name, constraint === undefined ? undefined : asRule(constraint), this);
+    return derive(
+      this,
+      name,
+      constraint === undefined ? undefined : asRule(constraint),
+      this,
+      options,
+    );
   }
 
   public static variant(
     this: typeof NominalRoot,
     name: string,
     rule: NominalSchema | RegExp,
+    options?: NominalOptions,
   ): typeof NominalRoot {
     const level = levelOf(NominalRoot, this);
-    const derived = derive(this, name, asRule(rule), level.base);
+    const derived = derive(this, name, asRule(rule), level.base, options);
 
     for (const key of level.keys) {
       Object.defineProperty(derived.prototype, key, { value: false });
@@ -181,7 +191,8 @@ const derive = (
   parent: typeof NominalRoot,
   name: string,
   rule: NominalSchema | undefined,
-  base?: object,
+  base: object | undefined,
+  options: NominalOptions | undefined,
 ): typeof NominalRoot => {
   const derived = class extends parent {
     public static override readonly typeName: string = name;
@@ -193,6 +204,10 @@ const derive = (
   Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
   Object.defineProperty(derived, Symbol.hasInstance, { value: brandCheck(key) });
+
+  if (options?.sensitive !== undefined) {
+    Object.defineProperty(derived, sensitiveSlot, { value: options.sensitive });
+  }
 
   if (rule !== undefined) {
     Object.defineProperty(derived, 'rule', { value: rule });
@@ -243,18 +258,22 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
 export function Nominal<const Name extends string>(
   name: Name,
   pattern: RegExp,
+  options?: NominalOptions,
 ): NominalType<Name, NominalSchema<string, string>>;
 export function Nominal<const Name extends string, Input, Value extends object>(
   name: Name,
   schema: ObjectRule<Input, Value>,
+  options?: NominalOptions,
 ): NominalType<Name, NominalSchema<Input, Value>, ObjectInstance<Name, Input, Value>>;
 export function Nominal<const Name extends string, Schema extends NominalSchema>(
   name: Name,
   schema: Schema,
+  options?: NominalOptions,
 ): NominalType<Name, NominalSchema<InputOf<Schema>, ValueOf<Schema>>>;
 export function Nominal(
   name: string,
   schema: NominalSchema | RegExp,
+  options?: NominalOptions,
 ): typeof NominalRoot | AnyNominalType {
-  return derive(NominalRoot, name, asRule(schema));
+  return derive(NominalRoot, name, asRule(schema), undefined, options);
 }

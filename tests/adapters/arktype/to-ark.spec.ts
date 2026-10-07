@@ -85,7 +85,9 @@ describe('toArk', () => {
     const result = type({ email: toArk(Email) })({ email: 'nope' });
 
     expect(result).toBeInstanceOf(type.errors);
-    expect(Reflect.get(result, 'summary')).toBe('email must be an email address (was "nope")');
+    expect(Reflect.get(result, 'summary')).toBe(
+      'email must be an email address (was a string of 4 characters)',
+    );
   });
 
   it('reports every issue of a type holding an object, with its path, in one message', () => {

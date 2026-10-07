@@ -16,7 +16,7 @@ const result = Email.parse(input);
 if (result.ok) {
   invite(result.value); // result.value is an Email
 } else {
-  reject(result.issues.map((issue) => issue.message)); // ['must be an email address (was "nope")']
+  reject(result.issues.map((issue) => issue.message)); // ['must be an email address (was a string of 4 characters)']
 }
 ```
 

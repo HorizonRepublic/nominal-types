@@ -21,7 +21,7 @@ if (result.ok) {
   result.value.email; // Email
   result.value.quantity; // PositiveInteger
 } else {
-  result.issues; // [{ message: 'must be an email address (was "nope")', path: ['email'] }]
+  result.issues; // [{ message: 'must be an email address (was a string of 4 characters)', path: ['email'] }]
 }
 ```
 

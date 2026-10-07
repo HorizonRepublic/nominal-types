@@ -42,17 +42,18 @@ With NestJS code-first, give it as the field's type: `@Field(() => EmailScalar) 
 A bad value gives an error such as:
 
 ```json
-{ "errors": [{ "message": "Email: must be an email address (was \"nope\")" }] }
+{ "errors": [{ "message": "Email: must be an email address (was a string of 4 characters)" }] }
 ```
 
 ## Options
 
-| Option           | Default                                                       |
-| ---------------- | ------------------------------------------------------------- |
-| `name`           | the last part of the type's name: `Email` for `nominal.Email` |
-| `description`    | the type's description: `an email address`                    |
-| `serialize`      | the instance's `toJSON()`                                     |
-| `specifiedByURL` | none                                                          |
+| Option           | Default                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `name`           | the last part of the type's name: `Email` for `nominal.Email`                                                                  |
+| `description`    | the type's description: `an email address`                                                                                     |
+| `serialize`      | the instance's `toJSON()`                                                                                                      |
+| `specifiedByURL` | none                                                                                                                           |
+| `hideValues`     | `false`; `true` leaves rejected values out of error messages, see [How to keep values out of error messages](hiding-values.md) |
 
 Two types whose names end in the same part, such as `billing.Email` and `nominal.Email`, need different `name`s in one schema.
 

@@ -2,6 +2,7 @@ import { GraphQLError, GraphQLScalarType, Kind, valueFromASTUntyped } from 'grap
 import type { ValueNode } from 'graphql';
 
 import type { AnyNominalType } from '../../core/contracts.ts';
+import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { instanceParserFor } from '../../core/type-functions.ts';
@@ -30,6 +31,11 @@ export interface GraphQLOptions<Instance> {
    * A URL of the scalar's specification, shown by GraphQL tools.
    */
   readonly specifiedByURL?: string;
+  /**
+   * Leaves rejected values out of error messages, for every type, since GraphQL sends the messages
+   * to the client. Types declared `sensitive` leave them out anyway.
+   */
+  readonly hideValues?: boolean;
 }
 
 const scalarName = (typeName: string): string =>
@@ -48,6 +54,7 @@ const storedOf = (instance: unknown): unknown => {
 const instanceMaker = <Target extends AnyNominalType>(
   target: Target,
   name: string,
+  hidden: boolean,
 ): ((value: unknown) => Target['prototype']) => {
   const parse = instanceParserFor(target);
 
@@ -55,9 +62,9 @@ const instanceMaker = <Target extends AnyNominalType>(
     const result = parse(value);
 
     if (result instanceof Rejection) {
-      throw new GraphQLError(
-        `${name}: ${result.issues.map((issue) => issueText(issue)).join('; ')}`,
-      );
+      const issues = hidden ? hideValues(result.issues) : result.issues;
+
+      throw new GraphQLError(`${name}: ${issues.map((issue) => issueText(issue)).join('; ')}`);
     }
 
     // The parser gave an instance of `target`.
@@ -98,7 +105,7 @@ export const toGraphQL = <Target extends AnyNominalType>(
   const json = typeJsonOf(target);
   const description: unknown = Reflect.get(target.rule, 'description');
 
-  const instanceOf = instanceMaker(target, name);
+  const instanceOf = instanceMaker(target, name, options.hideValues === true);
   const literalOf = literalReader(isUnder(AnyBigInt, target));
 
   const output = (value: unknown): unknown => {

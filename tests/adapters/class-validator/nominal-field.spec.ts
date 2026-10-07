@@ -73,7 +73,7 @@ describe('NominalField', () => {
 
   it('reports a rejected value with the property and the type message', () => {
     expect(messages(build(OrderDto, { ...valid, contact: 'nope' }).errors)).toStrictEqual([
-      'contact: must be an email address (was "nope")',
+      'contact: must be an email address (was a string of 4 characters)',
     ]);
   });
 
@@ -105,7 +105,7 @@ describe('NominalField', () => {
 
   it('prefixes the messages of a nested DTO', () => {
     expect(messages(build(OrderDto, { ...valid, billing: { email: 'x' } }).errors)).toStrictEqual([
-      'billing.email: must be an email address (was "x")',
+      'billing.email: must be an email address (was a string of 1 character)',
     ]);
   });
 

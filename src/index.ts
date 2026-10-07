@@ -7,6 +7,7 @@ export type {
   Immutable,
   InputOf,
   NominalInstance,
+  NominalOptions,
   NominalSchema,
   NominalType,
   ObjectCopy,
@@ -20,6 +21,7 @@ export type {
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';
+export { hideValues } from './core/hidden-values.ts';
 export { matching, PatternSchema } from './core/pattern-schema.ts';
 export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';

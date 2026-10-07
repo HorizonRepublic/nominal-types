@@ -63,13 +63,13 @@ A bad body fails with status 400. Each message names the property, and a list it
 {
   "statusCode": 400,
   "error": "Bad Request",
-  "message": ["contact: must be an email address (was \"nope\")", "items.0: must be a UUID (was \"x\")"]
+  "message": ["contact: must be an email address (was a string of 4 characters)", "items.0: must be a UUID (was \"x\")"]
 }
 ```
 
 ## Nested DTOs
 
-Use `@ValidateNested()` and `@Type()` as usual. Messages get the parent's name in front, such as `billing.email: must be an email address (was "y")`:
+Use `@ValidateNested()` and `@Type()` as usual. Messages get the parent's name in front, such as `billing.email: must be an email address (was a string of 1 character)`:
 
 ```ts
 import { Type } from 'class-transformer';

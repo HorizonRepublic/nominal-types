@@ -21,6 +21,7 @@
     "docs/",
     "CLAUDE.md",
     ".claude/",
-    ".serena/"
+    ".serena/",
+    "CHANGELOG.md"
   ]
 }

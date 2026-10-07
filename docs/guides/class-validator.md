@@ -1,5 +1,7 @@
 # How to use nominal types in class-validator DTOs
 
+> Recommended for projects that already use class-validator. For new code, an ArkType schema is simpler and several times faster: see [Choosing how to check input](../explanation/choosing-an-approach.md).
+
 This guide shows how to declare DTO properties as nominal types when your project validates DTO classes with class-validator and class-transformer, as NestJS's `ValidationPipe` does.
 
 The decorator comes from a separate entry point, `@horizon-republic/nominal-types/adapters/class-validator`. You only need `class-validator` and `class-transformer` if you import it.

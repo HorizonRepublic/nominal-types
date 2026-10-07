@@ -1,5 +1,7 @@
 # How to use nominal types in ArkType schemas
 
+> This is the recommended way to check objects. For the other ways and when they fit, see [Choosing how to check input](../explanation/choosing-an-approach.md).
+
 This guide shows how to check a request body, a message or a config with [ArkType](https://arktype.io) and get nominal instances back, such as an `Email`, at ArkType's own speed.
 
 The helpers come from a separate entry point, `@horizon-republic/nominal-types/adapters/arktype`. You only need `arktype` if you import it. It works with ArkType 2.2 and later.
@@ -43,6 +45,21 @@ if (result.ok) {
 `arkSchema()` checks the input with ArkType first. Then it builds an instance for every `arkOf()` field, in one pass.
 
 The messages are the type's own, the same as `Email.parse()` gives.
+
+## Naming a schema and its type
+
+Give the schema and the type of its value one name, as ArkType itself suggests. Signatures then read like a class:
+
+```ts
+import type { ValueOf } from '@horizon-republic/nominal-types';
+
+export const CreateOrder = arkSchema(type({ email: arkOf(Email), quantity: arkOf(PositiveInteger) }));
+export type CreateOrder = ValueOf<typeof CreateOrder>;
+
+const place = (order: CreateOrder): void => {
+  order.email; // Email
+};
+```
 
 ## Optional values, null, lists and unions
 
@@ -101,20 +118,42 @@ For the top object, pass constraints straight to `arkSchema()`: `arkSchema(type(
 
 Constraints run only when ArkType has accepted the whole input.
 
+## Making a class of a schema
+
+When an object is a value with behaviour of its own, make it a nominal type with the schema as its rule:
+
+```ts
+import { Nominal } from '@horizon-republic/nominal-types';
+
+export class Order extends Nominal(
+  'Order',
+  arkSchema(type({ email: arkOf(Email), quantity: arkOf(PositiveInteger) })),
+) {
+  public get isBulk(): boolean {
+    return this.value.quantity.value > 10;
+  }
+}
+
+const order = new Order({ email: 'jane@example.com', quantity: 20 });
+
+order.value.email; // Email
+order.isBulk; // true
+```
+
+The value is frozen and read through `value`. For a request body that is only taken apart, the plain object from `arkSchema()` is simpler.
+
 ## Using the schema elsewhere
 
 The result of `arkSchema()` is a Standard Schema. Anything that reads Standard Schema takes it, such as NestJS 12 with its `StandardSchemaValidationPipe`:
 
 ```ts
 import { Body, Controller, Post, StandardSchemaValidationPipe } from '@nestjs/common';
-import type { ValueOf } from '@horizon-republic/nominal-types';
-
 app.useGlobalPipes(new StandardSchemaValidationPipe());
 
 @Controller('orders')
 export class OrdersController {
   @Post()
-  public create(@Body({ schema: CreateOrder }) order: ValueOf<typeof CreateOrder>): void {
+  public create(@Body({ schema: CreateOrder }) order: CreateOrder): void {
     order.email; // Email
   }
 }

@@ -1,5 +1,7 @@
 # How to use a type inside another validator
 
+> For ArkType, the [adapter](arktype.md) is the recommended way. `schemaOf()` fits libraries without an adapter: see [Choosing how to check input](../explanation/choosing-an-approach.md).
+
 This guide shows how to put nominal types inside a schema from another library. The library then gives you back instances, such as an `Email`, instead of strings.
 
 ## Libraries that read Standard Schema

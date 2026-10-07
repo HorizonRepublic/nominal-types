@@ -17,7 +17,13 @@ import { IsInt, IsString, MinLength, ValidateNested } from 'class-validator';
 import { buildDocument, withManyErrors, withOneError } from '../document/data.ts';
 import { DocumentDto } from './class-validator-dtos.ts';
 import { NominalDocumentDto } from './nominal-dtos.ts';
-import { arkType, nominalWithArkType, valibotDocument, zodDocument } from './schemas.ts';
+import {
+  arkType,
+  nominalWithArkAdapter,
+  nominalWithArkType,
+  valibotDocument,
+  zodDocument,
+} from './schemas.ts';
 
 const [setup = '', unrelated = '0', typiaPath = ''] = process.argv.slice(2);
 
@@ -76,7 +82,9 @@ const setupOf = async (name: string): Promise<{ controller: Class; pipe: PipeTra
       return { controller: dtoController(DocumentDto), pipe: validation };
     case 'nominal-types + class-validator':
       return { controller: dtoController(NominalDocumentDto), pipe: validation };
-    case 'nominal-types + ArkType':
+    case 'nominal-types + ArkType adapter':
+      return { controller: schemaController(nominalWithArkAdapter), pipe: standard };
+    case 'nominal-types + ArkType, schemaOf()':
       return { controller: schemaController(nominalWithArkType), pipe: standard };
     case 'arktype':
       return { controller: schemaController(arkType), pipe: standard };

@@ -1,6 +1,6 @@
 # Documentation
 
-New here? Start with the tutorial.
+New here? Start with the tutorial. Checking request bodies? See [Choosing how to check input](explanation/choosing-an-approach.md).
 
 ## [Tutorial](tutorials/README.md)
 
@@ -29,6 +29,7 @@ New here? Start with the tutorial.
 
 ## [Explanation](explanation/README.md)
 
+- [Choosing how to check input](explanation/choosing-an-approach.md)
 - [How it works](explanation/how-it-works.md)
 - [Type hierarchy](explanation/type-hierarchy.md)
 - [Performance](explanation/performance.md)

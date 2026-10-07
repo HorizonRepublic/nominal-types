@@ -5,6 +5,7 @@ import {
   schemaOf,
   Uuid,
 } from '@horizon-republic/nominal-types';
+import { arkOf, arkSchema } from '@horizon-republic/nominal-types/adapters/arktype';
 import { type } from 'arktype';
 import * as v from 'valibot';
 import { z } from 'zod';
@@ -35,6 +36,33 @@ export const nominalWithArkType = type({
     tags: 'string[]',
   }).array(),
 });
+
+export const nominalWithArkAdapter = arkSchema(
+  type({
+    exportId: arkOf(Uuid),
+    customers: type({
+      id: arkOf(Uuid),
+      email: arkOf(Email),
+      name: 'string > 0',
+      addresses: type({
+        country: arkOf(CountryCode),
+        postcode: arkOf(Postcode),
+        line: 'string > 0',
+      }).array(),
+    }).array(),
+    orders: type({
+      id: arkOf(Uuid),
+      customerId: arkOf(Uuid),
+      status: "'new' | 'paid' | 'shipped'",
+      items: type({
+        sku: arkOf(Sku),
+        quantity: arkOf(PositiveInteger),
+        price: type({ amountMinor: arkOf(NonNegativeInteger), currency: "'UAH' | 'EUR' | 'USD'" }),
+      }).array(),
+      tags: 'string[]',
+    }).array(),
+  }),
+);
 
 export const arkType = type({
   exportId: 'string.uuid',

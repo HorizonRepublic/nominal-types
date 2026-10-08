@@ -1,3 +1,6 @@
+import type { NominalIssue } from './issue-codes.ts';
+import { issueOf } from './messages.ts';
+
 /**
  * What `array()` accepts: how many items, as an exact `length` or a `min`, a `max` or both, and
  * whether an item may repeat.
@@ -52,10 +55,7 @@ export const boundsOf = (options: ArrayOptions): { readonly min: number; readonl
   };
 };
 
-/**
- * Internal: the message for an array whose count `options` don't allow.
- */
-export const countMessage = (options: ArrayOptions, count: number): string => {
+const countMessage = (options: ArrayOptions, count: number): string => {
   if (options.length !== undefined) {
     return `must have ${items(options.length)} (was ${count})`;
   }
@@ -63,4 +63,21 @@ export const countMessage = (options: ArrayOptions, count: number): string => {
   return options.min !== undefined && count < options.min
     ? `must have at least ${items(options.min)} (was ${count})`
     : `must have at most ${items(options.max ?? 0)} (was ${count})`;
+};
+
+/**
+ * Internal: the issue for an array whose count `options` don't allow; the count is shown whatever
+ * the `values` setting, since it is not the value.
+ */
+export const countIssue = (options: ArrayOptions, count: number): NominalIssue => {
+  const { min, max } = boundsOf(options);
+
+  return issueOf(count < min ? 'too_few_items' : 'too_many_items', countMessage(options, count), {
+    wording: {
+      value: String(count),
+      hiddenValue: String(count),
+      min,
+      max: max === Number.POSITIVE_INFINITY ? undefined : max,
+    },
+  });
 };

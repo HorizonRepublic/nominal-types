@@ -1,6 +1,8 @@
-import { generateFunction } from './compile.ts';
+import { generateFunction, trimmed, trimSource } from './compile.ts';
+import type { AnyStep, TrimStep } from './compile.ts';
 import type { ConvertStep, Step } from './plan.ts';
 import { Rejection } from './rejection.ts';
+import { settings } from './settings.ts';
 
 /**
  * Internal: tells whether a value would be accepted, without building the value or its issues.
@@ -22,6 +24,8 @@ export const acceptsByRunning =
   (input) =>
     !(run(input) instanceof Rejection);
 
+const isTrim = (step: AnyStep): step is TrimStep => 'trim' in step;
+
 const isCheck = (step: Step | ConvertStep): step is Step => 'issues' in step;
 
 const isAccepts = (value: unknown): value is Accepts => typeof value === 'function';
@@ -33,11 +37,17 @@ const acceptsOf = (step: ConvertStep): Accepts | undefined => {
 };
 
 const loopOver =
-  (steps: ReadonlyArray<Step | ConvertStep>): Accepts =>
+  (steps: readonly AnyStep[]): Accepts =>
   (input) => {
     let value = input;
 
     for (const [index, step] of steps.entries()) {
+      if (isTrim(step)) {
+        value = trimmed(value);
+
+        continue;
+      }
+
       if (isCheck(step)) {
         if (!step.accepts(value)) {
           return false;
@@ -62,11 +72,15 @@ const loopOver =
     return true;
   };
 
-const generated = (steps: ReadonlyArray<Step | ConvertStep>): Accepts | undefined => {
-  const names: string[] = ['Rejection'];
-  const values: unknown[] = [Rejection];
+const generated = (steps: readonly AnyStep[]): Accepts | undefined => {
+  const names: string[] = ['Rejection', 'settings'];
+  const values: unknown[] = [Rejection, settings];
   const lines = steps.map((step, index) => {
     const at = String(index);
+
+    if (isTrim(step)) {
+      return trimSource;
+    }
 
     if (isCheck(step)) {
       names.push(`accepts${at}`);
@@ -106,7 +120,5 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Accepts | undefine
  * A rule from another library still runs, since the steps after it see the value it gives; the
  * last one is skipped in favour of its own check when it has one, such as an `n.object()` rule.
  */
-export const compileAccepts = (
-  steps: ReadonlyArray<Step | ConvertStep>,
-  generate: boolean = true,
-): Accepts => (generate && steps.length > 0 ? generated(steps) : undefined) ?? loopOver(steps);
+export const compileAccepts = (steps: readonly AnyStep[], generate: boolean = true): Accepts =>
+  (generate && steps.length > 0 ? generated(steps) : undefined) ?? loopOver(steps);

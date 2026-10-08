@@ -7,7 +7,7 @@ export { Nominal } from './core/nominal.ts';
  * `n.object()` and `n.of()` build schemas, `n.constraint()` checks fields together,
  * `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`, `n.hideValues()`
  * masks values in issues, `n.plain()` turns instances into plain values for a response, and `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a
- * value is.
+ * value is. `n.configure()` sets messages, values, trimming and code generation for the process.
  *
  * @example
  * ```ts
@@ -42,6 +42,15 @@ export type {
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';
+export type { Configuration, FullConfiguration } from './core/configure.ts';
+export type {
+  IssueCode,
+  IssueDetails,
+  MessageFunction,
+  MessageMap,
+  Messages,
+  NominalIssue,
+} from './core/issue-codes.ts';
 export { PatternSchema } from './core/pattern-schema.ts';
 export { PredicateSchema } from './core/predicate-schema.ts';
 export { OneOfSchema } from './core/one-of.ts';

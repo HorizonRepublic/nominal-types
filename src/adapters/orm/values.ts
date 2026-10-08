@@ -1,4 +1,5 @@
 import type { AnyNominalType } from '../../core/contracts.ts';
+import { valueIssue } from '../../core/messages.ts';
 import { NominalError } from '../../core/nominal-error.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { textFormOf } from '../../core/text-form.ts';
@@ -92,9 +93,12 @@ const storedOf = (instance: unknown): unknown => {
 // changed its digits with no sign of it, so it is refused rather than read.
 const lostDigits = (target: AnyNominalType, raw: number): NominalError =>
   new NominalError(target.typeName, [
-    {
-      message: `must come from the database as text, since a number may have lost digits (was ${String(raw)})`,
-    },
+    valueIssue(
+      'invalid',
+      'must come from the database as text, since a number may have lost digits',
+      raw,
+      { describe: String },
+    ),
   ]);
 
 /**

@@ -1,6 +1,8 @@
+import type { IssueCode } from './issue-codes.ts';
 import { forTarget } from './json-target.ts';
-import { describeValue } from './messages.ts';
+import { customized, describeHidden, describeValue, issueOf, shownValue } from './messages.ts';
 import { Rejection } from './rejection.ts';
+import { settings } from './settings.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
@@ -35,14 +37,46 @@ export abstract class NativeSchema<Value> {
   public abstract messageFor(value: unknown, describe?: (value: unknown) => string): string;
 
   /**
-   * The issues a rejected value is reported with, the value written by `describe`.
+   * The issues a rejected value is reported with, the value written by `describe`; `typeName` is
+   * the type whose rule this is, for a messages function.
    */
   public issuesFor(
     value: unknown,
     describe: (value: unknown) => string = describeValue,
+    typeName?: string,
   ): readonly StandardSchemaV1.Issue[] {
-    return [{ message: this.messageFor(value, describe) }];
+    const message = this.messageFor(value, describe);
+
+    if (!customized()) {
+      return [{ message }];
+    }
+
+    const hiddenValue = settings.values === 'hide' ? undefined : describeHidden(value);
+
+    return [
+      issueOf(this.codeFor(value), message, {
+        hiddenEnglish: this.messageFor(value, describeHidden),
+        wording: {
+          description: this.descriptionFor(value),
+          value: shownValue(value, describe),
+          hiddenValue,
+          typeName,
+        },
+      }),
+    ];
   }
+
+  /**
+   * The code of the issue a rejected value is reported with.
+   */
+  public codeFor(_value: unknown): IssueCode {
+    return 'invalid';
+  }
+
+  /**
+   * What a rejected value must be, as its message says it, such as `an email address`.
+   */
+  public abstract descriptionFor(value: unknown): string;
 
   /**
    * The JSON Schema body for the input the rule takes or the output it gives; most rules describe

@@ -1,4 +1,5 @@
 import type { AnyConstraint } from './constraint-types.ts';
+import { noPresence } from './object-helpers.ts';
 import { objectMark } from './object-rule.ts';
 import { ObjectSchema } from './object-schema.ts';
 import type { ObjectFields, ObjectInput, ObjectValue } from './object-types.ts';
@@ -41,3 +42,13 @@ export const objectOf = <const Fields extends ObjectFields>(
   ...constraints: AnyConstraint[]
 ): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>> =>
   new ObjectSchema(fields, constraints, false);
+
+/**
+ * Internal: `objectOf()` for a type this package declares as it loads, which builds its checks
+ * at the first use, so loading the package generates no code before `n.configure()` runs.
+ */
+export const deferredObjectOf = <const Fields extends ObjectFields>(
+  fields: Fields,
+  ...constraints: AnyConstraint[]
+): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>> =>
+  new ObjectSchema(fields, constraints, false, false, noPresence, true);

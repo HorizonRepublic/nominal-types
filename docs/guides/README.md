@@ -21,6 +21,7 @@ Your own types, and checking input with no other library.
 | take, compute and store amounts of money       | [How to handle money](core/handle-money.md)                                        |
 | read configuration from environment variables  | [How to read configuration from environment variables](core/read-config.md)        |
 | keep values out of error messages              | [How to keep values out of error messages](core/hide-values.md)                    |
+| translate messages, trim strings for the app   | [How to configure messages, values and trimming](core/configure.md)                |
 | test code that takes nominal types             | [How to test code that takes nominal types](core/write-tests.md)                   |
 | test with every kind of valid or invalid value | [How to generate test data](core/generate-test-data.md)                            |
 | fix an error or a surprise                     | [How to fix common problems](core/fix-common-problems.md)                          |

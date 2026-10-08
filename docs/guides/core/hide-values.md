@@ -65,6 +65,8 @@ if (!result.ok) {
 
 `n.hideValues()` changes the value at the end of a message, written as `(was "x")` by this package and ArkType, or `received "x"` by Valibot. It leaves other messages as they are.
 
+To hide values in every message of the app, set [`values: 'length'`](configure.md#hide-values-in-every-message) once at startup.
+
 The adapters take an `hideValues` option:
 
 | Where   | Option                                                                           |
@@ -75,6 +77,7 @@ The adapters take an `hideValues` option:
 ## See also
 
 - [Errors and messages](../../reference/errors-and-messages.md): how each kind of value is shown, and `n.hideValues()`.
+- [How to configure messages, values and trimming](configure.md)
 - [How to check untrusted input](check-input.md)
 
 [← Guides](../README.md)

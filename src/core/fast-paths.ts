@@ -4,6 +4,7 @@ import { boundsOf } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyConstraint } from './constraint-types.ts';
 import type { AnyNominalType } from './contracts.ts';
+import { settleParts } from './deferred-parts.ts';
 import { plans } from './json-leaves.ts';
 import type { Plan } from './json-leaves.ts';
 import { isNominalType, ownTypes } from './nominal.ts';
@@ -63,6 +64,8 @@ export const planOf = (field: unknown): Plan => {
   if (isNominalType(field)) {
     return { kind: 'type', type: field };
   }
+
+  settleParts(field);
 
   const own = typeof field === 'object' && field !== null ? plans.get(field) : undefined;
 

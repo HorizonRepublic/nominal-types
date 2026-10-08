@@ -1,6 +1,6 @@
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { forTarget } from '../../core/json-target.ts';
-import { mustBe } from '../../core/messages.ts';
+import { rejectedIssue } from '../../core/messages.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { runnableSchema } from '../../core/runner.ts';
@@ -29,7 +29,7 @@ const toBigInt = (value: unknown): bigint | Rejection => {
     ? 'a bigint or an integer string, since a number this large may have lost digits'
     : 'a bigint, an integer string or a safe integer';
 
-  return new Rejection([{ message: mustBe(expected, value) }]);
+  return new Rejection([rejectedIssue('invalid', expected, value)]);
 };
 
 const json = {

@@ -1,6 +1,6 @@
 import type { NominalSchema } from '../core/contracts.ts';
 import { forTarget } from '../core/json-target.ts';
-import { mustBe } from '../core/messages.ts';
+import { rejectedIssue } from '../core/messages.ts';
 import { Rejection } from '../core/rejection.ts';
 import { runnableSchema } from '../core/runner.ts';
 
@@ -67,7 +67,7 @@ export const temporalRule = <Value extends object>(
   const { pattern, description, tag } = kind;
   const objectTag = `[object ${tag}]`;
   const rejected = (value: unknown): Rejection =>
-    new Rejection([{ message: mustBe(description, value) }]);
+    new Rejection([rejectedIssue('invalid', description, value)]);
   const fromText = (text: string, input: unknown, temporal?: TemporalApi): Value | Rejection =>
     (pattern.test(text) ? kind.build(temporal ?? temporalFor(kind.typeName), text) : undefined) ??
     rejected(input);

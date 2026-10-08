@@ -1,3 +1,4 @@
+import type { IssueCode } from './issue-codes.ts';
 import { describeValue, mustBe } from './messages.ts';
 import { NativeSchema } from './native-schema.ts';
 import { stringOnly } from './string-rule.ts';
@@ -98,6 +99,14 @@ export class OneOfSchema<Value extends OneOfValue> extends NativeSchema<Value> {
 
   public messageFor(value: unknown, describe?: (value: unknown) => string): string {
     return mustBe(this.description, value, describe);
+  }
+
+  public override codeFor(_value: unknown): IssueCode {
+    return 'not_one_of';
+  }
+
+  public descriptionFor(_value: unknown): string {
+    return this.description;
   }
 
   protected jsonBody(): Record<string, unknown> {

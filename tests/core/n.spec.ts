@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { configure } from '../../src/core/configure.ts';
 import { constraint, isConstraint } from '../../src/core/constraint.ts';
 import { hideValues } from '../../src/core/hidden-values.ts';
 import { isNominalType } from '../../src/core/nominal.ts';
@@ -13,6 +14,7 @@ import { union } from '../../src/core/union-schema.ts';
 import * as library from '../../src/index.ts';
 
 const members = {
+  configure,
   constraint,
   hideValues,
   isConstraint,
@@ -37,6 +39,7 @@ describe('n', () => {
   });
 
   it.each([
+    'configure',
     'constraint',
     'hideValues',
     'isConstraint',

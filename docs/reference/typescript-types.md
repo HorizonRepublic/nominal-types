@@ -14,10 +14,15 @@ Every type the package exports, for code that names them. Import them with `impo
 Example:
 
 ```ts
-import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
-import type { InputOf, Parsed, ValueOf } from '@horizon-republic/nominal-types';
+import {
+  AnyString,
+  Email,
+  n,
+  PositiveInteger,
+} from "@horizon-republic/nominal-types";
+import type { InputOf, Parsed, ValueOf } from "@horizon-republic/nominal-types";
 
-class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
+class Sku extends AnyString.subtype("shop.Sku", /^[A-Z]{3}-\d{4}$/u) {}
 
 const CreateOrder = n.object({
   customer: Email,
@@ -29,9 +34,24 @@ const CreateOrder = n.object({
 type CreateOrderInput = InputOf<typeof CreateOrder>; // { customer: string | Email; …; note?: string }
 type CreateOrderValue = ValueOf<typeof CreateOrder>; // { customer: Email; sku: Sku; quantity: PositiveInteger; note?: AnyString }
 
-const input: CreateOrderInput = { customer: 'jane@example.com', sku: 'ABC-1234', quantity: 2 };
+const input: CreateOrderInput = {
+  customer: "jane@example.com",
+  sku: "ABC-1234",
+  quantity: 2,
+};
 const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 ```
+
+## Settings and issues
+
+| Type                                        | Description                                                                                         |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Configuration`                             | The options of `n.configure()`. See [n.configure()](configure.md).                                  |
+| `FullConfiguration`                         | Every setting, as `n.configure()` returns it.                                                       |
+| `IssueDetails`                              | What a `messages` function gets for an issue. See [IssueDetails](configure.md#issuedetails).        |
+| `Messages`, `MessageMap`, `MessageFunction` | What the `messages` option takes. See [Messages](configure.md#messages-messagemap-messagefunction). |
+| `IssueCode`                                 | The code of an issue, such as `'required'`. See [Issue codes](errors-and-messages.md#issue-codes).  |
+| `NominalIssue`                              | An issue of this package: a Standard Schema issue with an optional `code`.                          |
 
 ## Type classes and instances
 

@@ -1,4 +1,5 @@
 import { generateFunction } from './compile.ts';
+import { settleParts } from './deferred-parts.ts';
 import { isNominalType, ownTypes } from './nominal.ts';
 import { plainValue } from './plain.ts';
 
@@ -86,6 +87,8 @@ export const writerOf = (field: unknown): Write => {
   if (typeof field !== 'object' || field === null) {
     return plainValue;
   }
+
+  settleParts(field);
 
   const own = writers.get(field);
 

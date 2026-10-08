@@ -1,3 +1,4 @@
+import type { BuiltParts } from './built-parts.ts';
 import { checkConstraintFields } from './constraint-fields.ts';
 import type { AnyConstraint } from './constraint-types.ts';
 import { objectPaths } from './fast-paths.ts';
@@ -17,6 +18,7 @@ import type { ObjectParts, Presence } from './object-helpers.ts';
 import { objectMembers } from './object-members.ts';
 import { objectMark, objectMembersSlot } from './object-rule.ts';
 import { objectShape } from './object-shape.ts';
+import type { ObjectField } from './object-shape.ts';
 import type {
   Extended,
   FieldKey,
@@ -54,7 +56,8 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
 
   /**
    * Internal: built by `n.object()` and the methods below; `hidden` leaves the values out of the
-   * messages, `presence` makes fields optional (`true`) or required (`false`).
+   * messages, `presence` makes fields optional (`true`) or required (`false`); `deferred` builds
+   * the checks at the first use, for the objects of built-in types.
    */
   public constructor(
     source: ObjectFields,
@@ -62,28 +65,32 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     strict: boolean,
     hidden: boolean = false,
     presence: Presence = noPresence,
+    deferred: boolean = false,
   ) {
-    const fields = fieldsOf(source, presence);
+    const build = (fields: readonly ObjectField[]): BuiltParts<never> => {
+      const effective = gatedConstraints(constraints, presence);
+      const shape = objectShape(fields, effective, strict);
+      const ownShape = hidden ? hidingValues(shape) : shape;
+      const paths = objectPaths(fields, source, {
+        strict,
+        constraints: effective,
+        run: ownShape.run,
+      });
 
-    checkConstraintFields(
-      'n.object',
-      fields.map(({ key }) => key),
-      constraints,
-    );
+      // The shape returns a new object of the fields, which is what Output describes.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      return { shape: ownShape as never, paths };
+    };
 
-    const effective = gatedConstraints(constraints, presence);
-    const shape = objectShape(fields, effective, strict);
-    const ownShape = hidden ? hidingValues(shape) : shape;
-    const paths = objectPaths(fields, source, {
-      strict,
-      constraints: effective,
-      run: ownShape.run,
+    const keys = Object.keys(source);
+
+    checkConstraintFields('n.object', keys, constraints);
+
+    super(deferred ? () => build(fieldsOf(source, presence)) : build(fieldsOf(source, presence)), {
+      name: 'n.object()',
     });
 
-    // The shape returns a new object of the fields, which is what Output describes.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    super(ownShape as never, { paths, name: 'n.object()' });
-    this.keys = fields.map(({ key }) => key);
+    this.keys = keys;
     this.#source = source;
     this.#constraints = constraints;
     this.#strict = strict;

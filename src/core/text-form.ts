@@ -1,3 +1,5 @@
+import { trimmedText } from './compile.ts';
+import { normalizeSlot } from './hierarchy.ts';
 import { shared } from './shared.ts';
 
 /**
@@ -14,10 +16,7 @@ export const defineTextForm = (type: object, form: TextForm): void => {
   shared.textForms.set(type, form);
 };
 
-/**
- * Internal: the text form of a type, inherited from the closest type above it that has one.
- */
-export const textFormOf = (type: unknown): TextForm | undefined => {
+const ownFormOf = (type: unknown): TextForm | undefined => {
   let current: unknown = type;
 
   while (typeof current === 'function') {
@@ -31,6 +30,24 @@ export const textFormOf = (type: unknown): TextForm | undefined => {
   }
 
   return undefined;
+};
+
+/**
+ * Internal: the text form of a type, inherited from the closest type above it that has one; it
+ * trims the text first while `n.configure({ normalize: { trimStrings: true } })` is set, unless
+ * the type opts out with `normalize: false`.
+ */
+export const textFormOf = (type: unknown): TextForm | undefined => {
+  const form = ownFormOf(type);
+
+  if (
+    form === undefined ||
+    (typeof type === 'function' && Reflect.get(type, normalizeSlot) === false)
+  ) {
+    return form;
+  }
+
+  return (text) => form(trimmedText(text));
 };
 
 /**

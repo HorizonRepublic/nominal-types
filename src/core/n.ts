@@ -1,3 +1,4 @@
+export { configure } from './configure.ts';
 export { constraint, isConstraint } from './constraint.ts';
 export { hideValues } from './hidden-values.ts';
 export { isNominalType as isType } from './nominal.ts';

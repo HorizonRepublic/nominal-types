@@ -1,4 +1,3 @@
-import { describeValue } from './messages.ts';
 import { equalityKeySlot, noKey, sameItem } from './same-value.ts';
 import type { EqualityKey, Keyed } from './same-value.ts';
 
@@ -137,14 +136,10 @@ export const repeatsIn = (items: readonly unknown[]): number[] | undefined => {
 };
 
 /**
- * Internal: the message for an item that repeats an earlier one, naming a nominal instance by its
+ * Internal: an item that repeats an earlier one as its message names it: a nominal instance by its
  * value.
  */
-export const repeatMessage = (item: unknown): string => {
-  const shown: unknown =
-    typeof item === 'object' && item !== null && Reflect.get(item, equalityKeySlot) !== undefined
-      ? Reflect.get(item, 'value')
-      : item;
-
-  return `must not repeat an item (was ${describeValue(shown)})`;
-};
+export const repeatedValue = (item: unknown): unknown =>
+  typeof item === 'object' && item !== null && Reflect.get(item, equalityKeySlot) !== undefined
+    ? Reflect.get(item, 'value')
+    : item;

@@ -1,7 +1,7 @@
 import { constraint } from '../../core/constraint.ts';
 import type { NominalSchema, NominalType, ObjectInstance } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
-import { objectOf } from '../../core/object-of.ts';
+import { deferredObjectOf } from '../../core/object-of.ts';
 import type { ObjectInput, ObjectValue } from '../../core/object-types.ts';
 import { equalityKeySlot, inOneLine, noKey } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
@@ -39,7 +39,7 @@ const MoneyBase: NominalType<
   'nominal.Money',
   NominalSchema<MoneyInput, MoneyValue>,
   ObjectInstance<'nominal.Money', MoneyInput, MoneyValue>
-> = Nominal('nominal.Money', objectOf(fields, fitsCurrency));
+> = Nominal('nominal.Money', deferredObjectOf(fields, fitsCurrency));
 
 // The digits after the point of a result: the currency's own, or for a currency without minor
 // units, as many as the more precise of the amounts.

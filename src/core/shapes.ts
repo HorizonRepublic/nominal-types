@@ -1,10 +1,10 @@
-import { boundsOf, countMessage } from './array-bounds.ts';
+import { boundsOf, countIssue } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import { generateFunction } from './compile.ts';
 import { hideValues } from './hidden-values.ts';
-import { mustBe } from './messages.ts';
+import { atPath, rejectedIssue, valueIssue } from './messages.ts';
 import { Rejection } from './rejection.ts';
-import { repeatMessage, repeatsIn } from './repeats.ts';
+import { repeatedValue, repeatsIn } from './repeats.ts';
 import type { Describe, Run } from './standard-props.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 import type { TextForm } from './text-form.ts';
@@ -24,8 +24,7 @@ export interface Shape<Output> {
 const issuesAt = (
   index: number,
   issues: readonly StandardSchemaV1.Issue[],
-): StandardSchemaV1.Issue[] =>
-  issues.map((issue) => ({ message: issue.message, path: [index, ...(issue.path ?? [])] }));
+): StandardSchemaV1.Issue[] => issues.map((issue) => atPath(issue, index));
 
 const arraySource = `function parseArray(input) {
   if (!Array.isArray(input)) return notArray(input);
@@ -54,7 +53,7 @@ const itemIssues = (
 };
 
 const notArray = (input: unknown): Rejection =>
-  new Rejection([{ message: mustBe('an array', input) }]);
+  new Rejection([rejectedIssue('not_an_array', 'an array', input)]);
 
 const isRun = (value: unknown): value is (input: unknown) => unknown => typeof value === 'function';
 
@@ -65,8 +64,7 @@ const arrayRun = <Item>(
   max: number,
   generate?: boolean,
 ): ((input: unknown) => readonly Item[] | Rejection) => {
-  const wrongCount = (count: number): Rejection =>
-    new Rejection([{ message: countMessage(options, count) }]);
+  const wrongCount = (count: number): Rejection => new Rejection([countIssue(options, count)]);
   const generated = generateFunction(
     ['run', 'min', 'max', 'Rejection', 'notArray', 'wrongCount', 'itemIssues'],
     arraySource,
@@ -127,10 +125,11 @@ const uniqueRun =
       return values;
     }
 
-    const issues = repeats.map((index) => ({
-      message: repeatMessage(values[index]),
-      path: [index],
-    }));
+    const issues = repeats.map((index) =>
+      valueIssue('not_unique', 'must not repeat an item', repeatedValue(values[index]), {
+        path: [index],
+      }),
+    );
 
     return new Rejection(sensitive ? hideValues(issues) : issues);
   };

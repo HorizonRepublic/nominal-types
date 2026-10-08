@@ -1,5 +1,11 @@
+// The schema keeps its shape and paths private, built at once or at the first use, and every
+// method reads them; that makes the file longer than the usual limit.
+/* oxlint-disable max-lines */
 import type { ArrayOptions } from './array-bounds.ts';
+import { standInParts } from './built-parts.ts';
+import type { BuiltParts } from './built-parts.ts';
 import type { Parsed } from './contracts.ts';
+import { deferParts } from './deferred-parts.ts';
 import {
   arrayPaths,
   nullablePaths,
@@ -49,38 +55,60 @@ export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unkno
  */
 export class TypeSchema<Input, Output> {
   public readonly '~standard': StandardProps<Input, Output>;
-  readonly #shape: Shape<Output>;
+  #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
-  readonly #paths: FastPaths;
+  #paths: FastPaths;
   readonly #name: string;
   #stringify: ((value: unknown) => string) | undefined;
+  #build: (() => BuiltParts<Output>) | undefined;
 
   /**
-   * Internal: built by `n.of()` and the methods below; `paths` know the shape, `name` is the
-   * function that built it, for the message of `parseAsync()`.
+   * Internal: built by `n.of()` and the methods below from its shape and the paths that know it,
+   * or from a function that builds them at the first use; `name` is the function that built it,
+   * for the message of `parseAsync()`.
    */
   public constructor(
-    shape: Shape<Output>,
+    parts: BuiltParts<Output> | (() => BuiltParts<Output>),
     options: {
-      readonly paths: FastPaths;
       readonly textForm?: TextForm | undefined;
       readonly array?: boolean;
       readonly name?: string;
-    },
+    } = {},
   ) {
-    this.#shape = shape;
     this.#textForm = options.textForm;
-    this.#paths = options.paths;
     this.#name = options.name ?? 'n.of()';
-    this['~standard'] = standardProps(shape.run, (side, target) =>
-      forTarget(target, shape.describe(side, target)),
+
+    this.#build = typeof parts === 'function' ? parts : () => parts;
+    ({ shape: this.#shape, paths: this.#paths } = standInParts(() => this.#settled()));
+
+    if (typeof parts === 'function') {
+      deferParts(this, () => this.#settled());
+    } else {
+      this.#settled();
+    }
+
+    const { run, describe } = this.#shape;
+
+    this['~standard'] = standardProps(run, (side, target) =>
+      forTarget(target, describe(side, target)),
     );
-    runners.set(this, shape.run);
-    registerPaths(this, this.#paths);
 
     if (options.array === true) {
       shared.arraySchemas.add(this);
     }
+  }
+
+  #settled(): BuiltParts<Output> {
+    const build = this.#build;
+
+    if (build !== undefined) {
+      this.#build = undefined;
+      ({ shape: this.#shape, paths: this.#paths } = build());
+      runners.set(this, this.#shape.run);
+      registerPaths(this, this.#paths);
+    }
+
+    return { shape: this.#shape, paths: this.#paths };
   }
 
   /**
@@ -180,7 +208,7 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public stringify(value: Output): string {
-    return (this.#stringify ??= stringifyFor(this.#paths))(value);
+    return (this.#stringify ??= stringifyFor(this.#settled().paths))(value);
   }
 
   /**
@@ -203,13 +231,16 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public array(options: ArrayOptions = {}): TypeSchema<readonly Input[], readonly Output[]> {
-    const shape = arrayShape(this.#shape, options);
+    const { shape: item, paths } = this.#settled();
+    const shape = arrayShape(item, options);
 
-    return new TypeSchema(shape, {
-      array: true,
-      paths: arrayPaths(this.#paths, options, shape.run),
-      name: this.#name,
-    });
+    return new TypeSchema(
+      { shape, paths: arrayPaths(paths, options, shape.run) },
+      {
+        array: true,
+        name: this.#name,
+      },
+    );
   }
 
   /**
@@ -241,10 +272,14 @@ export class TypeSchema<Input, Output> {
       );
     }
 
-    return new TypeSchema<Input | string, Output>(textShape(this.#shape, form), {
-      paths: textPaths(this.#paths, form),
-      name: this.#name,
-    });
+    const { shape, paths } = this.#settled();
+
+    return new TypeSchema<Input | string, Output>(
+      { shape: textShape(shape, form), paths: textPaths(paths, form) },
+      {
+        name: this.#name,
+      },
+    );
   }
 
   /**
@@ -255,11 +290,15 @@ export class TypeSchema<Input, Output> {
    * expressed by leaving it out of `required` in the object around it.
    */
   public optional(): TypeSchema<Input | undefined, Output | undefined> {
-    return new TypeSchema(optionalShape(this.#shape), {
-      array: isArraySchema(this),
-      paths: optionalPaths(this.#paths),
-      name: this.#name,
-    });
+    const { shape, paths } = this.#settled();
+
+    return new TypeSchema(
+      { shape: optionalShape(shape), paths: optionalPaths(paths) },
+      {
+        array: isArraySchema(this),
+        name: this.#name,
+      },
+    );
   }
 
   /**
@@ -270,10 +309,14 @@ export class TypeSchema<Input, Output> {
    * `null` type, the value's schema with `nullable: true`.
    */
   public nullable(): TypeSchema<Input | null, Output | null> {
-    return new TypeSchema(nullableShape(this.#shape), {
-      array: isArraySchema(this),
-      paths: nullablePaths(this.#paths),
-      name: this.#name,
-    });
+    const { shape, paths } = this.#settled();
+
+    return new TypeSchema(
+      { shape: nullableShape(shape), paths: nullablePaths(paths) },
+      {
+        array: isArraySchema(this),
+        name: this.#name,
+      },
+    );
   }
 }

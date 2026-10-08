@@ -1,18 +1,19 @@
 import { acceptors, compileAccepts } from './acceptor.ts';
 import type { Accepts } from './acceptor.ts';
-import { compileRun } from './compile.ts';
+import { compileRun, trimStep } from './compile.ts';
+import type { AnyStep } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { frozen } from './frozen.ts';
 import { hideValues } from './hidden-values.ts';
-import { rulesOf, sensitiveSlot } from './hierarchy.ts';
+import { normalizeSlot, rulesOf, sensitiveSlot } from './hierarchy.ts';
 import { NativeSchema } from './native-schema.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
 import { describeRules } from './rules-json.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
-import { withoutImpliedString } from './string-rule.ts';
+import { stringRule, withoutImpliedString } from './string-rule.ts';
 
 /**
  * Internal: what the functions below need of a nominal type class.
@@ -39,10 +40,23 @@ const rulesFor = (root: object, target: TypeClass): readonly NominalSchema[] => 
 
 /**
  * Internal: whether every rule of a type only checks values, so the value a type holds is the
- * input itself whenever the input is a primitive.
+ * input itself whenever the input is a primitive, trimmed when the type trims strings.
  */
 export const onlyChecks = (root: object, target: TypeClass): boolean =>
   rulesFor(root, target).every((rule) => rule instanceof NativeSchema);
+
+/**
+ * Internal: whether a type trims a string before its checks while `n.configure()` asks for it: a
+ * type under `AnyString` that doesn't opt out with `normalize: false`.
+ */
+export const trimsStrings = (root: object, target: TypeClass): boolean =>
+  Reflect.get(target, normalizeSlot) !== false && rulesOf(root, target).includes(stringRule);
+
+const withTrim = (
+  root: object,
+  target: TypeClass,
+  steps: readonly AnyStep[],
+): readonly AnyStep[] => (trimsStrings(root, target) ? [trimStep, ...steps] : steps);
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 
@@ -58,14 +72,18 @@ const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown
   const hidden = Reflect.get(target, sensitiveSlot) === true;
 
   return compileRun(
-    stepsOf(
-      rulesFor(root, target),
-      (rule) => {
-        const convert = foreignRunner(rule, target.typeName);
+    withTrim(
+      root,
+      target,
+      stepsOf(
+        rulesFor(root, target),
+        (rule) => {
+          const convert = foreignRunner(rule, target.typeName);
 
-        return { convert: hidden ? hidingValues(convert) : convert };
-      },
-      hidden,
+          return { convert: hidden ? hidingValues(convert) : convert };
+        },
+        { hidden, typeName: target.typeName },
+      ),
     ),
   );
 };
@@ -96,10 +114,14 @@ export const rulesAcceptsOf = (root: object, target: TypeClass): Accepts => {
 
   if (accepts === undefined) {
     accepts = compileAccepts(
-      stepsOf(rulesFor(root, target), (rule) => ({
-        convert: foreignRunner(rule, target.typeName),
-        accepts: acceptors.get(rule),
-      })),
+      withTrim(
+        root,
+        target,
+        stepsOf(rulesFor(root, target), (rule) => ({
+          convert: foreignRunner(rule, target.typeName),
+          accepts: acceptors.get(rule),
+        })),
+      ),
     );
     typeAcceptors.set(target, accepts);
   }

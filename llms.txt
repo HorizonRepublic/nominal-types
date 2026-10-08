@@ -2,7 +2,7 @@
 
 > Runtime-validated nominal types for TypeScript. A type is a class with a rule: `new Email(text)` checks the text, and every `Email` you hold is valid. Two types don't mix at compile time even when they wrap the same kind of value. Every type is a Standard Schema and a Standard JSON Schema. Optional adapters connect types to ArkType, Zod, Valibot, NestJS, class-validator, Swagger, GraphQL, superjson, MikroORM, TypeORM, Drizzle and Sequelize.
 
-This file describes version 3 and ships inside the package: `node_modules/@horizon-republic/nominal-types/llms.txt` matches the installed code. `llms-full.txt` next to it holds every documentation page in one file.
+This file describes version 3 and ships inside the package: `node_modules/@horizon-republic/nominal-types/llms.txt` matches the installed code. Every documentation page ships next to it, under `docs/`; the [Docs](#docs) section lists them.
 
 ## Rules for agents
 
@@ -402,16 +402,88 @@ export class OrdersController {
 
 ## Docs
 
-- [Tutorial: build a sign-up check](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/tutorials/README.md): seven short lessons
-- [Guides](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/README.md): one task per page, one page per library
-- [Reference](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/README.md): every export, option and message
-- [Built-in types](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/types/README.md)
-- [How to use dates and times](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/core/use-dates-and-times.md)
-- [Common problems](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/guides/core/fix-common-problems.md)
+Every page ships in the package under `docs/` ([contents](docs/README.md)). Open the one you need; the paths are relative to this file.
 
-## Optional
+### Tutorial
 
-- [What a nominal type is](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/nominal-types.md)
-- [Choosing how to check input](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/choosing-an-approach.md)
-- [Nominal types in domain-driven design](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/explanation/domain-driven-design.md)
-- [Benchmarks](https://github.com/HorizonRepublic/nominal-types/blob/main/docs/reference/benchmarks.md)
+- [Tutorials](docs/tutorials/README.md)
+- [Your first type](docs/tutorials/01-first-type.md)
+- [Use a built-in type](docs/tutorials/02-built-in-types.md)
+- [Add behaviour to a type](docs/tutorials/03-add-behaviour.md)
+- [Check input without exceptions](docs/tutorials/04-check-input.md)
+- [Check a whole form](docs/tutorials/05-check-a-form.md)
+- [Check fields against each other](docs/tutorials/06-fields-together.md)
+- [Answer an HTTP request](docs/tutorials/07-serve-it.md)
+
+### Guides
+
+- [Guides](docs/guides/README.md)
+- [How to get a JSON Schema for a type](docs/guides/api-docs/json-schema.md)
+- [How to document nominal types in Swagger](docs/guides/api-docs/swagger.md)
+- [How to make a stricter type or a variant](docs/guides/core/build-on-a-type.md)
+- [How to check a request body with objectOf()](docs/guides/core/check-an-object.md)
+- [How to check one field against another](docs/guides/core/check-fields-together.md)
+- [How to check untrusted input](docs/guides/core/check-input.md)
+- [How to declare a type](docs/guides/core/declare-a-type.md)
+- [How to fix common problems](docs/guides/core/fix-common-problems.md)
+- [How to keep values out of error messages](docs/guides/core/hide-values.md)
+- [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
+- [How to make a value object](docs/guides/core/make-a-value-object.md)
+- [How to read configuration from environment variables](docs/guides/core/read-config.md)
+- [How to read numbers and booleans from text](docs/guides/core/read-text-values.md)
+- [How to use dates and times](docs/guides/core/use-dates-and-times.md)
+- [How to test code that takes nominal types](docs/guides/core/write-tests.md)
+- [How to store nominal types with Drizzle](docs/guides/databases/drizzle.md)
+- [How to store nominal types with MikroORM](docs/guides/databases/mikro-orm.md)
+- [How to store nominal types with Sequelize](docs/guides/databases/sequelize.md)
+- [How to store nominal types with TypeORM](docs/guides/databases/typeorm.md)
+- [How to use nominal types with GraphQL](docs/guides/frameworks/graphql.md)
+- [How to use nominal types with NestJS](docs/guides/frameworks/nestjs.md)
+- [How to send nominal types through superjson](docs/guides/frameworks/superjson.md)
+- [How to use nominal types with ArkType](docs/guides/validators/arktype.md)
+- [How to use nominal types with class-validator](docs/guides/validators/class-validator.md)
+- [How to use a type in any Standard Schema library](docs/guides/validators/standard-schema.md)
+- [How to use nominal types with Valibot](docs/guides/validators/valibot.md)
+- [How to use nominal types with Zod](docs/guides/validators/zod.md)
+
+### Reference
+
+- [Reference](docs/reference/README.md)
+- [Benchmarks](docs/reference/benchmarks.md)
+- [Declaring types](docs/reference/declaring.md)
+- [Errors and messages](docs/reference/errors-and-messages.md)
+- [Glossary](docs/reference/glossary.md)
+- [JSON Schema](docs/reference/json-schema.md)
+- [Schemas](docs/reference/schemas.md)
+- [Type members](docs/reference/type-members.md)
+- [TypeScript types](docs/reference/typescript-types.md)
+- [Adapters](docs/reference/adapters/README.md)
+- [arktype](docs/reference/adapters/arktype.md)
+- [class-validator](docs/reference/adapters/class-validator.md)
+- [Database columns](docs/reference/adapters/database-columns.md)
+- [drizzle](docs/reference/adapters/drizzle.md)
+- [graphql](docs/reference/adapters/graphql.md)
+- [mikro-orm](docs/reference/adapters/mikro-orm.md)
+- [nest](docs/reference/adapters/nest.md)
+- [sequelize](docs/reference/adapters/sequelize.md)
+- [superjson](docs/reference/adapters/superjson.md)
+- [swagger](docs/reference/adapters/swagger.md)
+- [typeorm](docs/reference/adapters/typeorm.md)
+- [valibot](docs/reference/adapters/valibot.md)
+- [zod](docs/reference/adapters/zod.md)
+- [Built-in types](docs/reference/types/README.md)
+- [Big integers](docs/reference/types/bigint.md)
+- [Booleans](docs/reference/types/boolean.md)
+- [Numbers](docs/reference/types/number.md)
+- [Strings](docs/reference/types/string.md)
+- [Dates and times](docs/reference/types/temporal.md)
+
+### Explanation
+
+- [Explanation](docs/explanation/README.md)
+- [Choosing how to check input](docs/explanation/choosing-an-approach.md)
+- [Nominal types in domain-driven design](docs/explanation/domain-driven-design.md)
+- [What a nominal type is](docs/explanation/nominal-types.md)
+- [Performance](docs/explanation/performance.md)
+- [Type hierarchy](docs/explanation/type-hierarchy.md)
+- [Where checks belong](docs/explanation/where-checks-belong.md)

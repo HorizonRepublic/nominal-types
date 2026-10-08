@@ -36,6 +36,19 @@ const exportsOf = (file: string): string[] =>
         .filter((name) => name !== ''),
   );
 
+const markdownIn = (folder: string): string[] =>
+  readdirSync(join(root, folder), { withFileTypes: true }).flatMap((entry) => {
+    const path = `${folder}/${entry.name}`;
+
+    if (entry.isDirectory()) {
+      return markdownIn(path);
+    }
+
+    return path.endsWith('.md') ? [path] : [];
+  });
+
+const docsPages = markdownIn('docs');
+
 const exported = entryPoints.flatMap(([entry, file]) =>
   exportsOf(file).map((name) => ({ entry, name })),
 );
@@ -51,6 +64,10 @@ describe('llms.txt', () => {
 
   it.each(exported)('names $name from $entry', ({ name }) => {
     expect(llms).toContain(`\`${name}`);
+  });
+
+  it.each(docsPages)('links the docs page %s, which ships in the package', (page) => {
+    expect(llms).toContain(`](${page})`);
   });
 
   it('stays small enough for an agent to read whole', () => {

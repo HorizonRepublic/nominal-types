@@ -19,8 +19,8 @@
   },
   "files": [
     "dist",
-    "llms.txt",
-    "llms-full.txt"
+    "docs",
+    "llms.txt"
   ],
   "type": "module",
   "sideEffects": false,
@@ -87,8 +87,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown && node scripts/llms-full.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tests && tsc --noEmit -p scripts",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
     "lint": "oxlint --ignore-pattern 'bench/**'",
     "format": "oxfmt",
     "format:check": "oxfmt --check",

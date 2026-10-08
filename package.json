@@ -1,6 +1,6 @@
 {
   "name": "@horizon-republic/nominal-types",
-  "version": "2.0.14",
+  "version": "3.0.0",
   "description": "Nominal types with runtime validation",
   "keywords": [
     "branded-types",

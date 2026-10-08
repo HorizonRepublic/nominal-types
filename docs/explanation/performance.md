@@ -98,18 +98,20 @@ The checks are slower there. Parsing an order with 20 items takes 4.1 µs instea
 
 A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps only the types and functions your code imports. These are the sizes of bundles minified by esbuild. Gzipped is the size sent over the network when the server compresses it.
 
-| Your code imports                                       | Minified | Gzipped  |
-| ------------------------------------------------------- | -------- | -------- |
-| `Uuid`                                                  | 25 KB    | 8.7 KB   |
-| `Email`                                                 | 24 KB    | 8.6 KB   |
-| `Integer`                                               | 23 KB    | 8.1 KB   |
-| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 58 KB    | 19 KB    |
-| `PlainDate` from `/temporal`                            | 25 KB    | 8.7 KB   |
-| `Uuid` and the adapter for a validator or a framework   | 25–27 KB | 9–9.5 KB |
-| `Uuid` and the adapter for a database                   | 34–35 KB | 12 KB    |
-| everything                                              | 102 KB   | 35 KB    |
+| Your code imports                                       | Minified | Gzipped   |
+| ------------------------------------------------------- | -------- | --------- |
+| `Uuid`                                                  | 27 KB    | 9.3 KB    |
+| `Email`                                                 | 26 KB    | 9.3 KB    |
+| `Integer`                                               | 25 KB    | 8.8 KB    |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 75 KB    | 25 KB     |
+| `PlainDate` from `/temporal`                            | 27 KB    | 9.5 KB    |
+| `Uuid` and the adapter for a validator or a framework   | 27–29 KB | 9.5–10 KB |
+| `Uuid` and the adapter for a database                   | 37 KB    | 13 KB     |
+| everything                                              | 120 KB   | 41 KB     |
 
-About 22 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
+About 24 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
+
+esbuild keeps every `n` function once your code calls one of them. Vite, Rollup, webpack, Rolldown and Bun keep only the `n` functions your code calls: with Rollup, the `n.object()` bundle above is 56 KB.
 
 The bundler leaves parts out only when your code loads the package with `import`. With `require()`, the bundle holds the whole package.
 

@@ -4,7 +4,9 @@ import { createRequire } from 'node:module';
 import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { build } from 'esbuild';
+import { rollup } from 'rollup';
 
 const require = createRequire(import.meta.url);
 const { name, exports } = JSON.parse(
@@ -131,3 +133,67 @@ const { results } = await import(
 );
 
 deepStrictEqual(results, [true, false, { a: 1 }, '{"a":1}', true, false]);
+
+// What an app bundler keeps of `n`: Rollup, like Vite, webpack, Rolldown and Bun, keeps only the
+// functions the app calls. esbuild keeps every member of a namespace another module re-exports, so
+// it drops `n` only from an app that uses none of it.
+const rollupBundle = async (contents) => {
+  const app = await rollup({
+    input: 'app',
+    onwarn: (warning) => {
+      throw new Error(warning.message);
+    },
+    plugins: [
+      {
+        name: 'app',
+        resolveId: (source) => (source === 'app' ? source : null),
+        load: (id) => (id === 'app' ? contents : null),
+      },
+      nodeResolve(),
+    ],
+  });
+  const { output } = await app.generate({ format: 'es' });
+
+  return output[0].code;
+};
+
+const esbuildBundle = async (contents) => {
+  const result = await build({
+    stdin: { contents, resolveDir: fileURLToPath(root) },
+    bundle: true,
+    write: false,
+    format: 'esm',
+    logLevel: 'silent',
+  });
+
+  return result.outputFiles[0].text;
+};
+
+// The text of an error each function throws, which only its own code holds.
+const nFunctions = {
+  of: 'n.of() takes',
+  record: 'n.record(): ',
+  tuple: 'n.tuple(): ',
+  union: 'n.union(): ',
+  oneOf: 'n.oneOf(): ',
+  configure: 'n.configure(): ',
+};
+const kept = (code) =>
+  Object.entries(nFunctions)
+    .filter(([, text]) => String(code).includes(text))
+    .map(([function_]) => function_);
+const uses = (call) =>
+  `import { n, Uuid } from '${name}'; export const out = ${call}.parse(undefined);`;
+
+for (const bundleWith of [rollupBundle, esbuildBundle]) {
+  deepStrictEqual(
+    kept(await bundleWith(`import { Uuid } from '${name}'; export const out = Uuid.parse('');`)),
+    [],
+    bundleWith.name,
+  );
+}
+
+deepStrictEqual(kept(await rollupBundle(uses('n.object({ id: Uuid })'))), ['of']);
+deepStrictEqual(kept(await rollupBundle(uses('n.of(Uuid)'))), ['of']);
+deepStrictEqual(kept(await rollupBundle(uses('n.tuple([Uuid])'))), ['tuple']);
+deepStrictEqual(kept(await rollupBundle(uses('n.record(Uuid, Uuid)'))), ['record']);

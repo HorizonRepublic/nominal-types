@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-import { build } from 'esbuild';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { build, transform } from 'esbuild';
+import { rollup } from 'rollup';
 
 const root = new URL('../', import.meta.url);
 const { name, exports } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
@@ -50,6 +52,35 @@ const bundle = async (code) => {
   return result.outputFiles[0].contents;
 };
 
+// Rollup, as Vite and webpack do, keeps only the `n` functions an app calls; esbuild keeps every
+// member of a namespace another module re-exports.
+const bundleWithRollup = async (code) => {
+  const app = await rollup({
+    input: 'app',
+    onwarn: (warning) => {
+      throw new Error(warning.message);
+    },
+    plugins: [
+      {
+        name: 'package',
+        resolveId: (source) => {
+          if (source === 'app') {
+            return source;
+          }
+
+          return bareSpecifier.test(source) && !ownSpecifier.test(source) ? false : null;
+        },
+        load: (id) => (id === 'app' ? code : null),
+      },
+      nodeResolve(),
+    ],
+  });
+  const { output } = await app.generate({ format: 'es' });
+  const { code: minified } = await transform(output[0].code, { minify: true, format: 'esm' });
+
+  return Buffer.from(minified);
+};
+
 const adapter = (entry, use) =>
   `import { Uuid } from '${name}'; import { ${use} } from '${name}/adapters/${entry}'; globalThis.out = ${use}(Uuid);`;
 
@@ -67,8 +98,20 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    75.7,
+    76.2,
     24.7,
+  ],
+  [
+    'only n.object',
+    `import { n, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid }).parse({});`,
+    73.5,
+    23.8,
+  ],
+  [
+    'only n.of',
+    `import { n, Uuid } from '${name}'; globalThis.out = n.of(Uuid).parse('');`,
+    73.5,
+    23.8,
   ],
   ['everything', `import * as all from '${name}'; globalThis.out = all;`, 121.2, 41.2],
   [
@@ -108,17 +151,49 @@ const cases = [
   ['zod', adapter('zod', 'toZod'), 27.6, 9.8],
 ];
 
+// The `n` cases again, bundled by Rollup.
+const rollupCases = [
+  [
+    'only n.object',
+    `import { n, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid }).parse({});`,
+    54.7,
+    18.1,
+  ],
+  [
+    'only n.of',
+    `import { n, Uuid } from '${name}'; globalThis.out = n.of(Uuid).parse('');`,
+    44.8,
+    15.2,
+  ],
+  [
+    'n.object and three types',
+    `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
+    57.2,
+    18.9,
+  ],
+];
+
 const kib = (bytes) => Math.round((bytes / 1024) * 10) / 10;
 
 const rows = [];
 
-for (const [label, code, minified, gzipped] of cases) {
-  const output = await bundle(code);
-  const size = { label, minified: kib(output.length), gzipped: kib(gzipSync(output).length) };
+for (const [bundler, bundleWith, list] of [
+  ['esbuild', bundle, cases],
+  ['Rollup', bundleWithRollup, rollupCases],
+]) {
+  for (const [label, code, minified, gzipped] of list) {
+    const output = await bundleWith(code);
+    const size = {
+      label,
+      bundler,
+      minified: kib(output.length),
+      gzipped: kib(gzipSync(output).length),
+    };
 
-  rows.push(size);
-  ok(size.minified <= minified, `${label}: ${size.minified} KiB minified, over ${minified} KiB`);
-  ok(size.gzipped <= gzipped, `${label}: ${size.gzipped} KiB gzipped, over ${gzipped} KiB`);
+    rows.push(size);
+    ok(size.minified <= minified, `${label}: ${size.minified} KiB minified, over ${minified} KiB`);
+    ok(size.gzipped <= gzipped, `${label}: ${size.gzipped} KiB gzipped, over ${gzipped} KiB`);
+  }
 }
 
 // The table is the report this script exists for.

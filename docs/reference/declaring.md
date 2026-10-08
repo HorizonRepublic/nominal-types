@@ -484,7 +484,7 @@ A valid name is one or more parts joined by dots. A part holds letters, digits, 
 
 The built-in types are named under `nominal.`, such as `nominal.Email`. A type of your own may be called `shop.Email` without a clash.
 
-A name must be unique in the application. Two types with one name share their brand, so they pass for each other. When a second type takes a name with different rules, the package warns once on the console:
+A name must be unique in the application. Two types with one name share their brand, so they pass for each other. When a second type takes a name with different rules, the package warns once, on the console or through the [logger you set](configure.md#logger):
 
 ```ts
 import { AnyString } from '@horizon-republic/nominal-types';

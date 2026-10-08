@@ -1,11 +1,12 @@
 import { issueCodes } from './issue-codes.ts';
 import type { Messages } from './issue-codes.ts';
 import { issueWriter } from './issue-writer.ts';
+import type { Logger } from './log.ts';
 import { settings } from './settings.ts';
 
 /**
  * Settings for the whole process, given to `n.configure()`: how messages read, whether they and
- * logs show values, whether strings are trimmed, and whether code is generated.
+ * logs show values, whether strings are trimmed, whether code is generated, and where warnings go.
  */
 export interface Configuration {
   /**
@@ -60,6 +61,13 @@ export interface Configuration {
    * @defaultValue `'auto'`, which generates code where the runtime allows it.
    */
   readonly codegen?: 'auto' | 'off' | undefined;
+  /**
+   * Sends the package's warnings, and the values adapters reject, to the logger of your app;
+   * `false` silences them. `undefined` restores the default.
+   *
+   * @defaultValue `undefined`, which writes warnings with `console.warn` and nothing else.
+   */
+  readonly logger?: Logger | false | undefined;
 }
 
 /**
@@ -90,6 +98,10 @@ export interface FullConfiguration {
    * Whether checks are built with generated code (`'auto'`) or without it (`'off'`).
    */
   readonly codegen: 'auto' | 'off';
+  /**
+   * Where warnings go: a logger, `false` for nowhere, or `undefined` for `console.warn`.
+   */
+  readonly logger: Logger | false | undefined;
 }
 
 const snapshot = (): FullConfiguration =>
@@ -100,6 +112,7 @@ const snapshot = (): FullConfiguration =>
     normalize: Object.freeze({ trimStrings: settings.trimStrings }),
     codes: settings.codes,
     codegen: settings.codegen,
+    logger: settings.logger,
   });
 
 /**
@@ -123,7 +136,17 @@ const choices = {
 
 const choiceNames = ['values', 'inspect', 'codes', 'codegen'] as const;
 
-const options: ReadonlySet<string> = new Set([...choiceNames, 'messages', 'normalize']);
+// A Set built at load would stay in bundles that never call n.configure(); an array literal doesn't.
+// oxlint-disable-next-line unicorn/prefer-set-has
+const options: readonly string[] = [
+  'values',
+  'inspect',
+  'codes',
+  'codegen',
+  'messages',
+  'normalize',
+  'logger',
+];
 
 const listed = (items: readonly unknown[]): string => {
   // @throws-ignore the items are option names and the literal choices of an option
@@ -211,6 +234,26 @@ const checkMessages = (messages: unknown): void => {
   }
 };
 
+const isLogger = (logger: unknown): boolean =>
+  typeof logger === 'object' &&
+  logger !== null &&
+  typeof Reflect.get(logger, 'warn') === 'function' &&
+  ['function', 'undefined'].includes(typeof Reflect.get(logger, 'debug'));
+
+/**
+ * Refuses a `logger` option of the wrong shape.
+ *
+ * @throws {@link TypeError} when the logger is neither `false`, `undefined` nor an object with a
+ * `warn` method and, if any, a `debug` method.
+ *
+ * @internal
+ */
+const checkLogger = (logger: unknown): void => {
+  if (logger !== undefined && logger !== false && !isLogger(logger)) {
+    fail('logger must be an object with a warn method and an optional debug method, or false');
+  }
+};
+
 /**
  * The settings the options change.
  *
@@ -219,13 +262,14 @@ const checkMessages = (messages: unknown): void => {
  * @internal
  */
 const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
-  const unknown = Object.keys(given).find((name) => !options.has(name));
+  const unknown = Object.keys(given).find((name) => !options.includes(name));
 
   if (unknown !== undefined) {
     fail(`there is no option ${unknown}`);
   }
 
   checkMessages(given.messages);
+  checkLogger(given.logger);
 
   for (const name of choiceNames) {
     choice(name, given[name], choices[name]);
@@ -236,6 +280,7 @@ const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
 
   return {
     ...('messages' in given ? { messages: frozen(given.messages) } : {}),
+    ...('logger' in given ? { logger: given.logger } : {}),
     ...Object.fromEntries(chosen.map((name) => [name, given[name]])),
     ...(trimStrings === undefined ? {} : { trimStrings }),
   };
@@ -251,7 +296,7 @@ const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
  * test can put them back with `n.configure(previous)`. The settings are shared by every copy of
  * the package loaded in the process, the ES module and the CommonJS one alike. Messages, values,
  * `inspect`, `codes` and trimming apply from the next check on; `codegen` applies to checks built
- * after the call.
+ * after the call; `logger` applies from the next warning.
  *
  * @param given - The options to change; the others keep their setting.
  * @returns Every setting as it was before the call.

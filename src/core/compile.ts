@@ -1,3 +1,4 @@
+import { warn } from './log.ts';
 import type { ConvertStep, Step } from './plan.ts';
 import { Rejection } from './rejection.ts';
 import { settings } from './settings.ts';
@@ -51,6 +52,11 @@ const probe = (): boolean => {
 
     return isRun(built);
   } catch {
+    if (settings.codegenWarned === undefined) {
+      settings.codegenWarned = true;
+      warn("new Function is blocked, so checks run slower; set n.configure({ codegen: 'off' })");
+    }
+
     return false;
   }
 };

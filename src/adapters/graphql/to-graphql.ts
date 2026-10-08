@@ -4,6 +4,7 @@ import type { ValueNode } from 'graphql';
 import type { AnyNominalType } from '../../core/contracts.ts';
 import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
+import { debugRejection } from '../../core/log.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { instanceParserFor } from '../../core/type-functions.ts';
 import { AnyBigInt } from '../../types/bigint/any-bigint.ts';
@@ -81,6 +82,8 @@ const instanceMaker = <Target extends AnyNominalType>(
 
     if (result instanceof Rejection) {
       const issues = hidden ? hideValues(result.issues) : result.issues;
+
+      debugRejection('toGraphQL rejected a scalar value', { scalar: name }, issues);
 
       throw new GraphQLError(`${name}: ${issues.map((issue) => issueText(issue)).join('; ')}`);
     }

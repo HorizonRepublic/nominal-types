@@ -30,6 +30,7 @@ describe('n.configure()', () => {
       normalize: { trimStrings: false },
       codes: false,
       codegen: 'auto',
+      logger: undefined,
     });
     expect(issuesOf(Uuid.parse('nope'))).toStrictEqual([
       { message: 'must be a UUID (was "nope")' },
@@ -61,6 +62,7 @@ describe('n.configure()', () => {
       normalize: { trimStrings: true },
       codes: true,
       codegen: 'auto',
+      logger: undefined,
     });
   });
 

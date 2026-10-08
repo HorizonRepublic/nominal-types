@@ -44,6 +44,9 @@ export type {
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';
 export type { Configuration, FullConfiguration } from './core/configure.ts';
+export type { Logger } from './core/log.ts';
+export { pinoLogger } from './core/pino-logger.ts';
+export type { ObjectFirstLogger } from './core/pino-logger.ts';
 export type {
   IssueCode,
   IssueDetails,

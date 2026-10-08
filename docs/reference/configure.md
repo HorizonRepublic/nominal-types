@@ -1,6 +1,6 @@
 # n.configure()
 
-The settings of the whole process: how messages read, whether they and logs show values, whether strings are trimmed, and whether checks use generated code. Terms are explained in the [glossary](glossary.md).
+The settings of the whole process: how messages read, whether they and logs show values, whether strings are trimmed, whether checks use generated code, and where warnings go. Terms are explained in the [glossary](glossary.md).
 
 ## Signature
 
@@ -16,16 +16,17 @@ Returns: every setting as it was before the call, as a frozen `FullConfiguration
 
 Throws: `TypeError` for an option that doesn't exist or a value it doesn't take. Nothing changes then.
 
-| Case                        | Message                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| no object                   | `n.configure(): pass an object of options`                                     |
-| an unknown option           | `n.configure(): there is no option value`                                      |
-| a value not offered         | `n.configure(): values must be "show", "length" or "hide"`                     |
-| `messages` of another kind  | `n.configure(): messages must be a function, a map by issue code or undefined` |
-| a map with an unknown code  | `n.configure(): there is no issue code missing`                                |
-| a map entry of another kind | `n.configure(): messages.required must be a string or a function`              |
-| `normalize` of another kind | `n.configure(): normalize must be an object, such as { trimStrings: true }`    |
-| an unknown normalization    | `n.configure(): there is no option normalize.lowerCase`                        |
+| Case                        | Message                                                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| no object                   | `n.configure(): pass an object of options`                                                          |
+| an unknown option           | `n.configure(): there is no option value`                                                           |
+| a value not offered         | `n.configure(): values must be "show", "length" or "hide"`                                          |
+| `messages` of another kind  | `n.configure(): messages must be a function, a map by issue code or undefined`                      |
+| a map with an unknown code  | `n.configure(): there is no issue code missing`                                                     |
+| a map entry of another kind | `n.configure(): messages.required must be a string or a function`                                   |
+| `normalize` of another kind | `n.configure(): normalize must be an object, such as { trimStrings: true }`                         |
+| an unknown normalization    | `n.configure(): there is no option normalize.lowerCase`                                             |
+| `logger` of another kind    | `n.configure(): logger must be an object with a warn method and an optional debug method, or false` |
 
 ## Options
 
@@ -37,8 +38,9 @@ Throws: `TypeError` for an option that doesn't exist or a value it doesn't take.
 | `codes`                 | `boolean`                                          | `false`     | from the next issue             |
 | `normalize.trimStrings` | `boolean`                                          | `false`     | from the next check             |
 | `codegen`               | `'auto' \| 'off'`                                  | `'auto'`    | for checks built after the call |
+| `logger`                | [`Logger`](#logger-interface) \| `false`           | `undefined` | from the next entry             |
 
-An option given as `undefined` keeps its value, except `messages`: `messages: undefined` brings the English messages back.
+An option given as `undefined` keeps its value, except `messages` and `logger`: `messages: undefined` brings the English messages back, and `logger: undefined` brings `console.warn` back.
 
 ### messages
 
@@ -95,6 +97,32 @@ The JSON Schema of a type doesn't change. With trimming on, it is stricter than 
 
 The package builds no check while it loads, so a call in the first module your app imports comes in time. A check built before the call keeps how it was built.
 
+### logger
+
+Where the package reports what it finds:
+
+| Value                           | What happens                                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `undefined`                     | Warnings go to `console.warn`, after `@horizon-republic/nominal-types: `. Nothing else is reported. |
+| a [`Logger`](#logger-interface) | Warnings go to its `warn`. If it has a `debug` method, rejected values go there too.                |
+| `false`                         | Nothing is reported.                                                                                |
+
+What is reported:
+
+| Method  | When                                                           | Message                                                                              | Details                                                                         |
+| ------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `warn`  | a second type takes a name with different rules, once per name | `the type name "shop.Sku" is declared twice with different rules; …`                 | `{ typeName }`                                                                  |
+| `warn`  | the runtime blocks `new Function`, once per process            | `new Function is blocked, so checks run slower; set n.configure({ codegen: 'off' })` | none                                                                            |
+| `debug` | `NominalPipe` rejects a route argument                         | `NominalPipe rejected a route argument`                                              | `{ argument, name, issues }`                                                    |
+| `debug` | the Fastify validator rejects a part of a request              | `fastifyNominal rejected a request`                                                  | `{ route, part, issues }`, such as `route: 'GET /orders/:id'`, `part: 'params'` |
+| `debug` | a GraphQL scalar from `toGraphQL()` rejects a value            | `toGraphQL rejected a scalar value`                                                  | `{ scalar, issues }`                                                            |
+
+Each item of `issues` holds the `message` and, when the issue has them, the `path` and the `code`. The messages are the ones the response carries: [`values`](#values), sensitive types and the `hideValues` option of the adapter apply, so a hidden value is never logged.
+
+A database adapter that reads a stored value its type refuses throws, and logs nothing.
+
+The logger is called as a method, `logger.warn(message, details)`, so a class instance keeps `this`.
+
 ## IssueDetails
 
 ```ts
@@ -132,6 +160,34 @@ type Messages = MessageFunction | MessageMap;
 
 What the [`messages`](#messages) option takes.
 
+## Logger interface
+
+```ts
+interface Logger {
+  readonly warn: (message: string, details?: Record<string, unknown>) => void;
+  readonly debug?: (message: string, details?: Record<string, unknown>) => void;
+}
+```
+
+What the [`logger`](#logger) option takes. `console` and winston fit as they are, as does any logger whose methods take the message first.
+
+## pinoLogger()
+
+```ts
+pinoLogger(logger: ObjectFirstLogger): Logger
+```
+
+```ts
+interface ObjectFirstLogger {
+  readonly warn: (details: Record<string, unknown>, message: string) => void;
+  readonly debug: (details: Record<string, unknown>, message: string) => void;
+}
+```
+
+Wraps a pino or bunyan logger, which take the details first and the message second. The details become fields of the entry. pino is not a dependency: any object of this shape fits.
+
+For Nest's `Logger`, use [`nestLogger()`](adapters/nest.md#nestlogger).
+
 ## FullConfiguration
 
 ```ts
@@ -142,6 +198,7 @@ interface FullConfiguration {
   readonly normalize: { readonly trimStrings: boolean };
   readonly codes: boolean;
   readonly codegen: "auto" | "off";
+  readonly logger: Logger | false | undefined;
 }
 ```
 
@@ -163,6 +220,6 @@ Uuid.parse("nope"); // { ok: false, issues: [{ code: 'pattern', message: 'must b
 n.configure(previous);
 ```
 
-See also: [How to configure messages, values and trimming](../guides/core/configure.md), [Errors and messages](errors-and-messages.md).
+See also: [How to configure messages, values and trimming](../guides/core/configure.md), [How to send warnings to your logger](../guides/core/configure.md#send-warnings-to-your-logger), [Errors and messages](errors-and-messages.md).
 
 [← Reference](README.md)

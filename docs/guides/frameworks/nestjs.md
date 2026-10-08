@@ -483,6 +483,18 @@ A body with `"customer": "jane"` now gets status 422:
 
 To keep rejected values out of answers and logs, pass `hideValues: true`, as in `app.useGlobalPipes(new NominalPipe({ hideValues: true }))`. Then `?ids=…&ids=nope` gets `ids.1: must be a UUID (was a string of 4 characters)`. A [sensitive type](../../reference/glossary.md) leaves its values out even without it. See [How to keep values out of error messages](../core/hide-values.md).
 
+To see in Nest's logs why a request was rejected, send the package's entries to Nest's logger in your [config module](../core/configure.md#configure-once-at-startup):
+
+```ts
+// nominal.config.ts
+import { n } from '@horizon-republic/nominal-types';
+import { nestLogger } from '@horizon-republic/nominal-types/adapters/nest';
+
+n.configure({ logger: nestLogger() });
+```
+
+The pipe then writes each rejected argument at the `debug` level, with the messages of the answer. Warnings, such as a type name declared twice, go to `warn`. With nestjs-pino, `app.useLogger(app.get(Logger))` sends them to pino. See [How to send warnings to your logger](../core/configure.md#send-warnings-to-your-logger).
+
 ## Limits
 
 - Write `page?: PositiveInteger`, not `page: PositiveInteger | undefined`. TypeScript records the second as `Object`, so the global pipe doesn't check it.

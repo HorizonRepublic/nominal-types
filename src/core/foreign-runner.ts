@@ -1,8 +1,7 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { NominalSchema } from './contracts.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
   issue.path === undefined || issue.path.length === 0

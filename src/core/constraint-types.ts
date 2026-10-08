@@ -1,6 +1,5 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { AnyNominalType, InputOf } from './contracts.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 import type { NominalTarget, TargetValue } from './target.ts';
 import type { TypeSchema } from './type-schema.ts';
 

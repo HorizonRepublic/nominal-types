@@ -1,4 +1,4 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
+import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 
 const schemaUris: Readonly<Record<string, string | undefined>> = {
   'draft-2020-12': 'https://json-schema.org/draft/2020-12/schema',

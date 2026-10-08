@@ -1,5 +1,3 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import { boundsOf, countMessage } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import { generateFunction } from './compile.ts';
@@ -8,6 +6,7 @@ import { mustBe } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import { repeatMessage, repeatsIn } from './repeats.ts';
 import type { Describe, Run } from './standard-props.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 import type { TextForm } from './text-form.ts';
 
 /**

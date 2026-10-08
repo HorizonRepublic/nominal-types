@@ -1,5 +1,3 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
-
 import { compileRun } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
@@ -11,6 +9,7 @@ import { NativeSchema } from './native-schema.ts';
 import { stepsOf } from './plan.ts';
 import { Rejection } from './rejection.ts';
 import { describeRules } from './rules-json.ts';
+import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 import { withoutImpliedString } from './string-rule.ts';
 
 /**

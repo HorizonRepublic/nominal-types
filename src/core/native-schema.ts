@@ -1,9 +1,8 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import { forTarget } from './json-target.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * The common ground of `PatternSchema` and `PredicateSchema`: a rule nominal types run directly,

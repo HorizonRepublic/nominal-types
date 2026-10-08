@@ -1,8 +1,7 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { NominalSchema } from './contracts.ts';
 import { NativeSchema } from './native-schema.ts';
 import { PatternSchema } from './pattern-schema.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * Internal: one check of a flat plan, and the issues it reports when it fails.

@@ -45,6 +45,7 @@ export { PredicateSchema } from './core/predicate-schema.ts';
 export { OneOfSchema } from './core/one-of.ts';
 export type { OneOfValue } from './core/one-of.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
+export type { StandardJSONSchemaV1, StandardSchemaV1 } from './core/standard-spec.ts';
 export { Constraint } from './core/constraint.ts';
 export type {
   AnyConstraint,

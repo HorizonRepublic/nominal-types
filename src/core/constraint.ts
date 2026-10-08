@@ -1,5 +1,3 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
 import { constraintMark } from './constraint-fields.ts';
 import type {
   ConstraintField,
@@ -16,6 +14,7 @@ import { isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 import { constructorFor } from './type-functions.ts';
 
 interface FieldRunner {

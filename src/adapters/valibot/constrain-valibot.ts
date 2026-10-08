@@ -1,8 +1,8 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import * as v from 'valibot';
 
 import { checkConstraintFields } from '../../core/constraint-fields.ts';
 import type { AnyConstraint } from '../../core/constraint-types.ts';
+import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;

@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * What a schema run returns instead of a value when the value is rejected.

@@ -1,6 +1,5 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import { issueText } from './issue-text.ts';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * Thrown when a nominal type is constructed from a value its schema rejects.

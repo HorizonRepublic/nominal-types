@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * Internal: an issue as one line, with its path in front: `ids.1: must be a UUID (was "x")`.

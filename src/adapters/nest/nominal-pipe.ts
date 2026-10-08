@@ -1,11 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import type { Parsed } from '../../core/contracts.ts';
 import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { isNominalType } from '../../core/nominal.ts';
+import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
 import type { NominalTarget } from '../../core/target.ts';
 import { textFormOf } from '../../core/text-form.ts';

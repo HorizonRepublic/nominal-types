@@ -100,11 +100,11 @@ A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps o
 | `Uuid`                                                  | 21 KB    | 7.7 KB  |
 | `Email`                                                 | 21 KB    | 7.9 KB  |
 | `Integer`                                               | 21 KB    | 7.4 KB  |
-| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 35 KB    | 12 KB   |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 42 KB    | 14 KB   |
 | `PlainDate` from `/temporal`                            | 22 KB    | 8 KB    |
 | `Uuid` and the adapter for a validator or a framework   | 22–23 KB | 8–9 KB  |
 | `Uuid` and the adapter for a database                   | 30 KB    | 11 KB   |
-| everything                                              | 67 KB    | 24 KB   |
+| everything                                              | 74 KB    | 26 KB   |
 
 About 20 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB.
 

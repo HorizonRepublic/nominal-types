@@ -1,4 +1,4 @@
-import { ok } from 'node:assert/strict';
+import { deepEqual, ok } from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -40,6 +40,13 @@ const bundle = async (code) => {
     ],
   });
 
+  // A warning here, such as an import kept only for a side effect, shows up in every app's build.
+  deepEqual(
+    result.warnings.map((warning) => warning.text),
+    [],
+    'esbuild warns about the package',
+  );
+
   return result.outputFiles[0].contents;
 };
 
@@ -55,10 +62,10 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    38,
-    13.5,
+    44,
+    15,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 72, 26],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 78, 28],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,

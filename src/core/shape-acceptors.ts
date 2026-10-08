@@ -4,7 +4,7 @@ import { generateFunction } from './compile.ts';
 import type { AnyNominalType } from './contracts.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { isNominalType, ownTypes } from './nominal.ts';
-import { vendor } from './standard-props.ts';
+import { isOwnVendor } from './standard-props.ts';
 import { rulesAcceptsOf } from './type-rules.ts';
 
 const isAccepts = (value: unknown): value is Accepts => typeof value === 'function';
@@ -46,10 +46,7 @@ export const fieldAcceptor = (field: unknown, label: string): Accepts => {
 
     const accepts: unknown = Reflect.get(field, 'accepts');
 
-    if (
-      isAccepts(accepts) &&
-      Reflect.get(Reflect.get(field, '~standard') ?? {}, 'vendor') === vendor
-    ) {
+    if (isAccepts(accepts) && isOwnVendor(field)) {
       return (input) => Reflect.apply(accepts, field, [input]);
     }
   }

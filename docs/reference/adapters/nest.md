@@ -8,6 +8,7 @@ Entry point: `@horizon-republic/nominal-types/adapters/nest`. Needs `@nestjs/com
 | `NominalSerializerInterceptor` | class     | a `ClassSerializerInterceptor` that writes instances as values |
 | `NominalResponse`              | decorator | a route's response written by a schema's `stringify()`         |
 | `NominalResponseInterceptor`   | class     | the interceptor behind `NominalResponse`                       |
+| `nestLogger`                   | function  | the package's warnings written by Nest's `Logger`              |
 | `NominalPipeOptions`           | type      | the options of `NominalPipe`                                   |
 | `NominalPipeTarget`            | type      | what `NominalPipe` checks against                              |
 | `NominalExceptionFactory`      | type      | a function that builds the error for rejected input            |
@@ -209,6 +210,32 @@ export class OrdersController {
 ```
 
 It needs `rxjs`, which every Nest app has.
+
+## nestLogger()
+
+```ts
+nestLogger(logger?: LoggerService): Logger
+```
+
+| Parameter | Type            | Description                                                                  |
+| --------- | --------------- | ---------------------------------------------------------------------------- |
+| `logger`  | `LoggerService` | optional; the Nest logger to write to. Default: `new Logger('NominalTypes')` |
+
+Returns: a [`Logger`](../configure.md#logger-interface) for `n.configure({ logger })`.
+
+It calls `logger.warn(message, details)` and `logger.debug(message, details)`, as Nest's loggers take them. A warning without details is written as `logger.warn(message)`.
+
+The default `Logger` writes through the logger the app uses at the time of each entry, so `n.configure()` can run before `NestFactory.create()`, and `app.useLogger()` still applies.
+
+With `debug`, Nest writes each argument `NominalPipe` rejects. See [logger](../configure.md#logger).
+
+```ts
+// nominal.config.ts
+import { n } from '@horizon-republic/nominal-types';
+import { nestLogger } from '@horizon-republic/nominal-types/adapters/nest';
+
+n.configure({ logger: nestLogger() });
+```
 
 ## See also
 

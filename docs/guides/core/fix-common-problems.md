@@ -74,6 +74,18 @@ The same pattern with other flags counts as different rules too.
 
 Fix: give each type its own name, such as `shop.Sku` and `warehouse.Sku`.
 
+### Warning: new Function is blocked
+
+The full warning:
+
+```
+@horizon-republic/nominal-types: new Function is blocked, so checks run slower; set n.configure({ codegen: 'off' })
+```
+
+Cause: the runtime forbids code generation, as Cloudflare Workers and a Content-Security-Policy without `'unsafe-eval'` do. The checks work, without generated code.
+
+Fix: set `codegen: 'off'` in the module your entry point imports first. The package then never tries `new Function`, and the warning stops. See [Turn off code generation](configure.md#turn-off-code-generation).
+
 ### TypeError: only the u flag is supported
 
 The full error:

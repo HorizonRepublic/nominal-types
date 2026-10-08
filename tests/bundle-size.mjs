@@ -87,8 +87,8 @@ const adapter = (entry, use) =>
 // Upper bounds in KiB, a little above the sizes measured when they were set, so a change that
 // pulls unused types or helpers into an app's bundle fails here.
 const cases = [
-  ['only Uuid', `import { Uuid } from '${name}'; globalThis.out = Uuid.parse('');`, 26.9, 9.5],
-  ['only Email', `import { Email } from '${name}'; globalThis.out = Email.parse('');`, 26.6, 9.5],
+  ['only Uuid', `import { Uuid } from '${name}'; globalThis.out = Uuid.parse('');`, 27.1, 9.6],
+  ['only Email', `import { Email } from '${name}'; globalThis.out = Email.parse('');`, 26.9, 9.6],
   [
     'only Integer',
     `import { Integer } from '${name}'; globalThis.out = Integer.parse(1);`,
@@ -98,22 +98,22 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    76.4,
-    24.9,
+    77.2,
+    25.4,
   ],
   [
     'only n.object',
     `import { n, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid }).parse({});`,
-    73.7,
-    24,
+    74.5,
+    24.4,
   ],
   [
     'only n.of',
     `import { n, Uuid } from '${name}'; globalThis.out = n.of(Uuid).parse('');`,
-    73.7,
-    24,
+    74.5,
+    24.4,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 121.5, 41.2],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 122.4, 41.4],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
@@ -123,32 +123,32 @@ const cases = [
   [
     'testing',
     `import { Email } from '${name}'; import { arbitraryOf } from '${name}/testing'; globalThis.out = arbitraryOf(Email);`,
-    58.1,
-    21.6,
+    58.4,
+    21.7,
   ],
-  ['arktype', adapter('arktype', 'toArk'), 28, 9.9],
-  ['class-validator', adapter('class-validator', 'NominalField'), 28, 9.9],
-  ['drizzle', adapter('drizzle', 'toDrizzle'), 36.9, 12.8],
+  ['arktype', adapter('arktype', 'toArk'), 28.3, 10.1],
+  ['class-validator', adapter('class-validator', 'NominalField'), 28.3, 10.1],
+  ['drizzle', adapter('drizzle', 'toDrizzle'), 37.2, 13],
   [
     'fastify',
     `import { fastifyNominal } from '${name}/adapters/fastify'; globalThis.out = fastifyNominal;`,
-    29.1,
-    10.1,
+    29.4,
+    10.3,
   ],
-  ['graphql', adapter('graphql', 'toGraphQL'), 29.6, 10.5],
-  ['mikro-orm', adapter('mikro-orm', 'toMikroOrm'), 37.6, 13],
+  ['graphql', adapter('graphql', 'toGraphQL'), 30.1, 10.8],
+  ['mikro-orm', adapter('mikro-orm', 'toMikroOrm'), 37.9, 13.2],
   [
     'nest',
     `import { Uuid } from '${name}'; import { NominalPipe } from '${name}/adapters/nest'; globalThis.out = new NominalPipe(Uuid);`,
-    28.8,
-    10.2,
+    29.4,
+    10.4,
   ],
-  ['sequelize', adapter('sequelize', 'toSequelize'), 37.1, 13],
-  ['superjson', adapter('superjson', 'toSuperjson'), 27.6, 9.7],
+  ['sequelize', adapter('sequelize', 'toSequelize'), 37.4, 13.2],
+  ['superjson', adapter('superjson', 'toSuperjson'), 27.9, 9.9],
   ['swagger', adapter('swagger', 'ApiNominalProperty'), 27.7, 9.8],
-  ['typeorm', adapter('typeorm', 'toTypeOrm'), 37.1, 12.9],
+  ['typeorm', adapter('typeorm', 'toTypeOrm'), 37.3, 13.1],
   ['valibot', adapter('valibot', 'toValibot'), 27.7, 9.8],
-  ['zod', adapter('zod', 'toZod'), 27.6, 9.8],
+  ['zod', adapter('zod', 'toZod'), 27.9, 10],
 ];
 
 // The `n` cases again, bundled by Rollup.
@@ -169,7 +169,7 @@ const rollupCases = [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
     57.2,
-    18.9,
+    19.2,
   ],
 ];
 

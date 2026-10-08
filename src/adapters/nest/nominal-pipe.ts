@@ -4,6 +4,7 @@ import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import type { Parsed } from '../../core/contracts.ts';
 import { hideValues } from '../../core/hidden-values.ts';
 import { issueText } from '../../core/issue-text.ts';
+import { debugRejection } from '../../core/log.ts';
 import { isNominalType } from '../../core/nominal.ts';
 import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import { isTarget, parseTarget } from '../../core/target.ts';
@@ -207,10 +208,15 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
       return parsed.value;
     }
 
-    throw this.#exceptionFactory(
-      this.#hideValues ? hideValues(parsed.issues) : parsed.issues,
-      metadata,
+    const issues = this.#hideValues ? hideValues(parsed.issues) : parsed.issues;
+
+    debugRejection(
+      'NominalPipe rejected a route argument',
+      { argument: metadata.type, name: metadata.data },
+      issues,
     );
+
+    throw this.#exceptionFactory(issues, metadata);
   }
 
   // A type read from the declaration can't tell `email?: Email` from `email: Email`, so a missing

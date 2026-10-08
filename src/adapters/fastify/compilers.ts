@@ -1,6 +1,7 @@
 import type { FastifySchemaValidationError } from 'fastify';
 
 import { hideValues } from '../../core/hidden-values.ts';
+import { debugRejection } from '../../core/log.ts';
 import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import { parseTarget } from '../../core/target.ts';
 import type { NominalTarget } from '../../core/target.ts';
@@ -111,6 +112,7 @@ const writerOf = (target: NominalTarget): ((data: unknown) => string) => {
 const validatorOf = (
   target: NominalTarget,
   part: string | undefined,
+  route: string,
   options: NominalValidatorOptions,
 ): NominalValidator => {
   const read = options.fromString === false ? undefined : textReaderFor(target, part);
@@ -131,6 +133,8 @@ const validatorOf = (
     }
 
     const issues = hide ? hideValues(parsed.issues) : parsed.issues;
+
+    debugRejection('fastifyNominal rejected a request', { route, part }, issues);
 
     return { error: issues.map((issue) => validationErrorOf(issue)) };
   };
@@ -157,7 +161,7 @@ export const validatorCompilerWith = (
     const target = targetOf(route.schema);
 
     if (target !== undefined) {
-      return validatorOf(target, route.httpPart, options);
+      return validatorOf(target, route.httpPart, `${route.method} ${route.url}`, options);
     }
 
     if (fallback === undefined) {

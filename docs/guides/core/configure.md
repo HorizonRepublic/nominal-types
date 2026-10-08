@@ -1,6 +1,6 @@
 # How to configure messages, values and trimming
 
-This guide shows how to set, for your whole app, how messages read, whether they show values, whether strings are trimmed, and whether checks use generated code.
+This guide shows how to set, for your whole app, how messages read, whether they show values, whether strings are trimmed, whether checks use generated code, and where warnings go.
 
 ## Configure once at startup
 
@@ -221,6 +221,39 @@ n.configure({ codegen: "off" });
 ```
 
 Set it in the module your entry point imports first. Checks built before the call keep the code they were built with. The results are the same either way; only the speed differs.
+
+## Send warnings to your logger
+
+By default, the package writes its warnings with `console.warn`. Pass your app's logger as `logger` to get them in your logs instead.
+
+A logger whose methods take the message first fits as it is, such as `console` or winston:
+
+```ts
+// nominal.config.ts
+import { n } from "@horizon-republic/nominal-types";
+import { logger } from "./logger.ts";
+
+n.configure({ logger });
+```
+
+pino takes the fields first and the message second. Wrap it in `pinoLogger()`:
+
+```ts
+// nominal.config.ts
+import pino from "pino";
+import { n, pinoLogger } from "@horizon-republic/nominal-types";
+
+n.configure({ logger: pinoLogger(pino({ level: "debug" })) });
+```
+
+In Fastify, pass `app.log`, which is a pino logger: `pinoLogger(app.log)`. In NestJS, use `nestLogger()` from the Nest adapter. See [How to use nominal types with NestJS](../frameworks/nestjs.md#errors).
+
+What the logger gets:
+
+- `warn`: a type name declared twice with different rules, and `new Function` blocked by the runtime.
+- `debug`, if the logger has it: each value that `NominalPipe`, the Fastify adapter or a GraphQL scalar rejects, with the messages and paths of the issues. These messages hide values the same way the answers do.
+
+`logger: false` turns every warning off. `logger: undefined` brings `console.warn` back. Every entry is listed in [n.configure()](../../reference/configure.md#logger).
 
 ## Put the settings back in tests
 

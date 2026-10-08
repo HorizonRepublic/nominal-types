@@ -1,4 +1,5 @@
 import type { IssueCode, Messages, NominalIssue } from './issue-codes.ts';
+import type { Logger } from './log.ts';
 import type { Wording } from './messages.ts';
 import type { NativeSchema } from './native-schema.ts';
 
@@ -96,6 +97,17 @@ export interface Settings {
    */
   codegen: 'auto' | 'off';
   /**
+   * Where warnings go: a logger, `false` for nowhere, or `undefined` for `console.warn`. A copy of
+   * the package from before the option leaves it out, which reads as `undefined`.
+   */
+  logger: Logger | false | undefined;
+  /**
+   * Set once the fallback from generated code was reported, so each process reports it once. It
+   * is left out until then: generated code, which needs the fields to keep one shape, never runs
+   * where it gets set.
+   */
+  codegenWarned?: true;
+  /**
    * Writes issues once codes or messages were set, put here by `n.configure()` so the code stays
    * out of a bundle that never calls it; `undefined` until then.
    */
@@ -112,6 +124,7 @@ const created = (): Settings => {
     trimStrings: false,
     codes: false,
     codegen: 'auto',
+    logger: undefined,
     writer: undefined,
   };
 

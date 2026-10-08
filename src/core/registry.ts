@@ -1,5 +1,6 @@
 import type { NominalSchema } from './contracts.ts';
 import { fingerprintOf } from './fingerprint.ts';
+import { warn } from './log.ts';
 import { shared } from './shared.ts';
 import { checkTypeName } from './type-name.ts';
 
@@ -7,7 +8,7 @@ const warned = new Set<string>();
 
 /**
  * Remembers a type under its name, as `Nominal()`, `subtype()` and `variant()` declare
- * it, and warns once when a different type takes a name already in use.
+ * it, and warns once, through the logger `n.configure()` sets, when a different type takes a name already in use.
  *
  * @remarks
  * Names are unique within an application: two types with one name share their brand and pass for
@@ -37,10 +38,9 @@ export const registerType = (
 
   if (known !== undefined && known.signature !== signature && !warned.has(name)) {
     warned.add(name);
-    // The warning is the point: a clash breaks types silently, and the package runs outside Node too.
-    // oxlint-disable-next-line no-console
-    console.warn(
-      `@horizon-republic/nominal-types: the type name "${name}" is declared twice with different rules; the two types will pass for each other. Give each type a unique name.`,
+    warn(
+      `the type name "${name}" is declared twice with different rules; the two types will pass for each other. Give each type a unique name.`,
+      { typeName: name },
     );
   }
 

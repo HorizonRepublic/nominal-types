@@ -140,3 +140,13 @@ describe('HexColor', () => {
     expect(HexColor.parse(new copy.HexColor('#fff')).ok).toBe(true);
   });
 });
+
+describe('HexColor equals() on a type that refuses the canonical form', () => {
+  const UpperColor = HexColor.subtype('tests.UpperColor', /^#[\dA-F]+$/u);
+
+  it('compares the channels without throwing', () => {
+    expect(new UpperColor('#FFF').equals(new UpperColor('#FFFFFF'))).toBe(true);
+    expect(new UpperColor('#FFF').equals(new UpperColor('#FFFFFE'))).toBe(false);
+    expect(() => new UpperColor('#FFF').canonical()).toThrow(NominalError);
+  });
+});

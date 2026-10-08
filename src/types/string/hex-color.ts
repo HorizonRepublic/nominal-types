@@ -83,10 +83,7 @@ export class HexColor extends HexColorBase {
    * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
-    const hex = (index: number): string => this.channel(index).toString(16).padStart(2, '0');
-    const opaque = !this.hasAlpha || this.channel(3) === 255;
-
-    return sameType(this, `#${hex(0)}${hex(1)}${hex(2)}${opaque ? '' : hex(3)}`);
+    return sameType(this, this.canonicalText);
   }
 
   /**
@@ -97,12 +94,21 @@ export class HexColor extends HexColorBase {
    * @returns `true` when both are the same color.
    */
   public override equals(other: unknown): boolean {
-    // @throws-ignore only a subtype that refuses its own canonical form throws here
     return (
       inOneLine(this, other) &&
       other instanceof HexColor &&
-      other.canonical().value === this.canonical().value
+      other.canonicalText === this.canonicalText
     );
+  }
+
+  /**
+   * The text `canonical()` holds, written without checking it again through the type.
+   */
+  private get canonicalText(): string {
+    const hex = (index: number): string => this.channel(index).toString(16).padStart(2, '0');
+    const opaque = !this.hasAlpha || this.channel(3) === 255;
+
+    return `#${hex(0)}${hex(1)}${hex(2)}${opaque ? '' : hex(3)}`;
   }
 
   private get hasAlpha(): boolean {

@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
 
@@ -65,8 +66,8 @@ export class MacAddress extends MacAddressBase {
   /**
    * The address in lowercase with colons, as Linux and most APIs print it.
    */
-  public canonical(): MacAddress {
-    return new MacAddress(this.value.toLowerCase().replaceAll('-', ':'));
+  public canonical(): this {
+    return sameType(this, this.value.toLowerCase().replaceAll('-', ':'));
   }
 
   /**

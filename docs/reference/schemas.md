@@ -290,8 +290,8 @@ Returns: an [`ObjectSchema`](#objectschema).
 What it does with an input:
 
 1. It refuses anything that isn't an object, arrays included: `must be an object (was "x")`.
-2. It checks every field. It collects every issue, with the field's key at the start of its `path`.
-3. A field whose schema accepts `undefined` may be missing. A missing one is left out of the result.
+2. It checks every field. It collects every issue, with the field's key at the start of its `path`. It reads only the input's own keys, not keys from its prototype.
+3. A field whose schema accepts `undefined` may be missing. A missing one is left out of the result. Any other field that is missing or `undefined` gets the issue `is required`.
 4. It drops keys it doesn't declare. With [`strict()`](#objectschema), each one is an issue instead.
 5. It runs the constraints, once every field passed.
 6. It returns a new object of the checked values, read-only by type. The input stays as it was.
@@ -327,7 +327,7 @@ CreateOrder.parse({ customer: 'jane', sku: 'abc' });
 // { ok: false, issues: [
 //   { message: 'must be an email address (was a string of 4 characters)', path: ['customer'] },
 //   { message: 'must be matched by ^[A-Z]{3}-\\d{4}$ (was "abc")', path: ['sku'] },
-//   { message: 'must be a number (was undefined)', path: ['quantity'] },
+//   { message: 'is required', path: ['quantity'] },
 // ] }
 ```
 
@@ -380,7 +380,7 @@ Config.parse({ PORT: 'abc', DEBUG: 'yes' });
 // { ok: false, issues: [
 //   { message: 'must be a number (was a string of 3 characters)', path: ['PORT'] },
 //   { message: 'must be a boolean (was a string of 3 characters)', path: ['DEBUG'] },
-//   { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
+//   { message: 'is required', path: ['DATABASE_URL'] },
 // ] }
 ```
 

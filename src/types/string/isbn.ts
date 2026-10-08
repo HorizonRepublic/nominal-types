@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -76,8 +77,8 @@ export class Isbn extends IsbnBase {
   /**
    * The ISBN-13 form, the one ISO 2108 assigns since 2007; an ISBN-13 stays as it is.
    */
-  public canonical(): Isbn {
-    return new Isbn(isbn13Of(this.value));
+  public canonical(): this {
+    return sameType(this, isbn13Of(this.value));
   }
 
   /**

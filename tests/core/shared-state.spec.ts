@@ -65,6 +65,21 @@ describe('a type name declared twice', () => {
     expect(warn.mock.calls[0]?.[0]).toContain('"TwiceDeclared" is declared twice');
   });
 
+  it('tells patterns apart by their flags', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    Nominal('DeclaredWithFlags', /^a$/u);
+    Nominal('DeclaredWithFlags', /^a$/u);
+
+    expect(warn).not.toHaveBeenCalled();
+
+    // The same pattern without the u flag is the point of this test.
+    // oxlint-disable-next-line require-unicode-regexp
+    Nominal('DeclaredWithFlags', /^a$/);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
   it('stays silent when the same type is declared again', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 

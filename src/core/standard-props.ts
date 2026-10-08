@@ -2,6 +2,8 @@ import { Rejection } from './rejection.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 
+export type { StandardProps } from './standard-schema.ts';
+
 /**
  * Internal: the vendor every schema of this package names in its `~standard`, which is also how
  * another copy of the package is recognised.

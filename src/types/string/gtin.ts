@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -64,8 +65,8 @@ export class Gtin extends GtinBase {
   /**
    * The GTIN-14 form, with zeros in front, as GS1 asks a database to keep a GTIN.
    */
-  public canonical(): Gtin {
-    return new Gtin(gtin14Of(this.value));
+  public canonical(): this {
+    return sameType(this, gtin14Of(this.value));
   }
 
   /**

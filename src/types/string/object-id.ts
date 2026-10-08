@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
 
@@ -45,8 +46,8 @@ export class ObjectId extends ObjectIdBase {
   /**
    * The same ObjectId in lowercase.
    */
-  public canonical(): ObjectId {
-    return new ObjectId(this.value.toLowerCase());
+  public canonical(): this {
+    return sameType(this, this.value.toLowerCase());
   }
 
   /**

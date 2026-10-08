@@ -42,6 +42,14 @@ const fieldIssues = (
   return all;
 };
 
+const missingIssues = (issues: Issues, key: string): StandardSchemaV1.Issue[] => {
+  const all = issues ?? [];
+
+  all.push({ message: 'is required', path: [key] });
+
+  return all;
+};
+
 const unknownKeyIssues = (
   issues: Issues,
   input: Readonly<Record<string, unknown>>,
@@ -92,16 +100,22 @@ const loopRun =
     let issues: Issues;
 
     for (const { key, run, optional } of fields) {
-      const item = input[key];
+      const item = Object.hasOwn(input, key) ? input[key] : undefined;
 
-      if (!optional || item !== undefined) {
-        const result = run(item);
-
-        if (result instanceof Rejection) {
-          issues = fieldIssues(issues, key, result);
-        } else {
-          value[key] = result;
+      if (item === undefined) {
+        if (!optional) {
+          issues = missingIssues(issues, key);
         }
+
+        continue;
+      }
+
+      const result = run(item);
+
+      if (result instanceof Rejection) {
+        issues = fieldIssues(issues, key, result);
+      } else {
+        value[key] = result;
       }
     }
 
@@ -116,19 +130,23 @@ const loopRun =
 
 const fieldSource = ({ key, optional }: ObjectField, index: number): string => {
   const name = JSON.stringify(key);
-  const check = `const v${String(index)} = run${String(index)}(raw${String(index)});
-    if (v${String(index)} instanceof Rejection) issues = fieldIssues(issues, ${name}, v${String(index)});`;
+  const at = String(index);
+  const read = `const raw${at} = hasOwn.call(input, ${name}) ? input[${name}] : undefined;`;
+  const check = `v${at} = run${at}(raw${at});
+    if (v${at} instanceof Rejection) issues = fieldIssues(issues, ${name}, v${at});`;
 
   return optional
-    ? `const raw${String(index)} = input[${name}];
-      let present${String(index)} = false;
-      let value${String(index)};
-      if (raw${String(index)} !== undefined) {
-        ${check}
-        else { present${String(index)} = true; value${String(index)} = v${String(index)}; }
+    ? `${read}
+      let present${at} = false;
+      let value${at};
+      if (raw${at} !== undefined) {
+        const ${check}
+        else { present${at} = true; value${at} = v${at}; }
       }`
-    : `const raw${String(index)} = input[${name}];
-      ${check}`;
+    : `${read}
+      let v${at};
+      if (raw${at} === undefined) issues = missingIssues(issues, ${name});
+      else { ${check} }`;
 };
 
 const sourceOf = (
@@ -173,6 +191,8 @@ const generatedRun = (
     'Rejection',
     'notObject',
     'fieldIssues',
+    'missingIssues',
+    'hasOwn',
     'unknownKeyIssues',
     'constraintIssues',
     'declared',
@@ -183,6 +203,8 @@ const generatedRun = (
     Rejection,
     notObject,
     fieldIssues,
+    missingIssues,
+    Reflect.get(Object.prototype, 'hasOwnProperty'),
     unknownKeyIssues,
     constraintIssues,
     new Set(fields.map(({ key }) => key)),

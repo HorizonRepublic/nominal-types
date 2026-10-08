@@ -144,7 +144,7 @@ describe('NonBlankString', () => {
     const copy: typeof library = await import('../../../src/index.ts');
     const text = new copy.NonBlankString('a');
 
-    expect(valueOf(NonBlankString.parse(text))).toBe(text);
+    expect(valueOf(NonBlankString.parse(text))).toStrictEqual(new NonBlankString('a'));
     expect(text.equals(new NonBlankString('a'))).toBe(true);
     expect(NonBlankString.parse(new copy.NonEmptyString(' ')).ok).toBe(false);
   });

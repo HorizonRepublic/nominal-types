@@ -71,7 +71,7 @@ describe('ObjectId', () => {
     const copy: typeof library = await import('../../../src/index.ts');
     const id = new copy.ObjectId(sample.toUpperCase());
 
-    expect(valueOf(ObjectId.parse(id))).toBe(id);
+    expect(valueOf(ObjectId.parse(id))).toStrictEqual(new ObjectId(sample.toUpperCase()));
     expect(new ObjectId(sample).equals(id)).toBe(true);
   });
 });

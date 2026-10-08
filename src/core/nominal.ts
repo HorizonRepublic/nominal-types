@@ -19,6 +19,7 @@ import {
   sensitiveSlot,
   variantSourceSlot,
 } from './hierarchy.ts';
+import { defineInspect } from './inspect.ts';
 import { jsonText } from './messages.ts';
 import { NominalError } from './nominal-error.ts';
 import { checkObjectRule, defineObjectMembers, objectKeysOf } from './object-members.ts';
@@ -29,34 +30,40 @@ import { Rejection } from './rejection.ts';
 import { equalityKeySlot, inOneLine, noKey, sameValue } from './same-value.ts';
 import type { EqualityKey } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
-import type { StandardProps } from './standard-schema.ts';
+import type { StandardProps } from './standard-props.ts';
 import { describeType, rulesRunnerOf, runType } from './type-rules.ts';
 import { parserFor } from './value-parser.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
+let isTrusted: (target: typeof NominalRoot, instance: object) => boolean;
+
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
   declare public static readonly rule: NominalSchema;
   public readonly value: unknown;
+  readonly #checked: unknown;
 
   public constructor(input: unknown) {
     const target = new.target;
     const pending = takePending(target, input);
-
-    if (pending !== nothingPending) {
-      this.value = pending;
-
-      return;
-    }
-
-    const value = runType(NominalRoot, target, input);
+    const value = pending === nothingPending ? runType(NominalRoot, target, input) : pending;
 
     if (value instanceof Rejection) {
       throw new NominalError(target.typeName, value.issues);
     }
 
     this.value = value;
+    this.#checked = value;
+  }
+
+  // Trusted: built by this copy, of the target or below it, still holding the value it was built with.
+  static {
+    isTrusted = (target, instance) =>
+      #checked in instance &&
+      Object.is(instance.#checked, instance.value) &&
+      (Object.getPrototypeOf(instance) === target.prototype ||
+        Object.prototype.isPrototypeOf.call(target.prototype, instance));
   }
 
   public static get '~standard'(): StandardProps<unknown, NominalRoot> {
@@ -92,13 +99,9 @@ class NominalRoot {
   ): typeof NominalRoot {
     checkObjectRule('subtype', this, constraint);
 
-    return derive(
-      this,
-      name,
-      constraint === undefined ? undefined : asRule(constraint),
-      this,
-      options,
-    );
+    const rule = constraint === undefined ? undefined : asRule(constraint);
+
+    return derive(this, name, rule, this, options);
   }
 
   public static variant(
@@ -156,15 +159,17 @@ const rootEqualityKey: EqualityKey = {
 };
 
 Object.defineProperty(NominalRoot.prototype, equalityKeySlot, { value: rootEqualityKey });
+defineInspect(NominalRoot.prototype);
 
 const isOwnType = (value: unknown): value is typeof NominalRoot =>
   typeof value === 'function' && Object.prototype.isPrototypeOf.call(NominalRoot, value);
 
-const valueParsers = new WeakMap<object, (input: unknown) => NominalRoot | Rejection>();
+type Type = typeof NominalRoot;
+type ValueParser = (input: unknown) => NominalRoot | Rejection;
 
-const valueParserOf = (
-  target: typeof NominalRoot,
-): ((input: unknown) => NominalRoot | Rejection) => {
+const valueParsers = new WeakMap<object, ValueParser>();
+
+const valueParserOf = (target: Type): ValueParser => {
   let parser = valueParsers.get(target);
 
   if (parser === undefined) {
@@ -175,28 +180,29 @@ const valueParserOf = (
   return parser;
 };
 
-const constructOwn = (target: typeof NominalRoot, input: unknown): NominalRoot | Rejection => {
-  if (typeof input === 'object' && input !== null) {
-    if (input instanceof target) {
-      return input;
-    }
+const constructOwn = (target: Type, input: unknown): NominalRoot | Rejection =>
+  typeof input === 'object' && input !== null
+    ? constructFromObject(target, input)
+    : valueParserOf(target)(input);
 
-    if (descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)) {
-      return constructOwn(target, Reflect.get(input, 'value'));
-    }
+const constructFromObject = (target: Type, input: object): NominalRoot | Rejection => {
+  if (input instanceof target) {
+    return isTrusted(target, input) ? input : valueParserOf(target)(Reflect.get(input, 'value'));
   }
 
-  return valueParserOf(target)(input);
+  return descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)
+    ? constructOwn(target, Reflect.get(input, 'value'))
+    : valueParserOf(target)(input);
 };
 
 /**
  * Internal: the parts of this module the type functions build on, for `type-functions.ts`.
  */
 export const ownTypes: {
-  readonly root: typeof NominalRoot;
-  readonly isOwn: (value: unknown) => value is typeof NominalRoot;
-  readonly construct: (target: typeof NominalRoot, input: unknown) => NominalRoot | Rejection;
-  readonly parserOf: (target: typeof NominalRoot) => (input: unknown) => NominalRoot | Rejection;
+  readonly root: Type;
+  readonly isOwn: (value: unknown) => value is Type;
+  readonly construct: (target: Type, input: unknown) => NominalRoot | Rejection;
+  readonly parserOf: (target: Type) => ValueParser;
 } = { root: NominalRoot, isOwn: isOwnType, construct: constructOwn, parserOf: valueParserOf };
 
 const derive = (

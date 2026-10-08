@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { IpAddress } from './ip-address.ts';
 import { ipv4Source } from './ip-patterns.ts';
@@ -36,7 +37,7 @@ export class Ipv4Address extends Ipv4AddressBase {
   /**
    * The same address; IPv4 text has one form only.
    */
-  public override canonical(): Ipv4Address {
-    return new Ipv4Address(this.value);
+  public override canonical(): this {
+    return sameType(this, this.value);
   }
 }

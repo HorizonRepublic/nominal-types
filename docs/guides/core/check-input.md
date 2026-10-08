@@ -53,7 +53,7 @@ The message of a `NominalError` starts with the type name. The messages in `issu
 
 ## Pass an instance to parse()
 
-`parse()` takes an instance of the type too. It returns the same object without checking it again:
+`parse()` takes an instance of the type too. It returns the same object without checking it again, if this copy of the package built it:
 
 ```ts
 import { Email } from '@horizon-republic/nominal-types';
@@ -63,6 +63,8 @@ const result = Email.parse(email);
 
 result.ok && result.value === email; // true
 ```
+
+Any other object that looks like an `Email` gets its value checked, and `parse()` returns a new instance. This covers an instance made by another copy of the package and an instance whose `value` was changed. [What parse() does with an instance](../../reference/type-members.md#parse) lists every case.
 
 ## Ask whether a value is an instance
 
@@ -84,6 +86,8 @@ describe('jane@example.com'); // 'something else'
 ```
 
 `instanceof` and `parse()` also accept an instance made by another copy of the package, such as the CommonJS copy that a `require()` loads.
+
+`instanceof` reads a hidden mark, not the value. An object built by hand can carry the mark. For input you don't trust, use `parse()`.
 
 ## See also
 

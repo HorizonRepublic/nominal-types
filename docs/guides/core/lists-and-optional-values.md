@@ -139,7 +139,7 @@ const UpdateProfile = n.object({
 UpdateProfile.parse({ email: 'jane@example.com', backupEmail: null, teams: [] });
 // { ok: true, value: { email: Email, backupEmail: null, teams: [] } }
 UpdateProfile.parse({ email: 'jane@example.com', teams: [] });
-// { ok: false, issues: [{ message: 'must be a string (was undefined)', path: ['backupEmail'] }] }
+// { ok: false, issues: [{ message: 'is required', path: ['backupEmail'] }] }
 ```
 
 To read list items from text, such as `?ids=1&ids=2`, see [How to read numbers and booleans from text](read-text-values.md).

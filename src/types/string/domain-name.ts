@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { hasTopLevelText, topLevelPattern } from './dns-name.ts';
 import { Hostname } from './hostname.ts';
@@ -33,7 +34,7 @@ export class DomainName extends DomainNameBase {
   /**
    * The same name in lowercase, the form DNS compares names in.
    */
-  public override canonical(): DomainName {
-    return new DomainName(this.value.toLowerCase());
+  public override canonical(): this {
+    return sameType(this, this.value.toLowerCase());
   }
 }

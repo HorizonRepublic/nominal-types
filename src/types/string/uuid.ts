@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
@@ -77,8 +78,8 @@ export class Uuid extends UuidBase {
   /**
    * The same UUID in lowercase.
    */
-  public canonical(): Uuid {
-    return new Uuid(this.value.toLowerCase());
+  public canonical(): this {
+    return sameType(this, this.value.toLowerCase());
   }
 
   /**

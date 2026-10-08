@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -78,8 +79,8 @@ export class IpPrefix extends IpPrefixBase {
   /**
    * The prefix with its address written as RFC 5952 recommends, such as `2001:db8::/32`.
    */
-  public canonical(): IpPrefix {
-    return new IpPrefix(canonicalPrefix(this.value));
+  public canonical(): this {
+    return sameType(this, canonicalPrefix(this.value));
   }
 
   /**

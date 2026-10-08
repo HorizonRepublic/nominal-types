@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
 
@@ -53,8 +54,8 @@ export class Ulid extends UlidBase {
   /**
    * The same ULID in uppercase.
    */
-  public canonical(): Ulid {
-    return new Ulid(this.value.toUpperCase());
+  public canonical(): this {
+    return sameType(this, this.value.toUpperCase());
   }
 
   /**

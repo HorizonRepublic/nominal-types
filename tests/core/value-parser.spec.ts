@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { NominalError } from '../../src/core/nominal-error.ts';
 import { nothingPending, takePending } from '../../src/core/pending.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 import { parserFor } from '../../src/core/value-parser.ts';
@@ -40,6 +41,21 @@ describe.each([
     const value: unknown = Reflect.get(parse({ a: [1] }), 'value');
 
     expect(Object.isFrozen(value)).toBe(true);
+  });
+
+  it('returns the NominalError of a constructor as a rejection', () => {
+    class Refusing {
+      public readonly value: unknown;
+
+      public constructor() {
+        throw new NominalError('Refusing', [{ message: 'refused' }]);
+      }
+    }
+
+    expect(parserFor(Refusing, run, generate)('C3')).toStrictEqual(
+      new Rejection([{ message: 'refused' }]),
+    );
+    expect(takePending(Refusing, 'C3')).toBe(nothingPending);
   });
 
   it('empties the slot when the constructor throws', () => {

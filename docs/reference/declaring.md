@@ -451,7 +451,10 @@ class Coupon extends AnyString.subtype('shop.Sku', /^[A-Z0-9]{8}$/u) {}
 // console: @horizon-republic/nominal-types: the type name "shop.Sku" is declared twice with different rules; the two types will pass for each other. Give each type a unique name.
 
 new Coupon('SAVE2026') instanceof Sku; // true
+Sku.parse(new Coupon('SAVE2026')).ok; // false
 ```
+
+`parse()` checks an instance of the other type against its own rules. A pattern with other flags counts as a different rule.
 
 Declaring the same type again, as a reloaded module or [another copy of the package](glossary.md) does, prints nothing.
 
@@ -497,10 +500,11 @@ class ToySku extends Sku {
 
 new ToySku('ABC-1234'); // throws NominalError: shop.Sku: must be a toy SKU (was "ABC-1234")
 new Sku('ABC-1234') instanceof ToySku; // true
+ToySku.parse(new Sku('ABC-1234')).ok; // false
 ```
 
 > [!WARNING]
-> The rule holds only for `new ToySku()` and `ToySku.parse()`. Any `Sku` passes where a `ToySku` is expected, at compile time and with `instanceof`. Use [`subtype()`](#subtype) when the rule must hold everywhere.
+> The rule holds only for `new ToySku()` and `ToySku.parse()`. `ToySku.parse()` checks a `Sku` instance against the rule. Any `Sku` still passes where a `ToySku` is expected, at compile time and with `instanceof`. Use [`subtype()`](#subtype) when the rule must hold everywhere.
 
 See also: [How to make a stricter type or a variant](../guides/core/build-on-a-type.md).
 

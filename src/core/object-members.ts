@@ -1,4 +1,5 @@
 import { checkConstraintFields, isConstraint } from './constraint-fields.ts';
+import { NominalError } from './nominal-error.ts';
 
 /**
  * Internal: the mark an `n.object()` schema carries, shared by every copy of this package.
@@ -25,13 +26,22 @@ export const objectKeysOf = (rule: unknown): readonly string[] | undefined => {
   return Array.isArray(keys) ? keys.map(String) : undefined;
 };
 
-const copyWith = function copyWith(this: { readonly value: object }, changes: object): unknown {
-  const Target: unknown = this.constructor;
+const copyOf = (declared: ReadonlySet<string>) =>
+  function copyWith(this: { readonly value: object }, changes: object): unknown {
+    const Target: unknown = this.constructor;
+    const unknown = Object.keys(changes).filter((key) => !declared.has(key));
 
-  return typeof Target === 'function'
-    ? Reflect.construct(Target, [{ ...this.value, ...changes }])
-    : undefined;
-};
+    if (unknown.length > 0) {
+      throw new NominalError(
+        String(Reflect.get(Target ?? {}, 'typeName')),
+        unknown.map((key) => ({ message: 'is not allowed', path: [key] })),
+      );
+    }
+
+    return typeof Target === 'function'
+      ? Reflect.construct(Target, [{ ...this.value, ...changes }])
+      : undefined;
+  };
 
 /**
  * Internal: gives the instances of a type built on `n.object()` a getter for each field and the
@@ -58,7 +68,7 @@ export const defineObjectMembers = (prototype: object, keys: readonly string[]):
   }
 
   Object.defineProperty(prototype, copyMethod, {
-    value: copyWith,
+    value: copyOf(new Set(keys)),
     writable: true,
     configurable: true,
   });

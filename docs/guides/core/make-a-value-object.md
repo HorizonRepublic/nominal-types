@@ -47,7 +47,7 @@ new Stay({ guests: 4, capacity: 3 }); // throws NominalError: booking.Stay: gues
 Stay.parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['guests'] }] }
 ```
 
-The value inside is frozen, so nobody can break the rules after the check.
+The object inside is frozen, and TypeScript keeps `value` read-only. So the rules hold after the check. [What keeps the value from changing](../../reference/type-members.md#value) lists the details.
 
 ## Change a field
 
@@ -64,6 +64,26 @@ fuller.guests.value; // 3
 stay.guests.value; // 2, the original is unchanged
 
 stay.copyWith({ guests: 5 }); // throws NominalError: booking.Stay: guests: must not exceed the capacity
+```
+
+`copyWith()` takes only the fields the object declares. Another key throws `NominalError` with the issue `is not allowed`.
+
+`copyWith()` builds the copy with `new` on the instance's class. If your class has a constructor of its own, its first argument must be the object of fields:
+
+```ts
+// tagged-stay.ts
+import { Stay } from './stay.ts';
+
+export class TaggedStay extends Stay {
+  readonly tag: string;
+
+  constructor(fields: { guests: number; capacity: number }, tag = 'new') {
+    super(fields);
+    this.tag = tag;
+  }
+}
+
+new TaggedStay({ guests: 2, capacity: 3 }, 'vip').copyWith({ guests: 3 }).tag; // 'new'
 ```
 
 ## Compare and send values

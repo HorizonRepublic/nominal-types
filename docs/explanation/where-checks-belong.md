@@ -47,7 +47,7 @@ It finds the missing `sku` and the bad `quantity` in one pass. Keys the schema d
 
 ## When another library checks the structure
 
-`n.object()` has no unions of different object shapes, no recursive schemas, no transforms and no asynchronous checks. For those, ArkType checks the structure, and its adapter puts nominal types into its fields.
+`n.object()` has no recursive schemas, no transforms and no asynchronous checks. Objects of several shapes work only when a field tells them apart, with `n.union()`. For those, ArkType checks the structure, and its adapter puts nominal types into its fields.
 
 A project that already uses ArkType, Zod, Valibot or class-validator keeps it, with its adapter. [Choosing how to check input](choosing-an-approach.md) compares these ways.
 

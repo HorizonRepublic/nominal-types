@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { constraint, isConstraint } from '../../src/core/constraint.ts';
 import { hideValues } from '../../src/core/hidden-values.ts';
 import { isNominalType } from '../../src/core/nominal.ts';
-import { isObjectSchema, objectOf } from '../../src/core/object-schema.ts';
+import { isObjectSchema, objectOf } from '../../src/core/object-of.ts';
 import { oneOf } from '../../src/core/one-of.ts';
 import { matching } from '../../src/core/pattern-schema.ts';
 import { plain } from '../../src/core/plain.ts';
 import { satisfying } from '../../src/core/predicate-schema.ts';
 import { schemaOf } from '../../src/core/type-schema.ts';
+import { union } from '../../src/core/union-schema.ts';
 import * as library from '../../src/index.ts';
 
 const members = {
@@ -23,6 +24,7 @@ const members = {
   oneOf,
   plain,
   satisfying,
+  union,
 };
 
 describe('n', () => {
@@ -46,6 +48,7 @@ describe('n', () => {
     'plain',
     'satisfying',
     'schemaOf',
+    'union',
   ])('leaves %s out of the root exports', (name) => {
     expect(Object.keys(library)).not.toContain(name);
   });
@@ -57,5 +60,6 @@ describe('n', () => {
     expect(library.PatternSchema).toBeTypeOf('function');
     expect(library.PredicateSchema).toBeTypeOf('function');
     expect(library.OneOfSchema).toBeTypeOf('function');
+    expect(library.UnionSchema).toBeTypeOf('function');
   });
 });

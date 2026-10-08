@@ -60,6 +60,8 @@ export type {
 export { ObjectSchema } from './core/object-schema.ts';
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
 export { TypeSchema } from './core/type-schema.ts';
+export { UnionSchema } from './core/union-schema.ts';
+export type { UnionInput, UnionValue, UnionVariants } from './core/union-schema.ts';
 export type { Plain } from './core/plain.ts';
 export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';

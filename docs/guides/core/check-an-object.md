@@ -88,6 +88,57 @@ CreateOrder.parse(body); // { ok: true, value: { customer: Email, sku: Sku, quan
 CreateOrder.strict().parse(body); // { ok: false, issues: [{ message: 'is not allowed', path: ['admin'] }] }
 ```
 
+## Check a PATCH body
+
+A PATCH body sends only the fields it changes. Call `partial()` to let every field be missing:
+
+```ts
+// update-order.ts
+import { CreateOrder } from './create-order.ts';
+
+export const UpdateOrder = CreateOrder.partial();
+
+UpdateOrder.parse({ quantity: 3 }); // { ok: true, value: { quantity: PositiveInteger } }
+UpdateOrder.parse({}); // { ok: true, value: {} }
+UpdateOrder.parse({ quantity: 0 });
+// { ok: false, issues: [{ message: 'must be a positive integer (was 0)', path: ['quantity'] }] }
+```
+
+A field that holds `undefined` counts as missing. To make only some fields optional, name them: `CreateOrder.partial('note', 'quantity')`. `required()` does the reverse.
+
+A [constraint](check-fields-together.md) that reads a field made optional runs only when all its fields are present. So `{ guests: 5 }` passes a check of guests against capacity, and `{ guests: 5, capacity: 2 }` doesn't.
+
+## Build a schema from another one
+
+Keep some fields with `pick()`, drop some with `omit()`, and add fields with `extend()`:
+
+```ts
+// gift.ts
+import { Email } from '@horizon-republic/nominal-types';
+
+import { CreateOrder } from './create-order.ts';
+
+const OrderContact = CreateOrder.pick('customer', 'note');
+const OrderLine = CreateOrder.omit('customer', 'note');
+const CreateGift = CreateOrder.extend({ recipient: Email });
+
+OrderContact.keys; // ['customer', 'note']
+OrderLine.keys; // ['sku', 'quantity']
+CreateGift.keys; // ['customer', 'sku', 'quantity', 'note', 'recipient']
+```
+
+Each method returns a new schema and leaves `CreateOrder` as it is. They chain, and keep `strict()`:
+
+```ts
+// main.ts
+import { CreateOrder } from './create-order.ts';
+
+CreateOrder.omit('note').partial().strict().parse({ admin: true });
+// { ok: false, issues: [{ message: 'is not allowed', path: ['admin'] }] }
+```
+
+`extend()` replaces a field of the same name. `pick()` and `omit()` keep a constraint only when every field it reads is kept.
+
 ## Nest objects and lists of objects
 
 A field can be another `n.object()`, or a list of them with `.array()`:
@@ -140,11 +191,13 @@ Search.parse({ customer: 'jane@example.com', limit: 500, sort: 'top' });
 
 ## Limits
 
-`n.object()` has no unions of different object shapes, recursive schemas, transforms or asynchronous checks. For those, use ArkType with its adapter: [How to use nominal types with ArkType](../validators/arktype.md).
+For an object that takes one of several shapes, told apart by a field such as `method`, see [How to accept one of several object shapes](accept-one-of-several-shapes.md).
+
+`n.object()` has no recursive schemas, transforms or asynchronous checks. For those, use ArkType with its adapter: [How to use nominal types with ArkType](../validators/arktype.md).
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `n.object()`, `strict()` and `keys`.
+- [Schemas](../../reference/schemas.md): `n.object()`, `strict()`, `partial()`, `pick()`, `omit()`, `extend()` and `keys`.
 - [How to check one field against another](check-fields-together.md)
 - [How to use nominal types with NestJS](../frameworks/nestjs.md), for the same schema in a controller.
 - [How to get a JSON Schema for a type](../api-docs/json-schema.md), for the same schema in API docs.

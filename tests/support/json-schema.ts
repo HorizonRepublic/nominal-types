@@ -50,9 +50,36 @@ const satisfiesArray = (keyword: (name: string) => unknown, value: unknown): boo
   );
 };
 
+const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const satisfiesObject = (keyword: (name: string) => unknown, value: unknown): boolean => {
+  if (keyword('type') === 'object' && !isRecord(value)) {
+    return false;
+  }
+
+  if (!isRecord(value)) {
+    return true;
+  }
+
+  const properties = keyword('properties');
+  const declared = isRecord(properties) ? properties : {};
+  const required = keyword('required');
+
+  return (
+    (!Array.isArray(required) ||
+      required.every((key: unknown) => typeof key === 'string' && Object.hasOwn(value, key))) &&
+    Object.entries(declared).every(
+      ([key, field]) => !Object.hasOwn(value, key) || satisfiesSchema(field, value[key]),
+    ) &&
+    (keyword('additionalProperties') !== false ||
+      Object.keys(value).every((key) => Object.hasOwn(declared, key)))
+  );
+};
+
 /**
- * A JSON Schema checker for the keywords the built-in types emit, so tests can hold a type's
- * runtime rule against the schema it describes itself with.
+ * A JSON Schema checker for the keywords the built-in types and the object schemas emit, so tests
+ * can hold a schema's runtime rule against the JSON Schema it describes itself with.
  */
 export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
   if (typeof schema !== 'object' || schema === null) {
@@ -66,7 +93,20 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
     return false;
   }
 
-  if (!satisfiesArray(keyword, value)) {
+  if (Object.hasOwn(schema, 'const') && !sameJson(keyword('const'), value)) {
+    return false;
+  }
+
+  if (!satisfiesArray(keyword, value) || !satisfiesObject(keyword, value)) {
+    return false;
+  }
+
+  const variants = keyword('oneOf');
+
+  if (
+    Array.isArray(variants) &&
+    variants.filter((variant: unknown) => satisfiesSchema(variant, value)).length !== 1
+  ) {
     return false;
   }
 

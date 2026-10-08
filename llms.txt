@@ -37,7 +37,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
 | `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
 | `@horizon-republic/nominal-types/adapters/class-validator` | `NominalField`, types `NominalFieldOptions`, `NominalTarget`, `TargetValue` | `class-validator` ^0.14 or ^0.15, `class-transformer` ^0.5.1 |
-| `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, `NominalSerializerInterceptor`, `NominalResponse`, `NominalResponseInterceptor`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory`, `NominalResponseSchema` | `@nestjs/common` ^11 or ^12 (and its `rxjs`) |
+| `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, `NominalSerializerInterceptor`, `NominalResponse`, `NominalResponseInterceptor`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory`, `NominalResponseSchema` | `@nestjs/common` ^11 or ^12, `rxjs` ^7.2 |
 | `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, `ApiNominalBody`, `ApiNominalQuery`, types `OpenApiDocument`, `ApiNominalBodyOptions`, `ApiNominalQueryOptions` | `@nestjs/swagger` ^11 or ^12 |
 | `@horizon-republic/nominal-types/adapters/graphql` | `toGraphQL`, type `GraphQLOptions` | `graphql` ^16 or ^17 |
 | `@horizon-republic/nominal-types/adapters/superjson` | `toSuperjson`, types `SuperjsonTransformer`, `SuperjsonValue` | `superjson` |

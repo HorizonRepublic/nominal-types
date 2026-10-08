@@ -1,6 +1,6 @@
 # nest
 
-Entry point: `@horizon-republic/nominal-types/adapters/nest`. Needs `@nestjs/common` 11 or 12.
+Entry point: `@horizon-republic/nominal-types/adapters/nest`. Needs `@nestjs/common` 11 or 12; `NominalResponse` also needs `rxjs` 7.2 or later, which Nest apps already have.
 
 | Export                         | Kind      | Use it for                                                     |
 | ------------------------------ | --------- | -------------------------------------------------------------- |

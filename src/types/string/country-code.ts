@@ -3,6 +3,8 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 /**
  * The 249 officially assigned code elements of ISO 3166-1 alpha-2, and XK.
@@ -53,7 +55,12 @@ const regionalIndicatorA = 0x1_f1_e6;
 const isCountryCode = (value: unknown): value is string =>
   typeof value === 'string' && assigned.has(value);
 
-const CountryCodeBase: SubtypeOf<typeof AnyString, 'nominal.CountryCode'> = AnyString.subtype(
+const CountryCodeBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.CountryCode',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.CountryCode',
   stringOnly(
     satisfying(isCountryCode, 'an ISO 3166-1 alpha-2 country code', {
@@ -64,6 +71,7 @@ const CountryCodeBase: SubtypeOf<typeof AnyString, 'nominal.CountryCode'> = AnyS
       examples: ['US'],
     }),
   ),
+  { implies: [nonBlankString] },
 );
 
 /**

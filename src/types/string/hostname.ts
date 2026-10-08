@@ -6,21 +6,25 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { digitsLastPattern, hostnamePattern, isHostnameText, uLabelOf } from './dns-name.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
-const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname'> = AnyString.subtype(
-  'nominal.Hostname',
-  stringOnly(
-    satisfying(isHostnameText, 'a host name', {
-      type: 'string',
-      format: 'hostname',
-      pattern: hostnamePattern.source,
-      minLength: 1,
-      maxLength: 253,
-      not: { pattern: digitsLastPattern.source },
-      examples: ['api.example.com'],
-    }),
-  ),
-);
+const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Hostname',
+    stringOnly(
+      satisfying(isHostnameText, 'a host name', {
+        type: 'string',
+        format: 'hostname',
+        pattern: hostnamePattern.source,
+        minLength: 1,
+        maxLength: 253,
+        not: { pattern: digitsLastPattern.source },
+        examples: ['api.example.com'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * A host name as RFC 1123 §2.1 defines it, such as `localhost` or `api.example.com`.
@@ -100,10 +104,8 @@ export class Hostname extends HostnameBase {
    * @returns `true` when both are the same name.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Hostname &&
-      other.value.toLowerCase() === this.value.toLowerCase()
-    );
+    return other instanceof Hostname
+      ? inOneLine(this, other) && other.value.toLowerCase() === this.value.toLowerCase()
+      : super.equals(other);
   }
 }

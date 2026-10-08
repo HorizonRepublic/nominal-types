@@ -4,17 +4,21 @@ import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^#(?:[\dA-Fa-f]{3,4}|[\dA-Fa-f]{6}|[\dA-Fa-f]{8})$/u;
 
-const HexColorBase: SubtypeOf<typeof AnyString, 'nominal.HexColor'> = AnyString.subtype(
-  'nominal.HexColor',
-  matching(pattern, 'a hex color', {
-    minLength: 4,
-    maxLength: 9,
-    examples: ['#1e90ff'],
-  }),
-);
+const HexColorBase: SubtypeOf<typeof AnyString, 'nominal.HexColor', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.HexColor',
+    matching(pattern, 'a hex color', {
+      minLength: 4,
+      maxLength: 9,
+      examples: ['#1e90ff'],
+    }),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * A color in the hex notation of CSS Color Module Level 4 §5.2: `#` and 3, 4, 6 or 8 hex digits.
@@ -94,11 +98,9 @@ export class HexColor extends HexColorBase {
    * @returns `true` when both are the same color.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof HexColor &&
-      other.canonicalText === this.canonicalText
-    );
+    return other instanceof HexColor
+      ? inOneLine(this, other) && other.canonicalText === this.canonicalText
+      : super.equals(other);
   }
 
   /**

@@ -5,6 +5,8 @@ import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const alphanumeric = '[A-Za-z0-9]';
 const languageSubtag = '[A-Za-z]{2,3}';
@@ -69,7 +71,12 @@ const repeats = (tag: string): boolean => {
 const isLanguageTag = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && !repeats(value);
 
-const LanguageTagBase: SubtypeOf<typeof AnyString, 'nominal.LanguageTag'> = AnyString.subtype(
+const LanguageTagBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.LanguageTag',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.LanguageTag',
   stringOnly(
     satisfying(isLanguageTag, 'a BCP 47 language tag', {
@@ -78,6 +85,7 @@ const LanguageTagBase: SubtypeOf<typeof AnyString, 'nominal.LanguageTag'> = AnyS
       examples: ['en-US'],
     }),
   ),
+  { implies: [nonBlankString] },
 );
 
 /**
@@ -170,11 +178,9 @@ export class LanguageTag extends LanguageTagBase {
    * @returns `true` when both are the same tag.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof LanguageTag &&
-      other.value.toLowerCase() === this.value.toLowerCase()
-    );
+    return other instanceof LanguageTag
+      ? inOneLine(this, other) && other.value.toLowerCase() === this.value.toLowerCase()
+      : super.equals(other);
   }
 
   #subtags(): string[] {

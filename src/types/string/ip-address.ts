@@ -9,8 +9,15 @@ import { bytesOf, textOf } from './ip-bits.ts';
 import { ipv4Source, ipv6Source } from './ip-patterns.ts';
 import { ipRanges } from './ip-ranges.ts';
 import { bitsOf, isIpText } from './ip-text.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
-const IpAddressBase: SubtypeOf<typeof AnyString, 'nominal.IpAddress'> = AnyString.subtype(
+const IpAddressBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.IpAddress',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.IpAddress',
   stringOnly(
     satisfying(isIpText, 'an IP address', {
@@ -24,7 +31,7 @@ const IpAddressBase: SubtypeOf<typeof AnyString, 'nominal.IpAddress'> = AnyStrin
       examples: ['192.0.2.1', '2001:db8::1'],
     }),
   ),
-  { sensitive: true },
+  { implies: [nonBlankString], sensitive: true },
 );
 
 /**
@@ -143,10 +150,8 @@ export class IpAddress extends IpAddressBase {
    * @returns `true` when both are the same address.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof IpAddress &&
-      textOf(bitsOf(other.value)) === textOf(bitsOf(this.value))
-    );
+    return other instanceof IpAddress
+      ? inOneLine(this, other) && textOf(bitsOf(other.value)) === textOf(bitsOf(this.value))
+      : super.equals(other);
   }
 }

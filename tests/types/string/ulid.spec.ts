@@ -77,8 +77,9 @@ describe('Ulid', () => {
     expect(n.of(Ulid).array({ unique: true }).parse([sample, sample.toLowerCase()]).ok).toBe(false);
   });
 
-  it('stays apart from a string type with the same text', () => {
-    expect(new Ulid(sample).equals(new AnyString(sample))).toBe(false);
+  it('compares with a string type by the exact text', () => {
+    expect(new Ulid(sample).equals(new AnyString(sample))).toBe(true);
+    expect(new Ulid(sample).equals(new AnyString(sample.toLowerCase()))).toBe(false);
     expect(new Ulid(sample).equals(new Uuid('6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718'))).toBe(false);
   });
 

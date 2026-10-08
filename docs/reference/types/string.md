@@ -1314,4 +1314,27 @@ Members, with results for this `bic`:
 | ------------- | ----------------------------------------------------- |
 | `Bic.pattern` | the shape of a BIC as a `RegExp`, without the country |
 
+## Implied types
+
+A type [implies](../glossary.md) another when every value it accepts is accepted by the other. Its instances fit where the other type is expected, for the compiler, `instanceof` and `equals()`.
+
+| Type                                                                                                                                          | Also passes for                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| every type on this page but `AnyString`, `NonEmptyString`, `NonBlankString`, `Base64` and `Base64Url`; [`TimeZoneId`](temporal.md#timezoneid) | `NonEmptyString`, `NonBlankString` |
+| `Base64`, `Base64Url`, since they accept `''`                                                                                                 | nothing                            |
+
+No string type implies a type that names a meaning, such as `Hostname` or `LanguageTag`.
+
+`parse()` of an implied type checks the value again and returns an instance of that type:
+
+```ts
+import { Email, NonBlankString } from '@horizon-republic/nominal-types';
+
+const greet = (name: NonBlankString): string => `Hello, ${name.value}`;
+
+greet(new Email('jane@example.com')); // 'Hello, jane@example.com'
+new Email('jane@example.com') instanceof NonBlankString; // true
+NonBlankString.parse(new Email('jane@example.com')); // { ok: true, value: NonBlankString { value: 'jane@example.com' } }
+```
+
 [← Built-in types](README.md)

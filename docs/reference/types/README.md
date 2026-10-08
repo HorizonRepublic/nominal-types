@@ -2,7 +2,7 @@
 
 The types the package ships, as a tree. Each type is a [subtype](../glossary.md) of the type above it. An instance fits wherever a type above it is expected, not the other way round. Every `Email` is an `AnyString`, but not every `AnyString` is an `Email`.
 
-A type marked `+` also [implies](../glossary.md) types in other branches: every value it accepts passes them, so its instances fit where they are expected. `PositiveInteger` fits where `PositiveNumber` is expected. [Numbers](number.md#implied-types) and [Big integers](bigint.md#implied-types) list the implied types.
+A type marked `+` also [implies](../glossary.md) types in other branches: every value it accepts passes them, so its instances fit where they are expected. `PositiveInteger` fits where `PositiveNumber` is expected, and `Email` where `NonBlankString` is. [Strings](string.md#implied-types), [Numbers](number.md#implied-types) and [Big integers](bigint.md#implied-types) list the implied types.
 
 The built-in types are optional. Any type can be declared from scratch with [`Nominal()`](../declaring.md#nominal).
 
@@ -10,41 +10,41 @@ The built-in types are optional. Any type can be declared from scratch with [`No
 AnyString                     any string
 ├── NonEmptyString            at least one character
 │   └── NonBlankString            not only white space
-├── Email
-├── E164PhoneNumber           a phone number, such as +14155552671
-├── Uuid                      any version
-│   ├── UuidV4                    random
-│   └── UuidV7                    starts with the time
-├── Ulid
-├── TypeId                    an id with its kind, such as user_01h455…
-├── ObjectId                  a MongoDB id
-├── SemVer                    a version such as 1.4.2
-├── Url
-│   └── HttpUrl
-├── CountryCode               ISO 3166-1, such as US
-├── CurrencyCode              ISO 4217, such as EUR
-├── DecimalString             an exact number as text, such as 12.34
-├── LanguageTag               BCP 47, such as en-US
-├── MediaType                 text/html; charset=utf-8
-├── HexColor                  #1e90ff
+├── Email +
+├── E164PhoneNumber +         a phone number, such as +14155552671
+├── Uuid +                    any version
+│   ├── UuidV4 +                  random
+│   └── UuidV7 +                  starts with the time
+├── Ulid +
+├── TypeId +                  an id with its kind, such as user_01h455…
+├── ObjectId +                a MongoDB id
+├── SemVer +                  a version such as 1.4.2
+├── Url +
+│   └── HttpUrl +
+├── CountryCode +             ISO 3166-1, such as US
+├── CurrencyCode +            ISO 4217, such as EUR
+├── DecimalString +           an exact number as text, such as 12.34
+├── LanguageTag +             BCP 47, such as en-US
+├── MediaType +               text/html; charset=utf-8
+├── HexColor +                #1e90ff
 ├── Base64                    bytes as text, + and / with = padding
 ├── Base64Url                 bytes as text, - and _ without padding
-├── Jwt                       a token, such as an access token
-├── Hostname                  localhost, api.example.com
-│   └── DomainName                with a top-level domain
-├── IpAddress                 IPv4 or IPv6
-│   ├── Ipv4Address
-│   └── Ipv6Address
-├── IpPrefix                  a network, such as 10.0.0.0/8
-│   ├── Ipv4Prefix
-│   └── Ipv6Prefix
-├── MacAddress
-├── Isbn                      a book, such as 9780306406157
-├── Issn                      a journal, such as 0378-5955
-├── Gtin                      a bar code number, EAN or UPC
-├── Isin                      a security, such as US0378331005
-├── Iban                      a bank account, such as GB82WEST1234…
-└── Bic                       a bank, such as DEUTDEFF
+├── Jwt +                     a token, such as an access token
+├── Hostname +                localhost, api.example.com
+│   └── DomainName +              with a top-level domain
+├── IpAddress +               IPv4 or IPv6
+│   ├── Ipv4Address +
+│   └── Ipv6Address +
+├── IpPrefix +                a network, such as 10.0.0.0/8
+│   ├── Ipv4Prefix +
+│   └── Ipv6Prefix +
+├── MacAddress +
+├── Isbn +                    a book, such as 9780306406157
+├── Issn +                    a journal, such as 0378-5955
+├── Gtin +                    a bar code number, EAN or UPC
+├── Isin +                    a security, such as US0378331005
+├── Iban +                    a bank account, such as GB82WEST1234…
+└── Bic +                     a bank, such as DEUTDEFF
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
@@ -90,7 +90,7 @@ ZonedDateTime                 a date and time in a time zone
 Duration                      a length of time, such as P1DT12H
 
 AnyString
-└── TimeZoneId                a time zone name, such as Europe/Paris
+└── TimeZoneId +              a time zone name, such as Europe/Paris
 ```
 
 | Page                           | Types                                                                                           |

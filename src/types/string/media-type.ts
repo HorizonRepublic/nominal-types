@@ -5,6 +5,8 @@ import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const name = '[\\dA-Za-z][\\dA-Za-z!#$&^_.+\\-]{0,126}';
 const token = "[\\dA-Za-z!#$%&'*+.^_`|~\\-]+";
@@ -126,7 +128,12 @@ const hasDistinctNames = (text: string): boolean => {
 const isMediaType = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && hasDistinctNames(value);
 
-const MediaTypeBase: SubtypeOf<typeof AnyString, 'nominal.MediaType'> = AnyString.subtype(
+const MediaTypeBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.MediaType',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.MediaType',
   stringOnly(
     satisfying(isMediaType, 'a media type', {
@@ -136,6 +143,7 @@ const MediaTypeBase: SubtypeOf<typeof AnyString, 'nominal.MediaType'> = AnyStrin
       examples: ['application/json', 'text/plain; charset=utf-8'],
     }),
   ),
+  { implies: [nonBlankString] },
 );
 
 /**
@@ -252,11 +260,9 @@ export class MediaType extends MediaTypeBase {
    * @returns `true` when both are the same media type.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof MediaType &&
-      other.canonicalText === this.canonicalText
-    );
+    return other instanceof MediaType
+      ? inOneLine(this, other) && other.canonicalText === this.canonicalText
+      : super.equals(other);
   }
 
   /**

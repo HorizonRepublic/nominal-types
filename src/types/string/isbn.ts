@@ -11,6 +11,8 @@ import {
   mod11CheckCharacter,
 } from './check-digits.ts';
 import { IsbnRule } from './isbn-rule.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 // 979-0 belongs to the ISMN of printed music, so an ISBN-13 starts with 978 or 979-1 to 979-9.
 const pattern = /^(?:\d{9}[\dX]|97(?:8\d|9[1-9])\d{9})$/u;
@@ -20,18 +22,20 @@ const isIsbnText = (value: unknown): value is string =>
   pattern.test(value) &&
   (value.length === 10 ? hasMod11CheckCharacter(value) : hasGs1CheckDigit(value));
 
-const IsbnBase: SubtypeOf<typeof AnyString, 'nominal.Isbn'> = AnyString.subtype(
-  'nominal.Isbn',
-  stringOnly(
-    new IsbnRule(isIsbnText, 'an ISBN with a valid check digit', {
-      type: 'string',
-      pattern: pattern.source,
-      minLength: 10,
-      maxLength: 13,
-      examples: ['9780306406157', '0306406152'],
-    }),
-  ),
-);
+const IsbnBase: SubtypeOf<typeof AnyString, 'nominal.Isbn', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Isbn',
+    stringOnly(
+      new IsbnRule(isIsbnText, 'an ISBN with a valid check digit', {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 10,
+        maxLength: 13,
+        examples: ['9780306406157', '0306406152'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 const isbn13Of = (text: string): string => {
   if (text.length === 13) {
@@ -122,10 +126,8 @@ export class Isbn extends IsbnBase {
    * @returns `true` when both are the same ISBN.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Isbn &&
-      isbn13Of(other.value) === isbn13Of(this.value)
-    );
+    return other instanceof Isbn
+      ? inOneLine(this, other) && isbn13Of(other.value) === isbn13Of(this.value)
+      : super.equals(other);
   }
 }

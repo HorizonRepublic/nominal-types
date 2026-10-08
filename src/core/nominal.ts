@@ -19,6 +19,7 @@ import {
   brandsCarried,
   descendsFrom,
   impliedSlot,
+  isStandIn,
   isVariantPair,
   levelOf,
   levelSlot,
@@ -392,7 +393,7 @@ const defineImplied = (
   const implied = new Set<symbol>();
 
   for (const type of implies) {
-    if (!isNominalType(type)) {
+    if (!isNominalType(type) && !isStandIn(type)) {
       throw new TypeError(`${typeName}: implies takes nominal types`);
     }
 

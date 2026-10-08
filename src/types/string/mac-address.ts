@@ -4,17 +4,24 @@ import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^(?:[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}|[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5})$/u;
 
-const MacAddressBase: SubtypeOf<typeof AnyString, 'nominal.MacAddress'> = AnyString.subtype(
+const MacAddressBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.MacAddress',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.MacAddress',
   matching(pattern, 'a MAC address', {
     minLength: 17,
     maxLength: 17,
     examples: ['00:00:5e:00:53:01'],
   }),
-  { sensitive: true },
+  { implies: [nonBlankString], sensitive: true },
 );
 
 const firstOctet = (text: string): number => Number.parseInt(text.slice(0, 2), 16);
@@ -91,11 +98,10 @@ export class MacAddress extends MacAddressBase {
    * @returns `true` when both are the same address.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof MacAddress &&
-      other.value.toLowerCase().replaceAll('-', ':') ===
-        this.value.toLowerCase().replaceAll('-', ':')
-    );
+    return other instanceof MacAddress
+      ? inOneLine(this, other) &&
+          other.value.toLowerCase().replaceAll('-', ':') ===
+            this.value.toLowerCase().replaceAll('-', ':')
+      : super.equals(other);
   }
 }

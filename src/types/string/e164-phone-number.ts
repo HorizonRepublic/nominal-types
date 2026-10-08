@@ -3,6 +3,8 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { callingCodes } from './calling-codes.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 import { SeparatedRule } from './separated-rule.ts';
 
 const assigned = new Set(callingCodes);
@@ -34,28 +36,32 @@ const isPhoneNumberText = (value: unknown): value is string => {
   return code !== undefined && value.length > code.length + 1;
 };
 
-const E164PhoneNumberBase: SubtypeOf<typeof AnyString, 'nominal.E164PhoneNumber'> =
-  AnyString.subtype(
-    'nominal.E164PhoneNumber',
-    stringOnly(
-      new SeparatedRule(
-        isPhoneNumberText,
-        'a phone number in E.164 format',
-        {
-          separators,
-          description: 'a phone number in E.164 format, without spaces, dashes or brackets',
-        },
-        {
-          type: 'string',
-          pattern: pattern.source,
-          minLength: 3,
-          maxLength: 16,
-          examples: ['+14155552671'],
-        },
-      ),
+const E164PhoneNumberBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.E164PhoneNumber',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
+  'nominal.E164PhoneNumber',
+  stringOnly(
+    new SeparatedRule(
+      isPhoneNumberText,
+      'a phone number in E.164 format',
+      {
+        separators,
+        description: 'a phone number in E.164 format, without spaces, dashes or brackets',
+      },
+      {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 3,
+        maxLength: 16,
+        examples: ['+14155552671'],
+      },
     ),
-    { sensitive: true },
-  );
+  ),
+  { implies: [nonBlankString], sensitive: true },
+);
 
 /**
  * A phone number in the international format of ITU-T E.164, such as `+14155552671`: `+`, the

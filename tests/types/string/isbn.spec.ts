@@ -163,7 +163,8 @@ describe('Isbn', () => {
     expect(new Isbn('9780306406157').equals(new copy.Isbn('0306406152'))).toBe(true);
     expect(new Isbn('9780306406157').equals(new Isbn('9791090636071'))).toBe(false);
     expect(new Isbn('9780306406157').equals('9780306406157')).toBe(false);
-    expect(new Isbn('9780306406157').equals(new AnyString('9780306406157'))).toBe(false);
+    expect(new Isbn('9780306406157').equals(new AnyString('9780306406157'))).toBe(true);
+    expect(new Isbn('9780306406157').equals(new AnyString('0306406152'))).toBe(false);
   });
 });
 

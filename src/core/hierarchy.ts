@@ -46,6 +46,26 @@ export const variantSourceSlot: unique symbol = Symbol('variantSource');
  */
 export const impliedSlot: unique symbol = Symbol('implied');
 
+/**
+ * The stand-ins `implies` takes in place of a type: objects with a `typeName` and a prototype
+ * that carries the type's brands.
+ *
+ * @internal
+ */
+export const standIns: WeakSet<object> = new WeakSet();
+
+/**
+ * Tells whether a value is a stand-in for a type in `implies`.
+ *
+ * @param value - The value to check.
+ * @returns `true` for a stand-in.
+ * @internal
+ */
+export const isStandIn = (
+  value: unknown,
+): value is { readonly typeName: string; readonly prototype: object } =>
+  typeof value === 'object' && value !== null && standIns.has(value);
+
 const impliedOf = (type: object): readonly symbol[] => {
   const implied: unknown = Object.hasOwn(type, impliedSlot) ? Reflect.get(type, impliedSlot) : [];
 

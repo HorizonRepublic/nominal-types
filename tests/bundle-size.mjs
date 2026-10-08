@@ -70,7 +70,7 @@ const cases = [
     75.7,
     24.7,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 120.3, 41],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 121.2, 41.2],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,

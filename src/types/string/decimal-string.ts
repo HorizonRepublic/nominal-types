@@ -5,13 +5,20 @@ import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const longest = 100;
 const grammar = '-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?';
 const pattern = new RegExp(`^(?=.{1,${longest}}$)${grammar}$`, 'u');
 const trailingZeros = /\.?0+$/u;
 
-const DecimalStringBase: SubtypeOf<typeof AnyString, 'nominal.DecimalString'> = AnyString.subtype(
+const DecimalStringBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.DecimalString',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.DecimalString',
   // The length lookahead stays out of the JSON Schema, which RE2-based tools couldn't compile.
   matching(pattern, 'a decimal number as text', {
@@ -20,6 +27,7 @@ const DecimalStringBase: SubtypeOf<typeof AnyString, 'nominal.DecimalString'> = 
     maxLength: longest,
     examples: ['12.34', '-0.5'],
   }),
+  { implies: [nonBlankString] },
 );
 
 interface Parts {
@@ -223,11 +231,9 @@ export class DecimalString extends DecimalStringBase {
    * @returns `true` when both are the same number.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof DecimalString &&
-      canonicalText(other.value) === canonicalText(this.value)
-    );
+    return other instanceof DecimalString
+      ? inOneLine(this, other) && canonicalText(other.value) === canonicalText(this.value)
+      : super.equals(other);
   }
 }
 

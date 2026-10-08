@@ -4,17 +4,21 @@ import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^[\dA-Fa-f]{24}$/u;
 
-const ObjectIdBase: SubtypeOf<typeof AnyString, 'nominal.ObjectId'> = AnyString.subtype(
-  'nominal.ObjectId',
-  matching(pattern, 'an ObjectId', {
-    minLength: 24,
-    maxLength: 24,
-    examples: ['507f1f77bcf86cd799439011'],
-  }),
-);
+const ObjectIdBase: SubtypeOf<typeof AnyString, 'nominal.ObjectId', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.ObjectId',
+    matching(pattern, 'an ObjectId', {
+      minLength: 24,
+      maxLength: 24,
+      examples: ['507f1f77bcf86cd799439011'],
+    }),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * A MongoDB ObjectId as 24 hex digits: 12 bytes, of which the first four are the time it was made
@@ -69,10 +73,8 @@ export class ObjectId extends ObjectIdBase {
    * @returns `true` when both are the same ObjectId.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof ObjectId &&
-      other.value.toLowerCase() === this.value.toLowerCase()
-    );
+    return other instanceof ObjectId
+      ? inOneLine(this, other) && other.value.toLowerCase() === this.value.toLowerCase()
+      : super.equals(other);
   }
 }

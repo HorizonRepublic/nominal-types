@@ -115,6 +115,66 @@ The static fields help build patterns of your own for email-like values.
 | `Email.label`    | one domain label, as a fragment                          |
 | `Email.topLevel` | the top-level domain, as a fragment                      |
 
+## E164PhoneNumber
+
+`AnyString` › `E164PhoneNumber`
+
+A phone number in the international [E.164](../glossary.md) format, like `+14155552671`.
+
+- `+`, then 15 digits at most. The first digit is not `0`.
+- The number starts with a country calling code that ITU-T has assigned, such as `1`, `44` or `380`. The package carries the list of codes, as of 8 October 2026.
+- At least one digit follows the country calling code.
+- Spaces, dashes, dots and brackets are refused, with their own message. Remove them before you check the value: `text.replaceAll(/[\s().-]/gu, '')`.
+- Only the format is checked. The type doesn't know whether a number is in use in its country. To check that, add a rule with [libphonenumber-js](https://www.npmjs.com/package/libphonenumber-js), as shown below.
+
+| Property    | Value                                                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: E164PhoneNumber.pattern.source, minLength: 3, maxLength: 16 }`, with an example                                                                           |
+| Message     | `must be a phone number in E.164 format (was a string of 11 characters)`. `E164PhoneNumber` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden. |
+| Message     | `must be a phone number in E.164 format, without spaces, dashes or brackets (was a string of 15 characters)`                                                                          |
+| Limits      | the `pattern` doesn't know the country calling codes, so the schema accepts `+2812345678`                                                                                             |
+
+```ts
+import { E164PhoneNumber } from '@horizon-republic/nominal-types';
+
+const phone = new E164PhoneNumber('+380441234567');
+
+phone.countryCallingCode; // '380'
+new E164PhoneNumber('+1 415 555 2671'); // throws NominalError: nominal.E164PhoneNumber: must be a phone number in E.164 format, without spaces, dashes or brackets (was a string of 15 characters)
+```
+
+Members, with results for this `phone`:
+
+| Member               | Returns                                   | Example          |
+| -------------------- | ----------------------------------------- | ---------------- |
+| `countryCallingCode` | the country calling code, without `+`     | `'380'`          |
+| `nationalNumber`     | the digits after the country calling code | `'441234567'`    |
+| `digits`             | every digit, without `+`                  | `'380441234567'` |
+
+| Static field                          | Holds                                                           |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `E164PhoneNumber.countryCallingCodes` | every accepted country calling code, without `+`                |
+| `E164PhoneNumber.pattern`             | the format as a `RegExp`, without the check of the calling code |
+
+To accept only numbers in use, declare a subtype with a rule from libphonenumber-js:
+
+```ts
+import { isValidPhoneNumber } from 'libphonenumber-js/max';
+
+import { E164PhoneNumber, n } from '@horizon-republic/nominal-types';
+
+const isInUse = (value: unknown): value is string =>
+  typeof value === 'string' && isValidPhoneNumber(value);
+
+class PhoneNumber extends E164PhoneNumber.subtype(
+  'crm.PhoneNumber',
+  n.satisfying(isInUse, 'a phone number in use', { type: 'string' }),
+) {}
+
+new PhoneNumber('+14155552671').value; // '+14155552671'
+new PhoneNumber('+15555550000'); // throws NominalError: crm.PhoneNumber: must be a phone number in use (was a string of 12 characters)
+```
+
 ## Uuid
 
 `AnyString` › `Uuid`
@@ -741,6 +801,54 @@ new TextDecoder().decode(token.toBytes()); // 'hello'
 
 It has the members and the static field of `Base64`.
 
+## Jwt
+
+`AnyString` › `Jwt`
+
+A [JWT](../glossary.md), such as an access token from an `Authorization: Bearer` header, in its compact form: a header, a payload and a signature in base64url, joined by dots.
+
+> [!WARNING]
+> `Jwt` checks the form of a token, never its signature. Anyone can make a token that `Jwt` accepts. Don't trust `header`, `payload`, `algorithm` or `expiresAt` until a JWT library, such as [jose](https://www.npmjs.com/package/jose), has verified the token with your key.
+
+- Three parts, each in base64url without `=`. The bits the last character fills must be zero, as for `Base64Url`.
+- The header and the payload are JSON objects in UTF-8.
+- The header has an `alg` that is a non-empty string.
+- `exp`, `nbf` and `iat`, where the payload has them, are numbers.
+- The signature is empty when `alg` is `none`, and only then.
+- Not accepted: encrypted tokens (five parts), the `Bearer ` prefix, and tokens longer than 8,192 characters.
+
+| Property    | Value                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Jwt.pattern.source, maxLength: 8192 }`, with an example                                                                             |
+| Message     | `must be a JWT in compact form (was a string of 8 characters)`. `Jwt` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden. |
+| Limits      | the `pattern` can't decode the parts, so the schema accepts parts that aren't JSON objects, such as `foo.bar.baz`                                               |
+
+```ts
+import { Jwt } from '@horizon-republic/nominal-types';
+
+const token = new Jwt(
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTQyIiwiZXhwIjoxNzY3MjI1NjAwfQ.ov8aVnMn4lXxVLhUxcOz6r8OM1VJKnuKptMFIyhE0wU',
+);
+
+token.algorithm; // 'HS256'
+token.expiresAt; // 2026-01-01T00:00:00.000Z
+new Jwt('foo.bar.'); // throws NominalError: nominal.Jwt: must be a JWT in compact form (was a string of 8 characters)
+```
+
+Members, with results for this `token`. None of them is verified:
+
+| Member      | Returns                                                   | Example                               |
+| ----------- | --------------------------------------------------------- | ------------------------------------- |
+| `header`    | the header, decoded into a new object each call           | `{ alg: 'HS256', typ: 'JWT' }`        |
+| `payload`   | the claims, decoded into a new object each call           | `{ sub: 'user-42', exp: 1767225600 }` |
+| `algorithm` | the `alg` of the header                                   | `'HS256'`                             |
+| `expiresAt` | a `Date` from the `exp` claim, or `undefined` without one | `2026-01-01T00:00:00.000Z`            |
+
+| Static field    | Holds                                                  |
+| --------------- | ------------------------------------------------------ |
+| `Jwt.pattern`   | the three parts as a `RegExp`, without the JSON checks |
+| `Jwt.maxLength` | `8192`, the longest token accepted                     |
+
 ## Hostname
 
 `AnyString` › `Hostname`
@@ -1120,5 +1228,90 @@ isin.nsin; // '037833100'
 | Static field   | Holds                                                       |
 | -------------- | ----------------------------------------------------------- |
 | `Isin.pattern` | the shape of an ISIN as a `RegExp`, without the check digit |
+
+## Iban
+
+`AnyString` › `Iban`
+
+A bank account number as an [IBAN](../glossary.md), like `GB82WEST12345698765432`: a country code, two [check digits](../glossary.md) and the account number in that country.
+
+- Upper case letters and digits, without spaces. This is the form IBANs take in files and APIs.
+- The country is one of the 89 in the IBAN registry of SWIFT, release 101. The package carries this list. A territory that uses the IBAN of its country starts with that country's code: `FR` for French Guiana, `FI` for Åland, `GB` for Jersey.
+- The length and the shape of the account number are the ones the registry gives the country: 22 characters for `GB` and `DE`, 15 for `NO`.
+- The check digits are checked. The type doesn't know whether the bank or the account exists.
+- Spaces and hyphens are refused, with their own message. To read an IBAN as people write it, remove the spaces and raise the case first: `text.replaceAll(' ', '').toUpperCase()`.
+
+| Property    | Value                                                                                                                                                                       |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Iban.pattern.source, minLength: 15, maxLength: 34 }`, with an example                                                                           |
+| Message     | `must be an IBAN with valid check digits (was a string of 22 characters)`. `Iban` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden. |
+| Message     | `must be an IBAN without spaces (was a string of 27 characters)`                                                                                                            |
+| Limits      | the `pattern` doesn't know the countries or compute the check digits, so the schema accepts `GB83WEST12345698765432`                                                        |
+
+```ts
+import { Iban } from '@horizon-republic/nominal-types';
+
+const iban = new Iban('GB82WEST12345698765432');
+
+iban.toPrint(); // 'GB82 WEST 1234 5698 7654 32'
+new Iban('GB82 WEST 1234 5698 7654 32'); // throws NominalError: nominal.Iban: must be an IBAN without spaces (was a string of 27 characters)
+```
+
+Members, with results for this `iban`:
+
+| Member        | Returns                                                  | Example                         |
+| ------------- | -------------------------------------------------------- | ------------------------------- |
+| `countryCode` | the two letters in front                                 | `'GB'`                          |
+| `checkDigits` | the two digits after the country code                    | `'82'`                          |
+| `bban`        | the account number in its country: everything after them | `'WEST12345698765432'`          |
+| `toPrint()`   | groups of four characters with spaces, to show to people | `'GB82 WEST 1234 5698 7654 32'` |
+
+| Static field        | Holds                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| `Iban.countryCodes` | every accepted country code, in alphabetical order                      |
+| `Iban.pattern`      | the shape of any IBAN as a `RegExp`, without the country rules or check |
+
+## Bic
+
+`AnyString` › `Bic`
+
+A bank as its [BIC](../glossary.md), the SWIFT code, like `DEUTDEFF` or `DEUTDEFF500`.
+
+- Four letters for the bank, a country code, two letters or digits for the place, and an optional branch of three letters or digits: 8 or 11 characters.
+- Upper case only: `deutdeff` is refused.
+- The country is one that `CountryCode` accepts, `XK` included.
+- The type doesn't know whether SWIFT has issued the code.
+- `value` keeps the form as given. A BIC of 8 characters names the main office, the same as the branch `XXX`, so `equals()` finds `DEUTDEFF` equal to `DEUTDEFFXXX`.
+
+| Property    | Value                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: Bic.pattern.source, minLength: 8, maxLength: 11 }`, with examples |
+| Message     | `must be a BIC (was "deutdeff")`                                                              |
+| Limits      | the `pattern` doesn't know the countries, so the schema accepts `DEUTZZFF`                    |
+
+```ts
+import { Bic } from '@horizon-republic/nominal-types';
+
+const bic = new Bic('DEUTDEFF');
+
+bic.canonical().value; // 'DEUTDEFFXXX'
+bic.equals(new Bic('DEUTDEFFXXX')); // true
+```
+
+Members, with results for this `bic`:
+
+| Member            | Returns                                                    | Example                  |
+| ----------------- | ---------------------------------------------------------- | ------------------------ |
+| `institution`     | the four letters of the bank                               | `'DEUT'`                 |
+| `countryCode`     | the country code                                           | `'DE'`                   |
+| `location`        | the two characters of the place                            | `'FF'`                   |
+| `branch`          | the three characters of the branch; `'XXX'` for 8          | `'XXX'`                  |
+| `isPrimaryOffice` | whether it names the main office: 8 characters, or `XXX`   | `true`                   |
+| `canonical()`     | the 11 characters, with `XXX` for the main office          | `DEUTDEFFXXX`            |
+| `equals(other)`   | whether both name the same office, with 8 or 11 characters | `true` for `DEUTDEFFXXX` |
+
+| Static field  | Holds                                                 |
+| ------------- | ----------------------------------------------------- |
+| `Bic.pattern` | the shape of a BIC as a `RegExp`, without the country |
 
 [← Built-in types](README.md)

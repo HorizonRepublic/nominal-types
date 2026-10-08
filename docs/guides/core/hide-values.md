@@ -32,7 +32,7 @@ What follows from it:
 - Every check of the type hides the value: `new`, `parse()`, a field in `n.object()`, a list item and the adapters.
 - Subtypes and variants of a sensitive type are sensitive too.
 - A sensitive type made of an object hides the values of all its fields.
-- The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
+- The built-in `Email`, `E164PhoneNumber`, `IpAddress` with the types under it, `MacAddress`, `Iban` and `Jwt` are sensitive.
 
 ## Show the values of one subtype
 

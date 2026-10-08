@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { sameType } from '../../src/core/same-type.ts';
 import {
+  Bic,
   DecimalString,
   DomainName,
   Email,
@@ -68,6 +69,7 @@ describe('methods that return a changed copy', () => {
     [LanguageTag.subtype('changed.LanguageTag'), 'EN-us'],
     [Gtin.subtype('changed.Gtin'), '4006381333931'],
     [DecimalString.subtype('changed.DecimalString'), '1.50'],
+    [Bic.subtype('changed.Bic'), 'DEUTDEFF'],
     [Money.subtype('changed.Money'), { amount: '1.5', currency: 'EUR' }],
   ])('keep the subtype in canonical() of %o', (Sub, sample) => {
     const instance: unknown = Reflect.construct(Sub, [sample]);

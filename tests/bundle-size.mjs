@@ -70,7 +70,7 @@ const cases = [
     58,
     19.5,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 97, 33],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 102, 35.5],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
@@ -80,8 +80,8 @@ const cases = [
   [
     'testing',
     `import { Email } from '${name}'; import { arbitraryOf } from '${name}/testing'; globalThis.out = arbitraryOf(Email);`,
-    50,
-    18,
+    55,
+    20.5,
   ],
   ['arktype', adapter('arktype', 'toArk'), 27, 9.5],
   ['class-validator', adapter('class-validator', 'NominalField'), 27, 9.5],

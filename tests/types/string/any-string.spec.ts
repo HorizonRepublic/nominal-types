@@ -3,14 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { stringOnly, stringRule, withoutImpliedString } from '../../../src/core/string-rule.ts';
 import {
   AnyString,
+  Bic,
   CountryCode,
   CurrencyCode,
   DecimalString,
   DomainName,
+  E164PhoneNumber,
   Email,
   Gtin,
   Hostname,
   HttpUrl,
+  Iban,
   IpAddress,
   IpPrefix,
   Ipv4Address,
@@ -20,6 +23,7 @@ import {
   Isbn,
   Isin,
   Issn,
+  Jwt,
   LanguageTag,
   MacAddress,
   n,
@@ -101,6 +105,10 @@ describe('types under AnyString', () => {
     [AnyString, Isin, 'US0378331005'],
     [AnyString, DecimalString, '12.34'],
     [AnyString, TypeId, 'user_01h455vb4pex5vsknk084sn02q'],
+    [AnyString, E164PhoneNumber, '+14155552671'],
+    [AnyString, Iban, 'GB82WEST12345698765432'],
+    [AnyString, Bic, 'DEUTDEFF'],
+    [AnyString, Jwt, 'eyJhbGciOiJub25lIn0.e30.'],
   ];
 
   it.each(
@@ -154,6 +162,10 @@ describe('types under AnyString', () => {
     [Isin, 'must be an ISIN with a valid check digit (was 42)'],
     [DecimalString, 'must be a string (was 42)'],
     [TypeId, 'must be a string (was 42)'],
+    [E164PhoneNumber, 'must be a phone number in E.164 format (was a number)'],
+    [Iban, 'must be an IBAN with valid check digits (was a number)'],
+    [Bic, 'must be a BIC (was 42)'],
+    [Jwt, 'must be a JWT in compact form (was a number)'],
   ] as const)('reports a non-string to %o once', (type, message) => {
     expect(issuesOf(type.parse(42))).toStrictEqual([{ message }]);
   });

@@ -88,10 +88,19 @@ Validators:
 Web frameworks:
 
 - [NestJS](https://nestjs.com) 11 and 12: `NominalPipe` from `adapters/nest`, for parameters, bodies and message payloads. [Guide](docs/guides/frameworks/nestjs.md)
+- [Fastify](https://fastify.dev) 5: the `fastifyNominal` plugin from `adapters/fastify`, for requests, responses and `@fastify/swagger`. [Guide](docs/guides/frameworks/fastify.md)
+- [Hono](https://hono.dev) and [Elysia](https://elysiajs.com): schemas as they are, with no adapter. Guides for [Hono](docs/guides/frameworks/hono.md) and [Elysia](docs/guides/frameworks/elysia.md)
+- [Next.js](https://nextjs.org): `parse()` in server actions and route handlers. [Guide](docs/guides/frameworks/nextjs.md)
+
+Forms:
+
+- [React Hook Form](https://react-hook-form.com) 7: its Standard Schema resolver hands over instances. [Guide](docs/guides/frameworks/react-hook-form.md)
+- [TanStack Form](https://tanstack.com/form) 1: a small function per field. [Guide](docs/guides/frameworks/tanstack-form.md)
 
 API and transport:
 
 - [GraphQL](https://graphql.org) 16 and 17: scalars from `toGraphQL()` in `adapters/graphql`. [Guide](docs/guides/frameworks/graphql.md)
+- [tRPC](https://trpc.io) 11: schemas as input through a two-line helper. [Guide](docs/guides/frameworks/trpc.md)
 - [superjson](https://github.com/flightcontrolhq/superjson): `toSuperjson()` from `adapters/superjson`, so instances survive tRPC and Next.js. [Guide](docs/guides/frameworks/superjson.md)
 
 Databases (values read back are checked):

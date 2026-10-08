@@ -42,6 +42,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, `NominalSerializerInterceptor`, `NominalResponse`, `NominalResponseInterceptor`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory`, `NominalResponseSchema` | `@nestjs/common` ^11 or ^12, `rxjs` ^7.2 |
 | `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, `ApiNominalBody`, `ApiNominalQuery`, types `OpenApiDocument`, `ApiNominalBodyOptions`, `ApiNominalQueryOptions` | `@nestjs/swagger` ^11 or ^12 |
 | `@horizon-republic/nominal-types/adapters/graphql` | `toGraphQL`, type `GraphQLOptions` | `graphql` ^16 or ^17 |
+| `@horizon-republic/nominal-types/adapters/fastify` | `fastifyNominal`, `nominalValidatorCompiler`, `nominalSerializerCompiler`, types `NominalTypeProvider`, `FastifyNominalOptions`, `NominalValidatorOptions`, `FastifyJsonTarget`, `NominalValidatorCompiler`, `NominalValidator`, `NominalSerializerCompiler`, `FastifyRouteSchema` | `fastify` ^5 |
 | `@horizon-republic/nominal-types/adapters/superjson` | `toSuperjson`, types `SuperjsonTransformer`, `SuperjsonValue` | `superjson` |
 | `@horizon-republic/nominal-types/adapters/mikro-orm` | `toMikroOrm`, types `MikroOrmOptions`, `MikroOrmType` | `@mikro-orm/core` ^7 |
 | `@horizon-republic/nominal-types/adapters/typeorm` | `toTypeOrm`, type `TypeOrmOptions` | `typeorm` ^0.3.13 or ^1 |
@@ -66,6 +67,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | an existing Zod or Valibot schema | `toZod()` / `toValibot()` fields, `constrainZod()` / `constrainValibot()` for rules across fields |
 | class-validator DTOs | `@NominalField(Type)` |
 | NestJS parameters and bodies | `NominalPipe` |
+| Fastify routes | `app.register(fastifyNominal)`, `withTypeProvider<NominalTypeProvider>()`, nominal schemas in `schema` |
 | NestJS responses with class-transformer | `NominalSerializerInterceptor` in place of `ClassSerializerInterceptor` |
 | a fast JSON response from parsed values | `schema.stringify(value)` or `Type.stringify(instance)`; `@NominalResponse(schema)` in NestJS; `JSON.stringify(n.plain(value))` for any value |
 | an OpenAPI document from `@nestjs/swagger` | `applyNominalTypes(document)` |
@@ -393,10 +395,24 @@ export class OrdersController {
 - Declared types lose array items and `?`: `Uuid[]` is not checked without a schema, and a missing value of a declared type reaches the handler as `undefined`. To require it or check a list, give the parameter its own pipe or a `{ schema }`.
 - In a query string, a lone value for an array schema becomes a list of one, and a string for a number or boolean type is read as its value (`?page=2` gives `2`), unless `fromString: false`.
 - Options: `fromString` (default `true`), `hideValues` (default `false`), `exceptionFactory(issues, metadata)` (default: `BadRequestException` with `{ statusCode: 400, error: 'Bad Request', message: ['id: must be a UUID (was "x")'] }`). In a microservice pass an `exceptionFactory` that returns an `RpcException`.
-- Pipes never run on `@Headers()`. Without an interceptor, responses use each instance's `toJSON()`. A Fastify response schema (fast-json-stringify) mishandles instances: an `AnyBoolean` holding `false` is written `true`, and a nullable field or a date and time type fails with status 500. Put `@NominalResponse(schema)` on such a route, return `schema.toPlain(value)` or `n.plain(value)`, or use `NominalSerializerInterceptor`. In plain Fastify, set the route option `serializerCompiler: () => (data) => Order.stringify(data)` and keep the JSON Schema in `schema.response` for `@fastify/swagger`. Nest's `ClassSerializerInterceptor` writes instances as `{ "value": … }`; use `NominalSerializerInterceptor` in its place (same arguments: `app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)))`). It writes every instance, at any depth, as its `toJSON()`, then runs class-transformer as before (`@Exclude()`, `@Expose()`, groups, `@SerializeOptions()`).
+- Pipes never run on `@Headers()`. Without an interceptor, responses use each instance's `toJSON()`. A Fastify response schema (fast-json-stringify) mishandles instances: an `AnyBoolean` holding `false` is written `true`, and a nullable field or a date and time type fails with status 500. Put `@NominalResponse(schema)` on such a route, return `schema.toPlain(value)` or `n.plain(value)`, or use `NominalSerializerInterceptor`. In plain Fastify, register `fastifyNominal` (see Fastify below). Nest's `ClassSerializerInterceptor` writes instances as `{ "value": … }`; use `NominalSerializerInterceptor` in its place (same arguments: `app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)))`). It writes every instance, at any depth, as its `toJSON()`, then runs class-transformer as before (`@Exclude()`, `@Expose()`, groups, `@SerializeOptions()`).
 - `@NominalResponse(schema)` on a route (or `@UseInterceptors(new NominalResponseInterceptor(schema))` on a controller) writes the returned value with `schema.stringify()` and sends it as `application/json; charset=utf-8`, on Express and Fastify; `schema` is an `n.of()`/`n.object()` schema or a nominal type. Errors are written by Nest as usual; outside HTTP the value passes unchanged. It works next to a global `NominalSerializerInterceptor`, which leaves the text alone.
 - Give a schema's value type its own name (`type CreateOrderBody = ValueOf<typeof CreateOrder>`). Under Bun and SWC, `order: CreateOrder` with a shared name records the schema object as the parameter type: `@nestjs/swagger` writes a broken `$ref` and a global `ValidationPipe` answers 500.
 - Nest 12 `@Body({ schema: CreateOrder })` works only together with the global `NominalPipe`.
+
+### Fastify
+
+- `await app.register(fastifyNominal, options?)` before the routes; `Fastify().withTypeProvider<NominalTypeProvider>()` types `request.body`, `request.query`, `request.params`, `request.headers` and the reply by nominal schemas (types, `n.of()`, `n.object()`, `n.union()`) in `schema.body`, `querystring`, `params`, `headers`, `response[status]`. Other JSON Schemas go to Fastify's Ajv and fast-json-stringify, with the server's `ajv` options.
+- Query strings, params and headers of an `n.object()` are read as `NominalPipe` reads them: number/boolean fields from text, a lone value for an array field becomes a list, `n.of()` fields only through `fromString()`. Options: `fromString` (default `true`), `hideValues` (default `false`), `jsonSchemaTarget` (`'draft-07'` default, `'draft-2020-12'`, `'openapi-3.0'`).
+- Rejected: Fastify's 400 `{ statusCode, code: 'FST_ERR_VALIDATION', error, message: 'body/customer must be an email address (was a string of 4 characters)' }`; `error.validation` holds Ajv-shaped `{ keyword: 'nominal', instancePath, schemaPath: '#', params: {}, message }`. Responses are written with `stringify()`. `@fastify/swagger` sees each schema's JSON Schema with no option.
+- `nominalValidatorCompiler(options?)` / `nominalSerializerCompiler()` for routes whose every schema is nominal; another schema throws when the route compiles.
+
+### Other frameworks and forms
+
+- tRPC 11: `.input({ '~standard': schema['~standard'] })`, never `.input(schema)` (tRPC calls the schema's non-throwing `parse()` and lets bad input through). Wrap single types in `n.of()` for the types.
+- Hono `sValidator('json', schema)`, Elysia `{ body: schema }`, React Hook Form `standardSchemaResolver(schema)`: schemas as they are; use `n.of(Type)` rather than the class for the types; text fields need `n.of(Type).fromString()`.
+- TanStack Form: types refuse nominal schemas as validators; validate in a function with `schema['~standard'].validate(value)` and `parse()` the values in `onSubmit`.
+- Next.js: `Schema.parse(Object.fromEntries(formData))` in server actions, `Schema.parse(await request.json())` in route handlers.
 
 ### Swagger
 
@@ -472,6 +488,13 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to store nominal types with TypeORM](docs/guides/databases/typeorm.md)
 - [How to use nominal types with GraphQL](docs/guides/frameworks/graphql.md)
 - [How to use nominal types with NestJS](docs/guides/frameworks/nestjs.md)
+- [How to use nominal types with Fastify](docs/guides/frameworks/fastify.md)
+- [How to use nominal types with Hono](docs/guides/frameworks/hono.md)
+- [How to use nominal types with Elysia](docs/guides/frameworks/elysia.md)
+- [How to use nominal types with tRPC](docs/guides/frameworks/trpc.md)
+- [How to use nominal types with Next.js](docs/guides/frameworks/nextjs.md)
+- [How to use nominal types with React Hook Form](docs/guides/frameworks/react-hook-form.md)
+- [How to use nominal types with TanStack Form](docs/guides/frameworks/tanstack-form.md)
 - [How to send nominal types through superjson](docs/guides/frameworks/superjson.md)
 - [How to use nominal types with ArkType](docs/guides/validators/arktype.md)
 - [How to use nominal types with class-validator](docs/guides/validators/class-validator.md)
@@ -495,6 +518,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [class-validator](docs/reference/adapters/class-validator.md)
 - [Database columns](docs/reference/adapters/database-columns.md)
 - [drizzle](docs/reference/adapters/drizzle.md)
+- [fastify](docs/reference/adapters/fastify.md)
 - [graphql](docs/reference/adapters/graphql.md)
 - [mikro-orm](docs/reference/adapters/mikro-orm.md)
 - [nest](docs/reference/adapters/nest.md)

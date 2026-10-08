@@ -80,6 +80,12 @@ const cases = [
   ['arktype', adapter('arktype', 'toArk'), 27, 9.5],
   ['class-validator', adapter('class-validator', 'NominalField'), 27, 9.5],
   ['drizzle', adapter('drizzle', 'toDrizzle'), 34.5, 12],
+  [
+    'fastify',
+    `import { fastifyNominal } from '${name}/adapters/fastify'; globalThis.out = fastifyNominal;`,
+    29,
+    10.5,
+  ],
   ['graphql', adapter('graphql', 'toGraphQL'), 28, 10],
   ['mikro-orm', adapter('mikro-orm', 'toMikroOrm'), 35, 12.5],
   [

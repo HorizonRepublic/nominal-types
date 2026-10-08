@@ -39,11 +39,18 @@ You already use a validation library. New project? Check bodies with [n.object()
 
 ## Frameworks
 
-| I want to…                                   | Guide                                                                  |
-| -------------------------------------------- | ---------------------------------------------------------------------- |
-| check NestJS parameters, bodies and payloads | [How to use nominal types with NestJS](frameworks/nestjs.md)           |
-| take nominal types as GraphQL arguments      | [How to use nominal types with GraphQL](frameworks/graphql.md)         |
-| keep instances through tRPC or Next.js       | [How to send nominal types through superjson](frameworks/superjson.md) |
+| I want to…                                      | Guide                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| check NestJS parameters, bodies and payloads    | [How to use nominal types with NestJS](frameworks/nestjs.md)                   |
+| check Fastify requests and write responses      | [How to use nominal types with Fastify](frameworks/fastify.md)                 |
+| check Hono requests                             | [How to use nominal types with Hono](frameworks/hono.md)                       |
+| check Elysia requests and responses             | [How to use nominal types with Elysia](frameworks/elysia.md)                   |
+| take nominal types as tRPC input                | [How to use nominal types with tRPC](frameworks/trpc.md)                       |
+| check Next.js server actions and route handlers | [How to use nominal types with Next.js](frameworks/nextjs.md)                  |
+| check a form with React Hook Form               | [How to use nominal types with React Hook Form](frameworks/react-hook-form.md) |
+| check a form with TanStack Form                 | [How to use nominal types with TanStack Form](frameworks/tanstack-form.md)     |
+| take nominal types as GraphQL arguments         | [How to use nominal types with GraphQL](frameworks/graphql.md)                 |
+| keep instances through tRPC or Next.js          | [How to send nominal types through superjson](frameworks/superjson.md)         |
 
 ## Databases
 

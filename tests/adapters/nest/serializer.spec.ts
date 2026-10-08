@@ -51,6 +51,20 @@ class UserView {
   public internal?: string;
 }
 
+class Account {
+  public readonly email: Email | undefined;
+  readonly #secret = 'secret';
+
+  public constructor(email: Email | undefined) {
+    this.email = email;
+  }
+
+  @Expose()
+  public get hint(): string {
+    return this.#secret;
+  }
+}
+
 const user = (): User => new User(new Uuid(first), new Email('jane@example.com'));
 
 @Controller('serialized')
@@ -281,6 +295,16 @@ describe('NominalSerializerInterceptor.serialize', () => {
     expect(json['held']).toBeInstanceOf(User);
     expect(json['held']).toHaveProperty('id', first);
     expect(json['held']).toHaveProperty('self', held);
+  });
+
+  it('copies an object without its private fields, so a getter reading one throws', () => {
+    expect(() => interceptor.serialize(new Account(new Email('jane@example.com')), {})).toThrow(
+      'Cannot read private member',
+    );
+    expect(interceptor.serialize(new Account(undefined), {})).toStrictEqual({
+      email: undefined,
+      hint: 'secret',
+    });
   });
 
   it('leaves dates, files and values that are not objects alone', () => {

@@ -18,6 +18,26 @@ export const openApiSchemaOf = (target: NominalTarget, decorator: string): OpenA
   return withoutUri(target['~standard'].jsonSchema.input({ target: 'openapi-3.0' }));
 };
 
+const combinators = ['allOf', 'anyOf', 'oneOf'];
+
+/**
+ * Internal: a property schema in a form `@nestjs/swagger` writes as it is.
+ *
+ * @remarks
+ * Without `type`, as for the `allOf` of `UuidV4`, `@nestjs/swagger` describes the property's
+ * class instead and drops the schema. Given `Array` and a combinator, it writes the schema as it
+ * is and drops the `type`; `applyNominalTypes` puts the type back where the parts agree on one.
+ */
+export const fieldOf = (schema: OpenApiSchema): OpenApiSchema => {
+  if (schema['type'] !== undefined) {
+    return schema;
+  }
+
+  return combinators.some((key) => key in schema)
+    ? { ...schema, type: Array }
+    : { allOf: [schema], type: Array };
+};
+
 /**
  * Internal: whether a value must be given, which it need not when the target accepts `undefined`,
  * as `n.of(Email).optional()` does.

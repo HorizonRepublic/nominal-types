@@ -122,7 +122,7 @@ The two parameters in the document:
   { "name": "ids", "in": "query", "required": true,
     "schema": { "type": "array", "maxItems": 100, "items": { "type": "string", "format": "uuid", … } } },
   { "name": "page", "in": "query", "required": false,
-    "schema": { "title": "nominal.PositiveInteger", "allOf": [ … ] } }
+    "schema": { "title": "nominal.PositiveInteger", "type": "integer", "minimum": 1, … } }
 ]
 ```
 

@@ -26,6 +26,8 @@ function applyNominalTypes<Document extends OpenApiDocument>(document: Document)
 
 Returns a new document. The document passed in is not changed. Schemas with properties are left alone.
 
+Some types have a schema made of `allOf` parts with no `type` at the top, such as `UuidV4` and `DomainName`. `@nestjs/swagger` also drops a `type` written next to `allOf`. `applyNominalTypes()` adds the `type` all parts share to every such schema in the document. `Int64` gets none, since its parts allow a string or an integer.
+
 How a schema finds its type:
 
 | Schema name                         | Found type                                                                                       |
@@ -49,7 +51,7 @@ function ApiNominalProperty(target: NominalTarget, options?: ApiPropertyOptions)
 | `target`  | nominal type or `n.of()` schema | —       | what the property holds                                   |
 | `options` | `@ApiProperty()` options        | `{}`    | they win over the generated schema, such as `description` |
 
-Writes the whole OpenAPI 3.0 schema into the property. A list gets `items`, `minItems` and `maxItems`. The property is required unless the schema accepts a missing value, as `n.of(Email).optional()` does.
+Writes the whole OpenAPI 3.0 schema into the property. A list gets `items`, `minItems` and `maxItems`. The property is required unless the schema accepts a missing value, as `n.of(Email).optional()` does. A schema made of `allOf` parts, such as `UuidV4`'s, is written without a top-level `type`; `applyNominalTypes()` adds it back.
 
 Throws `TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema` when `target` is neither.
 

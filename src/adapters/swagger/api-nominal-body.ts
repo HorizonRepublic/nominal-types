@@ -1,7 +1,7 @@
 import { ApiBody, ApiProperty } from '@nestjs/swagger';
 
 import type { NominalTarget } from '../../core/target.ts';
-import { isRequired, openApiSchemaOf, propertyOf } from './openapi-schema.ts';
+import { fieldOf, isRequired, openApiSchemaOf, propertyOf } from './openapi-schema.ts';
 import type { OpenApiSchema } from './openapi-schema.ts';
 
 /**
@@ -22,21 +22,6 @@ const isRecord = (value: unknown): value is OpenApiSchema =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 type Component = new () => object;
-
-const combinators = ['allOf', 'anyOf', 'oneOf'];
-
-// A field schema without `type`, such as the `allOf` of a number type, would send
-// `@nestjs/swagger` looking for the property's class. Given `Array` and a combinator, it writes
-// the schema as it is and drops the `type`.
-const fieldOf = (schema: OpenApiSchema): Readonly<Record<string, unknown>> => {
-  if (schema['type'] !== undefined) {
-    return schema;
-  }
-
-  return combinators.some((key) => key in schema)
-    ? { ...schema, type: Array }
-    : { allOf: [schema], type: Array };
-};
 
 const components = new WeakMap<NominalTarget, Map<string, Component>>();
 

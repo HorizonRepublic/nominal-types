@@ -139,7 +139,7 @@ Extends Nest's `ClassSerializerInterceptor` and takes the same arguments. Needs 
 | `[new PositiveInteger(1)]`                 | `[1]`                                   |
 | an object without instances                | what `ClassSerializerInterceptor` gives |
 
-The response itself is not changed. An object that holds an instance is copied with its class, so a getter on it reads the plain value: in `get domain() { return this.email.domain; }`, `this.email` is a string.
+The response itself is not changed. An object that holds an instance is copied with its class, so a getter on it reads the plain value: in `get domain() { return this.email.domain; }`, `this.email` is a string. The copy has no `#private` fields, so a getter that reads one throws `TypeError: Cannot read private member`.
 
 ```ts
 // main.ts

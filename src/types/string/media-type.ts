@@ -240,15 +240,7 @@ export class MediaType extends MediaTypeBase {
    * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
-    let text = this.essence;
-
-    for (const [key, value] of parametersOf(this.value)) {
-      const written = tokenPattern.test(value) ? value : `"${value.replaceAll(/["\\]/gu, '\\$&')}"`;
-
-      text += `;${key}=${written}`;
-    }
-
-    return sameType(this, text);
+    return sameType(this, this.canonicalText);
   }
 
   /**
@@ -260,11 +252,25 @@ export class MediaType extends MediaTypeBase {
    * @returns `true` when both are the same media type.
    */
   public override equals(other: unknown): boolean {
-    // @throws-ignore only a subtype that refuses its own canonical form throws here
     return (
       inOneLine(this, other) &&
       other instanceof MediaType &&
-      other.canonical().value === this.canonical().value
+      other.canonicalText === this.canonicalText
     );
+  }
+
+  /**
+   * The text `canonical()` holds, written without checking it again through the type.
+   */
+  private get canonicalText(): string {
+    let text = this.essence;
+
+    for (const [key, value] of parametersOf(this.value)) {
+      const written = tokenPattern.test(value) ? value : `"${value.replaceAll(/["\\]/gu, '\\$&')}"`;
+
+      text += `;${key}=${written}`;
+    }
+
+    return text;
   }
 }

@@ -226,3 +226,13 @@ describe('MediaType', () => {
     expect(MediaType.parse(new copy.MediaType('text/plain')).ok).toBe(true);
   });
 });
+
+describe('MediaType equals() on a type that refuses the canonical form', () => {
+  const UpperType = MediaType.subtype('tests.UpperType', /^[A-Z]/u);
+
+  it('compares the canonical text without throwing', () => {
+    expect(new UpperType('TEXT/Plain').equals(new UpperType('Text/PLAIN'))).toBe(true);
+    expect(new UpperType('TEXT/Plain').equals(new UpperType('TEXT/html'))).toBe(false);
+    expect(() => new UpperType('TEXT/Plain').canonical()).toThrow(NominalError);
+  });
+});

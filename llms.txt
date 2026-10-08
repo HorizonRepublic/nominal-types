@@ -218,7 +218,7 @@ config.PORT.value; // 3000 for PORT=3000
 | `SemVer` | `nominal.SemVer` | Semantic Versioning 2.0.0, no `v` prefix, up to 256 characters, numbers up to `Number.MAX_SAFE_INTEGER`; `major`, `minor`, `patch`, `prerelease`, `build`, `isPrerelease`, `compare(other)` (precedence, build ignored), `isNewerThan(other)`; `equals` compares the text | yes |
 | `Url` | `nominal.Url` | an absolute URL; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
-| `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code, upper case (`UK`, `EU`, `XK` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
+| `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code or `XK` (Kosovo), upper case (`UK`, `EU` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
 | `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |
 | `LanguageTag` | `nominal.LanguageTag` | a well-formed BCP 47 tag in any case that `Intl` also takes (`en_US`, `french`, `zh-yue`, `i-klingon` refused); `language`, `script`, `region`, `canonical()` via `Intl.getCanonicalLocales`; `equals` ignores case | yes |
 | `MediaType` | `nominal.MediaType` | an RFC 6838 type/subtype with RFC 9110 parameters, no wildcards, no repeated parameter name; `type`, `subtype`, `suffix`, `essence`, `parameters`, `charset`, `isJson`, `canonical()`; `equals` ignores case of names, spaces and quoting | yes |

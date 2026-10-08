@@ -356,9 +356,9 @@ new HttpUrl('mailto:jane@example.com'); // throws NominalError: nominal.HttpUrl:
 
 A country or territory as its two-letter [ISO 3166-1](../glossary.md) code, like `US` or `UA`.
 
-- The 249 codes officially assigned as of 8 October 2026. The package carries this list, so the Node version doesn't change it.
+- The 249 codes officially assigned as of 8 October 2026, and `XK` for Kosovo. The package carries this list, so the Node version doesn't change it.
 - Upper case only: `us` is refused.
-- Reserved codes are refused: `UK` (write `GB`), `EU` and `XK`.
+- Reserved codes are refused: `UK` (write `GB`) and `EU`.
 
 | Property    | Value                                                                                      |
 | ----------- | ------------------------------------------------------------------------------------------ |
@@ -380,16 +380,16 @@ new CountryCode('UK'); // throws NominalError: nominal.CountryCode: must be an I
 | ------------------- | ------------------------------------------ |
 | `CountryCode.codes` | every accepted code, in alphabetical order |
 
-To accept a code outside the list, such as `XK`, declare your own type from `CountryCode.codes`:
+To accept a code outside the list, such as `EU`, declare your own type from `CountryCode.codes`:
 
 ```ts
 import { AnyString, CountryCode } from '@horizon-republic/nominal-types';
 
-const codes = [...CountryCode.codes, 'XK'].join('|');
+const codes = [...CountryCode.codes, 'EU'].join('|');
 
 class Region extends AnyString.subtype('geo.Region', new RegExp(`^(?:${codes})$`, 'u')) {}
 
-new Region('XK').value; // 'XK'
+new Region('EU').value; // 'EU'
 ```
 
 ## CurrencyCode

@@ -4,8 +4,9 @@ import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
 // The 249 officially assigned code elements of ISO 3166-1 alpha-2, as the ISO 3166 Maintenance
-// Agency lists them on 8 October 2026; the last one added was SS, in 2011. Reserved codes such as
-// UK, EU and XK are not assigned to a country and stay out.
+// Agency lists them on 8 October 2026 (the last one added was SS, in 2011), and XK, the code the
+// European Union, banks and payment providers use for Kosovo. Reserved codes such as UK and EU
+// are not assigned to a country and stay out.
 const codes: readonly string[] = Object.freeze(
   [
     'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ',
@@ -31,6 +32,7 @@ const codes: readonly string[] = Object.freeze(
     'UA UG UM US UY UZ',
     'VA VC VE VG VI VN VU',
     'WF WS',
+    'XK',
     'YE YT',
     'ZA ZM ZW',
   ].flatMap((row) => row.split(' ')),
@@ -62,7 +64,8 @@ const CountryCodeBase: SubtypeOf<typeof AnyString, 'nominal.CountryCode'> = AnyS
  *
  * @remarks
  * Only the officially assigned codes pass, in upper case, from a table the package carries rather
- * than the runtime's locale data. Reserved codes are refused: `UK` (write `GB`), `EU` and `XK`.
+ * than the runtime's locale data. `XK` for Kosovo passes too. Reserved codes are refused: `UK` (write
+ * `GB`) and `EU`.
  * Declare a type of your own from `CountryCode.codes` where one of them has to pass.
  *
  * @example

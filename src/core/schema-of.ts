@@ -38,14 +38,17 @@ export const schemaOf = <Type extends AnyNominalType>(
 
   return new TypeSchema<InputOf<Type['rule']>, Type['prototype']>(
     {
-      // The function makes an instance of `type` or a Rejection; the compiler can't follow the
-      // class hierarchy that far, and parse() would allocate a result object per value.
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      run: construct as (input: unknown) => Type['prototype'] | Rejection,
-      describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
-      // A type from another copy of the package keeps whether it is sensitive to itself.
-      sensitive: !ownTypes.isOwn(type) || Reflect.get(type, sensitiveSlot) === true,
+      shape: {
+        // The function makes an instance of `type` or a Rejection; the compiler can't follow the
+        // class hierarchy that far, and parse() would allocate a result object per value.
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        run: construct as (input: unknown) => Type['prototype'] | Rejection,
+        describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
+        // A type from another copy of the package keeps whether it is sensitive to itself.
+        sensitive: !ownTypes.isOwn(type) || Reflect.get(type, sensitiveSlot) === true,
+      },
+      paths: typePaths(type),
     },
-    { textForm: textFormOf(type), paths: typePaths(type) },
+    { textForm: textFormOf(type) },
   );
 };

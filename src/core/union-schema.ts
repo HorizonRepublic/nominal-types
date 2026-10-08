@@ -1,7 +1,7 @@
 import { planOf, registerPaths } from './fast-paths.ts';
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
-import { describeValue, mustBe } from './messages.ts';
+import { describeValue, rejectedIssue } from './messages.ts';
 import { keptPresence, objectParts } from './object-helpers.ts';
 import { isObjectSchema } from './object-of.ts';
 import { ObjectSchema } from './object-schema.ts';
@@ -47,7 +47,9 @@ export type UnionValue<Key extends string, Variants extends UnionVariants> = {
 const tagField = (tag: string): StandardSchemaV1 => {
   const field = runnableSchema<string, string>(
     (value) =>
-      value === tag ? tag : new Rejection([{ message: mustBe(JSON.stringify(tag), value) }]),
+      value === tag
+        ? tag
+        : new Rejection([rejectedIssue('not_one_of', JSON.stringify(tag), value)]),
     (_side, options) =>
       options.target === 'openapi-3.0' ? { type: 'string', enum: [tag] } : { const: tag },
   );
@@ -157,16 +159,16 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
 
     super(
       {
-        // The variant a tag picks gives its value, which is what Output describes.
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        run: paths.run as (input: unknown) => Output | Rejection,
-        describe: (side, options) => ({
-          oneOf: tagged.map(([, variant]) => describeField(variant, side, options, 'union')),
-          ...(options.target === 'openapi-3.0' ? { discriminator: { propertyName: key } } : {}),
-        }),
-        sensitive: tagged.some(([, variant]) => objectParts.get(variant)?.hidden === true),
-      },
-      {
+        shape: {
+          // The variant a tag picks gives its value, which is what Output describes.
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          run: paths.run as (input: unknown) => Output | Rejection,
+          describe: (side, options) => ({
+            oneOf: tagged.map(([, variant]) => describeField(variant, side, options, 'union')),
+            ...(options.target === 'openapi-3.0' ? { discriminator: { propertyName: key } } : {}),
+          }),
+          sensitive: tagged.some(([, variant]) => objectParts.get(variant)?.hidden === true),
+        },
         paths: {
           accepts: paths.accepts,
           write: paths.write,
@@ -182,8 +184,8 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
             variants: tagged.map(([tag, variant]) => ({ tag, variant })),
           },
         },
-        name: 'n.union()',
       },
+      { name: 'n.union()' },
     );
     this.key = key;
     this.tags = Object.freeze(tags);

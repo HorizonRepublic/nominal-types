@@ -1,5 +1,6 @@
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType } from './contracts.ts';
+import { settleParts } from './deferred-parts.ts';
 
 /**
  * Internal: what a schema built by `n.of()`, `n.object()` or `n.union()` is made of, for tools
@@ -69,4 +70,8 @@ export const recordParts = (schema: object, paths: object, pathParts?: SchemaPar
 /**
  * Internal: what a schema is made of, or `undefined` for a schema no copy of this package built.
  */
-export const partsOf = (schema: object): SchemaParts | undefined => parts().get(schema);
+export const partsOf = (schema: object): SchemaParts | undefined => {
+  settleParts(schema);
+
+  return parts().get(schema);
+};

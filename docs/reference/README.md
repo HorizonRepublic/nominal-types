@@ -9,7 +9,8 @@ Exact facts about everything the package exports, for looking things up. Terms a
 | [Declaring types](declaring.md)               | `Nominal()`, `subtype()`, `variant()`, `n.matching()`, `n.satisfying()`, `n.oneOf()`, type names |
 | [Type members](type-members.md)               | `new`, `parse()`, `instanceof`, `value`, `equals()`, `toJSON()`, `copyWith()`                    |
 | [Schemas](schemas.md)                         | `n`, `n.of()`, `array()`, `fromString()`, `n.object()`, `fromEnv()`, `n.constraint()`            |
-| [Errors and messages](errors-and-messages.md) | `NominalError`, issues, message text, sensitive types, `n.hideValues()`                          |
+| [Errors and messages](errors-and-messages.md) | `NominalError`, issues, issue codes, message text, sensitive types, `n.hideValues()`             |
+| [n.configure()](configure.md)                 | Messages, values, trimming and code generation for the whole process                             |
 | [JSON Schema](json-schema.md)                 | Targets, `input()` and `output()`, what each schema is described as                              |
 | [TypeScript types](typescript-types.md)       | Every exported type, such as `ValueOf`, `InputOf` and `Parsed`                                   |
 

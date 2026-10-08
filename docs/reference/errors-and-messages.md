@@ -64,6 +64,29 @@ Example: `{ message: 'must be a UUID (was "x")', path: ['items', 0] }` is the fi
 
 An issue from another library keeps its message. Its path segments become plain keys.
 
+With [`n.configure({ codes: true })`](configure.md#codes), every issue of this package also has a `code`, first: `{ code: 'required', message: 'is required', path: ['email'] }`. The type `NominalIssue` describes such an issue.
+
+## Issue codes
+
+A code names the kind of issue. Codes don't change between versions; messages may. An issue gets its code with [`codes: true`](configure.md#codes), and a [`messages`](configure.md#messages) map uses codes as its keys.
+
+| Code             | When                                                                                                     | Message                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `not_a_string`   | a pattern or `AnyString` is given a value that is not a string                                           | `must be a string (was 42)`                   |
+| `pattern`        | a pattern refuses a string: `n.matching()`, a `RegExp`, `Email`, `Uuid` and other built-in pattern types | `must be a UUID (was "nope")`                 |
+| `invalid`        | any other rule of a type refuses the value: `n.satisfying()`, number, big integer, date and time types   | `must be a positive integer (was 0)`          |
+| `not_one_of`     | `n.oneOf()` or the tag of `n.union()` refuses the value                                                  | `must be one of "draft", "paid" (was "lost")` |
+| `not_an_object`  | `n.object()`, `n.union()` or a constraint is given a value that is not an object                         | `must be an object (was "x")`                 |
+| `not_an_array`   | `array()` is given a value that is not an array                                                          | `must be an array (was "x")`                  |
+| `too_few_items`  | an array has fewer items than `min` or `length`                                                          | `must have at least 2 items (was 1)`          |
+| `too_many_items` | an array has more items than `max` or `length`                                                           | `must have at most 10 items (was 12)`         |
+| `not_unique`     | an item of a `unique` array repeats an earlier one                                                       | `must not repeat an item (was "a")`           |
+| `required`       | a field is missing or `undefined`                                                                        | `is required`                                 |
+| `not_allowed`    | `strict()` or `copyWith()` gets a key the object doesn't declare                                         | `is not allowed`                              |
+| `constraint`     | an `n.constraint()` check fails                                                                          | the constraint's message                      |
+
+An issue from a rule of another library, such as a Zod schema, has no code.
+
 ## Message format
 
 Messages from `n.matching()`, `n.satisfying()`, `n.oneOf()` and the built-in types read:
@@ -86,7 +109,7 @@ The rejected value is written like this:
 | an array                    | `array`                                                       |
 | any other object            | `object`                                                      |
 
-The value is the input as it was given. A bigint type given the string `'9223372036854775808'` writes `"9223372036854775808"`, not the bigint it was read as.
+[`values`](configure.md#values) in `n.configure()` changes how the value is shown, or leaves it out. The value is the input as it was given. A bigint type given the string `'9223372036854775808'` writes `"9223372036854775808"`, not the bigint it was read as.
 
 A string of up to 64 characters is quoted whole. A longer one is cut, so a large input doesn't make a large response. The message gives the length and the first 32 characters, then `…`:
 
@@ -176,7 +199,7 @@ It reads a value at the end of a message in two forms:
 | `(was a string of 70 characters starting "x"…)` | this package             |
 | `received "x"`                                  | Valibot                  |
 
-A message that names the value another way is left as it is.
+A message that names the value another way is left as it is. A message written by a [`messages` function](configure.md#messages) is written again by that function, with the value hidden.
 
 Throws: nothing.
 

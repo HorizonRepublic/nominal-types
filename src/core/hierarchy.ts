@@ -18,6 +18,12 @@ export const levelSlot: unique symbol = Symbol('levelBase');
 export const sensitiveSlot: unique symbol = Symbol('sensitive');
 
 /**
+ * Internal: on a class declared with the `normalize` option, whether it follows the `normalize`
+ * setting of `n.configure()`; a class without its own inherits it from the class it extends.
+ */
+export const normalizeSlot: unique symbol = Symbol('normalize');
+
+/**
  * Internal: on a variant, the brand keys of the level it was made from.
  */
 export const variantSourceSlot: unique symbol = Symbol('variantSource');

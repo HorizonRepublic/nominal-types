@@ -1,4 +1,3 @@
-import { mustBe } from '../../core/messages.ts';
 import { PredicateSchema } from '../../core/predicate-schema.ts';
 
 /**
@@ -20,9 +19,9 @@ export class SeparatedRule extends PredicateSchema<string> {
     this.#unseparated = separated.description;
   }
 
-  public override messageFor(value: unknown, describe?: (value: unknown) => string): string {
+  public override descriptionFor(value: unknown): string {
     return typeof value === 'string' && this.#separators.test(value)
-      ? mustBe(this.#unseparated, value, describe)
-      : super.messageFor(value, describe);
+      ? this.#unseparated
+      : this.description;
   }
 }

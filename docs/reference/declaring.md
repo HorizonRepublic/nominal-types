@@ -30,7 +30,7 @@ Declares a type with no parent. It returns a class to extend.
 | --------- | ----------------------------------------- | ----------------------------------------------------- |
 | `name`    | `string`                                  | The [type name](#type-names), such as `booking.Stay`. |
 | `rule`    | `RegExp` or a synchronous Standard Schema | What a valid value looks like.                        |
-| `options` | [`NominalOptions`](#nominaloptions)       | Optional. `{ sensitive?, implies? }`.                 |
+| `options` | [`NominalOptions`](#nominaloptions)       | Optional. `{ sensitive?, normalize?, implies? }`.     |
 
 `rule` can be:
 
@@ -167,16 +167,18 @@ See also: [How to make a stricter type or a variant](../guides/core/build-on-a-t
 ```ts
 interface NominalOptions {
   readonly sensitive?: boolean;
+  readonly normalize?: boolean;
   readonly implies?: readonly AnyNominalType[];
 }
 ```
 
 The options of `Nominal()`, `subtype()` and `variant()`.
 
-| Option      | Type              | Default                                                                     | Description                                                                         |
-| ----------- | ----------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `sensitive` | `boolean`         | `false` for `Nominal()`; the parent's value for `subtype()` and `variant()` | `true` leaves rejected values out of the type's messages.                           |
-| `implies`   | an array of types | `[]`                                                                        | Types that accept every value of the new type. Its instances pass for them as well. |
+| Option      | Type              | Default                                                                     | Description                                                                                        |
+| ----------- | ----------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `sensitive` | `boolean`         | `false` for `Nominal()`; the parent's value for `subtype()` and `variant()` | `true` leaves rejected values out of the type's messages.                                          |
+| `normalize` | `boolean`         | `true` for `Nominal()`; the parent's value for `subtype()` and `variant()`  | `false` keeps the input exactly as given when [trimming](configure.md#normalizetrimstrings) is on. |
+| `implies`   | an array of types | `[]`                                                                        | Types that accept every value of the new type. Its instances pass for them as well.                |
 
 A subtype or variant of a sensitive type is sensitive too. Pass `{ sensitive: false }` to turn it off for one of them.
 

@@ -2,6 +2,7 @@ import { acceptors, acceptsByRunning } from './acceptor.ts';
 import type { Accepts } from './acceptor.ts';
 import { generateFunction } from './compile.ts';
 import type { AnyNominalType } from './contracts.ts';
+import { settleParts } from './deferred-parts.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { isNominalType, ownTypes } from './nominal.ts';
 import { isOwnVendor } from './standard-props.ts';
@@ -38,6 +39,8 @@ export const fieldAcceptor = (field: unknown, label: string): Accepts => {
   }
 
   if (typeof field === 'object' && field !== null) {
+    settleParts(field);
+
     const own = acceptors.get(field);
 
     if (own !== undefined) {

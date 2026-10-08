@@ -1,5 +1,6 @@
 import type { NominalSchema } from './contracts.ts';
-import { describeHidden, hideValues } from './hidden-values.ts';
+import { hideValues } from './hidden-values.ts';
+import { describeHidden, describeValue } from './messages.ts';
 import { NativeSchema } from './native-schema.ts';
 import { PatternSchema } from './pattern-schema.ts';
 import { PredicateSchema } from './predicate-schema.ts';
@@ -21,23 +22,34 @@ const describesThrough = (rule: NativeSchema<unknown>): boolean =>
   (rule.messageFor === PatternSchema.prototype.messageFor ||
     rule.messageFor === PredicateSchema.prototype.messageFor);
 
+/**
+ * Internal: how the issues of a type's rules are written: whether they leave the value out, and
+ * the name of the type, for a messages function.
+ */
+export interface Reporting {
+  readonly hidden: boolean;
+  readonly typeName?: string | undefined;
+}
+
+const shown: Reporting = { hidden: false };
+
 const issuesOf = (
   rule: NativeSchema<unknown>,
   input: unknown,
-  hidden: boolean,
+  { hidden, typeName }: Reporting,
 ): readonly StandardSchemaV1.Issue[] => {
   if (!hidden) {
-    return rule.issuesFor(input);
+    return rule.issuesFor(input, describeValue, typeName);
   }
 
   return describesThrough(rule)
-    ? rule.issuesFor(input, describeHidden)
-    : hideValues(rule.issuesFor(input));
+    ? rule.issuesFor(input, describeHidden, typeName)
+    : hideValues(rule.issuesFor(input, describeValue, typeName));
 };
 
-const stepOf = (rule: NativeSchema<unknown>, hidden: boolean): Step => ({
+const stepOf = (rule: NativeSchema<unknown>, reporting: Reporting): Step => ({
   accepts: rule.accepts,
-  issues: (_value, input) => issuesOf(rule, input, hidden),
+  issues: (_value, input) => issuesOf(rule, input, reporting),
 });
 
 // Joined into one expression, a backreference would count the groups of the patterns before it,
@@ -54,10 +66,10 @@ const mergeable = (rule: NominalSchema): rule is PatternSchema =>
 const mergedStep = (
   first: PatternSchema,
   rest: readonly PatternSchema[],
-  hidden: boolean,
+  reporting: Reporting,
 ): Step => {
   if (rest.length === 0) {
-    return stepOf(first, hidden);
+    return stepOf(first, reporting);
   }
 
   const patterns = [first, ...rest];
@@ -69,7 +81,7 @@ const mergedStep = (
   return {
     accepts: (value) => typeof value === 'string' && combined.test(value),
     issues: (value, input) =>
-      issuesOf(patterns.find((schema) => !schema.accepts(value)) ?? first, input, hidden),
+      issuesOf(patterns.find((schema) => !schema.accepts(value)) ?? first, input, reporting),
   };
 };
 
@@ -84,7 +96,7 @@ const mergedStep = (
  */
 export const planOf = (
   rules: ReadonlyArray<NativeSchema<unknown>>,
-  hidden: boolean = false,
+  reporting: Reporting = shown,
 ): readonly Step[] => {
   const steps: Step[] = [];
   let group: PatternSchema[] = [];
@@ -93,7 +105,7 @@ export const planOf = (
     const [first, ...rest] = group;
 
     if (first !== undefined) {
-      steps.push(mergedStep(first, rest, hidden));
+      steps.push(mergedStep(first, rest, reporting));
     }
 
     group = [];
@@ -102,7 +114,7 @@ export const planOf = (
   for (const rule of rules) {
     if (!mergeable(rule)) {
       flush();
-      steps.push(stepOf(rule, hidden));
+      steps.push(stepOf(rule, reporting));
     } else if (group[0] !== undefined && group[0].pattern.flags !== rule.pattern.flags) {
       flush();
       group.push(rule);
@@ -126,19 +138,19 @@ export interface ConvertStep {
 
 /**
  * Internal: the rules of a type as steps: checks for patterns and guards, folded as `planOf` folds
- * them, and a mapping step for each rule from another library. `hidden` is passed on to `planOf`;
- * the mapping steps hide values themselves.
+ * them, and a mapping step for each rule from another library. `reporting` is passed on to
+ * `planOf`; the mapping steps hide values themselves.
  */
 export const stepsOf = (
   rules: readonly NominalSchema[],
   convertOf: (rule: NominalSchema) => ConvertStep,
-  hidden: boolean = false,
+  reporting: Reporting = shown,
 ): ReadonlyArray<Step | ConvertStep> => {
   const steps: Array<Step | ConvertStep> = [];
   let native: Array<NativeSchema<unknown>> = [];
 
   const flush = (): void => {
-    steps.push(...planOf(native, hidden));
+    steps.push(...planOf(native, reporting));
     native = [];
   };
 

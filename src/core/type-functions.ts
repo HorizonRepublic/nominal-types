@@ -1,8 +1,9 @@
+import { trimmed } from './compile.ts';
 import type { AnyNominalType } from './contracts.ts';
 import { ownTypes } from './nominal.ts';
 import { forget, remember } from './pending.ts';
 import { Rejection } from './rejection.ts';
-import { onlyChecks, rulesRunnerOf } from './type-rules.ts';
+import { onlyChecks, rulesRunnerOf, trimsStrings } from './type-rules.ts';
 
 /**
  * Internal: a function that makes instances of `target`, chosen once: straight to the constructor
@@ -61,12 +62,14 @@ export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown)
     return build;
   }
 
+  const trims = trimsStrings(ownTypes.root, target);
+
   return function buildInstance(input: unknown): unknown {
     if (typeof input === 'object' && input !== null) {
       return build(input);
     }
 
-    remember(target, input, input);
+    remember(target, input, trims ? trimmed(input) : input);
 
     try {
       return new target(input);

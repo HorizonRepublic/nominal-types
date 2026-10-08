@@ -1,3 +1,4 @@
+import { settleParts } from './deferred-parts.ts';
 import { holdsEscapeFreeText } from './escape-free.ts';
 import { rulesOf } from './hierarchy.ts';
 
@@ -84,7 +85,11 @@ const findLeaf = (type: object, { root, isOwn }: Instances): Leaf => {
     return Reflect.get(ownerType ?? {}, 'typeName') === 'nominal.AnyBigInt' ? 'bigint' : 'json';
   }
 
-  const objectPlan = plans.get(rulesOf(root, type).at(-1) ?? {});
+  const rule = rulesOf(root, type).at(-1) ?? {};
+
+  settleParts(rule);
+
+  const objectPlan = plans.get(rule);
 
   if (objectPlan?.kind === 'object') {
     return objectPlan;

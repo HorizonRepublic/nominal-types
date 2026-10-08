@@ -1,6 +1,6 @@
 import type { Accepts } from './acceptor.ts';
 import { generateFunction } from './compile.ts';
-import { mustBe } from './messages.ts';
+import { rejectedIssue } from './messages.ts';
 import type { Write } from './plain-writers.ts';
 import { plainValue } from './plain.ts';
 import { Rejection } from './rejection.ts';
@@ -86,7 +86,8 @@ const dispatchOf = (
   };
 };
 
-const notObject: Dispatch = (input) => new Rejection([{ message: mustBe('an object', input) }]);
+const notObject: Dispatch = (input) =>
+  new Rejection([rejectedIssue('not_an_object', 'an object', input)]);
 
 /**
  * Internal: how an `n.union()` schema runs, checks and writes a value: the tag picks the variant,
@@ -102,7 +103,7 @@ export const unionPaths = (
   generate?: boolean,
 ): { readonly run: Dispatch; readonly accepts: Accepts; readonly write: Write } => {
   const otherTag = (tag: unknown): Rejection =>
-    new Rejection([{ message: mustBe(expected, tag), path: [key] }]);
+    new Rejection([rejectedIssue('not_one_of', expected, tag, { path: [key] })]);
   const run = dispatchOf(key, variants, (variant) => variant.run, notObject, otherTag, generate);
   const accepts = dispatchOf(
     key,

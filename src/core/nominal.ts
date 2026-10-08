@@ -22,6 +22,7 @@ import {
   isVariantPair,
   levelOf,
   levelSlot,
+  normalizeSlot,
   rulesOf,
   sensitiveSlot,
   variantSourceSlot,
@@ -367,6 +368,20 @@ const defineImplied = (
   return [...implied];
 };
 
+// The check is built at the first `instanceof`, not when the type is declared, so the types this
+// package declares as it loads generate no code before `n.configure()` can turn generation off.
+const defineBrandCheck = (derived: object, key: symbol): void => {
+  const settle = (value: unknown): boolean => {
+    const check = brandCheck(key);
+
+    Object.defineProperty(derived, Symbol.hasInstance, { value: check, configurable: false });
+
+    return check(value);
+  };
+
+  Object.defineProperty(derived, Symbol.hasInstance, { value: settle, configurable: true });
+};
+
 const derive = (
   parent: typeof NominalRoot,
   name: string,
@@ -384,10 +399,14 @@ const derive = (
   Object.defineProperty(derived, brandKeySlot, { value: key });
   Object.defineProperty(derived, levelSlot, { value: base });
   Object.defineProperty(derived.prototype, key, { value: true });
-  Object.defineProperty(derived, Symbol.hasInstance, { value: brandCheck(key) });
+  defineBrandCheck(derived, key);
 
   if (options?.sensitive !== undefined) {
     Object.defineProperty(derived, sensitiveSlot, { value: options.sensitive });
+  }
+
+  if (options?.normalize !== undefined) {
+    Object.defineProperty(derived, normalizeSlot, { value: options.normalize });
   }
 
   if (rule !== undefined) {

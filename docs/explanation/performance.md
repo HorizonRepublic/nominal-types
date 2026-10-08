@@ -90,7 +90,7 @@ class-validator also gets slower as the app registers more DTO classes, whatever
 
 ## Without code generation
 
-The package generates its checks with `new Function`. Cloudflare Workers and pages with a strict Content-Security-Policy forbid that. There, the checks run without generated code. The results are the same, and nothing needs to be configured.
+The package generates its checks with `new Function`. Cloudflare Workers and pages with a strict Content-Security-Policy forbid that. There, the checks run without generated code. The results are the same. To keep the package from even trying, set [`codegen: 'off'`](../reference/configure.md#codegen).
 
 The checks are slower there. Parsing an order with 20 items takes 4.1 µs instead of 2.5 µs, about 1.7 times as long. A single value loses a few nanoseconds: an email takes 97 ns instead of 91 ns. A schema's `stringify()` writes `JSON.stringify(schema.toPlain(value))` there: 2.4 µs for the order instead of 0.58 µs, still faster than `JSON.stringify()` of the instances.
 

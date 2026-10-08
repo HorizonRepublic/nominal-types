@@ -1,5 +1,6 @@
-import { charactersOf } from './hidden-values.ts';
 import { sensitiveSlot } from './hierarchy.ts';
+import { charactersOf } from './messages.ts';
+import { settings } from './settings.ts';
 
 // Node.js and Bun both read the form `console.log` and `util.inspect` show from this key.
 const inspectKey = Symbol.for('nodejs.util.inspect.custom');
@@ -49,10 +50,12 @@ const inspectInstance = function inspectInstance(
     return stylize(`[${name}]`, 'special');
   }
 
-  const text =
-    typeof type === 'function' && Reflect.get(type, sensitiveSlot) === true
-      ? stylize(`<hidden, ${outlineOf(this.value)}>`, 'special')
-      : valueText(this.value, options, inspect);
+  const hidden =
+    settings.inspect === 'hide' ||
+    (typeof type === 'function' && Reflect.get(type, sensitiveSlot) === true);
+  const text = hidden
+    ? stylize(`<hidden, ${outlineOf(this.value)}>`, 'special')
+    : valueText(this.value, options, inspect);
 
   return text.includes('\n')
     ? `${name} {\n  value: ${text.replaceAll('\n', '\n  ')}\n}`
@@ -62,7 +65,8 @@ const inspectInstance = function inspectInstance(
 /**
  * Internal: gives instances the form `console.log` shows in Node.js and Bun,
  * `Uuid { value: '0190f1c2-…' }`, with the value of a sensitive type left out:
- * `Email { value: <hidden, a string of 16 characters> }`.
+ * `Email { value: <hidden, a string of 16 characters> }`, and of every type with
+ * `n.configure({ inspect: 'hide' })`.
  */
 export const defineInspect = (prototype: object): void => {
   Object.defineProperty(prototype, inspectKey, {

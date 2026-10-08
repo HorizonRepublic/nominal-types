@@ -141,6 +141,8 @@ export interface NominalOptions<Implied extends AnyNominalType = AnyNominalType>
    * inherit it; `false` turns it off for one of them.
    */
   readonly sensitive?: boolean;
+  /** `false` keeps a string type's input as given, whatever `n.configure()` normalizes. */
+  readonly normalize?: boolean;
   /**
    * Types that accept every value this type accepts, so its instances pass for theirs as well:
    * at compile time, and for `instanceof` and `equals()`.

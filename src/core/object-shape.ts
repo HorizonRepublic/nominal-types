@@ -1,6 +1,6 @@
 import { generateFunction } from './compile.ts';
 import type { AnyConstraint } from './constraint-types.ts';
-import { mustBe } from './messages.ts';
+import { atPath, issueOf, rejectedIssue } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import type { Shape } from './shapes.ts';
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
@@ -36,7 +36,7 @@ const fieldIssues = (
   const all = issues ?? [];
 
   for (const issue of rejection.issues) {
-    all.push({ message: issue.message, path: [key, ...(issue.path ?? [])] });
+    all.push(atPath(issue, key));
   }
 
   return all;
@@ -45,7 +45,7 @@ const fieldIssues = (
 const missingIssues = (issues: Issues, key: string): StandardSchemaV1.Issue[] => {
   const all = issues ?? [];
 
-  all.push({ message: 'is required', path: [key] });
+  all.push(issueOf('required', 'is required', { path: [key] }));
 
   return all;
 };
@@ -60,7 +60,7 @@ const unknownKeyIssues = (
   for (const key of Object.keys(input)) {
     if (!declared.has(key)) {
       all ??= [];
-      all.push({ message: 'is not allowed', path: [key] });
+      all.push(issueOf('not_allowed', 'is not allowed', { path: [key] }));
     }
   }
 
@@ -87,7 +87,7 @@ const constraintIssues = (
 };
 
 const notObject = (input: unknown): Rejection =>
-  new Rejection([{ message: mustBe('an object', input) }]);
+  new Rejection([rejectedIssue('not_an_object', 'an object', input)]);
 
 const loopRun =
   (fields: readonly ObjectField[], constraints: readonly AnyConstraint[], strict: boolean): Run =>

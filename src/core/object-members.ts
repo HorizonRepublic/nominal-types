@@ -1,4 +1,5 @@
 import { checkConstraintFields, isConstraint } from './constraint-fields.ts';
+import { issueOf } from './messages.ts';
 import { NominalError } from './nominal-error.ts';
 import type { ObjectMembers } from './object-rule.ts';
 
@@ -17,7 +18,7 @@ const copyOf = (declared: ReadonlySet<string>) =>
     if (unknown.length > 0) {
       throw new NominalError(
         String(Reflect.get(Target ?? {}, 'typeName')),
-        unknown.map((key) => ({ message: 'is not allowed', path: [key] })),
+        unknown.map((key) => issueOf('not_allowed', 'is not allowed', { path: [key] })),
       );
     }
 

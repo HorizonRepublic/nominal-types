@@ -1,0 +1,81 @@
+import type { StandardSchemaV1 } from './standard-spec.ts';
+
+/**
+ * Internal: every issue code, to check the keys of a messages map.
+ */
+export const issueCodes = [
+  'not_a_string',
+  'pattern',
+  'invalid',
+  'not_one_of',
+  'not_an_object',
+  'not_an_array',
+  'too_few_items',
+  'too_many_items',
+  'not_unique',
+  'required',
+  'not_allowed',
+  'constraint',
+] as const;
+
+/**
+ * What went wrong, as a stable name for each kind of issue this package reports: for translating
+ * messages, and for code that reacts to one kind of issue.
+ *
+ * @remarks
+ * Messages may change wording between versions; codes don't. Issues carry their code when
+ * `n.configure({ codes: true })` is set, and a messages function always receives it.
+ */
+export type IssueCode = (typeof issueCodes)[number];
+
+/**
+ * An issue as this package reports it: a Standard Schema issue, with its code when
+ * `n.configure({ codes: true })` is set.
+ */
+export interface NominalIssue extends StandardSchemaV1.Issue {
+  readonly code?: IssueCode;
+}
+
+/**
+ * What a messages function given to `n.configure()` receives for each issue this package reports,
+ * to write the message in its place.
+ *
+ * @remarks
+ * `value` is the rejected value as the English message writes it, with the `values` setting and a
+ * sensitive type already applied, so a translated message never shows more than the English one.
+ */
+export interface IssueDetails {
+  readonly code: IssueCode;
+  /** The message in English, as the package writes it without a messages function. */
+  readonly message: string;
+  /** What the value must be, such as `an email address`, for the codes that have one. */
+  readonly description?: string;
+  /** The rejected value as the English message writes it: `"jane"`, `42`, `a string of 4 characters`. */
+  readonly value?: string;
+  /** The type whose rule refused the value, when a type's own rule did. */
+  readonly typeName?: string;
+  /** Where the value sits in the checked input, such as `['address', 'city']`; missing at the top. */
+  readonly path?: readonly PropertyKey[];
+  /** The fewest items an array may have, for `too_few_items` and `too_many_items`. */
+  readonly min?: number;
+  /** The most items an array may have, when it has a limit. */
+  readonly max?: number;
+}
+
+/**
+ * A message function given to `n.configure()`: writes the message for an issue, or returns
+ * `undefined` to keep the English one.
+ */
+export type MessageFunction = (issue: IssueDetails) => string | undefined;
+
+/**
+ * Messages by issue code, given to `n.configure()` for a language or wording of your own: a code
+ * maps to its message, or to a function that writes it. A code left out keeps the English message.
+ */
+export type MessageMap = Readonly<Partial<Record<IssueCode, string | MessageFunction>>>;
+
+/**
+ * What the `messages` option of `n.configure()` takes: one function for every issue, or a map by
+ * issue code.
+ */
+export type Messages = MessageFunction | MessageMap;

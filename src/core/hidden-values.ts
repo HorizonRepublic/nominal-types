@@ -1,36 +1,13 @@
-import { describeValue } from './messages.ts';
+import { charactersOf, rewrittenHidden } from './messages.ts';
+import { settings } from './settings.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
+
+export { charactersOf, describeHidden } from './messages.ts';
 
 const numberText = /^-?(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|Infinity)$|^NaN$/u;
 const bigintText = /^-?\d+n$/u;
 // A long string, as a message cuts it: `a string of 30000 characters starting "abc"…`.
 const cutText = /^a string of (\d+) characters starting (".*")…$/su;
-
-/**
- * Internal: a string as a hidden value reads, by its length.
- */
-export const charactersOf = (count: number): string =>
-  count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
-
-/**
- * Internal: a rejected value as the message of a sensitive type names it, by its kind only: what
- * `hideValues` makes of the value `describeValue` writes.
- */
-export const describeHidden = (value: unknown): string => {
-  if (typeof value === 'string') {
-    return value.length === 0 ? 'an empty string' : charactersOf(value.length);
-  }
-
-  if (typeof value === 'number') {
-    return 'a number';
-  }
-
-  if (typeof value === 'bigint') {
-    return 'a bigint';
-  }
-
-  return typeof value === 'boolean' ? 'a boolean' : describeValue(value);
-};
 
 // JSON text that opens with a quote parses to a string or not at all.
 const lengthOf = (text: string): number | undefined => {
@@ -82,7 +59,7 @@ const markers: ReadonlyArray<readonly [string, string]> = [
   ['Received ', ''],
 ];
 
-const hiddenMessage = (message: string): string => {
+const hiddenMessage = (message: string, leaveOut: boolean): string => {
   for (const [opening, closing] of markers) {
     if (!message.endsWith(closing)) {
       continue;
@@ -98,7 +75,9 @@ const hiddenMessage = (message: string): string => {
       const outline = outlineOf(message.slice(at + opening.length, end));
 
       if (outline !== undefined) {
-        return `${message.slice(0, at + opening.length)}${outline}${closing}`;
+        return leaveOut && opening === ' (was '
+          ? message.slice(0, at)
+          : `${message.slice(0, at + opening.length)}${outline}${closing}`;
       }
     }
   }
@@ -126,7 +105,36 @@ export const hideValues = (
   issues: readonly StandardSchemaV1.Issue[],
 ): readonly StandardSchemaV1.Issue[] =>
   issues.map((issue) => {
-    const message = hiddenMessage(issue.message);
+    const rewritten = rewrittenHidden(issue);
+
+    if (rewritten !== undefined) {
+      return rewritten;
+    }
+
+    const message = hiddenMessage(issue.message, false);
 
     return message === issue.message ? issue : { ...issue, message };
   });
+
+/**
+ * Internal: the issues of a rule from another library as the `values` setting of `n.configure()`
+ * asks: as they are, with values told by their length, or with the values left out where the
+ * message ends in `(was …)`.
+ */
+export const valuesAsConfigured = (
+  issues: readonly StandardSchemaV1.Issue[],
+): readonly StandardSchemaV1.Issue[] => {
+  const mode = settings.values;
+
+  if (mode === 'show') {
+    return issues;
+  }
+
+  return mode === 'length'
+    ? hideValues(issues)
+    : issues.map((issue) => {
+        const message = hiddenMessage(issue.message, true);
+
+        return message === issue.message ? issue : { ...issue, message };
+      });
+};

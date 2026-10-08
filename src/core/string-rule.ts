@@ -1,14 +1,20 @@
 import type { NominalSchema } from './contracts.ts';
+import type { IssueCode } from './issue-codes.ts';
 import { PatternSchema } from './pattern-schema.ts';
-import { satisfying } from './predicate-schema.ts';
-import type { PredicateSchema } from './predicate-schema.ts';
+import { PredicateSchema } from './predicate-schema.ts';
 
 const isString = (value: unknown): value is string => typeof value === 'string';
+
+class StringRule extends PredicateSchema<string> {
+  public override codeFor(): IssueCode {
+    return 'not_a_string';
+  }
+}
 
 /**
  * Internal: the rule of `AnyString`.
  */
-export const stringRule: PredicateSchema<string> = satisfying(isString, 'a string', {
+export const stringRule: PredicateSchema<string> = new StringRule(isString, 'a string', {
   type: 'string',
 });
 

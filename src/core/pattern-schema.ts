@@ -1,4 +1,5 @@
 import type { NominalSchema } from './contracts.ts';
+import type { IssueCode } from './issue-codes.ts';
 import { mustBe } from './messages.ts';
 import { NativeSchema } from './native-schema.ts';
 
@@ -37,11 +38,19 @@ export class PatternSchema extends NativeSchema<string> {
   }
 
   public messageFor(value: unknown, describe?: (value: unknown) => string): string {
+    return mustBe(this.descriptionFor(value), value, describe);
+  }
+
+  public override codeFor(value: unknown): IssueCode {
+    return typeof value === 'string' ? 'pattern' : 'not_a_string';
+  }
+
+  public descriptionFor(value: unknown): string {
     if (typeof value !== 'string') {
-      return mustBe('a string', value, describe);
+      return 'a string';
     }
 
-    return mustBe(this.description ?? `matched by ${this.pattern.source}`, value, describe);
+    return this.description ?? `matched by ${this.pattern.source}`;
   }
 
   protected jsonBody(): Record<string, unknown> {

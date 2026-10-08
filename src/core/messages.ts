@@ -1,3 +1,6 @@
+import type { IssueCode, IssueDetails, Messages, NominalIssue } from './issue-codes.ts';
+import { settings } from './settings.ts';
+
 const longestShown = 64;
 const shownCharacters = 32;
 
@@ -42,14 +45,253 @@ export const describeValue = (value: unknown): string => {
 };
 
 /**
+ * Internal: a string as a hidden value reads, by its length.
+ */
+export const charactersOf = (count: number): string =>
+  count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
+
+/**
+ * Internal: a rejected value as the message of a sensitive type names it, by its kind only: what
+ * `hideValues` makes of the value `describeValue` writes.
+ */
+export const describeHidden = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value.length === 0 ? 'an empty string' : charactersOf(value.length);
+  }
+
+  if (typeof value === 'number') {
+    return 'a number';
+  }
+
+  if (typeof value === 'bigint') {
+    return 'a bigint';
+  }
+
+  return typeof value === 'boolean' ? 'a boolean' : describeValue(value);
+};
+
+/**
+ * Internal: the value as a message writes it under the `values` setting, written by `describe`
+ * when values are shown; `undefined` when messages leave values out.
+ */
+export const shownValue = (
+  value: unknown,
+  describe: (value: unknown) => string = describeValue,
+): string | undefined => {
+  const mode = settings.values;
+
+  if (mode === 'show') {
+    return describe(value);
+  }
+
+  return mode === 'length' ? describeHidden(value) : undefined;
+};
+
+const withValue = (head: string, shown: string | undefined): string =>
+  shown === undefined ? head : `${head} (was ${shown})`;
+
+/**
  * The message for a value a rule rejects: `must be <expected> (was <value>)`, with the value
- * written by `describe`.
+ * written by `describe`, or as the `values` setting of `n.configure()` asks.
  */
 export const mustBe = (
   expected: string,
   value: unknown,
   describe: (value: unknown) => string = describeValue,
-): string => `must be ${expected} (was ${describe(value)})`;
+): string => withValue(`must be ${expected}`, shownValue(value, describe));
+
+/**
+ * Internal: what a message is written from, besides its code and English text.
+ */
+export interface Wording {
+  readonly description?: string | undefined;
+  readonly value?: string | undefined;
+  readonly hiddenValue?: string | undefined;
+  readonly typeName?: string | undefined;
+  readonly min?: number | undefined;
+  readonly max?: number | undefined;
+}
+
+interface Draft {
+  readonly code: IssueCode;
+  readonly english: string;
+  readonly hiddenEnglish: string;
+  readonly wording: Wording;
+}
+
+// Kept only for issues a messages function wrote, so `hideValues` can have it write them again
+// with the value hidden, which it can't find in a message it didn't write.
+const drafts = new WeakMap<object, Draft>();
+
+/**
+ * Internal: whether issues need more than the English message: a code, or a messages function.
+ */
+export const customized = (): boolean => settings.codes || settings.messages !== undefined;
+
+type Path = NominalIssue['path'];
+
+const keysOf = (path: NonNullable<Path>): PropertyKey[] =>
+  path.map((segment) => (typeof segment === 'object' ? segment.key : segment));
+
+const detailsOf = (draft: Draft, path: Path): IssueDetails => {
+  const { description, value, typeName, min, max } = draft.wording;
+
+  return {
+    code: draft.code,
+    message: draft.english,
+    ...(description === undefined ? {} : { description }),
+    ...(value === undefined ? {} : { value }),
+    ...(typeName === undefined ? {} : { typeName }),
+    ...(path === undefined || path.length === 0 ? {} : { path: keysOf(path) }),
+    ...(min === undefined ? {} : { min }),
+    ...(max === undefined ? {} : { max }),
+  };
+};
+
+const formatted = (format: Messages, details: IssueDetails): string | undefined => {
+  const write = typeof format === 'function' ? format : format[details.code];
+
+  return typeof write === 'string' ? write : write?.(details);
+};
+
+const issueWith = (code: IssueCode, message: string, path: Path): NominalIssue => {
+  if (!settings.codes) {
+    return path === undefined ? { message } : { message, path };
+  }
+
+  return path === undefined ? { code, message } : { code, message, path };
+};
+
+const written = (draft: Draft, path: Path): NominalIssue => {
+  const format = settings.messages;
+  const message =
+    format === undefined
+      ? draft.english
+      : (formatted(format, detailsOf(draft, path)) ?? draft.english);
+  const issue = issueWith(draft.code, message, path);
+
+  if (format !== undefined) {
+    drafts.set(issue, draft);
+  }
+
+  return issue;
+};
+
+/**
+ * Internal: an issue of this package, with its code when `codes` is set and its message written
+ * by the messages function when one is set; `hiddenEnglish` is the English message without the
+ * value, which `hideValues` uses.
+ */
+export const issueOf = (
+  code: IssueCode,
+  english: string,
+  options: {
+    readonly hiddenEnglish?: string;
+    readonly wording?: Wording;
+    readonly path?: Path;
+  } = {},
+): NominalIssue => {
+  const { hiddenEnglish = english, wording = {}, path } = options;
+
+  if (!customized()) {
+    return path === undefined ? { message: english } : { message: english, path };
+  }
+
+  return written({ code, english, hiddenEnglish, wording }, path);
+};
+
+/**
+ * Internal: the issue for a rejected value, `<head> (was <value>)`, the value written by `describe`
+ * or as the `values` setting asks.
+ */
+export const valueIssue = (
+  code: IssueCode,
+  head: string,
+  value: unknown,
+  options: {
+    readonly describe?: (value: unknown) => string;
+    readonly description?: string;
+    readonly typeName?: string | undefined;
+    readonly path?: Path;
+  } = {},
+): NominalIssue => {
+  const { describe = describeValue, description, typeName, path } = options;
+  const shown = shownValue(value, describe);
+  const english = withValue(head, shown);
+
+  if (!customized()) {
+    return path === undefined ? { message: english } : { message: english, path };
+  }
+
+  const hiddenValue = settings.values === 'hide' ? undefined : describeHidden(value);
+
+  return written(
+    {
+      code,
+      english,
+      hiddenEnglish: withValue(head, hiddenValue),
+      wording: { description, value: shown, hiddenValue, typeName },
+    },
+    path,
+  );
+};
+
+/**
+ * Internal: the issue for a value a rule rejects, `must be <description> (was <value>)`.
+ */
+export const rejectedIssue = (
+  code: IssueCode,
+  description: string,
+  value: unknown,
+  options: { readonly path?: Path } = {},
+): NominalIssue =>
+  valueIssue(code, `must be ${description}`, value, {
+    ...options,
+    description,
+  });
+
+/**
+ * Internal: the issue written again with its value hidden, for `hideValues`, when a messages
+ * function wrote it; `undefined` for any other issue.
+ */
+export const rewrittenHidden = (issue: NominalIssue): NominalIssue | undefined => {
+  const draft = drafts.get(issue);
+
+  if (draft === undefined) {
+    return undefined;
+  }
+
+  return written(
+    {
+      ...draft,
+      english: draft.hiddenEnglish,
+      wording: { ...draft.wording, value: draft.wording.hiddenValue },
+    },
+    issue.path,
+  );
+};
+
+/**
+ * Internal: an issue of a field or an item, with `key` in front of its path, keeping its code; a
+ * messages function writes it again, for the longer path.
+ */
+export const atPath = (issue: NominalIssue, key: PropertyKey): NominalIssue => {
+  const path = [key, ...(issue.path ?? [])];
+
+  if (settings.messages !== undefined) {
+    const draft = drafts.get(issue);
+
+    if (draft !== undefined) {
+      return written(draft, path);
+    }
+  }
+
+  const { code } = issue;
+
+  return code === undefined
+    ? { message: issue.message, path }
+    : { code, message: issue.message, path };
+};
 
 /**
  * Internal: a value as JSON text, with bigints written as decimal strings.

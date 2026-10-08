@@ -9,7 +9,7 @@ import type {
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { forTarget } from './json-target.ts';
-import { mustBe } from './messages.ts';
+import { atPath, issueOf, rejectedIssue } from './messages.ts';
 import { isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
@@ -32,8 +32,7 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 const prefixed = (
   key: string,
   issues: readonly StandardSchemaV1.Issue[],
-): StandardSchemaV1.Issue[] =>
-  issues.map((issue) => ({ message: issue.message, path: [key, ...(issue.path ?? [])] }));
+): StandardSchemaV1.Issue[] => issues.map((issue) => atPath(issue, key));
 
 const defaultMessage = (keys: readonly string[], path: readonly PropertyKey[]): string => {
   const others = keys.filter((key) => key !== path[0]);
@@ -101,7 +100,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
 
     const message = verdict === false ? this.#message : verdict;
 
-    return this.#path.length === 0 ? { message } : { message, path: this.#path };
+    return issueOf('constraint', message, this.#path.length === 0 ? {} : { path: this.#path });
   }
 
   /**
@@ -153,7 +152,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
 
   #run(input: unknown): ConstraintValues<Fields> | Rejection {
     if (!isRecord(input)) {
-      return new Rejection([{ message: mustBe('an object', input) }]);
+      return new Rejection([rejectedIssue('not_an_object', 'an object', input)]);
     }
 
     const values = this.valuesOf(input);

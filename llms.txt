@@ -87,7 +87,7 @@ All from `@horizon-republic/nominal-types`. `n` is a namespace object: `import {
 
 ### Declaring types
 
-- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `n.matching()`, `n.satisfying()`, `n.oneOf()`, `n.object()`, `n.constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean, implies?: readonly AnyNominalType[] }`.
+- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `n.matching()`, `n.satisfying()`, `n.oneOf()`, `n.object()`, `n.constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean, implies?: readonly AnyNominalType[], normalize?: boolean }`; `normalize: false` opts the type and its subtypes out of `trimStrings`.
 - `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first. A rule that narrows the value, such as `n.oneOf()`, narrows the type of `value` too.
 - `Type.variant(name, rule, options?)` makes a sibling: the same methods, its own rule in place of the source's, and the two don't mix.
 - `implies: [OtherType]` in the options says every value of the new type passes `OtherType`. Its instances then pass for `OtherType` at compile time, for `instanceof` and for `equals()`, together with what `OtherType` implies. It is trusted, never checked: `OtherType.parse(instance)` checks the value again and returns an `OtherType`. A subtype keeps its parent's implied types; a variant drops those of the level it replaces. An entry that is not a nominal type, or a type whose instances have members the new type lacks, throws `TypeError` at declaration.
@@ -214,6 +214,27 @@ config.PORT.value; // 3000 for PORT=3000
 - `n.hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")`, the cut form `(was a string of N characters starting "x"…)` and Valibot's `received "x"`.
 - Rules from other libraries keep their own messages.
 
+### n.configure()
+
+`n.configure(options?: Configuration): FullConfiguration` sets process-wide settings, shared by every copy of the package (ESM and CJS) through `globalThis`. Call it once, in a module the entry point imports first. It changes only the options named, returns the previous settings (frozen; `n.configure(previous)` restores them) and throws `TypeError` on an unknown option or value, changing nothing. Defaults keep the package unconfigured.
+
+| Option | Values (default first) | Effect |
+| --- | --- | --- |
+| `messages` | `undefined`, `MessageFunction`, `MessageMap` | `(issue: IssueDetails) => string \| undefined`, or `{ [code]: string \| MessageFunction }`; `undefined` from a function or a missing code keeps English. `IssueDetails`: `{ code, message, description?, value?, typeName?, path?, min?, max? }`; `value` is already hidden as the English message hides it. Messages of other libraries are left alone. |
+| `values` | `'show'`, `'length'`, `'hide'` | How messages show the rejected value: `(was "x")`, `(was a string of 1 character)`, or no `(was …)`. Sensitive types always hide. |
+| `inspect` | `'show'`, `'hide'` | `'hide'` makes `console.log()` hide every instance's value. |
+| `codes` | `false`, `true` | Adds `code: IssueCode` to every issue of this package (`NominalIssue`). |
+| `normalize.trimStrings` | `false`, `true` | Types under `AnyString` trim input before the check; `fromString()`/`fromEnv()` trim text. JSON Schema unchanged. |
+| `codegen` | `'auto'`, `'off'` | `'off'` never calls `new Function` (CSP without `'unsafe-eval'`); applies to checks built after the call. |
+
+`IssueCode`: `not_a_string`, `pattern`, `invalid`, `not_one_of`, `not_an_object`, `not_an_array`, `too_few_items`, `too_many_items`, `not_unique`, `required`, `not_allowed`, `constraint`.
+
+```ts
+import { n } from '@horizon-republic/nominal-types';
+
+n.configure({ codes: true, values: 'length', messages: { required: 'ist erforderlich' } });
+```
+
 ### JSON Schema
 
 - `Type['~standard'].jsonSchema.input({ target })` and `.output({ target })`. Targets: `'draft-2020-12'`, `'draft-07'`, `'openapi-3.0'`; any other throws `TypeError`.
@@ -225,7 +246,7 @@ config.PORT.value; // 3000 for PORT=3000
 
 ### TypeScript types
 
-`ValueOf<Schema>` (the value a schema gives: `type CreateBookingBody = ValueOf<typeof CreateBooking>`; give the type its own name, since Bun and SWC record a schema named like the type in Nest's parameter metadata), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?, Implied?>` (`Implied` is the union of the `implies` classes), `ImplyingType<Name, Schema, Instance, Implied>` (what `Nominal()` returns), `Narrowed<Instance, Value>`, `VariantOf<Source, Name, Implied?>`, `VariantInstance<Source, Name, Implied?>`, `SubtypeInstance<Parent, Name, Value?, Implied?>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `UnionSchema`, `UnionInput<Key, Variants>`, `UnionValue<Key, Variants>`, `UnionVariants`, `Plain<Value>`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `StandardOf<Type>` (the `~standard` of a class typed with the class itself: `declare static readonly '~standard': StandardOf<typeof MyType>;` in a class that adds members), `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
+`ValueOf<Schema>` (the value a schema gives: `type CreateBookingBody = ValueOf<typeof CreateBooking>`; give the type its own name, since Bun and SWC record a schema named like the type in Nest's parameter metadata), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?, Implied?>` (`Implied` is the union of the `implies` classes), `ImplyingType<Name, Schema, Instance, Implied>` (what `Nominal()` returns), `Narrowed<Instance, Value>`, `VariantOf<Source, Name, Implied?>`, `VariantInstance<Source, Name, Implied?>`, `SubtypeInstance<Parent, Name, Value?, Implied?>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `UnionSchema`, `UnionInput<Key, Variants>`, `UnionValue<Key, Variants>`, `UnionVariants`, `Plain<Value>`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `StandardOf<Type>` (the `~standard` of a class typed with the class itself: `declare static readonly '~standard': StandardOf<typeof MyType>;` in a class that adds members), `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`, `Configuration`, `FullConfiguration`, `IssueCode`, `IssueDetails`, `NominalIssue`, `Messages`, `MessageMap`, `MessageFunction`.
 
 ## Built-in types
 
@@ -509,6 +530,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to fix common problems](docs/guides/core/fix-common-problems.md)
 - [How to handle money](docs/guides/core/handle-money.md)
 - [How to keep values out of error messages](docs/guides/core/hide-values.md)
+- [How to configure messages, values and trimming](docs/guides/core/configure.md)
 - [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
 - [How to make a value object](docs/guides/core/make-a-value-object.md)
 - [How to move from version 2](docs/guides/core/migrate-from-v2.md)
@@ -543,6 +565,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [Benchmarks](docs/reference/benchmarks.md)
 - [Declaring types](docs/reference/declaring.md)
 - [Errors and messages](docs/reference/errors-and-messages.md)
+- [n.configure()](docs/reference/configure.md)
 - [Glossary](docs/reference/glossary.md)
 - [JSON Schema](docs/reference/json-schema.md)
 - [Schemas](docs/reference/schemas.md)

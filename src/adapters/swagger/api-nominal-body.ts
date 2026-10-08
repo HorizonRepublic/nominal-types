@@ -76,7 +76,9 @@ const componentFor = (
 // is written inline.
 const fieldsOf = (schema: OpenApiSchema): OpenApiSchema | undefined => {
   const fields = schema['properties'];
-  const plain = Object.keys(schema).every((key) => ['type', 'properties', 'required'].includes(key));
+  const plain = Object.keys(schema).every((key) =>
+    ['type', 'properties', 'required'].includes(key),
+  );
 
   return schema['type'] === 'object' && plain && isRecord(fields) ? fields : undefined;
 };

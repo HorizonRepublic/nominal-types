@@ -20,7 +20,19 @@ const NonPositiveIntegerBase: SubtypeOf<
  *
  * @remarks
  * Unlike `NegativeInteger`, it takes 0 and `-0`.
+ *
+ * @example
+ * ```ts
+ * import { NonPositiveInteger } from '@horizon-republic/nominal-types';
+ *
+ * new NonPositiveInteger(0).value; // 0
+ * NonPositiveInteger.parse(1).ok; // false
+ * ```
  */
 export class NonPositiveInteger extends NonPositiveIntegerBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonPositiveInteger>;
 }

@@ -11,8 +11,10 @@ import { rulesAcceptsOf } from './type-rules.ts';
 const isAccepts = (value: unknown): value is Accepts => typeof value === 'function';
 
 /**
- * Internal: the check of a nominal type, as `Type.accepts()` answers it, held once for a schema
+ * The check of a nominal type, as `Type.accepts()` answers it, held once for a schema
  * or a field.
+ *
+ * @internal
  */
 export const typeAcceptor = (type: AnyNominalType): Accepts => {
   if (!ownTypes.isOwn(type)) {
@@ -30,8 +32,10 @@ export const typeAcceptor = (type: AnyNominalType): Accepts => {
 };
 
 /**
- * Internal: the check of a field of an object: its schema's own check when it has one, a run of
+ * The check of a field of an object: its schema's own check when it has one, a run of
  * the schema otherwise.
+ *
+ * @internal
  */
 export const fieldAcceptor = (field: unknown, label: string): Accepts => {
   if (isNominalType(field)) {
@@ -68,8 +72,10 @@ const arraySource = `function acceptsArray(input) {
 }`;
 
 /**
- * Internal: the check of an array whose count lies between `min` and `max` and whose every item
+ * The check of an array whose count lies between `min` and `max` and whose every item
  * `item` accepts.
+ *
+ * @internal
  */
 export const arrayAcceptor = (
   item: Accepts,
@@ -91,7 +97,9 @@ export const arrayAcceptor = (
 };
 
 /**
- * Internal: the check of `item`, letting `undefined` or `null` through.
+ * The check of `item`, letting `undefined` or `null` through.
+ *
+ * @internal
  */
 export const emptyOrAcceptor =
   (item: Accepts, empty: undefined | null): Accepts =>
@@ -99,11 +107,22 @@ export const emptyOrAcceptor =
     input === empty || item(input);
 
 /**
- * Internal: a field of an object as its check sees it.
+ * A field of an object as its check sees it.
+ *
+ * @internal
  */
 export interface AcceptedField {
+  /**
+   * The key of the field in the object.
+   */
   readonly key: string;
+  /**
+   * Checks the value of the field.
+   */
   readonly accepts: Accepts;
+  /**
+   * Whether the field may be missing.
+   */
   readonly optional: boolean;
 }
 
@@ -151,8 +170,10 @@ const objectLoop =
   };
 
 /**
- * Internal: the check of an `n.object()` schema without constraints, generated per object like
+ * The check of an `n.object()` schema without constraints, generated per object like
  * its run, returning at the first field that fails.
+ *
+ * @internal
  */
 export const objectAcceptor = (
   fields: readonly AcceptedField[],

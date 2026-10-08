@@ -102,12 +102,19 @@ const partAt = (text: string, index: number): JsonObject =>
  *
  * @example
  * ```ts
- * const token = new Jwt(request.headers.authorization.slice('Bearer '.length));
+ * import { Jwt } from '@horizon-republic/nominal-types';
+ *
+ * declare const authorization: string;
+ *
+ * const token = new Jwt(authorization.slice('Bearer '.length));
  * token.algorithm; // 'RS256'
  * token.expiresAt; // a Date, from `exp`, not verified
  * ```
  */
 export class Jwt extends JwtBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Jwt>;
 
   /**

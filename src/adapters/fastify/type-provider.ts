@@ -20,13 +20,28 @@ type NominalValue<Schema> =
  *
  * @example
  * ```ts
+ * import Fastify from 'fastify';
+ * import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ * import { fastifyNominal } from '@horizon-republic/nominal-types/adapters/fastify';
+ * import type { NominalTypeProvider } from '@horizon-republic/nominal-types/adapters/fastify';
+ *
+ * const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
  * const app = Fastify().withTypeProvider<NominalTypeProvider>();
  *
  * await app.register(fastifyNominal);
- * app.post('/orders', { schema: { body: CreateOrder } }, (request) => request.body.customer.domain);
+ *
+ * app.post('/orders', { schema: { body: CreateOrder } }, async (request) => ({
+ *   domain: request.body.customer.domain,
+ * }));
  * ```
  */
 export interface NominalTypeProvider extends FastifyTypeProvider {
+  /**
+   * The type a request part gets from its schema.
+   */
   readonly validator: NominalValue<this['schema']>;
+  /**
+   * The type a response takes for its schema.
+   */
   readonly serializer: NominalValue<this['schema']>;
 }

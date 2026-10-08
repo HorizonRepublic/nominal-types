@@ -56,13 +56,17 @@ class Characters extends Arbitrary<string> {
 }
 
 /**
- * Internal: text of `min` to `max` characters of `alphabet`, each character one UTF-16 unit.
+ * Text of `min` to `max` characters of `alphabet`, each character one UTF-16 unit.
+ *
+ * @internal
  */
 export const characters = (alphabet: string, min: number, max: number = min): Arbitrary<string> =>
   new Characters(alphabet, min, max);
 
 /**
- * Internal: the alphabets the built-in generators draw from.
+ * The alphabets the built-in generators draw from.
+ *
+ * @internal
  */
 export const alphabets = {
   lower: 'abcdefghijklmnopqrstuvwxyz',

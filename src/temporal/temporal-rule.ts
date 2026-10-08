@@ -5,15 +5,19 @@ import { Rejection } from '../core/rejection.ts';
 import { runnableSchema } from '../core/runner.ts';
 
 /**
- * Internal: the `Temporal` namespace the runtime provides, natively or through a polyfill.
+ * The `Temporal` namespace the runtime provides, natively or through a polyfill.
+ *
+ * @internal
  */
 export type TemporalApi = typeof Temporal;
 
 /**
- * Internal: the `Temporal` namespace of the runtime, read when a value is built rather than when
+ * The `Temporal` namespace of the runtime, read when a value is built rather than when
  * the module loads, so a polyfill installed after the import still counts.
  *
- * @throws TypeError naming the type and the polyfill to load when the runtime has no Temporal.
+ * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+ *
+ * @internal
  */
 export const temporalFor = (typeName: string): TemporalApi => {
   if (!('Temporal' in globalThis)) {
@@ -26,22 +30,45 @@ export const temporalFor = (typeName: string): TemporalApi => {
 };
 
 /**
- * Internal: what tells one Temporal type from another for `temporalRule()`.
+ * What tells one Temporal type from another for `temporalRule()`.
+ *
+ * @internal
  */
 export interface TemporalKind<Value extends object> {
-  /** The name of the nominal type, for the error thrown when Temporal is missing. */
+  /**
+   * The name of the nominal type, for the error thrown when Temporal is missing.
+   */
   readonly typeName: string;
-  /** The `Symbol.toStringTag` of the Temporal class, such as `Temporal.Instant`. */
+
+  /**
+   * The `Symbol.toStringTag` of the Temporal class, such as `Temporal.Instant`.
+   */
   readonly tag: string;
-  /** The whole text the type accepts. */
+
+  /**
+   * The whole text the type accepts.
+   */
   readonly pattern: RegExp;
-  /** What the value must be, completing "must be …". */
+
+  /**
+   * What the value must be, completing "must be …".
+   */
   readonly description: string;
-  /** JSON Schema keywords beside `type`, `pattern` and `description`. */
+
+  /**
+   * JSON Schema keywords beside `type`, `pattern` and `description`.
+   */
   readonly json: Readonly<Record<string, unknown>>;
-  /** Whether a value of the runtime's own Temporal class is one the type accepts. */
+
+  /**
+   * Whether a value of the runtime's own Temporal class is one the type accepts.
+   */
   readonly accepts: (temporal: TemporalApi, value: object) => value is Value;
-  /** The value of text the pattern matched, or `undefined` for text it matches but the type refuses. */
+
+  /**
+   * The value of text the pattern matched, or `undefined` for text it matches but the type
+   * refuses.
+   */
   readonly build: (temporal: TemporalApi, text: string) => Value | undefined;
 }
 
@@ -53,13 +80,15 @@ const textOf = (value: object): string => {
 };
 
 /**
- * Internal: the rule of a Temporal type: strict text, checked before Temporal is asked to build
+ * The rule of a Temporal type: strict text, checked before Temporal is asked to build
  * it, or a Temporal object of the same kind.
  *
  * @remarks
  * Temporal's own parser takes far more than RFC 3339 and turns a leap second into `:59`, so text
  * is held to the pattern, which is also the JSON Schema `pattern`. An object from another Temporal
  * implementation is recognised by its tag and read through its text.
+ *
+ * @internal
  */
 export const temporalRule = <Value extends object>(
   kind: TemporalKind<Value>,
@@ -100,7 +129,9 @@ export const temporalRule = <Value extends object>(
 };
 
 /**
- * Internal: the error a Temporal type throws where JavaScript asks it for a number, as `<` does.
+ * The error a Temporal type throws where JavaScript asks it for a number, as `<` does.
+ *
+ * @internal
  */
 export const noPrimitive = (instance: object, temporalName: string): TypeError =>
   new TypeError(

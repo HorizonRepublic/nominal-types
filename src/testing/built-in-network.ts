@@ -223,7 +223,9 @@ const ipv6Prefix: Arbitrary<string> = fc
   });
 
 /**
- * Internal: a generator for each built-in host, address and URL type, by name.
+ * A generator for each built-in host, address and URL type, by name.
+ *
+ * @internal
  */
 export const networkArbitraries: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   'nominal.Email': () => email,

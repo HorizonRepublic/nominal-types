@@ -25,12 +25,14 @@ const randomBytes = (): Uint8Array => {
 };
 
 /**
- * Internal: the 16 bytes of a new version 7 UUID (RFC 9562 section 5.7): the Unix time in
+ * The 16 bytes of a new version 7 UUID (RFC 9562 section 5.7): the Unix time in
  * milliseconds, a counter that keeps one process's ids in order, and 62 random bits.
  *
  * @remarks
  * A clock that goes back keeps the last time used, and a counter that runs out within one
  * millisecond moves on to the next, so the order holds either way.
+ *
+ * @internal
  */
 export const uuidV7Bytes = (now: number = Date.now()): Uint8Array => {
   const bytes = randomBytes();

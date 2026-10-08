@@ -10,6 +10,10 @@ import { typeIdOf, typeKey } from './registry.ts';
 /**
  * The ArkType node `toArk()` returns: it takes the type's input, and `fromArk()` gives an
  * instance for it.
+ *
+ * @typeParam Target - The nominal type the node checks.
+ *
+ * @see {@link toArk}
  */
 export type ArkField<Target extends AnyNominalType> = Type<
   (input: InputOf<Target['rule']>) => Out<Target['prototype']>
@@ -25,10 +29,25 @@ export type ArkField<Target extends AnyNominalType> = Type<
  * it came; `fromArk()` builds the instances afterwards. Use ArkType's own `.array()`, `'key?'`
  * and `.or('null')` around it.
  *
+ * @typeParam Target - The nominal type the node checks.
+ * @param target - The nominal type to wrap.
+ * @returns An ArkType node that checks the type's input.
+ *
  * @example
  * ```ts
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { fromArk, toArk } from '@horizon-republic/nominal-types/adapters/arktype';
+ * import { type } from 'arktype';
+ *
  * const CreateUser = fromArk(type({ id: toArk(Uuid), email: toArk(Email), 'name?': 'string' }));
+ *
+ * declare const body: unknown;
+ *
+ * const result = CreateUser.parse(body);
+ * // { ok: true, value: { id: Uuid, email: Email, name?: string } }
  * ```
+ *
+ * @see {@link fromArk}
  */
 export const toArk = <Target extends AnyNominalType>(target: Target): ArkField<Target> => {
   const check = checkerFor(target);

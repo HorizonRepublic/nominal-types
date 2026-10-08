@@ -1,5 +1,5 @@
 /**
- * Internal: the country calling codes ITU-T has assigned under Recommendation E.164, without `+`.
+ * The country calling codes ITU-T has assigned under Recommendation E.164, without `+`.
  *
  * @remarks
  * As the list of assigned codes (Annex to the ITU Operational Bulletin) stands on 8 October 2026:
@@ -7,6 +7,8 @@
  * 979. Spare codes, codes reserved for a future service (875 to 877, 879, 999) and withdrawn ones
  * (388, 878, 888, 991, 997) stay out. No code is the start of another, so a number starts with at
  * most one of them.
+ *
+ * @internal
  */
 export const callingCodes: readonly string[] = Object.freeze(
   [

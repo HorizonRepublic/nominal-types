@@ -24,7 +24,19 @@ const PositiveBigIntBase: SubtypeOf<
  *
  * @remarks
  * Zero is not positive; reach for `NonNegativeBigInt` where 0 is a valid value.
+ *
+ * @example
+ * ```ts
+ * import { PositiveBigInt } from '@horizon-republic/nominal-types';
+ *
+ * new PositiveBigInt(1n).value; // 1n
+ * PositiveBigInt.parse(0n).ok; // false
+ * ```
  */
 export class PositiveBigInt extends PositiveBigIntBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PositiveBigInt>;
 }

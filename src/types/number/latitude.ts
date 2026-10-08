@@ -20,7 +20,19 @@ const LatitudeBase: SubtypeOf<typeof FiniteNumber, 'nominal.Latitude'> = FiniteN
  * @remarks
  * Both ends are included. The value is a number; read `'51.5'` from text with
  * `n.of(Latitude).fromString()`.
+ *
+ * @example
+ * ```ts
+ * import { Latitude } from '@horizon-republic/nominal-types';
+ *
+ * new Latitude(51.5072).value; // 51.5072
+ * Latitude.parse(91).ok; // false
+ * ```
  */
 export class Latitude extends LatitudeBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Latitude>;
 }

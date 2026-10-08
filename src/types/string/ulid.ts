@@ -29,11 +29,16 @@ const UlidBase: SubtypeOf<typeof AnyString, 'nominal.Ulid'> = AnyString.subtype(
  *
  * @example
  * ```ts
+ * import { Ulid } from '@horizon-republic/nominal-types';
+ *
  * const id = new Ulid('01ARZ3NDEKTSV4RRFFQ69G5FAV');
  * id.timestamp; // 2016-07-30T23:54:10.259Z
  * ```
  */
 export class Ulid extends UlidBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Ulid>;
 
   /**
@@ -56,6 +61,8 @@ export class Ulid extends UlidBase {
 
   /**
    * The same ULID in uppercase.
+   *
+   * @returns A ULID of the same class.
    */
   public canonical(): this {
     return sameType(this, this.value.toUpperCase());
@@ -64,6 +71,9 @@ export class Ulid extends UlidBase {
   /**
    * Whether the other value has the same characters, ignoring case, and belongs to this type, a
    * type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same ULID.
    */
   public override equals(other: unknown): boolean {
     return (

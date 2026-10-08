@@ -45,12 +45,18 @@ const PlainDateTimeBase: NominalType<
  *
  * @example
  * ```ts
+ * import { PlainDateTime } from '@horizon-republic/nominal-types/temporal';
+ *
  * const meeting = new PlainDateTime('2024-05-01T09:30:00');
  * meeting.value.toPlainDate().toString(); // '2024-05-01'
  * meeting.value.toZonedDateTime('Europe/Kyiv').toInstant().toString(); // '2024-05-01T06:30:00Z'
  * ```
  */
 export class PlainDateTime extends PlainDateTimeBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PlainDateTime>;
 
   /**
@@ -65,6 +71,9 @@ export class PlainDateTime extends PlainDateTimeBase {
   /**
    * Whether the other value is the same date and time and belongs to this type, a type under it
    * or the type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return (
@@ -74,6 +83,8 @@ export class PlainDateTime extends PlainDateTimeBase {
 
   /**
    * The date and time as `YYYY-MM-DDThh:mm:ss`, with a fraction when there is one.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -81,6 +92,8 @@ export class PlainDateTime extends PlainDateTimeBase {
 
   /**
    * The date and time as `toJSON()` writes them.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -89,6 +102,10 @@ export class PlainDateTime extends PlainDateTimeBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two values would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

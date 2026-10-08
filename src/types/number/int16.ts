@@ -12,7 +12,19 @@ const Int16Base: SubtypeOf<typeof Integer, 'nominal.Int16', number, typeof Int32
 
 /**
  * An integer from -32768 to 32767, the range of a signed 16-bit integer.
+ *
+ * @example
+ * ```ts
+ * import { Int16 } from '@horizon-republic/nominal-types';
+ *
+ * new Int16(32767).value; // 32767
+ * Int16.parse(32768).ok; // false
+ * ```
  */
 export class Int16 extends Int16Base {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Int16>;
 }

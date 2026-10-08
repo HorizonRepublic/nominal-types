@@ -3,10 +3,19 @@ import { bitsOf, readIpv4, readIpv6 } from './ip-text.ts';
 import type { IpBits } from './ip-text.ts';
 
 /**
- * Internal: a network written as `a/n`: its address and its prefix length.
+ * A network written as `a/n`: its address and its prefix length.
+ *
+ * @internal
  */
 export interface IpNetwork {
+  /**
+   * The address of the network.
+   */
   readonly bits: IpBits;
+
+  /**
+   * The prefix length: how many leading bits name the network.
+   */
   readonly length: number;
 }
 
@@ -79,13 +88,17 @@ const isIpv6PrefixText = (value: unknown): value is string => {
 };
 
 /**
- * Internal: whether a value is an IPv4 or IPv6 prefix.
+ * Whether a value is an IPv4 or IPv6 prefix.
+ *
+ * @internal
  */
 export const isIpPrefixText = (value: unknown): value is string =>
   isIpv4PrefixText(value) || isIpv6PrefixText(value);
 
 /**
- * Internal: the network of prefix text a type has already accepted.
+ * The network of prefix text a type has already accepted.
+ *
+ * @internal
  */
 export const networkOf = (text: string): IpNetwork => {
   const at = text.indexOf('/');
@@ -94,7 +107,9 @@ export const networkOf = (text: string): IpNetwork => {
 };
 
 /**
- * Internal: prefix text with its address written as RFC 5952 recommends.
+ * Prefix text with its address written as RFC 5952 recommends.
+ *
+ * @internal
  */
 export const canonicalPrefix = (text: string): string => {
   const network = networkOf(text);

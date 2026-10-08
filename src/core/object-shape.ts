@@ -6,13 +6,27 @@ import type { Shape } from './shapes.ts';
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
 /**
- * Internal: a field of an object schema: how its value runs, whether it may be missing, and how it
+ * A field of an object schema: how its value runs, whether it may be missing, and how it
  * describes itself.
+ *
+ * @internal
  */
 export interface ObjectField {
+  /**
+   * The key of the field in the object.
+   */
   readonly key: string;
+  /**
+   * Runs the schema of the field: the value, or a `Rejection`.
+   */
   readonly run: (value: unknown) => unknown;
+  /**
+   * Whether the field may be missing.
+   */
   readonly optional: boolean;
+  /**
+   * The JSON Schema of the field, without its `$schema`.
+   */
   readonly describe: (
     side: 'input' | 'output',
     options: StandardJSONSchemaV1.Options,
@@ -233,7 +247,7 @@ const describeObject =
   });
 
 /**
- * Internal: how an `n.object()` schema runs and describes itself: every field through its own
+ * How an `n.object()` schema runs and describes itself: every field through its own
  * schema, all issues collected, unknown keys dropped or, when `strict`, refused, the constraints
  * once every field passed. The result is a new object, read-only by type; a nominal type built on
  * it freezes it.
@@ -241,6 +255,8 @@ const describeObject =
  * @remarks
  * Where code generation is allowed, each object runs one function generated for its fields, with
  * a call site of its own per field.
+ *
+ * @internal
  */
 export const objectShape = (
   fields: readonly ObjectField[],

@@ -23,14 +23,18 @@ const earliest = -62_167_219_200_000;
 const latest = 253_402_300_799_999;
 
 /**
- * Internal: whether a moment is one an `Instant` holds, its UTC text in the years 0000 to 9999.
+ * Whether a moment is one an `Instant` holds, its UTC text in the years 0000 to 9999.
+ *
+ * @internal
  */
 export const isInstantInRange = (value: { readonly epochMilliseconds: number }): boolean =>
   value.epochMilliseconds >= earliest && value.epochMilliseconds <= latest;
 
 /**
- * Internal: the epoch nanoseconds of a `date-time` with a numeric offset or `Z` that the pattern
+ * The epoch nanoseconds of a `date-time` with a numeric offset or `Z` that the pattern
  * has checked, so that building the value skips a second parse of the text.
+ *
+ * @internal
  */
 export const epochNanosecondsOf = (text: string): bigint => {
   const [year, month, day] = dateFields(text);
@@ -77,12 +81,18 @@ const InstantBase: NominalType<
  *
  * @example
  * ```ts
+ * import { Instant } from '@horizon-republic/nominal-types/temporal';
+ *
  * const sent = new Instant('2024-05-01T11:30:00+02:00');
  * sent.toJSON(); // '2024-05-01T09:30:00Z'
  * Temporal.Instant.compare(sent.value, new Instant('2024-05-01T10:00:00Z').value); // -1
  * ```
  */
 export class Instant extends InstantBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Instant>;
 
   /**
@@ -96,6 +106,8 @@ export class Instant extends InstantBase {
 
   /**
    * The same moment as a `Date`, for APIs that take one; anything below a millisecond is dropped.
+   *
+   * @returns A new `Date`.
    */
   public toDate(): Date {
     return new Date(this.value.epochMilliseconds);
@@ -104,6 +116,9 @@ export class Instant extends InstantBase {
   /**
    * Whether the other value is the same moment, whatever offset each was written with, and belongs
    * to this type, a type under it or the type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return inOneLine(this, other) && other instanceof Instant && this.value.equals(other.value);
@@ -111,6 +126,8 @@ export class Instant extends InstantBase {
 
   /**
    * The moment in UTC, as `2024-05-01T09:30:00Z`.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -118,6 +135,8 @@ export class Instant extends InstantBase {
 
   /**
    * The moment in UTC, as `toJSON()` writes it.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -126,6 +145,10 @@ export class Instant extends InstantBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two instants would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

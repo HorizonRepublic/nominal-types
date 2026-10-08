@@ -1,7 +1,9 @@
 import type { IpBits } from './ip-text.ts';
 
 /**
- * Internal: the address as bytes in network order, 4 for IPv4 and 16 for IPv6.
+ * The address as bytes in network order, 4 for IPv4 and 16 for IPv6.
+ *
+ * @internal
  */
 export const bytesOf = (bits: IpBits): Uint8Array => {
   const bytes = new Uint8Array(bits.groups.length * 2);
@@ -18,7 +20,9 @@ const dottedOf = (high: number, low: number): string =>
   `${String(high >> 8)}.${String(high & 0xff)}.${String(low >> 8)}.${String(low & 0xff)}`;
 
 /**
- * Internal: whether an IPv6 address is IPv4-mapped, `::ffff:0:0/96`.
+ * Whether an IPv6 address is IPv4-mapped, `::ffff:0:0/96`.
+ *
+ * @internal
  */
 export const isMapped = (bits: IpBits): boolean => {
   const { groups } = bits;
@@ -35,7 +39,9 @@ export const isMapped = (bits: IpBits): boolean => {
 };
 
 /**
- * Internal: the IPv4 address in two groups of an IPv6 address, the last two unless told otherwise.
+ * The IPv4 address in two groups of an IPv6 address, the last two unless told otherwise.
+ *
+ * @internal
  */
 export const ipv4Inside = (bits: IpBits, at = 6): IpBits => ({
   version: 4,
@@ -63,9 +69,11 @@ const hexOf = (groups: Uint16Array, from: number, to: number): string =>
   Array.from(groups.subarray(from, to), (group) => group.toString(16)).join(':');
 
 /**
- * Internal: the address as RFC 5952 §4 writes it: lowercase, no leading zeros, the longest run of
+ * The address as RFC 5952 §4 writes it: lowercase, no leading zeros, the longest run of
  * two or more zero groups shortened to `::`, the first of equal runs, and an IPv4-mapped address
  * with its IPv4 part dotted (§5). IPv4 text has one form only.
+ *
+ * @internal
  */
 export const textOf = (bits: IpBits): string => {
   const { groups } = bits;
@@ -86,7 +94,9 @@ export const textOf = (bits: IpBits): string => {
 };
 
 /**
- * Internal: the bits of the group at `index` that a prefix of `length` bits covers.
+ * The bits of the group at `index` that a prefix of `length` bits covers.
+ *
+ * @internal
  */
 export const maskOf = (length: number, index: number): number => {
   const bits = Math.min(16, Math.max(0, length - index * 16));
@@ -95,7 +105,9 @@ export const maskOf = (length: number, index: number): number => {
 };
 
 /**
- * Internal: whether two addresses are of one family and agree in their first `length` bits.
+ * Whether two addresses are of one family and agree in their first `length` bits.
+ *
+ * @internal
  */
 export const samePrefix = (left: IpBits, right: IpBits, length: number): boolean =>
   left.version === right.version &&

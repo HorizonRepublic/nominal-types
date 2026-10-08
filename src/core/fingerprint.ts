@@ -1,8 +1,10 @@
 import type { NominalSchema } from './contracts.ts';
 
 /**
- * Internal: what tells two rules apart when two types share a name: the pattern, the description
+ * What tells two rules apart when two types share a name: the pattern, the description
  * or the vendor of the rule.
+ *
+ * @internal
  */
 export const fingerprintOf = (rule: NominalSchema | undefined): string => {
   if (rule === undefined) {

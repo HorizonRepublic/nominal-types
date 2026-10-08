@@ -27,15 +27,19 @@ import type { StandardProps } from './standard-schema.ts';
 import type { TextForm } from './text-form.ts';
 
 /**
- * Internal: whether a schema accepts an array at its top, also behind `optional()` and
+ * Whether a schema accepts an array at its top, also behind `optional()` and
  * `nullable()`, so an adapter can wrap a lone value from a query string.
+ *
+ * @internal
  */
 export const isArraySchema = (value: unknown): boolean =>
   typeof value === 'object' && value !== null && shared.arraySchemas.has(value);
 
 /**
- * Internal: whether a value is a schema built by `n.of()`, including one from another copy of
+ * Whether a value is a schema built by `n.of()`, including one from another copy of
  * this package.
+ *
+ * @internal
  */
 export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unknown> =>
   typeof value === 'object' &&
@@ -52,8 +56,24 @@ export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unkno
  * Each method returns a new schema and leaves this one as it is, so a schema can be shared and
  * extended freely. The methods read left to right: `n.of(Uuid).array().optional()` is an
  * optional array, `n.of(Uuid).optional().array()` an array of optional items.
+ *
+ * @typeParam Input - The type of the values the schema accepts.
+ * @typeParam Output - The type of the value the schema gives back.
+ *
+ * @example
+ * ```ts
+ * import { n, Uuid } from '@horizon-republic/nominal-types';
+ *
+ * const OrderIds = n.of(Uuid).array({ max: 100 });
+ *
+ * OrderIds.accepts(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // true
+ * ```
  */
 export class TypeSchema<Input, Output> {
+  /**
+   * The Standard Schema and Standard JSON Schema properties, which let libraries such as tRPC,
+   * Hono and OpenAPI generators use the schema.
+   */
   public readonly '~standard': StandardProps<Input, Output>;
   #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
@@ -63,9 +83,11 @@ export class TypeSchema<Input, Output> {
   #build: (() => BuiltParts<Output>) | undefined;
 
   /**
-   * Internal: built by `n.of()` and the methods below from its shape and the paths that know it,
+   * Built by `n.of()` and the methods below from its shape and the paths that know it,
    * or from a function that builds them at the first use; `name` is the function that built it,
    * for the message of `parseAsync()`.
+   *
+   * @internal
    */
   public constructor(
     parts: BuiltParts<Output> | (() => BuiltParts<Output>),
@@ -114,8 +136,13 @@ export class TypeSchema<Input, Output> {
   /**
    * Checks a value without throwing: the result, or the issues that prevented it.
    *
+   * @param input - The value to check.
+   * @returns `{ ok: true, value }` with the value, or `{ ok: false, issues }`.
+   *
    * @example
    * ```ts
+   * import { n, Uuid } from '@horizon-republic/nominal-types';
+   *
    * n.of(Uuid).array().parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']);
    * // { ok: false, issues: [{ message: 'must be a UUID (was "nope")', path: [1] }] }
    * ```
@@ -137,10 +164,16 @@ export class TypeSchema<Input, Output> {
    * value with `BAD_REQUEST`. In your own code, read the result of `parse()`, which builds no
    * exception.
    *
+   * @param input - The value to check.
+   * @returns A Promise of the value, rejected with a `NominalError` for a bad value.
+   *
    * @example
    * ```ts
+   * import { Email, n } from '@horizon-republic/nominal-types';
+   *
    * await n.object({ customer: Email }).parseAsync({ customer: 'jane' });
-   * // rejects: NominalError: n.object(): customer: must be an email address (was a string of 4 characters)
+   * // rejects: NominalError: n.object(): customer: must be an email address
+   * // (was a string of 4 characters)
    * ```
    */
   public parseAsync(input: unknown): Promise<Output> {
@@ -155,8 +188,13 @@ export class TypeSchema<Input, Output> {
    * A constructor of your own is not run, so a type whose constructor changes or refuses the input
    * can disagree with `parse()`. The answer doesn't narrow the input's type.
    *
+   * @param input - The value to check.
+   * @returns `true` when `parse()` would accept the input.
+   *
    * @example
    * ```ts
+   * import { n, Uuid } from '@horizon-republic/nominal-types';
+   *
    * n.of(Uuid).array({ max: 10 }).accepts(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // true
    * ```
    */
@@ -174,8 +212,15 @@ export class TypeSchema<Input, Output> {
    * doesn't describe, such as a field from another library, go through `n.plain()`. The value is
    * not changed.
    *
+   * @param value - A value this schema gave, such as the `value` of a successful `parse()`.
+   * @returns A new value with plain values in place of the instances.
+   *
    * @example
    * ```ts
+   * import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * declare const body: unknown;
+   *
    * const Order = n.object({ id: Uuid, quantity: PositiveInteger });
    * const order = Order.parse(body);
    *
@@ -197,10 +242,16 @@ export class TypeSchema<Input, Output> {
    * schema doesn't describe, such as a field from another library or an instance whose `value` was
    * changed, go through `JSON.stringify()`, so the text is the same.
    *
-   * @throws TypeError for a value JSON has no text for, such as `undefined`.
+   * @param value - A value this schema gave, such as the `value` of a successful `parse()`.
+   * @returns The JSON text.
+   * @throws {@link TypeError} when JSON has no text for the value, such as `undefined`.
    *
    * @example
    * ```ts
+   * import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * declare const body: unknown;
+   *
    * const Order = n.object({ id: Uuid, quantity: PositiveInteger });
    * const order = Order.parse(body);
    *
@@ -220,13 +271,17 @@ export class TypeSchema<Input, Output> {
    * `unique: true`, an item equal to an earlier one is refused once every item is valid, compared
    * as `equals()` compares them, and the issue carries the index of the repeat.
    *
-   * @throws TypeError when the counts are not whole numbers from 0 up, `length` is mixed with `min`
-   * or `max`, `min` is above `max`, or `unique` is not a boolean.
+   * @param options - Limits on the number of items, and whether items must be unique.
+   * @returns A new schema for an array of this schema's values.
+   * @throws {@link TypeError} when the counts are not whole numbers from 0 up, `length` is mixed
+   * with `min` or `max`, `min` is above `max`, or `unique` is not a boolean.
    *
    * @example
    * ```ts
+   * import { n, Url, Uuid } from '@horizon-republic/nominal-types';
+   *
    * n.of(Url).array({ max: 10 });
-   * n.of(UserId).array({ length: 3 });
+   * n.of(Uuid).array({ length: 3 });
    * n.of(Uuid).array({ unique: true });
    * ```
    */
@@ -254,12 +309,15 @@ export class TypeSchema<Input, Output> {
    * take text already. Call it on `n.of(Type)` itself, before `array()`, `optional()` or
    * `nullable()`.
    *
-   * @throws TypeError when called after another method, or for a type with no text form, such as
-   * one declared from scratch with `Nominal()`.
+   * @returns A new schema that also takes the value as text.
+   * @throws {@link TypeError} when called after another method, or for a type with no text form,
+   * such as one declared from scratch with `Nominal()`.
    *
    * @example
    * ```ts
-   * n.of(Port).fromString().parse(process.env.PORT);
+   * import { n, Port, PositiveInteger } from '@horizon-republic/nominal-types';
+   *
+   * n.of(Port).fromString().parse(process.env['PORT']);
    * n.of(PositiveInteger).fromString().array();
    * ```
    */
@@ -288,6 +346,15 @@ export class TypeSchema<Input, Output> {
    * @remarks
    * JSON has no `undefined`, so the JSON Schema is that of the value; a missing property is
    * expressed by leaving it out of `required` in the object around it.
+   *
+   * @returns A new schema that also accepts `undefined`.
+   *
+   * @example
+   * ```ts
+   * import { n, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * n.of(Uuid).optional().parse(undefined); // { ok: true, value: undefined }
+   * ```
    */
   public optional(): TypeSchema<Input | undefined, Output | undefined> {
     const { shape, paths } = this.#settled();
@@ -307,6 +374,15 @@ export class TypeSchema<Input, Output> {
    * @remarks
    * In JSON Schema it becomes an `anyOf` with `{ type: 'null' }`; for OpenAPI 3.0, which has no
    * `null` type, the value's schema with `nullable: true`.
+   *
+   * @returns A new schema that also accepts `null`.
+   *
+   * @example
+   * ```ts
+   * import { n, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * n.of(Uuid).nullable().parse(null); // { ok: true, value: null }
+   * ```
    */
   public nullable(): TypeSchema<Input | null, Output | null> {
     const { shape, paths } = this.#settled();

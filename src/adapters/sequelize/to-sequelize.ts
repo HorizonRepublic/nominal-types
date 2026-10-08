@@ -10,6 +10,10 @@ import { jsonTextOf, readerOf, writerOf } from '../orm/values.ts';
 /**
  * Options of `toSequelize()`: the storage options and any Sequelize attribute option, such as
  * `allowNull`, `unique`, `field` or a `type` of your own.
+ *
+ * @typeParam Instance - The instance the attribute holds.
+ *
+ * @see {@link toSequelize}
  */
 export type SequelizeOptions<Instance> = StorageOptions<Instance> &
   Partial<Omit<ModelAttributeColumnOptions, 'get' | 'set'>>;
@@ -54,8 +58,25 @@ const dataTypeOf = (column: ColumnKind): DataType => {
  * `trusted`. Sequelize doesn't run attribute setters on `where` values: compare with what is
  * stored, such as `email.value`.
  *
+ * @typeParam Target - The nominal type the attribute holds.
+ * @param target - The nominal type of the attribute.
+ * @param options - The storage options and any Sequelize attribute option.
+ * @returns An attribute to pass to `Model.init()`.
+ *
  * @example
  * ```ts
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { toSequelize } from '@horizon-republic/nominal-types/adapters/sequelize';
+ * import { Model } from 'sequelize';
+ * import type { Sequelize } from 'sequelize';
+ *
+ * declare const sequelize: Sequelize;
+ *
+ * class User extends Model {
+ *   declare public email: Email;
+ *   declare public referrer: Uuid | null;
+ * }
+ *
  * User.init(
  *   {
  *     email: toSequelize(Email),

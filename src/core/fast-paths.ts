@@ -32,12 +32,23 @@ import type { TextForm } from './text-form.ts';
 export type { Plain } from './plain.ts';
 
 /**
- * Internal: what a schema built by `n.of()` or `n.object()` does besides running, generated for
+ * What a schema built by `n.of()` or `n.object()` does besides running, generated for
  * its shape: write a value it gave as plain values, and check an input without building a value.
+ *
+ * @internal
  */
 export interface FastPaths {
+  /**
+   * Turns a value the schema gave into plain values.
+   */
   readonly write: Write;
+  /**
+   * Checks an input without building a value.
+   */
   readonly accepts: Accepts;
+  /**
+   * How a value the schema gave is written as JSON text.
+   */
   readonly plan: Plan;
   /**
    * What the schema is made of, a shape naming the paths of the schema it is around.
@@ -46,8 +57,10 @@ export interface FastPaths {
 }
 
 /**
- * Internal: records a schema's paths, so an object that holds the schema as a field calls them
+ * Records a schema's paths, so an object that holds the schema as a field calls them
  * directly.
+ *
+ * @internal
  */
 export const registerPaths = (schema: object, paths: FastPaths): void => {
   writers.set(schema, paths.write);
@@ -57,8 +70,10 @@ export const registerPaths = (schema: object, paths: FastPaths): void => {
 };
 
 /**
- * Internal: the plan of a field or a variant: its schema's own when it has one, writing through
+ * The plan of a field or a variant: its schema's own when it has one, writing through
  * its plain copy otherwise.
+ *
+ * @internal
  */
 export const planOf = (field: unknown): Plan => {
   if (isNominalType(field)) {
@@ -73,8 +88,10 @@ export const planOf = (field: unknown): Plan => {
 };
 
 /**
- * Internal: the function `stringify()` of a schema calls, generated for its plan; without code
+ * The function `stringify()` of a schema calls, generated for its plan; without code
  * generation, its plain copy goes to `JSON.stringify()`.
+ *
+ * @internal
  */
 export const stringifyFor = ({ plan, write }: FastPaths): ((value: unknown) => string) => {
   const stringify = stringifierOf(plan, ownTypes, (value) => JSON.stringify(write(value)));
@@ -83,7 +100,9 @@ export const stringifyFor = ({ plan, write }: FastPaths): ((value: unknown) => s
 };
 
 /**
- * Internal: the paths of `n.of(type)`.
+ * The paths of `n.of(type)`.
+ *
+ * @internal
  */
 export const typePaths = (type: AnyNominalType): FastPaths => ({
   write: instanceWriter(),
@@ -93,8 +112,10 @@ export const typePaths = (type: AnyNominalType): FastPaths => ({
 });
 
 /**
- * Internal: the paths of an array of `item`; with `unique`, the check builds the values, since
+ * The paths of an array of `item`; with `unique`, the check builds the values, since
  * repeats are found among them.
+ *
+ * @internal
  */
 export const arrayPaths = (
   item: FastPaths,
@@ -120,17 +141,23 @@ const emptyOrPaths = (item: FastPaths, empty?: null): FastPaths => ({
 });
 
 /**
- * Internal: the paths of `item` or `undefined`.
+ * The paths of `item` or `undefined`.
+ *
+ * @internal
  */
 export const optionalPaths = (item: FastPaths): FastPaths => emptyOrPaths(item);
 
 /**
- * Internal: the paths of `item` or `null`.
+ * The paths of `item` or `null`.
+ *
+ * @internal
  */
 export const nullablePaths = (item: FastPaths): FastPaths => emptyOrPaths(item, null);
 
 /**
- * Internal: the paths of `item` reading a string through a text form first.
+ * The paths of `item` reading a string through a text form first.
+ *
+ * @internal
  */
 export const textPaths = (item: FastPaths, form: TextForm): FastPaths => ({
   write: item.write,
@@ -140,8 +167,10 @@ export const textPaths = (item: FastPaths, form: TextForm): FastPaths => ({
 });
 
 /**
- * Internal: the paths of an `n.object()` schema; with constraints, the check builds the values,
+ * The paths of an `n.object()` schema; with constraints, the check builds the values,
  * since the constraints read them.
+ *
+ * @internal
  */
 export const objectPaths = (
   fields: ReadonlyArray<{ readonly key: string; readonly optional: boolean }>,

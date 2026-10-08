@@ -4,7 +4,9 @@ import { NominalError } from './nominal-error.ts';
 import type { ObjectMembers } from './object-rule.ts';
 
 /**
- * Internal: the name of the method that returns a changed copy of an object instance.
+ * The name of the method that returns a changed copy of an object instance.
+ *
+ * @internal
  */
 export const copyMethod = 'copyWith';
 
@@ -55,9 +57,11 @@ const defineObjectMembers = (prototype: object, keys: readonly string[]): void =
 };
 
 /**
- * Internal: what a type built on `n.object()` gets from the schema: a getter for each field and
+ * What a type built on `n.object()` gets from the schema: a getter for each field and
  * the copy method on its instances, and a `TypeError` for a constraint given to `subtype()` or
  * `variant()` that reads a field the object doesn't declare.
+ *
+ * @internal
  */
 export const objectMembers: ObjectMembers = {
   define: defineObjectMembers,

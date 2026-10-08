@@ -74,6 +74,9 @@ const entry = {
   'adapters/fastify/index': 'src/adapters/fastify/index.ts',
 };
 
+// The JS keeps the comments a bundler reads, `@__PURE__` and licenses; TSDoc lives in the declarations.
+const jsComments = { legal: true, annotation: true, jsdoc: false };
+
 const shared = {
   platform: 'neutral',
   target: 'es2022',
@@ -100,6 +103,7 @@ const forBundlers: UserConfig = {
   outputOptions: (options, format, { cjsDts }) => ({
     ...options,
     sourcemapExcludeSources: true,
+    comments: jsComments,
     ...(format === 'es' && !cjsDts ? moduleChunks : {}),
   }),
   clean: true,
@@ -116,7 +120,7 @@ const forNode: UserConfig = {
   format: 'esm',
   outDir: 'dist/node',
   dts: false,
-  outputOptions: (options) => ({ ...options, sourcemapExcludeSources: true }),
+  outputOptions: (options) => ({ ...options, sourcemapExcludeSources: true, comments: jsComments }),
   clean: false,
   publint: true,
   attw: { profile: 'strict', level: 'error' },

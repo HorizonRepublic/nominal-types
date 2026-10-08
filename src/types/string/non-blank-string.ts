@@ -22,8 +22,20 @@ const NonBlankStringBase: SubtypeOf<typeof NonEmptyString, 'nominal.NonBlankStri
  * from what `String.prototype.trim()` removes: U+0085 (next line) counts as white space here, and
  * U+FEFF (byte order mark) and U+200B (zero-width space) do not. The value is kept as given and
  * never trimmed.
+ *
+ * @example
+ * ```ts
+ * import { NonBlankString } from '@horizon-republic/nominal-types';
+ *
+ * const title = new NonBlankString('  Draft  ');
+ * title.value; // '  Draft  '
+ * NonBlankString.accepts('   '); // false
+ * ```
  */
 export class NonBlankString extends NonBlankStringBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonBlankString>;
 
   /**

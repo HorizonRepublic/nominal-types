@@ -21,21 +21,29 @@ const ipv6 = [
 ].join('|');
 
 /**
- * Internal: IPv4 dotted-quad text as a pattern source.
+ * IPv4 dotted-quad text as a pattern source.
+ *
+ * @internal
  */
 export const ipv4Source: string = `^${ipv4}$`;
 
 /**
- * Internal: IPv6 text as a pattern source.
+ * IPv6 text as a pattern source.
+ *
+ * @internal
  */
 export const ipv6Source: string = `^(?:${ipv6})$`;
 
 /**
- * Internal: an IPv4 prefix as a pattern source, lengths 0 to 32.
+ * An IPv4 prefix as a pattern source, lengths 0 to 32.
+ *
+ * @internal
  */
 export const ipv4PrefixSource: string = `^${ipv4}/(?:3[0-2]|[12]?[0-9])$`;
 
 /**
- * Internal: an IPv6 prefix as a pattern source, lengths 0 to 128.
+ * An IPv6 prefix as a pattern source, lengths 0 to 128.
+ *
+ * @internal
  */
 export const ipv6PrefixSource: string = `^(?:${ipv6})/(?:12[0-8]|1[01][0-9]|[1-9]?[0-9])$`;

@@ -6,7 +6,18 @@ import { settings } from './settings.ts';
 const inspectKey = Symbol.for('nodejs.util.inspect.custom');
 
 interface InspectOptions {
+  /**
+   * How many levels deep the runtime still shows nested values.
+   *
+   * @defaultValue The depth of the runtime, `2` in Node.js.
+   */
   readonly depth?: number | null | undefined;
+
+  /**
+   * Colours a piece of text in the style the runtime names, such as `'string'`.
+   *
+   * @defaultValue The text stays as it is.
+   */
   readonly stylize?: (text: string, style: string) => string;
 }
 
@@ -63,10 +74,12 @@ const inspectInstance = function inspectInstance(
 };
 
 /**
- * Internal: gives instances the form `console.log` shows in Node.js and Bun,
+ * Gives instances the form `console.log` shows in Node.js and Bun,
  * `Uuid { value: '0190f1c2-…' }`, with the value of a sensitive type left out:
  * `Email { value: <hidden, a string of 16 characters> }`, and of every type with
  * `n.configure({ inspect: 'hide' })`.
+ *
+ * @internal
  */
 export const defineInspect = (prototype: object): void => {
   Object.defineProperty(prototype, inspectKey, {

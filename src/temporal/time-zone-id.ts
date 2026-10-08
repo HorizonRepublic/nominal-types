@@ -112,12 +112,18 @@ const TimeZoneIdBase: SubtypeOf<typeof AnyString, 'nominal.TimeZoneId'> = AnyStr
  *
  * @example
  * ```ts
+ * import { TimeZoneId } from '@horizon-republic/nominal-types/temporal';
+ *
  * const zone = new TimeZoneId('europe/paris');
  * zone.canonical().value; // 'Europe/Paris'
  * zone.equals(new TimeZoneId('Europe/Paris')); // true
  * ```
  */
 export class TimeZoneId extends TimeZoneIdBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof TimeZoneId>;
 
   /**
@@ -137,6 +143,8 @@ export class TimeZoneId extends TimeZoneIdBase {
    * @remarks
    * Which name is primary comes from the runtime's time zone data: Node.js 24 gives
    * `Europe/Kiev` for `Europe/Kyiv`, so store the name as it came and use this to compare.
+   *
+   * @returns A new value of this type that holds the primary name.
    */
   public canonical(): this {
     return sameType(this, canonicalOf(this.value));
@@ -145,6 +153,9 @@ export class TimeZoneId extends TimeZoneIdBase {
   /**
    * Whether the other value names the same zone, as `canonical()` finds it, and belongs to this
    * type, a type under it or the type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return (

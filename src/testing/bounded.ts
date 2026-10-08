@@ -2,7 +2,9 @@ import { Arbitrary } from 'fast-check';
 import type { Random, Stream, Value } from 'fast-check';
 
 /**
- * Internal: how many generated values in a row may fail before generation gives up.
+ * How many generated values in a row may fail before generation gives up.
+ *
+ * @internal
  */
 export const attempts = 1000;
 
@@ -42,8 +44,10 @@ class BoundedFilter<Item> extends Arbitrary<Item> {
 }
 
 /**
- * Internal: the values of `source` that `keep` approves; after `attempts` refusals in a row,
+ * The values of `source` that `keep` approves; after `attempts` refusals in a row,
  * generation throws an error with the message `failure`.
+ *
+ * @internal
  */
 export const bounded = <Item>(
   source: Arbitrary<Item>,
@@ -52,7 +56,9 @@ export const bounded = <Item>(
 ): Arbitrary<Item> => new BoundedFilter(source, keep, failure);
 
 /**
- * Internal: the message for a target that refused every value made for it.
+ * The message for a target that refused every value made for it.
+ *
+ * @internal
  */
 export const refusedBy = (target: string): string =>
   `arbitraryOf(): ${target} refused ${attempts} generated values in a row, so its rules or constraints refuse almost everything the generator makes. Pass a generator of your own: { overrides: new Map([[schema, arbitrary]]) }`;

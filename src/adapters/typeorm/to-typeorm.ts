@@ -9,6 +9,10 @@ import { jsonTextOf, readerOf, writerOf } from '../orm/values.ts';
 /**
  * Options of `toTypeOrm()`: the storage options and any TypeORM column option, such as `nullable`,
  * `unique` or a `type` of your own.
+ *
+ * @typeParam Instance - The instance the column holds.
+ *
+ * @see {@link toTypeOrm}
  */
 export type TypeOrmOptions<Instance> = StorageOptions<Instance> &
   Omit<ColumnOptions, 'transformer'>;
@@ -54,8 +58,17 @@ const columnOptions = (column: ColumnKind): ColumnOptions => {
  * values in find conditions, where plain values are checked into instances first. Stored values are
  * checked when read, unless `trusted`.
  *
+ * @typeParam Target - The nominal type the column holds.
+ * @param target - The nominal type of the entity property.
+ * @param options - The storage options and any TypeORM column option.
+ * @returns Column options to pass to TypeORM's `@Column()`.
+ *
  * @example
  * ```ts
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { toTypeOrm } from '@horizon-republic/nominal-types/adapters/typeorm';
+ * import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+ *
  * @Entity()
  * export class User {
  *   @PrimaryGeneratedColumn() id!: number;

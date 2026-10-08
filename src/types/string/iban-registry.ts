@@ -1,11 +1,13 @@
 /**
- * Internal: the BBAN of every country in the SWIFT IBAN Registry, release 101 (current in January
+ * The BBAN of every country in the SWIFT IBAN Registry, release 101 (current in January
  * 2026), by country code.
  *
  * @remarks
  * Written as the registry writes it: a length and `n` for digits, `a` for upper-case letters, `c`
  * for letters and digits. A territory that uses the IBAN of its country, such as GF or AX, writes
  * FR or FI in front.
+ *
+ * @internal
  */
 export const ibanRegistry: Readonly<Record<string, string>> = {
   AD: '4n4n12c',
@@ -103,11 +105,13 @@ const zero = 48;
 const letterA = 65;
 
 /**
- * Internal: ISO 7064 MOD 97-10 of an IBAN with its first four characters moved to the end and each
+ * ISO 7064 MOD 97-10 of an IBAN with its first four characters moved to the end and each
  * letter written as two digits, `A` as 10 to `Z` as 35; 1 for valid check digits.
  *
  * @remarks
  * The remainder is carried through, so no number grows past a few digits.
+ *
+ * @internal
  */
 export const ibanRemainderOf = (text: string): number => {
   const moved = text.slice(4) + text.slice(0, 4);
@@ -126,7 +130,9 @@ export const ibanRemainderOf = (text: string): number => {
 };
 
 /**
- * Internal: the two check digits ISO 13616-1 computes for a country and a BBAN.
+ * The two check digits ISO 13616-1 computes for a country and a BBAN.
+ *
+ * @internal
  */
 export const ibanCheckDigits = (country: string, bban: string): string =>
   String(98 - ibanRemainderOf(`${country}00${bban}`)).padStart(2, '0');

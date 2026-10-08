@@ -35,11 +35,16 @@ const IpPrefixBase: SubtypeOf<typeof AnyString, 'nominal.IpPrefix'> = AnyString.
  *
  * @example
  * ```ts
+ * import { IpAddress, IpPrefix } from '@horizon-republic/nominal-types';
+ *
  * const network = new IpPrefix('10.0.0.0/8');
  * network.contains(new IpAddress('10.1.2.3')); // true
  * ```
  */
 export class IpPrefix extends IpPrefixBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof IpPrefix>;
 
   /**
@@ -64,8 +69,13 @@ export class IpPrefix extends IpPrefixBase {
   }
 
   /**
-   * Whether an address, or every address of another prefix, lies in this network. An address of the
-   * other IP version is never in it, IPv4-mapped ones included.
+   * Whether an address, or every address of another prefix, lies in this network.
+   *
+   * @remarks
+   * An address of the other IP version is never in it, IPv4-mapped ones included.
+   *
+   * @param other - The address or the prefix to look for.
+   * @returns `true` when all of it lies in this network.
    */
   public contains(other: IpAddress | IpPrefix): boolean {
     const network = networkOf(this.value);
@@ -81,6 +91,8 @@ export class IpPrefix extends IpPrefixBase {
 
   /**
    * The prefix with its address written as RFC 5952 recommends, such as `2001:db8::/32`.
+   *
+   * @returns A prefix of the same class.
    */
   public canonical(): this {
     return sameType(this, canonicalPrefix(this.value));
@@ -89,6 +101,9 @@ export class IpPrefix extends IpPrefixBase {
   /**
    * Whether the other value is the same network, however its address is written, and belongs to
    * this type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same network.
    */
   public override equals(other: unknown): boolean {
     return (

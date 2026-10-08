@@ -26,12 +26,17 @@ const HexColorBase: SubtypeOf<typeof AnyString, 'nominal.HexColor'> = AnyString.
  *
  * @example
  * ```ts
+ * import { HexColor } from '@horizon-republic/nominal-types';
+ *
  * const color = new HexColor('#1E90FF80');
  * color.red; // 30
  * color.canonical().value; // '#1e90ff80'
  * ```
  */
 export class HexColor extends HexColorBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof HexColor>;
 
   /**
@@ -73,6 +78,8 @@ export class HexColor extends HexColorBase {
 
   /**
    * The same color as `#` and six lowercase digits, or eight when it is not fully opaque.
+   *
+   * @returns A color of the same class.
    */
   public canonical(): this {
     const hex = (index: number): string => this.channel(index).toString(16).padStart(2, '0');
@@ -84,6 +91,9 @@ export class HexColor extends HexColorBase {
   /**
    * Whether the other value has the same channels, whatever its notation, and belongs to this
    * type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same color.
    */
   public override equals(other: unknown): boolean {
     return (

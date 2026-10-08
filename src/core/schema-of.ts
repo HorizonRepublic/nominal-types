@@ -18,10 +18,16 @@ import { TypeSchema } from './type-schema.ts';
  * constructs, so they take this object instead. The same object goes to `NominalPipe` and to
  * NestJS's `{ schema }`.
  *
- * @throws TypeError when `type` is not a nominal type.
+ * @typeParam Type - The nominal type.
+ * @param type - The nominal type to wrap.
+ * @returns The schema of the type, with `array()`, `optional()`, `nullable()` and `fromString()`.
+ * @throws {@link TypeError} when `type` is not a nominal type.
  *
  * @example
  * ```ts
+ * import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+ * import { type } from 'arktype';
+ *
  * type({ email: n.of(Email), team: n.of(Uuid) });
  * n.of(Uuid).array({ min: 1, max: 100 });
  * n.of(Email).optional();

@@ -97,13 +97,17 @@ const base64Of = (data: Uint8Array): string => {
 };
 
 /**
- * Internal: bytes as RFC 4648 §5 base64url text, without padding.
+ * Bytes as RFC 4648 §5 base64url text, without padding.
+ *
+ * @internal
  */
 export const base64UrlOf = (data: Uint8Array): string =>
   base64Of(data).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 
 /**
- * Internal: a generator for each built-in string type with a grammar or a check digit, by name.
+ * A generator for each built-in string type with a grammar or a check digit, by name.
+ *
+ * @internal
  */
 export const textArbitraries: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   'nominal.AnyString': () => anyText,

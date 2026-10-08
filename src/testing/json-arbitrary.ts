@@ -13,8 +13,10 @@ const numberAt = (schema: Json, key: string): number | undefined => {
 };
 
 /**
- * Internal: the strings a pattern matches, or `undefined` for syntax fast-check can't generate
+ * The strings a pattern matches, or `undefined` for syntax fast-check can't generate
  * from, such as a lookahead.
+ *
+ * @internal
  */
 export const matchingPattern = (
   pattern: RegExp | string,
@@ -126,9 +128,11 @@ const choiceFrom = (schema: Json, choices: readonly unknown[]): Arbitrary<unknow
 };
 
 /**
- * Internal: values close to what a JSON Schema describes, for a rule that says no more about
+ * Values close to what a JSON Schema describes, for a rule that says no more about
  * itself, or `undefined` when the schema gives too little to go on; the caller filters them by
  * the rule itself.
+ *
+ * @internal
  */
 export const arbitraryFromJson = (schema: unknown): Arbitrary<unknown> | undefined => {
   if (!isJson(schema)) {

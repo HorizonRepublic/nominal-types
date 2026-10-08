@@ -4,9 +4,12 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
- * Internal: the JSON Schema of a field of an object, without its `$schema`.
+ * The JSON Schema of a field of an object, without its `$schema`.
  *
- * @throws TypeError naming `owner` for a field schema that can't describe itself.
+ * @throws {@link TypeError} when the field schema can't describe itself; the message names
+ * `owner`.
+ *
+ * @internal
  */
 export const describeField = (
   field: StandardSchemaV1,

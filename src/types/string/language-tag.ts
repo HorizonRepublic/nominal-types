@@ -89,16 +89,22 @@ const LanguageTagBase: SubtypeOf<typeof AnyString, 'nominal.LanguageTag'> = AnyS
  * every value. The language is two or three letters; extended languages (`zh-yue`, write `yue`),
  * the irregular grandfathered tags (`i-klingon`) and tags of private use alone (`x-mine`) are
  * refused. The check is the package's own and does not depend on the runtime. Whether a subtag is
- * registered is not checked, so `xx-YY` passes. Case is free and kept as given; `equals` ignores it.
+ * registered is not checked, so `xx-YY` passes. Case is free and kept as given; `equals` ignores
+ * it.
  *
  * @example
  * ```ts
+ * import { LanguageTag } from '@horizon-republic/nominal-types';
+ *
  * const tag = new LanguageTag('ZH-hant-tw');
  * tag.region; // 'TW'
  * tag.canonical().value; // 'zh-Hant-TW'
  * ```
  */
 export class LanguageTag extends LanguageTagBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof LanguageTag>;
 
   /**
@@ -146,6 +152,8 @@ export class LanguageTag extends LanguageTagBase {
    *
    * @remarks
    * The aliases come from the runtime's Unicode data, so a newer runtime may replace more of them.
+   *
+   * @returns A tag of the same class.
    */
   public canonical(): this {
     const [canonical = this.value] = Intl.getCanonicalLocales(this.value);
@@ -156,6 +164,9 @@ export class LanguageTag extends LanguageTagBase {
   /**
    * Whether the other value is the same tag, ignoring case, and belongs to this type, a type under
    * it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same tag.
    */
   public override equals(other: unknown): boolean {
     return (

@@ -23,10 +23,13 @@ const ownIssue = (issue: NominalIssue): NominalIssue => {
 };
 
 /**
- * Internal: how a rule from another library runs inside a type, chosen once: the runner of a
+ * How a rule from another library runs inside a type, chosen once: the runner of a
  * `n.of()` schema, or the rule's `validate`, whose messages then follow the `values` setting.
  *
- * @throws TypeError naming the type when the rule answers with a Promise.
+ * @throws {@link TypeError} when the rule answers with a Promise, at the call of the runner; the
+ * message names the type.
+ *
+ * @internal
  */
 export const foreignRunner = (
   rule: NominalSchema,

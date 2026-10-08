@@ -29,10 +29,15 @@ const Ipv4PrefixBase: SubtypeOf<typeof IpPrefix, 'nominal.Ipv4Prefix'> = IpPrefi
  *
  * @example
  * ```ts
+ * import { Ipv4Address, Ipv4Prefix } from '@horizon-republic/nominal-types';
+ *
  * new Ipv4Prefix('192.168.0.0/16').contains(new Ipv4Address('192.168.1.10')); // true
  * ```
  */
 export class Ipv4Prefix extends Ipv4PrefixBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Ipv4Prefix>;
 
   /**
@@ -44,6 +49,8 @@ export class Ipv4Prefix extends Ipv4PrefixBase {
 
   /**
    * The same prefix; IPv4 text has one form only.
+   *
+   * @returns A prefix of the same class.
    */
   public override canonical(): this {
     return sameType(this, this.value);

@@ -36,12 +36,17 @@ const IsinBase: SubtypeOf<typeof AnyString, 'nominal.Isin'> = AnyString.subtype(
  *
  * @example
  * ```ts
+ * import { Isin } from '@horizon-republic/nominal-types';
+ *
  * const isin = new Isin('US0378331005');
  * isin.prefix; // 'US'
  * isin.nsin; // '037833100'
  * ```
  */
 export class Isin extends IsinBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Isin>;
 
   /**

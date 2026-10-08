@@ -1,36 +1,48 @@
 import type { NominalSchema } from './contracts.ts';
 
 /**
- * Internal: where a class keeps the `Symbol.for` key its instances are branded with.
+ * Where a class keeps the `Symbol.for` key its instances are branded with.
+ *
+ * @internal
  */
 export const brandKeySlot: unique symbol = Symbol('brandKey');
 
 /**
- * Internal: on a class made by `Nominal`, `subtype` or `variant`, the class whose rules come before
+ * On a class made by `Nominal`, `subtype` or `variant`, the class whose rules come before
  * its own, or `undefined` for a root.
+ *
+ * @internal
  */
 export const levelSlot: unique symbol = Symbol('levelBase');
 
 /**
- * Internal: on a class declared with the `sensitive` option, whether its rejected values are left
+ * On a class declared with the `sensitive` option, whether its rejected values are left
  * out of messages; a class without its own inherits it from the class it extends.
+ *
+ * @internal
  */
 export const sensitiveSlot: unique symbol = Symbol('sensitive');
 
 /**
- * Internal: on a class declared with the `normalize` option, whether it follows the `normalize`
+ * On a class declared with the `normalize` option, whether it follows the `normalize`
  * setting of `n.configure()`; a class without its own inherits it from the class it extends.
+ *
+ * @internal
  */
 export const normalizeSlot: unique symbol = Symbol('normalize');
 
 /**
- * Internal: on a variant, the brand keys of the level it was made from.
+ * On a variant, the brand keys of the level it was made from.
+ *
+ * @internal
  */
 export const variantSourceSlot: unique symbol = Symbol('variantSource');
 
 /**
- * Internal: on a class declared with the `implies` option, the brand keys its level adds besides
+ * On a class declared with the `implies` option, the brand keys its level adds besides
  * its own, which a variant of the level drops with it.
+ *
+ * @internal
  */
 export const impliedSlot: unique symbol = Symbol('implied');
 
@@ -47,6 +59,8 @@ const isSchema = (value: unknown): value is NominalSchema =>
 
 /**
  * Whether a value is the root class or a class extending it.
+ *
+ * @internal
  */
 export const isLevel = (root: object, value: unknown): value is object =>
   value === root ||
@@ -55,6 +69,8 @@ export const isLevel = (root: object, value: unknown): value is object =>
 /**
  * The rules a class validates with, from the root down: every level's own `rule`, starting over
  * where a variant replaced its source's level.
+ *
+ * @internal
  */
 export const rulesOf = (root: object, target: object): readonly NominalSchema[] => {
   if (target === root) {
@@ -73,6 +89,8 @@ export const rulesOf = (root: object, target: object): readonly NominalSchema[] 
 /**
  * The level a class belongs to: the class its level builds on, the brand keys the level adds, and
  * the brand keys it adds through `implies`.
+ *
+ * @internal
  */
 export const levelOf = (
   root: object,
@@ -112,6 +130,8 @@ export const levelOf = (
 /**
  * The brand keys the instances of a type carry: its own, those of the types above it and those it
  * implies, read from the prototype so a type from another copy of the package answers too.
+ *
+ * @internal
  */
 export const brandsCarried = (prototype: object, prefix: string): readonly symbol[] => {
   const found = new Set<symbol>();
@@ -132,6 +152,8 @@ export const brandsCarried = (prototype: object, prefix: string): readonly symbo
 
 /**
  * Whether an instance belongs to a type up the chain of `target`, which makes it narrowable.
+ *
+ * @internal
  */
 export const descendsFrom = (root: object, target: object, instance: object): boolean => {
   let ancestor: unknown = Object.getPrototypeOf(target);
@@ -162,6 +184,8 @@ const variantSourcesOf = (root: object, target: unknown): readonly unknown[] => 
 /**
  * Whether `target` and the instance's type are a variant and the type it was made from, in either
  * direction, which makes the instance convertible by its value.
+ *
+ * @internal
  */
 export const isVariantPair = (root: object, target: object, instance: object): boolean => {
   const own = ownKeyOf(root, target);

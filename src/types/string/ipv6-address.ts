@@ -34,23 +34,31 @@ const Ipv6AddressBase: SubtypeOf<typeof IpAddress, 'nominal.Ipv6Address'> = IpAd
  *
  * @example
  * ```ts
+ * import { Ipv6Address } from '@horizon-republic/nominal-types';
+ *
  * new Ipv6Address('2001:0DB8::0001').canonical().value; // '2001:db8::1'
  * ```
  */
 export class Ipv6Address extends Ipv6AddressBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Ipv6Address>;
 
   /**
    * The address as RFC 5952 writes it: lowercase, no leading zeros, the longest run of zero groups
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`.
+   *
+   * @returns An address of the same class.
    */
   public override canonical(): this {
     return sameType(this, textOf(bitsOf(this.value)));
   }
 
   /**
-   * The IPv4 address an IPv4-mapped address (`::ffff:0:0/96`) carries, or `undefined` for any
-   * other address.
+   * The IPv4 address an IPv4-mapped address (`::ffff:0:0/96`) carries.
+   *
+   * @returns The IPv4 address, or `undefined` for any other address.
    */
   public toIpv4(): Ipv4Address | undefined {
     const bits = bitsOf(this.value);

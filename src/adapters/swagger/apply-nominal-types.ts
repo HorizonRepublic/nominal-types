@@ -7,7 +7,13 @@ import { typeForSchemaName, typeNamed } from '../../core/registry.ts';
  * The part of an OpenAPI document this adapter reads and fills.
  */
 export interface OpenApiDocument {
+  /**
+   * The OpenAPI version the document follows, such as `3.0.0`.
+   */
   readonly openapi?: string;
+  /**
+   * The reusable parts of the document, whose `schemas` this adapter fills.
+   */
   readonly components?: { readonly schemas?: Readonly<Record<string, unknown>> } | undefined;
 }
 
@@ -113,9 +119,24 @@ const withTypes = (value: unknown, schemas: Node): unknown => {
  * type's schema made of `allOf` parts, such as `UuidV4`'s, gets back the top-level `type`
  * `@nestjs/swagger` drops, wherever it appears in the document.
  *
+ * @typeParam Document - The type of the document, kept in the result.
+ * @param document - The document `SwaggerModule.createDocument()` made.
+ * @returns A copy of the document with the nominal types' schemas filled in.
+ *
  * @example
  * ```ts
+ * import { Module } from '@nestjs/common';
+ * import { NestFactory } from '@nestjs/core';
+ * import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+ * import { applyNominalTypes } from '@horizon-republic/nominal-types/adapters/swagger';
+ *
+ * @Module({})
+ * class AppModule {}
+ *
+ * const app = await NestFactory.create(AppModule);
+ * const config = new DocumentBuilder().setTitle('Orders').build();
  * const document = applyNominalTypes(SwaggerModule.createDocument(app, config));
+ *
  * SwaggerModule.setup('docs', app, document);
  * ```
  */

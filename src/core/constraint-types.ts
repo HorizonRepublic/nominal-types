@@ -12,6 +12,8 @@ export type ConstraintField = NominalTarget | StandardSchemaV1;
 /**
  * The value a constraint's check receives for a field: an instance, what a `n.of()` schema
  * gives, or the output of another schema.
+ *
+ * @typeParam Field - The type or schema of the field.
  */
 export type ConstraintValue<Field extends ConstraintField> = Field extends NominalTarget
   ? TargetValue<Field>
@@ -21,6 +23,8 @@ export type ConstraintValue<Field extends ConstraintField> = Field extends Nomin
 
 /**
  * The values a constraint's check receives, one for each field it lists.
+ *
+ * @typeParam Fields - The fields the constraint lists.
  */
 export type ConstraintValues<Fields extends Readonly<Record<string, ConstraintField>>> = {
   readonly [Key in keyof Fields]: ConstraintValue<Fields[Key]>;
@@ -28,6 +32,8 @@ export type ConstraintValues<Fields extends Readonly<Record<string, ConstraintFi
 
 /**
  * What a constraint accepts for a field: what its type or schema takes as input.
+ *
+ * @typeParam Field - The type or schema of the field.
  */
 export type ConstraintInput<Field extends ConstraintField> =
   Field extends TypeSchema<infer Input, unknown>
@@ -40,6 +46,8 @@ export type ConstraintInput<Field extends ConstraintField> =
 
 /**
  * What a constraint accepts: an object with an input for each field it lists.
+ *
+ * @typeParam Fields - The fields the constraint lists.
  */
 export type ConstraintInputs<Fields extends Readonly<Record<string, ConstraintField>>> = {
   readonly [Key in keyof Fields]: ConstraintInput<Fields[Key]>;
@@ -53,14 +61,21 @@ export type ConstraintVerdict = boolean | string;
 
 /**
  * Options of `n.constraint()`.
+ *
+ * @typeParam Key - The names of the fields the constraint lists.
  */
 export interface ConstraintOptions<Key extends string> {
   /**
    * The field the issue belongs to, or a path to it; without one, the issue belongs to the object.
+   *
+   * @defaultValue The object itself, with an empty path.
    */
   readonly path?: Key | readonly PropertyKey[];
   /**
    * The message when the check answers `false`.
+   *
+   * @defaultValue `must agree with …` naming the other fields, or `… must agree` naming every
+   * field when the issue belongs to the object.
    */
   readonly message?: string;
 }
@@ -69,6 +84,9 @@ export interface ConstraintOptions<Key extends string> {
  * Any constraint, whatever fields it lists, as adapters take it.
  */
 export interface AnyConstraint {
+  /**
+   * The issues of an object whose fields a validator has accepted, or none when it passes.
+   */
   readonly issuesOf: (
     input: Readonly<Record<string, unknown>>,
   ) => readonly StandardSchemaV1.Issue[];

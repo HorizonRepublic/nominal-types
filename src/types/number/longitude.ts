@@ -20,7 +20,19 @@ const LongitudeBase: SubtypeOf<typeof FiniteNumber, 'nominal.Longitude'> = Finit
  * @remarks
  * Both ends are included and kept apart: -180 and 180 name one meridian, yet `equals` tells them
  * apart, as it compares values.
+ *
+ * @example
+ * ```ts
+ * import { Longitude } from '@horizon-republic/nominal-types';
+ *
+ * new Longitude(-0.1276).value; // -0.1276
+ * Longitude.parse(181).ok; // false
+ * ```
  */
 export class Longitude extends LongitudeBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Longitude>;
 }

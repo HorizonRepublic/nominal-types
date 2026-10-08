@@ -261,7 +261,9 @@ const acceptsOwn = (target: Type, input: unknown): boolean => {
 };
 
 /**
- * Internal: the parts of this module the type functions build on, for `type-functions.ts`.
+ * The parts of this module the type functions in `type-functions.ts` build on.
+ *
+ * @internal
  */
 export const ownTypes: {
   readonly root: Type;
@@ -437,6 +439,17 @@ const derive = (
  * @remarks
  * Adapters use it to recognise a nominal type in metadata they receive, such as the parameter type
  * a framework reflects from a decorator.
+ *
+ * @param value - The value to test.
+ * @returns `true` for a nominal type class, which TypeScript then treats as one.
+ *
+ * @example
+ * ```ts
+ * import { Email, n } from '@horizon-republic/nominal-types';
+ *
+ * n.isType(Email); // true
+ * n.isType(String); // false
+ * ```
  */
 export const isNominalType = (value: unknown): value is AnyNominalType =>
   typeof value === 'function' &&
@@ -452,8 +465,24 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  * nominal types one application loads. A subclass that overrides `rule` stays the same type;
  * `subtype` makes a distinct one. A regular expression stands for `n.matching(pattern)`.
  *
+ * The rule can also be the result of `n.satisfying()`, `n.oneOf()`, `n.object()`, `n.of()` or
+ * `n.constraint()`, or any Standard Schema that answers synchronously, such as a Zod schema.
+ *
+ * @typeParam Name - The type name.
+ * @typeParam Implied - The types listed in `options.implies`.
+ * @param name - The type name, such as `billing.InvoiceNumber`: parts of letters, digits, `_` and
+ * `-`, joined by dots.
+ * @param pattern - The regular expression a valid value matches.
+ * @param options - Settings for the new type.
+ * @returns A class to extend.
+ * @throws {@link TypeError} when the name is not a valid type name, the regular expression has a
+ * flag other than `u`, an `n.object()` field is named like an instance member, or
+ * `options.implies` lists something that can't be implied.
+ *
  * @example
  * ```ts
+ * import { Nominal } from '@horizon-republic/nominal-types';
+ *
  * export class OrderNumber extends Nominal('OrderNumber', /^ORD-\d{8}$/u) {
  *   get sequence(): number {
  *     return Number(this.value.slice(4));
@@ -466,6 +495,30 @@ export function Nominal<const Name extends string, Implied extends AnyNominalTyp
   pattern: RegExp,
   options?: NominalOptions<Implied>,
 ): ImplyingType<Name, NominalSchema<string, string>, NominalInstance<Name, string>, Implied>;
+/**
+ * Declares a nominal type built on an `n.object()` schema: its instances get a getter for each
+ * field and `copyWith()`.
+ *
+ * @typeParam Name - The type name.
+ * @typeParam Input - The type of the object the schema accepts.
+ * @typeParam Value - The type of the object the schema gives back.
+ * @typeParam Implied - The types listed in `options.implies`.
+ * @param name - The type name, such as `booking.Stay`.
+ * @param schema - The `n.object()` schema the value must pass.
+ * @param options - Settings for the new type.
+ * @returns A class to extend.
+ * @throws {@link TypeError} when the name is not a valid type name, a field is named like an
+ * instance member, such as `value`, or `options.implies` lists something that can't be implied.
+ *
+ * @example
+ * ```ts
+ * import { Email, n, Nominal } from '@horizon-republic/nominal-types';
+ *
+ * class Contact extends Nominal('crm.Contact', n.object({ email: Email })) {}
+ *
+ * new Contact({ email: 'jane@example.com' }).email.domain; // 'example.com'
+ * ```
+ */
 export function Nominal<
   const Name extends string,
   Input,
@@ -476,6 +529,29 @@ export function Nominal<
   schema: ObjectRule<Input, Value>,
   options?: NominalOptions<Implied>,
 ): ImplyingType<Name, NominalSchema<Input, Value>, ObjectInstance<Name, Input, Value>, Implied>;
+/**
+ * Declares a nominal type whose values pass a schema: a rule of this package, or any Standard
+ * Schema that answers synchronously.
+ *
+ * @typeParam Name - The type name.
+ * @typeParam Schema - The schema the value must pass.
+ * @typeParam Implied - The types listed in `options.implies`.
+ * @param name - The type name, such as `billing.InvoiceNumber`.
+ * @param schema - The schema the value must pass, such as `n.oneOf()` or a Zod schema.
+ * @param options - Settings for the new type.
+ * @returns A class to extend.
+ * @throws {@link TypeError} when the name is not a valid type name, or `options.implies` lists
+ * something that can't be implied.
+ *
+ * @example
+ * ```ts
+ * import { n, Nominal } from '@horizon-republic/nominal-types';
+ *
+ * class Status extends Nominal('order.Status', n.oneOf('draft', 'paid')) {}
+ *
+ * new Status('paid').value; // 'paid'
+ * ```
+ */
 export function Nominal<
   const Name extends string,
   Schema extends NominalSchema,

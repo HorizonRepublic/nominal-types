@@ -71,15 +71,42 @@ const checkedValues = <Value extends OneOfValue>(values: readonly Value[]): Set<
  * Nominal types recognise it and test the value directly, without going through `validate`. A
  * value is the same as a listed one when `===` says so, so `'Draft'` is not `'draft'` and `'1'` is
  * not `1`.
+ *
+ * @typeParam Value - The listed values.
+ *
+ * @example
+ * ```ts
+ * import { n } from '@horizon-republic/nominal-types';
+ *
+ * const status = n.oneOf('draft', 'paid', 'shipped');
+ *
+ * status.values; // ['draft', 'paid', 'shipped']
+ * status.accepts('paid'); // true
+ * ```
  */
 export class OneOfSchema<Value extends OneOfValue> extends NativeSchema<Value> {
   /**
    * The listed values, in the order they were given.
    */
   public readonly values: readonly Value[];
+  /**
+   * What a listed value is, completing "must be …" in messages, such as
+   * `one of "draft", "paid"`.
+   */
   public readonly description: string;
+  /**
+   * Whether the value is one of the listed values; a plain function, so it can be called on its
+   * own.
+   */
   public readonly accepts: (value: unknown) => value is Value;
 
+  /**
+   * Builds the schema; `n.oneOf()` does the same and takes the values one by one.
+   *
+   * @param values - The values to accept, each listed once.
+   * @throws {@link TypeError} when the list is empty, a value is listed twice, or a value is not a
+   * string, a finite number, a boolean or `null`.
+   */
   public constructor(values: readonly Value[]) {
     super();
 
@@ -130,11 +157,16 @@ export class OneOfSchema<Value extends OneOfValue> extends NativeSchema<Value> {
  * numeric enum also holds its member names; list its members instead, or spread
  * `Object.values()` of a string enum.
  *
- * @throws TypeError for an empty list, a value listed twice, or a value of another kind, such as
- * a bigint, `NaN` or an object.
+ * @typeParam Values - The listed values.
+ * @param values - The values to accept, each listed once.
+ * @returns The schema of the listed values.
+ * @throws {@link TypeError} when the list is empty, a value is listed twice, or a value is of
+ * another kind, such as a bigint, `NaN` or an object.
  *
  * @example
  * ```ts
+ * import { AnyString, n } from '@horizon-republic/nominal-types';
+ *
  * export class OrderStatus extends AnyString.subtype(
  *   'shop.OrderStatus',
  *   n.oneOf('draft', 'paid', 'shipped'),

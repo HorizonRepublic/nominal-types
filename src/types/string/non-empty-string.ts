@@ -24,7 +24,18 @@ const NonEmptyStringBase: SubtypeOf<typeof AnyString, 'nominal.NonEmptyString'> 
  * @remarks
  * A string of spaces passes; reach for `NonBlankString` where it should not. The value is kept as
  * given and never trimmed.
+ *
+ * @example
+ * ```ts
+ * import { NonEmptyString } from '@horizon-republic/nominal-types';
+ *
+ * const name = new NonEmptyString('Jane');
+ * NonEmptyString.accepts(''); // false
+ * ```
  */
 export class NonEmptyString extends NonEmptyStringBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonEmptyString>;
 }

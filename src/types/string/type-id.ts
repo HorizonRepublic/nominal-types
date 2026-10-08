@@ -125,6 +125,8 @@ const joined = (prefix: string, suffix: string): string =>
  *
  * @example
  * ```ts
+ * import { TypeId } from '@horizon-republic/nominal-types';
+ *
  * class UserId extends TypeId.subtype('shop.UserId', TypeId.withPrefix('user')) {}
  *
  * const id = UserId.generate();
@@ -132,6 +134,9 @@ const joined = (prefix: string, suffix: string): string =>
  * ```
  */
 export class TypeId extends TypeIdBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof TypeId>;
 
   /**
@@ -144,7 +149,9 @@ export class TypeId extends TypeIdBase {
    * `TypeId.subtype('shop.UserId', TypeId.withPrefix('user'))`. An empty prefix makes a type of
    * ids without one.
    *
-   * @throws TypeError when the prefix breaks the grammar of the specification.
+   * @param prefix - The kind of id, such as `user`, or `''` for ids without a prefix.
+   * @returns The rule to pass to `TypeId.subtype()`.
+   * @throws {@link TypeError} when the prefix breaks the grammar of the specification.
    */
   public static withPrefix(prefix: string): PredicateSchema<string> {
     checkPrefix('withPrefix()', prefix);
@@ -173,8 +180,11 @@ export class TypeId extends TypeIdBase {
    * @remarks
    * Ids made by one process sort by the time they were made, also within one millisecond.
    *
-   * @throws TypeError when the prefix breaks the grammar of the specification.
-   * @throws NominalError when the type refuses the id, such as a prefix other than its own.
+   * @typeParam Type - The class it is called on, `TypeId` or a subclass.
+   * @param prefix - The kind of id; the prefix the type fixes when left out.
+   * @returns An instance of the class it is called on.
+   * @throws {@link TypeError} when the prefix breaks the grammar of the specification.
+   * @throws {@link NominalError} when the type refuses the id, such as a prefix other than its own.
    */
   public static generate<Type extends new (input: string) => TypeId>(
     this: Type,
@@ -189,10 +199,18 @@ export class TypeId extends TypeIdBase {
 
   /**
    * The id of a UUID that exists already, such as one a database made, with the prefix the type
-   * fixes, or the one given. Any 128 bits in the 8-4-4-4-12 form pass, in either case.
+   * fixes, or the one given.
    *
-   * @throws TypeError when the UUID is not in the 8-4-4-4-12 form, or the prefix breaks the grammar.
-   * @throws NominalError when the type refuses the id, such as a prefix other than its own.
+   * @remarks
+   * Any 128 bits in the 8-4-4-4-12 form pass, in either case.
+   *
+   * @typeParam Type - The class it is called on, `TypeId` or a subclass.
+   * @param uuid - The UUID, as a `Uuid` or as text.
+   * @param prefix - The kind of id; the prefix the type fixes when left out.
+   * @returns An instance of the class it is called on.
+   * @throws {@link TypeError} when the UUID is not in the 8-4-4-4-12 form, or the prefix breaks
+   * the grammar.
+   * @throws {@link NominalError} when the type refuses the id, such as a prefix other than its own.
    */
   public static fromUuid<Type extends new (input: string) => TypeId>(
     this: Type,
@@ -245,7 +263,8 @@ export class TypeId extends TypeIdBase {
   /**
    * The UUID inside, in lowercase.
    *
-   * @throws NominalError when the 128 bits are not a UUID `Uuid` accepts, such as the
+   * @returns A new `Uuid`.
+   * @throws {@link NominalError} when the 128 bits are not a UUID `Uuid` accepts, such as the
    * specification's test id `00000000000000000000000001`: version 1 to 8 with the RFC 9562
    * variant, nil or max.
    */

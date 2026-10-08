@@ -17,17 +17,22 @@ const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtyp
  * Quoted local parts, IP-literal domains and Unicode domains are rejected; a Unicode domain passes
  * once converted to punycode. Local parts stay as written, since the standard leaves their case to
  * the receiving server; `canonical()` lowers it for comparing people rather than strings.
- * An address is personal data, so messages leave it out: `must be an email address (was a string of
- * 4 characters)`.
+ * An address is personal data, so messages leave it out:
+ * `must be an email address (was a string of 4 characters)`.
  *
  * @example
  * ```ts
+ * import { Email } from '@horizon-republic/nominal-types';
+ *
  * const email = new Email('Jane.Doe+news@Example.com');
  * email.tag; // 'news'
  * email.canonical().value; // 'jane.doe@example.com'
  * ```
  */
 export class Email extends EmailBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Email>;
 
   /**
@@ -54,6 +59,8 @@ export class Email extends EmailBase {
    *
    * @example
    * ```ts
+   * import { Email, n } from '@horizon-republic/nominal-types';
+   *
    * class CompanyEmail extends Email {
    *   static override readonly pattern = /^[a-z.]+@example\.com$/u;
    *   static override readonly rule = n.matching(CompanyEmail.pattern);
@@ -99,7 +106,9 @@ export class Email extends EmailBase {
   /**
    * The same mailbox with the tag replaced.
    *
-   * @throws NominalError when the tag carries characters an address cannot hold.
+   * @param tag - The new tag, without the `+`.
+   * @returns An address of the same class.
+   * @throws {@link NominalError} when the tag carries characters an address cannot hold.
    */
   public withTag(tag: string): this {
     return sameType(this, `${this.mailbox}+${tag}@${this.domain}`);
@@ -107,6 +116,8 @@ export class Email extends EmailBase {
 
   /**
    * The same mailbox without any tag.
+   *
+   * @returns An address of the same class.
    */
   public withoutTag(): this {
     return sameType(this, `${this.mailbox}@${this.domain}`);
@@ -118,6 +129,8 @@ export class Email extends EmailBase {
    *
    * @remarks
    * Provider rules beyond that, such as Gmail ignoring dots, are left to the caller.
+   *
+   * @returns An address of the same class.
    */
   public canonical(): this {
     return sameType(this, `${this.mailbox}@${this.domain}`.toLowerCase());
@@ -125,6 +138,9 @@ export class Email extends EmailBase {
 
   /**
    * Whether both addresses reach the same mailbox once tags and case are set aside.
+   *
+   * @param other - The address to compare with.
+   * @returns `true` when both reach the same mailbox.
    */
   public isSameMailbox(other: Email): boolean {
     return this.canonical().value === other.canonical().value;

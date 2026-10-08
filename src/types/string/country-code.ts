@@ -5,12 +5,14 @@ import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
 /**
- * Internal: the 249 officially assigned code elements of ISO 3166-1 alpha-2, and XK.
+ * The 249 officially assigned code elements of ISO 3166-1 alpha-2, and XK.
  *
  * @remarks
  * As the ISO 3166 Maintenance Agency lists them on 8 October 2026 (the last one added was SS, in
  * 2011), and XK, the code the European Union, banks and payment providers use for Kosovo. Reserved
  * codes such as UK and EU are not assigned to a country and stay out.
+ *
+ * @internal
  */
 export const countryCodes: readonly string[] = Object.freeze(
   [
@@ -69,17 +71,22 @@ const CountryCodeBase: SubtypeOf<typeof AnyString, 'nominal.CountryCode'> = AnyS
  *
  * @remarks
  * Only the officially assigned codes pass, in upper case, from a table the package carries rather
- * than the runtime's locale data. `XK` for Kosovo passes too. Reserved codes are refused: `UK` (write
- * `GB`) and `EU`.
- * Declare a type of your own from `CountryCode.codes` where one of them has to pass.
+ * than the runtime's locale data. `XK` for Kosovo passes too. Reserved codes are refused: `UK`
+ * (write `GB`) and `EU`. Declare a type of your own from `CountryCode.codes` where one of them has
+ * to pass.
  *
  * @example
  * ```ts
+ * import { CountryCode } from '@horizon-republic/nominal-types';
+ *
  * const country = new CountryCode('UA');
  * country.flag; // '🇺🇦'
  * ```
  */
 export class CountryCode extends CountryCodeBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof CountryCode>;
 
   /**

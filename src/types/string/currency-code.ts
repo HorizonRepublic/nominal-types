@@ -64,11 +64,16 @@ const CurrencyCodeBase: SubtypeOf<typeof AnyString, 'nominal.CurrencyCode'> = An
  *
  * @example
  * ```ts
+ * import { CurrencyCode } from '@horizon-republic/nominal-types';
+ *
  * new CurrencyCode('JPY').minorUnits; // 0
  * new CurrencyCode('BHD').minorUnits; // 3
  * ```
  */
 export class CurrencyCode extends CurrencyCodeBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof CurrencyCode>;
 
   /**

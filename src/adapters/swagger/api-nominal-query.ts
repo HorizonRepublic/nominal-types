@@ -4,10 +4,20 @@ import type { NominalTarget } from '../../core/target.ts';
 import { isRequired, openApiSchemaOf } from './openapi-schema.ts';
 
 /**
- * Options for `@ApiNominalQuery()`.
+ * Options for {@link ApiNominalQuery}.
  */
 export interface ApiNominalQueryOptions {
+  /**
+   * The description of the query value in the document.
+   *
+   * @defaultValue No description.
+   */
   readonly description?: string;
+  /**
+   * Whether the query value must be given.
+   *
+   * @defaultValue `true`, unless the schema accepts `undefined`.
+   */
   readonly required?: boolean;
 }
 
@@ -22,17 +32,33 @@ export interface ApiNominalQueryOptions {
  * `description` in `options` win. It replaces what `@nestjs/swagger` reflects for a parameter of
  * the same name.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `n.of()` schema.
+ * @param name - The name of the query value, as in `@Query()`.
+ * @param target - The nominal type or `n.of()` schema of the value.
+ * @param options - The description and whether the value is required.
+ * @returns A decorator for a route.
+ * @throws {@link TypeError} when `target` is neither a nominal type nor a `n.of()` schema.
  *
  * @example
  * ```ts
- * @Get()
- * @ApiNominalQuery('ids', n.of(Uuid).array({ max: 100 }))
- * @ApiNominalQuery('page', PositiveInteger, { required: false })
- * list(
- *   @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
- *   @Query('page') page?: PositiveInteger,
- * ) {}
+ * import { Controller, Get, Query } from '@nestjs/common';
+ * import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+ * import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+ * import { ApiNominalQuery } from '@horizon-republic/nominal-types/adapters/swagger';
+ *
+ * const Ids = n.of(Uuid).array({ max: 100 });
+ *
+ * @Controller('orders')
+ * export class OrdersController {
+ *   @Get()
+ *   @ApiNominalQuery('ids', Ids)
+ *   @ApiNominalQuery('page', PositiveInteger, { required: false })
+ *   public list(
+ *     @Query('ids', new NominalPipe(Ids)) ids: readonly Uuid[],
+ *     @Query('page') page?: PositiveInteger,
+ *   ): number {
+ *     return ids.length;
+ *   }
+ * }
  * ```
  */
 export const ApiNominalQuery = (

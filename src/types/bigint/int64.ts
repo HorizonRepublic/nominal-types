@@ -22,7 +22,19 @@ const Int64Base: SubtypeOf<typeof AnyBigInt, 'nominal.Int64'> = AnyBigInt.subtyp
  * @remarks
  * JSON Schema bounds the string's length rather than the value, so a string of the right length
  * beyond the range passes the schema and is refused when the type is built.
+ *
+ * @example
+ * ```ts
+ * import { Int64 } from '@horizon-republic/nominal-types';
+ *
+ * new Int64('-9223372036854775808').value; // -9223372036854775808n
+ * Int64.parse('9223372036854775808').ok; // false
+ * ```
  */
 export class Int64 extends Int64Base {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Int64>;
 }

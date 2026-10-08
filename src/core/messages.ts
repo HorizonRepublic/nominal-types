@@ -23,6 +23,8 @@ const describeString = (text: string): string =>
  * @remarks
  * A string longer than 64 characters is told by its length and its first 32 characters, so a
  * large input doesn't make a large message: `a string of 30000 characters starting "abc"…`.
+ *
+ * @internal
  */
 export const describeValue = (value: unknown): string => {
   if (typeof value === 'string') {
@@ -45,14 +47,18 @@ export const describeValue = (value: unknown): string => {
 };
 
 /**
- * Internal: a string as a hidden value reads, by its length.
+ * A string as a hidden value reads, by its length.
+ *
+ * @internal
  */
 export const charactersOf = (count: number): string =>
   count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
 
 /**
- * Internal: a rejected value as the message of a sensitive type names it, by its kind only: what
+ * A rejected value as the message of a sensitive type names it, by its kind only: what
  * `hideValues` makes of the value `describeValue` writes.
+ *
+ * @internal
  */
 export const describeHidden = (value: unknown): string => {
   if (typeof value === 'string') {
@@ -71,8 +77,10 @@ export const describeHidden = (value: unknown): string => {
 };
 
 /**
- * Internal: the value as a message writes it under the `values` setting, written by `describe`
+ * The value as a message writes it under the `values` setting, written by `describe`
  * when values are shown; `undefined` when messages leave values out.
+ *
+ * @internal
  */
 export const shownValue = (
   value: unknown,
@@ -93,6 +101,8 @@ const withValue = (head: string, shown: string | undefined): string =>
 /**
  * The message for a value a rule rejects: `must be <expected> (was <value>)`, with the value
  * written by `describe`, or as the `values` setting of `n.configure()` asks.
+ *
+ * @internal
  */
 export const mustBe = (
   expected: string,
@@ -101,14 +111,34 @@ export const mustBe = (
 ): string => withValue(`must be ${expected}`, shownValue(value, describe));
 
 /**
- * Internal: what a message is written from, besides its code and English text.
+ * What a message is written from, besides its code and English text.
+ *
+ * @internal
  */
 export interface Wording {
+  /**
+   * What the value must be, completing "must be …".
+   */
   readonly description?: string | undefined;
+  /**
+   * The value as the message shows it.
+   */
   readonly value?: string | undefined;
+  /**
+   * The value told by its kind and length, for a message that hides it.
+   */
   readonly hiddenValue?: string | undefined;
+  /**
+   * The name of the type whose rule rejected the value.
+   */
   readonly typeName?: string | undefined;
+  /**
+   * The lowest count or length allowed.
+   */
   readonly min?: number | undefined;
+  /**
+   * The highest count or length allowed.
+   */
   readonly max?: number | undefined;
 }
 
@@ -124,7 +154,9 @@ interface Draft {
 const drafts = new WeakMap<object, Draft>();
 
 /**
- * Internal: whether issues need more than the English message: a code, or a messages function.
+ * Whether issues need more than the English message: a code, or a messages function.
+ *
+ * @internal
  */
 export const customized = (): boolean => settings.codes || settings.messages !== undefined;
 
@@ -178,9 +210,11 @@ const written = (draft: Draft, path: Path): NominalIssue => {
 };
 
 /**
- * Internal: an issue of this package, with its code when `codes` is set and its message written
+ * An issue of this package, with its code when `codes` is set and its message written
  * by the messages function when one is set; `hiddenEnglish` is the English message without the
  * value, which `hideValues` uses.
+ *
+ * @internal
  */
 export const issueOf = (
   code: IssueCode,
@@ -201,8 +235,10 @@ export const issueOf = (
 };
 
 /**
- * Internal: the issue for a rejected value, `<head> (was <value>)`, the value written by `describe`
+ * The issue for a rejected value, `<head> (was <value>)`, the value written by `describe`
  * or as the `values` setting asks.
+ *
+ * @internal
  */
 export const valueIssue = (
   code: IssueCode,
@@ -237,7 +273,9 @@ export const valueIssue = (
 };
 
 /**
- * Internal: the issue for a value a rule rejects, `must be <description> (was <value>)`.
+ * The issue for a value a rule rejects, `must be <description> (was <value>)`.
+ *
+ * @internal
  */
 export const rejectedIssue = (
   code: IssueCode,
@@ -251,8 +289,10 @@ export const rejectedIssue = (
   });
 
 /**
- * Internal: the issue written again with its value hidden, for `hideValues`, when a messages
+ * The issue written again with its value hidden, for `hideValues`, when a messages
  * function wrote it; `undefined` for any other issue.
+ *
+ * @internal
  */
 export const rewrittenHidden = (issue: NominalIssue): NominalIssue | undefined => {
   const draft = drafts.get(issue);
@@ -272,8 +312,10 @@ export const rewrittenHidden = (issue: NominalIssue): NominalIssue | undefined =
 };
 
 /**
- * Internal: an issue of a field or an item, with `key` in front of its path, keeping its code; a
+ * An issue of a field or an item, with `key` in front of its path, keeping its code; a
  * messages function writes it again, for the longer path.
+ *
+ * @internal
  */
 export const atPath = (issue: NominalIssue, key: PropertyKey): NominalIssue => {
   const path = [key, ...(issue.path ?? [])];
@@ -294,7 +336,9 @@ export const atPath = (issue: NominalIssue, key: PropertyKey): NominalIssue => {
 };
 
 /**
- * Internal: a value as JSON text, with bigints written as decimal strings.
+ * A value as JSON text, with bigints written as decimal strings.
+ *
+ * @internal
  */
 export const jsonText = (value: unknown): string =>
   JSON.stringify(value, (_key, item: unknown) => (typeof item === 'bigint' ? String(item) : item));

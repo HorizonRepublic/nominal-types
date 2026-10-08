@@ -145,14 +145,16 @@ const MediaTypeBase: SubtypeOf<typeof AnyString, 'nominal.MediaType'> = AnyStrin
  * The type and subtype are names as RFC 6838 §4.2 defines them: a letter or digit, then up to 126
  * of `A-Za-z0-9!#$&-^_.+`. Parameters follow RFC 9110 §8.3.1, `;` then `name=value` with the value
  * a token or a quoted string, and RFC 6838 §4.3 refuses a name given twice. Wildcards such as
- * `text/*` belong to `Accept` headers and are refused. The JSON Schema pattern cannot tell a repeated
- * parameter name, so it is the one value the schema accepts and the type refuses.
+ * `text/*` belong to `Accept` headers and are refused. The JSON Schema pattern cannot tell a
+ * repeated parameter name, so it is the one value the schema accepts and the type refuses.
  *
  * Type, subtype and parameter names are compared without case, and a quoted value equals the same
  * token unquoted; `canonical()` writes that form, and `equals` compares it.
  *
  * @example
  * ```ts
+ * import { MediaType } from '@horizon-republic/nominal-types';
+ *
  * const type = new MediaType('Application/LD+JSON; Charset="utf-8"');
  * type.essence; // 'application/ld+json'
  * type.suffix; // 'JSON'
@@ -160,6 +162,9 @@ const MediaTypeBase: SubtypeOf<typeof AnyString, 'nominal.MediaType'> = AnyStrin
  * ```
  */
 export class MediaType extends MediaTypeBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof MediaType>;
 
   /**
@@ -230,6 +235,8 @@ export class MediaType extends MediaTypeBase {
   /**
    * The same media type with type, subtype and parameter names lowered, no spaces, and values
    * quoted only where a token cannot carry them.
+   *
+   * @returns A media type of the same class.
    */
   public canonical(): this {
     let text = this.essence;
@@ -247,6 +254,9 @@ export class MediaType extends MediaTypeBase {
    * Whether the other value is the same media type once case, spaces and quoting are set aside,
    * and belongs to this type, a type under it or the type it is under, like `equals()` on every
    * type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same media type.
    */
   public override equals(other: unknown): boolean {
     return (

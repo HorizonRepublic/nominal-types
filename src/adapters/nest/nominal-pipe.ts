@@ -12,7 +12,7 @@ import { textFormOf } from '../../core/text-form.ts';
 import { isArraySchema } from '../../core/type-schema.ts';
 
 /**
- * What `NominalPipe` checks a value against: a nominal type, a schema built by `n.of()` or
+ * What {@link NominalPipe} checks a value against: a nominal type, a schema built by `n.of()` or
  * `n.object()`, or any synchronous Standard Schema, such as one from `fromArk()` or Zod.
  */
 export type NominalPipeTarget = NominalTarget | StandardSchemaV1;
@@ -43,6 +43,10 @@ const parseAny = (target: NominalPipeTarget, input: unknown): Parsed<unknown> =>
 
 /**
  * Turns the issues of a rejected value into the exception the request fails with.
+ *
+ * @param issues - What the value was rejected for.
+ * @param metadata - The route argument the value came from, such as its type and name.
+ * @returns The error the pipe throws.
  */
 export type NominalExceptionFactory = (
   issues: readonly StandardSchemaV1.Issue[],
@@ -50,20 +54,28 @@ export type NominalExceptionFactory = (
 ) => Error;
 
 /**
- * Options for `NominalPipe`.
+ * Options for {@link NominalPipe}.
  */
 export interface NominalPipeOptions {
+  /**
+   * Builds the error a rejected value fails the request with.
+   *
+   * @defaultValue A `BadRequestException` with one message per issue.
+   */
   readonly exceptionFactory?: NominalExceptionFactory;
   /**
    * Whether a string from a query string or a route parameter is read as the value of a number or
-   * boolean type, so `?page=2` becomes `2`. On by default; a `n.of()` schema reads text only
-   * through its own `fromString()`.
+   * boolean type, so `?page=2` becomes `2`. A `n.of()` schema reads text only through its own
+   * `fromString()`.
+   *
+   * @defaultValue `true`
    */
   readonly fromString?: boolean;
   /**
    * Leaves rejected values out of the messages for every type, before the exception factory sees
    * them, so they don't reach responses or logs. Types declared `sensitive` leave them out anyway.
-   * Off by default.
+   *
+   * @defaultValue `false`
    */
   readonly hideValues?: boolean;
 }
@@ -94,26 +106,43 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
  * @remarks
  * Given a type or a `n.of()` schema, it checks that. Given none, it uses the parameter's
  * `{ schema }` on Nest 12 when that is a nominal type or a `n.of()` schema, else the type the
- * parameter is declared with, or the schema Bun and SWC record for a type named like a schema,
- * and passes every other argument through untouched; that makes it
- * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` needs a schema,
- * and a missing value of a declared type is passed on as `undefined`; to require it, give the
- * parameter a pipe of its own or a schema. In a query string, a lone value given to an array schema is wrapped into an
- * array, and a string for a number or boolean type is read as its value, so `?page=2` gives `2`.
+ * parameter is declared with, or the schema Bun and SWC record for a type named like a schema.
+ * It passes every other argument through untouched, which makes it safe to bind globally.
+ *
+ * Declared types lose array items and `?`, so `Uuid[]` needs a schema. A missing value of a
+ * declared type is passed on as `undefined`; to require it, give the parameter a pipe of its own
+ * or a schema.
+ *
+ * In a query string, a lone value given to an array schema is wrapped into an array, and a string
+ * for a number or boolean type is read as its value, so `?page=2` gives `2`.
+ *
  * Works on Nest 11 and 12. Pipes never run on `@Headers()`.
  *
  * @example
  * ```ts
+ * import { Controller, Get, Param, Query } from '@nestjs/common';
+ * import type { INestApplication } from '@nestjs/common';
+ * import { n, Uuid } from '@horizon-republic/nominal-types';
+ * import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+ *
+ * declare const app: INestApplication;
+ *
  * app.useGlobalPipes(new NominalPipe());
  *
- * @Get(':id')
- * find(@Param('id') id: Uuid) {}
+ * @Controller('orders')
+ * export class OrdersController {
+ *   @Get(':id')
+ *   public find(@Param('id') id: Uuid): string {
+ *     return id.value;
+ *   }
  *
- * @Get(':id')
- * findOne(@Param('id', new NominalPipe(Uuid)) id: Uuid) {}
- *
- * @Get()
- * list(@Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {}
+ *   @Get()
+ *   public list(
+ *     @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
+ *   ): number {
+ *     return ids.length;
+ *   }
+ * }
  * ```
  */
 export class NominalPipe implements PipeTransform<unknown, unknown> {
@@ -122,7 +151,18 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
   readonly #fromString: boolean;
   readonly #hideValues: boolean;
 
+  /**
+   * Creates a pipe that checks each argument against the schema or type the parameter declares.
+   *
+   * @param options - How values are read and how a rejected value fails the request.
+   */
   public constructor(options?: NominalPipeOptions);
+  /**
+   * Creates a pipe that checks the argument against `target`.
+   *
+   * @param target - The nominal type or schema the argument must match.
+   * @param options - How values are read and how a rejected value fails the request.
+   */
   public constructor(target: NominalPipeTarget, options?: NominalPipeOptions);
   public constructor(
     targetOrOptions?: NominalPipeTarget | NominalPipeOptions,
@@ -137,6 +177,16 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     this.#hideValues = settings.hideValues ?? false;
   }
 
+  /**
+   * Checks one route argument. Nest calls it for you.
+   *
+   * @param value - The argument as the request gave it.
+   * @param metadata - Which argument it is, and the type or schema it is declared with.
+   * @returns The instance or value the target gives, or `value` untouched when there is no target.
+   * @throws {@link BadRequestException} when the target rejects the value, unless
+   * `exceptionFactory` builds another error.
+   * @throws {@link TypeError} if a Standard Schema checks the value asynchronously.
+   */
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {
     const target = this.#target ?? targetOf(metadata);
 

@@ -9,18 +9,22 @@ import { targetOf } from './stand-ins.ts';
 import { textReaderFor } from './text-input.ts';
 
 /**
- * Options for `nominalValidatorCompiler()` and `fastifyNominal`.
+ * Options for {@link nominalValidatorCompiler} and `fastifyNominal`.
  */
 export interface NominalValidatorOptions {
   /**
    * Whether a string in the query string, a route parameter or a header is read as the value of a
    * number or boolean field, so `?page=2` gives `2`, and a lone value for a list becomes a list of
-   * one, as `NominalPipe` reads them. On by default.
+   * one, as `NominalPipe` reads them.
+   *
+   * @defaultValue `true`
    */
   readonly fromString?: boolean;
   /**
    * Leaves rejected values out of the messages for every type, so they don't reach responses or
-   * logs. Types declared `sensitive` leave them out anyway. Off by default.
+   * logs. Types declared `sensitive` leave them out anyway.
+   *
+   * @defaultValue `false`
    */
   readonly hideValues?: boolean;
 }
@@ -29,16 +33,34 @@ export interface NominalValidatorOptions {
  * What Fastify tells a compiler about the schema of one part of a route.
  */
 export interface FastifyRouteSchema {
+  /**
+   * The schema given for this part, such as a nominal type or an `n.object()` schema.
+   */
   readonly schema: unknown;
+  /**
+   * The HTTP method of the route, such as `POST`.
+   */
   readonly method: string;
+  /**
+   * The path of the route, such as `/orders/:id`.
+   */
   readonly url: string;
+  /**
+   * The part of the request the schema checks: `body`, `querystring`, `params` or `headers`.
+   */
   readonly httpPart?: string;
+  /**
+   * The status code of the response the schema writes, such as `200`.
+   */
   readonly httpStatus?: string;
 }
 
 /**
  * A check of one part of a request: the value the handler gets, or the issues Fastify answers
  * status 400 with.
+ *
+ * @param data - The part of the request as Fastify read it.
+ * @returns The value for the handler, or the issues.
  */
 export type NominalValidator = (
   data: unknown,
@@ -46,11 +68,17 @@ export type NominalValidator = (
 
 /**
  * Builds the check of one part of a route, as `setValidatorCompiler()` takes it.
+ *
+ * @param route - The route and the schema of the part.
+ * @returns The check of that part.
  */
 export type NominalValidatorCompiler = (route: FastifyRouteSchema) => NominalValidator;
 
 /**
  * Builds the writer of one response of a route, as `setSerializerCompiler()` takes it.
+ *
+ * @param route - The route and the schema of the response.
+ * @returns The function that writes the response as JSON text.
  */
 export type NominalSerializerCompiler = (route: FastifyRouteSchema) => (data: unknown) => string;
 
@@ -109,7 +137,9 @@ const validatorOf = (
 };
 
 /**
- * Internal: the validator compiler, handing a schema that is not nominal to `fallback`.
+ * The validator compiler, handing a schema that is not nominal to `fallback`.
+ *
+ * @internal
  */
 export const validatorCompilerWith = (
   options: NominalValidatorOptions,
@@ -133,7 +163,9 @@ export const validatorCompilerWith = (
 };
 
 /**
- * Internal: the serializer compiler, handing a schema that is not nominal to `fallback`.
+ * The serializer compiler, handing a schema that is not nominal to `fallback`.
+ *
+ * @internal
  */
 export const serializerCompilerWith = (
   fallback: Fallback<NominalSerializerCompiler>,
@@ -164,12 +196,23 @@ export const serializerCompilerWith = (
  * it alone for a route whose every schema is nominal: given another schema, it throws a
  * `TypeError` when the route is compiled.
  *
+ * @param options - How text is read and whether rejected values are left out of messages.
+ * @returns The compiler to pass as `validatorCompiler`.
+ *
  * @example
  * ```ts
- * app.post('/orders', {
- *   schema: { body: CreateOrder },
- *   validatorCompiler: nominalValidatorCompiler(),
- * }, handler);
+ * import Fastify from 'fastify';
+ * import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ * import { nominalValidatorCompiler } from '@horizon-republic/nominal-types/adapters/fastify';
+ *
+ * const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
+ * const app = Fastify();
+ *
+ * app.post(
+ *   '/orders',
+ *   { schema: { body: CreateOrder }, validatorCompiler: nominalValidatorCompiler() },
+ *   async () => ({ created: true }),
+ * );
  * ```
  */
 export const nominalValidatorCompiler = (
@@ -177,20 +220,34 @@ export const nominalValidatorCompiler = (
 ): NominalValidatorCompiler => validatorCompilerWith(options, none);
 
 /**
- * A Fastify serializer compiler that writes a response with the schema's `stringify()`, several
- * times faster than writing instances by other means.
+ * A Fastify serializer compiler that writes a response with the schema's `stringify()`.
  *
  * @remarks
  * `fastifyNominal` sets it up for you, next to Fastify's own serializer for other JSON Schemas.
  * Use it alone for a route whose every response schema is nominal: given another schema, it
- * throws a `TypeError` when the route is compiled.
+ * throws a `TypeError` when the route is compiled. It is several times faster than writing
+ * instances by other means.
+ *
+ * @returns The compiler to pass as `serializerCompiler`.
  *
  * @example
  * ```ts
- * app.get('/orders/:id', {
- *   schema: { response: { 200: Order } },
- *   serializerCompiler: nominalSerializerCompiler(),
- * }, handler);
+ * import Fastify from 'fastify';
+ * import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+ * import type { ValueOf } from '@horizon-republic/nominal-types';
+ * import { nominalSerializerCompiler } from '@horizon-republic/nominal-types/adapters/fastify';
+ *
+ * const Order = n.object({ id: Uuid, customer: Email });
+ *
+ * declare const latestOrder: () => Promise<ValueOf<typeof Order>>;
+ *
+ * const app = Fastify();
+ *
+ * app.get(
+ *   '/orders/latest',
+ *   { schema: { response: { 200: Order } }, serializerCompiler: nominalSerializerCompiler() },
+ *   async () => latestOrder(),
+ * );
  * ```
  */
 export const nominalSerializerCompiler = (): NominalSerializerCompiler =>

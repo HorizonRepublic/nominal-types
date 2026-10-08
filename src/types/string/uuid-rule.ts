@@ -3,6 +3,11 @@
 // oxlint-disable unicorn/prefer-code-point
 import { PatternSchema } from '../../core/pattern-schema.ts';
 
+/**
+ * A UUID of versions 1 to 8 with the RFC 9562 variant, or the nil or max UUID, in either case.
+ *
+ * @internal
+ */
 export const pattern: RegExp =
   /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
 
@@ -73,7 +78,9 @@ class UuidSchema extends PatternSchema {
 }
 
 /**
- * Internal: the rule of `Uuid`.
+ * The rule of `Uuid`.
+ *
+ * @internal
  */
 export const uuidRule: PatternSchema = new UuidSchema(pattern, 'a UUID', {
   format: 'uuid',

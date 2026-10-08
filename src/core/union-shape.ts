@@ -6,12 +6,26 @@ import { plainValue } from './plain.ts';
 import { Rejection } from './rejection.ts';
 
 /**
- * Internal: a variant of an `n.union()` schema as its dispatch sees it.
+ * A variant of an `n.union()` schema as its dispatch sees it.
+ *
+ * @internal
  */
 export interface UnionVariant {
+  /**
+   * The value of the tag field that picks this variant.
+   */
   readonly tag: string;
+  /**
+   * Runs the schema of the variant: the value, or a `Rejection`.
+   */
   readonly run: (input: unknown) => unknown;
+  /**
+   * Checks an input against the variant without building a value.
+   */
   readonly accepts: Accepts;
+  /**
+   * Turns a value of the variant into plain values.
+   */
   readonly write: Write;
 }
 
@@ -90,11 +104,13 @@ const notObject: Dispatch = (input) =>
   new Rejection([rejectedIssue('not_an_object', 'an object', input)]);
 
 /**
- * Internal: how an `n.union()` schema runs, checks and writes a value: the tag picks the variant,
+ * How an `n.union()` schema runs, checks and writes a value: the tag picks the variant,
  * which does the rest.
  *
  * @remarks
  * A missing tag, or one no variant has, is one issue under the key, in the words of `n.oneOf()`.
+ *
+ * @internal
  */
 export const unionPaths = (
   key: string,

@@ -18,7 +18,9 @@ const acceptsOf =
     callOf(schema, 'accepts', value) === true;
 
 /**
- * Internal: a schema as code, such as `n.of(nominal.Uuid).array()`, for messages.
+ * A schema as code, such as `n.of(nominal.Uuid).array()`, for messages.
+ *
+ * @internal
  */
 export const describeSchema = (schema: unknown): string => {
   if (isNominalType(schema)) {
@@ -167,9 +169,11 @@ const fromParts = (
 };
 
 /**
- * Internal: values a schema built by `n.of()`, `n.object()` or `n.union()` accepts, as its input.
+ * Values a schema built by `n.of()`, `n.object()` or `n.union()` accepts, as its input.
  *
- * @throws TypeError for a schema no copy of this package recorded the parts of.
+ * @throws {@link TypeError} when no copy of this package recorded the parts of the schema.
+ *
+ * @internal
  */
 export const schemaArbitrary = (schema: object, context: GeneratorContext): Arbitrary<unknown> => {
   const override = context.overrides.get(schema);
@@ -201,10 +205,12 @@ const validates = (field: object, value: unknown): boolean => {
 };
 
 /**
- * Internal: values a field of an object accepts: a nominal type, a schema of this package, or a
+ * Values a field of an object accepts: a nominal type, a schema of this package, or a
  * Standard Schema of another library that describes itself as JSON Schema.
  *
- * @throws TypeError for a field nothing can be generated for.
+ * @throws {@link TypeError} when nothing can be generated for the field.
+ *
+ * @internal
  */
 export const fieldArbitrary = (
   field: unknown,

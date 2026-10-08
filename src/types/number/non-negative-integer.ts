@@ -21,7 +21,19 @@ const NonNegativeIntegerBase: SubtypeOf<
  * @remarks
  * Unlike `PositiveInteger`, it takes 0. `-0` passes and stays `-0`; `equals` compares with
  * `Object.is`, so it differs from `0`.
+ *
+ * @example
+ * ```ts
+ * import { NonNegativeInteger } from '@horizon-republic/nominal-types';
+ *
+ * new NonNegativeInteger(0).value; // 0
+ * NonNegativeInteger.parse(-1).ok; // false
+ * ```
  */
 export class NonNegativeInteger extends NonNegativeIntegerBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonNegativeInteger>;
 }

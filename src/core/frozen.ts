@@ -5,7 +5,9 @@ const isPlainObject = (value: object): boolean => {
 };
 
 /**
- * Internal: whether a value is a plain object, whose own keys are its whole content.
+ * Whether a value is a plain object, whose own keys are its whole content.
+ *
+ * @internal
  */
 export const isPlainRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value) && isPlainObject(value);
@@ -34,12 +36,14 @@ const frozenRecord = (value: Readonly<Record<string, unknown>>): object => {
 };
 
 /**
- * Internal: a value as a type holds it: a primitive as is, plain objects and arrays frozen all the
+ * A value as a type holds it: a primitive as is, plain objects and arrays frozen all the
  * way down, anything else (an instance, a `Date`, a `Map`) as is.
  *
  * @remarks
  * What is not frozen yet is copied before freezing, so a caller's input stays theirs when a rule
  * hands back the object it was given; what is frozen all the way down already is kept.
+ *
+ * @internal
  */
 export const frozen = (value: unknown): unknown => {
   if (Array.isArray(value)) {

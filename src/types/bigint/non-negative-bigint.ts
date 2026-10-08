@@ -18,7 +18,19 @@ const NonNegativeBigIntBase: SubtypeOf<typeof AnyBigInt, 'nominal.NonNegativeBig
  *
  * @remarks
  * Unlike `PositiveBigInt`, it takes 0.
+ *
+ * @example
+ * ```ts
+ * import { NonNegativeBigInt } from '@horizon-republic/nominal-types';
+ *
+ * new NonNegativeBigInt('0').value; // 0n
+ * NonNegativeBigInt.parse(-1n).ok; // false
+ * ```
  */
 export class NonNegativeBigInt extends NonNegativeBigIntBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonNegativeBigInt>;
 }

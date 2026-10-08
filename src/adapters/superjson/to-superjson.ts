@@ -18,10 +18,23 @@ export type SuperjsonValue =
 
 /**
  * A superjson custom transformer for one nominal type.
+ *
+ * @typeParam Instance - The instances of the type.
  */
 export interface SuperjsonTransformer<Instance> {
+  /**
+   * Tells superjson whether a value is an instance of this very type.
+   */
   readonly isApplicable: (value: unknown) => value is Instance;
+  /**
+   * Writes an instance as its JSON value.
+   */
   readonly serialize: (value: Instance) => SuperjsonValue;
+  /**
+   * Checks a JSON value with the type and makes it an instance again.
+   *
+   * @throws {@link NominalError} when the type rejects the value.
+   */
   readonly deserialize: (value: SuperjsonValue) => Instance;
 }
 
@@ -52,14 +65,24 @@ const jsonOf = (instance: { readonly value: unknown }): SuperjsonValue => {
  *
  * @remarks
  * Only instances of this very class are taken, not of its subtypes, so register each type that is
- * sent. What arrives is checked by the type; a value it refuses throws a `NominalError`.
+ * sent. What arrives is checked by the type; a value it refuses throws a {@link NominalError}.
+ *
+ * @typeParam Target - The nominal type.
+ * @param target - The nominal type whose instances superjson writes and reads.
+ * @returns The transformer and the type's name, in the order `superjson.registerCustom()` takes
+ * them.
  *
  * @example
  * ```ts
  * import superjson from 'superjson';
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { toSuperjson } from '@horizon-republic/nominal-types/adapters/superjson';
  *
  * superjson.registerCustom(...toSuperjson(Email));
  * superjson.registerCustom(...toSuperjson(Uuid));
+ *
+ * const text = superjson.stringify({ contact: new Email('jane@example.com') });
+ * const { contact } = superjson.parse<{ contact: Email }>(text);
  * ```
  */
 export const toSuperjson = <Target extends AnyNominalType>(

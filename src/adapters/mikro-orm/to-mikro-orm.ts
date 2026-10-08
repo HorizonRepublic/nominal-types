@@ -9,16 +9,24 @@ import { readerOf, writerOf } from '../orm/values.ts';
 
 /**
  * Options of `toMikroOrm()`.
+ *
+ * @typeParam Instance - The instance the column holds.
+ *
+ * @see {@link toMikroOrm}
  */
 export interface MikroOrmOptions<Instance> extends StorageOptions<Instance> {
   /**
    * The SQL type of the column, in place of the one the type gives by default.
+   *
+   * @defaultValue The column the type gives, such as `varchar(254)` for `Email`.
    */
   readonly column?: string;
 }
 
 /**
  * The MikroORM type class `toMikroOrm()` returns.
+ *
+ * @typeParam Target - The nominal type the column holds.
  */
 export type MikroOrmType<Target extends AnyNominalType> = new () => Type<
   Target['prototype'] | null | undefined,
@@ -76,8 +84,17 @@ const comparedAs = (column: ColumnKind): string => {
  * where plain values are checked into instances first. Stored values are checked when read, unless
  * `trusted`.
  *
+ * @typeParam Target - The nominal type the column holds.
+ * @param target - The nominal type of the entity property.
+ * @param options - The storage options and the SQL type of the column.
+ * @returns A MikroORM type class to pass to `p.type()` or a property's `type`.
+ *
  * @example
  * ```ts
+ * import { Email } from '@horizon-republic/nominal-types';
+ * import { toMikroOrm } from '@horizon-republic/nominal-types/adapters/mikro-orm';
+ * import { defineEntity } from '@mikro-orm/core';
+ *
  * const User = defineEntity({
  *   name: 'User',
  *   properties: (p) => ({

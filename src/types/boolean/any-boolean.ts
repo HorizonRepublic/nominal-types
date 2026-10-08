@@ -27,10 +27,19 @@ const AnyBooleanBase: NominalType<'nominal.AnyBoolean', NominalSchema<boolean, b
  *
  * @example
  * ```ts
+ * import { AnyBoolean } from '@horizon-republic/nominal-types';
+ *
  * export class Consent extends AnyBoolean.subtype('Consent') {}
+ *
+ * new Consent(true).value; // true
+ * Consent.parse('yes').ok; // false
  * ```
  */
 export class AnyBoolean extends AnyBooleanBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof AnyBoolean>;
 }
 

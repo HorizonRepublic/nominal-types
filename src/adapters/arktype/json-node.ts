@@ -1,23 +1,31 @@
 import { typeKey } from './registry.ts';
 
 /**
- * Internal: an object node of ArkType's `.json`.
+ * An object node of ArkType's `.json`.
+ *
+ * @internal
  */
 export type JsonNode = Readonly<Record<string, unknown>>;
 
 /**
- * Internal: whether a value is an object node rather than a union, a keyword or a literal.
+ * Whether a value is an object node rather than a union, a keyword or a literal.
+ *
+ * @internal
  */
 export const isJsonNode = (value: unknown): value is JsonNode =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
- * Internal: a list from the `.json`, or an empty one where the key holds none.
+ * A list from the `.json`, or an empty one where the key holds none.
+ *
+ * @internal
  */
 export const listOf = (value: unknown): readonly unknown[] => (Array.isArray(value) ? value : []);
 
 /**
- * Internal: a value from a node's meta.
+ * A value from a node's meta.
+ *
+ * @internal
  */
 export const metaOf = (node: JsonNode, key: string): unknown => {
   const meta = node['meta'];
@@ -26,7 +34,9 @@ export const metaOf = (node: JsonNode, key: string): unknown => {
 };
 
 /**
- * Internal: the type name an `toArk()` node carries, or `undefined` for any other node.
+ * The type name an `toArk()` node carries, or `undefined` for any other node.
+ *
+ * @internal
  */
 export const nominalNameOf = (node: unknown): string | undefined => {
   const name = isJsonNode(node) ? metaOf(node, typeKey) : undefined;
@@ -35,7 +45,9 @@ export const nominalNameOf = (node: unknown): string | undefined => {
 };
 
 /**
- * Internal: whether an `toArk()` node sits anywhere below a node.
+ * Whether an `toArk()` node sits anywhere below a node.
+ *
+ * @internal
  */
 export const holdsNominal = (node: unknown): boolean =>
   JSON.stringify(node).includes(`"${typeKey}"`);
@@ -44,19 +56,25 @@ const isObjectDomain = (domain: unknown): boolean =>
   domain === 'object' || (isJsonNode(domain) && domain['domain'] === 'object');
 
 /**
- * Internal: whether a node describes an object.
+ * Whether a node describes an object.
+ *
+ * @internal
  */
 export const isObjectNode = (node: unknown): node is JsonNode =>
   isJsonNode(node) && (isObjectDomain(node['domain']) || 'required' in node || 'optional' in node);
 
 /**
- * Internal: whether a node describes an array.
+ * Whether a node describes an array.
+ *
+ * @internal
  */
 export const isArrayNode = (node: unknown): node is JsonNode =>
   isJsonNode(node) && node['proto'] === 'Array';
 
 /**
- * Internal: the error for an `toArk()` node in a place whose branch can't be told at runtime.
+ * The error for an `toArk()` node in a place whose branch can't be told at runtime.
+ *
+ * @internal
  */
 export const unsupported = (where: string): TypeError =>
   new TypeError(

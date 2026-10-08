@@ -18,8 +18,19 @@ const UuidV4Base: SubtypeOf<typeof Uuid, 'nominal.UuidV4'> = Uuid.subtype(
  *
  * @remarks
  * The nil and max UUIDs are refused. Like `Uuid`, either case passes and is kept as written.
+ *
+ * @example
+ * ```ts
+ * import { UuidV4 } from '@horizon-republic/nominal-types';
+ *
+ * const id = new UuidV4(crypto.randomUUID());
+ * id.version; // 4
+ * ```
  */
 export class UuidV4 extends UuidV4Base {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof UuidV4>;
 
   /**
@@ -32,6 +43,8 @@ export class UuidV4 extends UuidV4Base {
 
   /**
    * The same UUID in lowercase.
+   *
+   * @returns A UUID of the same class.
    */
   public override canonical(): this {
     return sameType(this, this.value.toLowerCase());

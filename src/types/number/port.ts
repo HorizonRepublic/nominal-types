@@ -18,7 +18,19 @@ const PortBase: SubtypeOf<typeof Uint16, 'nominal.Port', number, typeof Positive
  * Port 0 is reserved and refused: it asks the system for any free port, which is not a port to
  * connect to. Reach for `Uint16` where 0 belongs. The value is a number; read `'8080'` from text
  * with `n.of(Port).fromString()`.
+ *
+ * @example
+ * ```ts
+ * import { Port } from '@horizon-republic/nominal-types';
+ *
+ * new Port(8080).value; // 8080
+ * Port.parse(0).ok; // false
+ * ```
  */
 export class Port extends PortBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Port>;
 }

@@ -5,19 +5,25 @@ import { Rejection } from './rejection.ts';
 import { settings } from './settings.ts';
 
 /**
- * Internal: tells whether a value would be accepted, without building the value or its issues.
+ * Tells whether a value would be accepted, without building the value or its issues.
+ *
+ * @internal
  */
 export type Accepts = (input: unknown) => boolean;
 
 /**
- * Internal: the check-only functions of the schemas this copy of the package built, so a type or
+ * The check-only functions of the schemas this copy of the package built, so a type or
  * an object that holds one can call it directly.
+ *
+ * @internal
  */
 export const acceptors: WeakMap<object, Accepts> = new WeakMap();
 
 /**
- * Internal: a check built from a run function, for schemas that need the value they build to
+ * A check built from a run function, for schemas that need the value they build to
  * decide, such as one with constraints or `unique` items.
+ *
+ * @internal
  */
 export const acceptsByRunning =
   (run: (input: unknown) => unknown): Accepts =>
@@ -113,12 +119,14 @@ const generated = (steps: readonly AnyStep[]): Accepts | undefined => {
 };
 
 /**
- * Internal: one function that tells whether every step of a type accepts a value, generated per
+ * One function that tells whether every step of a type accepts a value, generated per
  * type like the function that runs them; it builds no issues for a failed check.
  *
  * @remarks
  * A rule from another library still runs, since the steps after it see the value it gives; the
  * last one is skipped in favour of its own check when it has one, such as an `n.object()` rule.
+ *
+ * @internal
  */
 export const compileAccepts = (steps: readonly AnyStep[], generate: boolean = true): Accepts =>
   (generate && steps.length > 0 ? generated(steps) : undefined) ?? loopOver(steps);

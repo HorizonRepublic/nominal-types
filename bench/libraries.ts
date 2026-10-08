@@ -32,7 +32,9 @@ export type Check = (input: unknown) => unknown;
  */
 export interface Library {
   readonly name: string;
-  /** Whether a result of this library's checks means the value was accepted. */
+  /**
+   * Whether a result of this library's checks means the value was accepted.
+   */
   readonly accepted: (result: unknown) => boolean;
   readonly sku?: Check;
   readonly uuid?: Check;

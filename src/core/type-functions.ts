@@ -6,8 +6,10 @@ import { Rejection } from './rejection.ts';
 import { onlyChecks, rulesRunnerOf, trimsStrings } from './type-rules.ts';
 
 /**
- * Internal: a function that makes instances of `target`, chosen once: straight to the constructor
+ * A function that makes instances of `target`, chosen once: straight to the constructor
  * for a type of this copy of the package, through `parse` for one from another copy.
+ *
+ * @internal
  */
 export const constructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
   if (ownTypes.isOwn(target)) {
@@ -22,8 +24,10 @@ export const constructorFor = (target: AnyNominalType): ((input: unknown) => unk
 };
 
 /**
- * Internal: a function that makes instances of `target` like `parse` does, holding the type's
+ * A function that makes instances of `target` like `parse` does, holding the type's
  * generated parser rather than looking it up for every value; for fields of objects and arrays.
+ *
+ * @internal
  */
 export const instanceParserFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
   if (!ownTypes.isOwn(target)) {
@@ -37,8 +41,10 @@ export const instanceParserFor = (target: AnyNominalType): ((input: unknown) => 
 };
 
 /**
- * Internal: a function that checks a value against `target` without making an instance: a
+ * A function that checks a value against `target` without making an instance: a
  * `Rejection`, or anything else when the value is accepted.
+ *
+ * @internal
  */
 export const checkerFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
   if (!ownTypes.isOwn(target)) {
@@ -52,8 +58,10 @@ export const checkerFor = (target: AnyNominalType): ((input: unknown) => unknown
 };
 
 /**
- * Internal: a function that makes instances of `target` from values a checker of it accepted, and
+ * A function that makes instances of `target` from values a checker of it accepted, and
  * skips checking a primitive again where the type's rules only check.
+ *
+ * @internal
  */
 export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown) => unknown) => {
   const build = constructorFor(target);

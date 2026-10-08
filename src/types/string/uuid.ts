@@ -20,8 +20,20 @@ const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid'> = AnyString.subtype(
  * @remarks
  * Hex digits may come in either case and are kept as written; `equals` ignores case, and
  * `canonical()` gives the lowercase form RFC 9562 recommends for output.
+ *
+ * @example
+ * ```ts
+ * import { Uuid } from '@horizon-republic/nominal-types';
+ *
+ * const id = new Uuid('6F1C2A3E-8B9D-4E5F-A1B2-C3D4E5F60718');
+ * id.version; // 4
+ * id.canonical().value; // '6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718'
+ * ```
  */
 export class Uuid extends UuidBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Uuid>;
 
   /**
@@ -72,6 +84,8 @@ export class Uuid extends UuidBase {
 
   /**
    * The same UUID in lowercase.
+   *
+   * @returns A UUID of the same class.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());
@@ -80,6 +94,9 @@ export class Uuid extends UuidBase {
   /**
    * Whether the other value has the same digits, ignoring case, and belongs to this type, a type
    * under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same UUID.
    */
   public override equals(other: unknown): boolean {
     return (

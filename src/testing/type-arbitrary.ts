@@ -80,13 +80,17 @@ const noGenerator = (type: AnyNominalType): TypeError =>
   );
 
 /**
- * Internal: values a nominal type accepts, as its input.
+ * Values a nominal type accepts, as its input.
  *
  * @remarks
  * The levels are tried from the type up: a generator passed for a level or a schema the level is
  * built on is taken as it is, and any other candidate is sampled first and taken once the type
  * accepts a quarter of what it makes. Failing that, the candidate the type accepted most of, then
  * the examples of its JSON Schema.
+ *
+ * @throws {@link TypeError} when nothing can be generated for the type.
+ *
+ * @internal
  */
 export const typeArbitrary = (
   type: AnyNominalType,

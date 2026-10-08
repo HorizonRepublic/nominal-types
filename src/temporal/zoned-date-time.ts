@@ -85,6 +85,8 @@ const ZonedDateTimeBase: NominalType<
  *
  * @example
  * ```ts
+ * import { ZonedDateTime } from '@horizon-republic/nominal-types/temporal';
+ *
  * const meeting = new ZonedDateTime('2024-05-01T09:30:00+02:00[Europe/Paris]');
  * meeting.timeZone.value; // 'Europe/Paris'
  * meeting.toInstant().toJSON(); // '2024-05-01T07:30:00Z'
@@ -92,6 +94,10 @@ const ZonedDateTimeBase: NominalType<
  * ```
  */
 export class ZonedDateTime extends ZonedDateTimeBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof ZonedDateTime>;
 
   /**
@@ -112,6 +118,8 @@ export class ZonedDateTime extends ZonedDateTimeBase {
 
   /**
    * The moment on the global timeline, without the zone.
+   *
+   * @returns The moment as an `Instant`.
    */
   public toInstant(): Instant {
     return new Instant(this.value.toInstant());
@@ -120,6 +128,9 @@ export class ZonedDateTime extends ZonedDateTimeBase {
   /**
    * Whether the other value is the same moment in the same zone and belongs to this type, a type
    * under it or the type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return (
@@ -129,6 +140,8 @@ export class ZonedDateTime extends ZonedDateTimeBase {
 
   /**
    * The date, time, offset and zone, as `2024-05-01T09:30:00+02:00[Europe/Paris]`.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -136,6 +149,8 @@ export class ZonedDateTime extends ZonedDateTimeBase {
 
   /**
    * The text `toJSON()` writes.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -144,6 +159,10 @@ export class ZonedDateTime extends ZonedDateTimeBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two values would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

@@ -3,8 +3,10 @@ import type { AnyNominalType } from './contracts.ts';
 import { settleParts } from './deferred-parts.ts';
 
 /**
- * Internal: what a schema built by `n.of()`, `n.object()` or `n.union()` is made of, for tools
+ * What a schema built by `n.of()`, `n.object()` or `n.union()` is made of, for tools
  * that walk a schema, such as the generators of the `testing` entry point.
+ *
+ * @internal
  */
 export type SchemaParts =
   | { readonly kind: 'type'; readonly type: AnyNominalType }
@@ -49,8 +51,10 @@ const parts = (): WeakMap<object, SchemaParts> => {
 const owners = new WeakMap<object, object>();
 
 /**
- * Internal: records the schema that owns `paths` and what it is made of, as its paths know it:
+ * Records the schema that owns `paths` and what it is made of, as its paths know it:
  * the `item` of a shape around another schema is that schema's paths, recorded before.
+ *
+ * @internal
  */
 export const recordParts = (schema: object, paths: object, pathParts?: SchemaParts): void => {
   owners.set(paths, schema);
@@ -68,7 +72,9 @@ export const recordParts = (schema: object, paths: object, pathParts?: SchemaPar
 };
 
 /**
- * Internal: what a schema is made of, or `undefined` for a schema no copy of this package built.
+ * What a schema is made of, or `undefined` for a schema no copy of this package built.
+ *
+ * @internal
  */
 export const partsOf = (schema: object): SchemaParts | undefined => {
   settleParts(schema);

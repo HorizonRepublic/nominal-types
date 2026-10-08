@@ -21,9 +21,11 @@ const readerOf = (field: unknown): Reader | undefined => {
 };
 
 /**
- * Internal: how a part of a request that arrives as text is read for an `n.object()` schema, as
+ * How a part of a request that arrives as text is read for an `n.object()` schema, as
  * `NominalPipe` reads a query value: a string for a number or boolean type is read as its value,
  * and a lone value for a list becomes a list of one. `undefined` when nothing is read.
+ *
+ * @internal
  */
 export const textReaderFor = (
   target: NominalTarget,

@@ -17,7 +17,19 @@ const Uint16Base: SubtypeOf<
 
 /**
  * An integer from 0 to 65535, the range of an unsigned 16-bit integer.
+ *
+ * @example
+ * ```ts
+ * import { Uint16 } from '@horizon-republic/nominal-types';
+ *
+ * new Uint16(65535).value; // 65535
+ * Uint16.parse(-1).ok; // false
+ * ```
  */
 export class Uint16 extends Uint16Base {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Uint16>;
 }

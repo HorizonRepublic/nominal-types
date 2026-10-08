@@ -51,9 +51,33 @@ const defaultMessage = (keys: readonly string[], path: readonly PropertyKey[]): 
  * type, then runs the check on the values, and gives back a copy of the object with those values
  * in place. Keys it doesn't list pass through unchecked. Adapters run the check alone, on fields
  * their validator has checked already.
+ *
+ * @typeParam Fields - The fields the rule reads, each key to its type or schema.
+ *
+ * @example
+ * ```ts
+ * import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
+ *
+ * const withinCapacity = n.constraint(
+ *   { guests: PositiveInteger, capacity: PositiveInteger },
+ *   ({ guests, capacity }) => guests <= capacity,
+ * );
+ *
+ * withinCapacity.fields; // { guests: PositiveInteger, capacity: PositiveInteger }
+ * ```
  */
 export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>> {
+  /**
+   * The Standard Schema interface, so any library that takes a Standard Schema can run the rule.
+   *
+   * @remarks
+   * It checks the listed fields of an object, runs the rule on their values and describes the
+   * object as JSON Schema.
+   */
   public readonly '~standard': StandardProps<ConstraintInputs<Fields>, ConstraintValues<Fields>>;
+  /**
+   * The fields the rule reads, each key to its type or schema, as given to `n.constraint()`.
+   */
   public readonly fields: Fields;
   readonly #check: (values: ConstraintValues<Fields>) => ConstraintVerdict;
   readonly #path: readonly PropertyKey[];
@@ -61,7 +85,9 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
   readonly #runners: readonly FieldRunner[];
 
   /**
-   * Internal: built by `n.constraint()`.
+   * Built by `n.constraint()`.
+   *
+   * @internal
    */
   public constructor(
     fields: Fields,
@@ -88,8 +114,10 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
   }
 
   /**
-   * Internal: the issue for values already checked against their fields, or `undefined` when they
+   * The issue for values already checked against their fields, or `undefined` when they
    * agree.
+   *
+   * @internal
    */
   public issueFor(values: ConstraintValues<Fields>): StandardSchemaV1.Issue | undefined {
     const verdict = this.#check(values);
@@ -104,9 +132,11 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
   }
 
   /**
-   * Internal: an object with each listed field checked against its type, or a `Rejection` with
+   * An object with each listed field checked against its type, or a `Rejection` with
    * the issues of the fields that failed, each under its key; the input itself when every field
    * already holds its value, such as an instance.
+   *
+   * @internal
    */
   public valuesOf(input: Readonly<Record<string, unknown>>): ConstraintValues<Fields> | Rejection {
     let values: Record<string, unknown> | undefined;
@@ -135,8 +165,10 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
   }
 
   /**
-   * Internal: the issues of an object whose fields an adapter's validator has accepted: those of
+   * The issues of an object whose fields an adapter's validator has accepted: those of
    * listed fields that still fail their types, or the constraint's own, or none.
+   *
+   * @internal
    */
   public issuesOf(input: Readonly<Record<string, unknown>>): readonly StandardSchemaV1.Issue[] {
     const values = this.valuesOf(input);
@@ -198,8 +230,18 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
  * The result is a Standard Schema over the object. Give it to `n.object()`, or to an adapter's
  * `constrain…()`.
  *
+ * @typeParam Fields - The fields the rule reads, each key to its type or schema.
+ * @param fields - The fields the rule reads, each key to a nominal type, a `n.of()` schema or a
+ * synchronous Standard Schema.
+ * @param check - The rule: `true` when the values agree, `false` for the message in the options,
+ * or a message.
+ * @param options - Where the issue belongs and its message.
+ * @returns The constraint, to give to `n.object()` or an adapter.
+ *
  * @example
  * ```ts
+ * import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
+ *
  * const withinCapacity = n.constraint(
  *   { guests: PositiveInteger, capacity: PositiveInteger },
  *   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',

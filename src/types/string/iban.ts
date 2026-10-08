@@ -73,12 +73,17 @@ const IbanBase: SubtypeOf<typeof AnyString, 'nominal.Iban'> = AnyString.subtype(
  *
  * @example
  * ```ts
+ * import { Iban } from '@horizon-republic/nominal-types';
+ *
  * const iban = new Iban('GB82WEST12345698765432');
  * iban.countryCode; // 'GB'
  * iban.toPrint(); // 'GB82 WEST 1234 5698 7654 32'
  * ```
  */
 export class Iban extends IbanBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Iban>;
 
   /**
@@ -117,6 +122,8 @@ export class Iban extends IbanBase {
   /**
    * The print form of ISO 13616-1: groups of four characters separated by spaces, for showing to
    * people.
+   *
+   * @returns The IBAN in print form.
    */
   public toPrint(): string {
     return this.value.replaceAll(/.{4}(?!$)/gu, '$& ');

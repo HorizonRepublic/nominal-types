@@ -12,31 +12,52 @@ export interface Configuration {
    * Writes the messages in place of the English ones, for another language or your own wording:
    * a function for every issue, or a map by issue code. A function returning `undefined`, or a
    * code the map leaves out, keeps the English message. `undefined` restores the English messages.
+   *
+   * @defaultValue `undefined`, the English messages.
    */
   readonly messages?: Messages | undefined;
   /**
    * How messages show the rejected value: `'show'` writes it, except for a sensitive type;
    * `'length'` tells every value by its kind and length, `a string of 4 characters`; `'hide'`
    * leaves it out.
+   *
+   * @defaultValue `'show'`
    */
   readonly values?: 'show' | 'length' | 'hide' | undefined;
   /**
    * Whether `console.log` and `util.inspect` show the values of instances: `'hide'` shows every
    * instance as a sensitive type's, `Uuid { value: <hidden, a string of 36 characters> }`.
+   *
+   * @defaultValue `'show'`
    */
   readonly inspect?: 'show' | 'hide' | undefined;
   /**
    * Changes made to input before the check. With `trimStrings`, every type under `AnyString`
    * trims a string first, and `fromString()` and `fromEnv()` trim text before reading it.
+   *
+   * @defaultValue `{ trimStrings: false }`
    */
-  readonly normalize?: { readonly trimStrings?: boolean | undefined } | undefined;
+  readonly normalize?:
+    | {
+        /**
+         * Whether strings are trimmed before the check.
+         *
+         * @defaultValue `false`
+         */
+        readonly trimStrings?: boolean | undefined;
+      }
+    | undefined;
   /**
    * Gives every issue its `code`, such as `'required'`, next to the message.
+   *
+   * @defaultValue `false`
    */
   readonly codes?: boolean | undefined;
   /**
    * `'off'` builds every check without `new Function`, for a Content-Security-Policy without
    * `'unsafe-eval'`; checks built before the call keep how they were built.
+   *
+   * @defaultValue `'auto'`, which generates code where the runtime allows it.
    */
   readonly codegen?: 'auto' | 'off' | undefined;
 }
@@ -45,11 +66,29 @@ export interface Configuration {
  * Every setting `n.configure()` holds, as it returns them.
  */
 export interface FullConfiguration {
+  /**
+   * The messages in place of the English ones, or `undefined` for the English messages.
+   */
   readonly messages: Messages | undefined;
+  /**
+   * How messages show the rejected value.
+   */
   readonly values: 'show' | 'length' | 'hide';
+  /**
+   * Whether `console.log` and `util.inspect` show the values of instances.
+   */
   readonly inspect: 'show' | 'hide';
+  /**
+   * The changes made to input before the check.
+   */
   readonly normalize: { readonly trimStrings: boolean };
+  /**
+   * Whether every issue carries its `code`.
+   */
   readonly codes: boolean;
+  /**
+   * Whether checks are built with generated code (`'auto'`) or without it (`'off'`).
+   */
   readonly codegen: 'auto' | 'off';
 }
 
@@ -177,7 +216,9 @@ const changesOf = (given: Configuration): Partial<Settings> => {
  * `inspect`, `codes` and trimming apply from the next check on; `codegen` applies to checks built
  * after the call.
  *
- * @throws TypeError for an option that doesn't exist or a value it doesn't take; nothing is
+ * @param given - The options to change; the others keep their setting.
+ * @returns Every setting as it was before the call.
+ * @throws {@link TypeError} when an option doesn't exist or has a value it doesn't take; nothing is
  * changed then.
  *
  * @example

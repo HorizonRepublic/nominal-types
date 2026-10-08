@@ -30,10 +30,15 @@ const Ipv6PrefixBase: SubtypeOf<typeof IpPrefix, 'nominal.Ipv6Prefix'> = IpPrefi
  *
  * @example
  * ```ts
+ * import { Ipv6Prefix } from '@horizon-republic/nominal-types';
+ *
  * new Ipv6Prefix('2001:DB8:0::/48').canonical().value; // '2001:db8::/48'
  * ```
  */
 export class Ipv6Prefix extends Ipv6PrefixBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Ipv6Prefix>;
 
   /**
@@ -45,6 +50,8 @@ export class Ipv6Prefix extends Ipv6PrefixBase {
 
   /**
    * The prefix with its address written as RFC 5952 recommends.
+   *
+   * @returns A prefix of the same class.
    */
   public override canonical(): this {
     return sameType(this, canonicalPrefix(this.value));

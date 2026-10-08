@@ -56,12 +56,17 @@ const isbn13Of = (text: string): string => {
  *
  * @example
  * ```ts
+ * import { Isbn } from '@horizon-republic/nominal-types';
+ *
  * const isbn = new Isbn('0306406152');
  * isbn.canonical().value; // '9780306406157'
  * isbn.equals(new Isbn('9780306406157')); // true
  * ```
  */
 export class Isbn extends IsbnBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Isbn>;
 
   /**
@@ -79,14 +84,18 @@ export class Isbn extends IsbnBase {
 
   /**
    * The ISBN-13 form, the one ISO 2108 assigns since 2007; an ISBN-13 stays as it is.
+   *
+   * @returns An ISBN of the same class, 13 digits long.
    */
   public canonical(): this {
     return sameType(this, isbn13Of(this.value));
   }
 
   /**
-   * The ISBN-10 form, for systems that still take it; `undefined` for an ISBN-13 starting with
-   * 979, which has none.
+   * The ISBN-10 form, for systems that still take it.
+   *
+   * @returns An `Isbn` of 10 characters, or `undefined` for an ISBN-13 starting with 979, which has
+   * none.
    */
   public toIsbn10(): Isbn | undefined {
     if (this.value.length === 10) {
@@ -105,6 +114,9 @@ export class Isbn extends IsbnBase {
   /**
    * Whether the other value is the same ISBN, as an ISBN-10 or an ISBN-13, and belongs to this
    * type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same ISBN.
    */
   public override equals(other: unknown): boolean {
     return (

@@ -63,8 +63,10 @@ const fixed: Readonly<Record<string, () => Arbitrary<unknown>>> = {
 };
 
 /**
- * Internal: the generator of a built-in type, found by the name the class at this level declares,
+ * The generator of a built-in type, found by the name the class at this level declares,
  * or `undefined` for a type that is not built in.
+ *
+ * @internal
  */
 export const builtInArbitrary = (
   level: object,

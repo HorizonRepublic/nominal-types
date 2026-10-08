@@ -1,7 +1,9 @@
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
- * Internal: every issue code, to check the keys of a messages map.
+ * Every issue code, to check the keys of a messages map.
+ *
+ * @internal
  */
 export const issueCodes = [
   'not_a_string',
@@ -33,6 +35,10 @@ export type IssueCode = (typeof issueCodes)[number];
  * `n.configure({ codes: true })` is set.
  */
 export interface NominalIssue extends StandardSchemaV1.Issue {
+  /**
+   * What went wrong, such as `pattern` or `required`. Present when
+   * `n.configure({ codes: true })` is set.
+   */
   readonly code?: IssueCode;
 }
 
@@ -45,20 +51,38 @@ export interface NominalIssue extends StandardSchemaV1.Issue {
  * sensitive type already applied, so a translated message never shows more than the English one.
  */
 export interface IssueDetails {
+  /**
+   * What went wrong, such as `pattern` or `required`.
+   */
   readonly code: IssueCode;
-  /** The message in English, as the package writes it without a messages function. */
+  /**
+   * The message in English, as the package writes it without a messages function.
+   */
   readonly message: string;
-  /** What the value must be, such as `an email address`, for the codes that have one. */
+  /**
+   * What the value must be, such as `an email address`, for the codes that have one.
+   */
   readonly description?: string;
-  /** The rejected value as the English message writes it: `"jane"`, `42`, `a string of 4 characters`. */
+  /**
+   * The rejected value as the English message writes it: `"jane"`, `42`,
+   * `a string of 4 characters`.
+   */
   readonly value?: string;
-  /** The type whose rule refused the value, when a type's own rule did. */
+  /**
+   * The type whose rule refused the value, when a type's own rule did.
+   */
   readonly typeName?: string;
-  /** Where the value sits in the checked input, such as `['address', 'city']`; missing at the top. */
+  /**
+   * Where the value sits in the checked input, such as `['address', 'city']`; missing at the top.
+   */
   readonly path?: readonly PropertyKey[];
-  /** The fewest items an array may have, for `too_few_items` and `too_many_items`. */
+  /**
+   * The fewest items an array may have, for `too_few_items` and `too_many_items`.
+   */
   readonly min?: number;
-  /** The most items an array may have, when it has a limit. */
+  /**
+   * The most items an array may have, when it has a limit.
+   */
   readonly max?: number;
 }
 

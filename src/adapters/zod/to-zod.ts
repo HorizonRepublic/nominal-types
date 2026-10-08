@@ -8,6 +8,10 @@ import { typeJsonOf } from '../type-json.ts';
 
 /**
  * The Zod schema `toZod()` returns: it takes the type's input and gives an instance.
+ *
+ * @typeParam Target - The nominal type the schema parses into.
+ *
+ * @see {@link toZod}
  */
 export type ZodField<Target extends AnyNominalType> = z.ZodType<
   Target['prototype'],
@@ -23,10 +27,25 @@ export type ZodField<Target extends AnyNominalType> = z.ZodType<
  * pattern, format, limits and examples. Use Zod's `.array()`, `.optional()` and `.nullable()`
  * around it.
  *
+ * @typeParam Target - The nominal type the schema parses into.
+ * @param target - The nominal type to wrap.
+ * @returns A Zod schema that parses the type's input into an instance.
+ *
  * @example
  * ```ts
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { toZod } from '@horizon-republic/nominal-types/adapters/zod';
+ * import { z } from 'zod';
+ *
  * const CreateUser = z.object({ id: toZod(Uuid), email: toZod(Email), name: z.string() });
+ *
+ * declare const body: unknown;
+ *
+ * const user = CreateUser.parse(body);
+ * user.email; // an Email instance
  * ```
+ *
+ * @see {@link constrainZod}
  */
 export const toZod = <Target extends AnyNominalType>(target: Target): ZodField<Target> => {
   const parse = instanceParserFor(target);

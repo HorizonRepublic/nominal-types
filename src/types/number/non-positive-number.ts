@@ -14,7 +14,19 @@ const NonPositiveNumberBase: SubtypeOf<typeof FiniteNumber, 'nominal.NonPositive
  *
  * @remarks
  * Unlike `NegativeNumber`, it takes 0 and `-0`.
+ *
+ * @example
+ * ```ts
+ * import { NonPositiveNumber } from '@horizon-republic/nominal-types';
+ *
+ * new NonPositiveNumber(-0.5).value; // -0.5
+ * NonPositiveNumber.parse(0.5).ok; // false
+ * ```
  */
 export class NonPositiveNumber extends NonPositiveNumberBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof NonPositiveNumber>;
 }

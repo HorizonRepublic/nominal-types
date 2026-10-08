@@ -11,11 +11,22 @@ import { z } from 'zod';
 import { fromArk, toArk } from '../../../src/adapters/arktype/index.ts';
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
 import { toZod } from '../../../src/adapters/zod/index.ts';
-import { Email, Uuid } from '../../../src/index.ts';
+import { Email, n, NonEmptyString, PositiveInteger, Uuid } from '../../../src/index.ts';
 
 const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
 const body: ArgumentMetadata = { type: 'body', metatype: Object };
+
+const Rows = n
+  .object({ sku: NonEmptyString, quantity: PositiveInteger })
+  .array()
+  .check((rows, report) => {
+    rows.forEach((row, index) => {
+      if (rows.findIndex((other) => other.sku.value === row.sku.value) !== index) {
+        report({ path: [index, 'sku'], code: 'duplicate_sku', message: 'repeats a SKU' });
+      }
+    });
+  });
 
 const param = (metatype: ArgumentMetadata['metatype'], data = 'id'): ArgumentMetadata => ({
   type: 'param',
@@ -59,6 +70,17 @@ describe('NominalPipe', () => {
       const result = pipe.transform(id, param(Uuid));
 
       expect(result).toBeInstanceOf(Uuid);
+    });
+
+    it('lists every issue of a rule with its row and column', () => {
+      const sku = { sku: 'A-1', quantity: 1 };
+      const error = thrownBy(() => new NominalPipe(Rows).transform([sku, sku, sku], body));
+
+      expect(error).toHaveProperty('response', {
+        statusCode: 400,
+        error: 'Bad Request',
+        message: ['1.sku: repeats a SKU', '2.sku: repeats a SKU'],
+      });
     });
 
     it('passes arguments of other types through untouched', () => {

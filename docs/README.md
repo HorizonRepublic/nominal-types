@@ -23,6 +23,7 @@ Core:
 - [How to accept one of several object shapes](guides/core/accept-one-of-several-shapes.md)
 - [How to accept lists, missing values and null](guides/core/lists-and-optional-values.md)
 - [How to check one field against another](guides/core/check-fields-together.md)
+- [How to report problems by row and column](guides/core/report-problems-by-row-and-column.md)
 - [How to make a value object](guides/core/make-a-value-object.md)
 - [How to read numbers and booleans from text](guides/core/read-text-values.md)
 - [How to use dates and times](guides/core/use-dates-and-times.md)

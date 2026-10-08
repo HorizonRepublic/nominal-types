@@ -8,6 +8,7 @@ import type { Parsed } from './contracts.ts';
 import { deferParts } from './deferred-parts.ts';
 import {
   arrayPaths,
+  checkedPaths,
   nullablePaths,
   optionalPaths,
   registerPaths,
@@ -18,6 +19,8 @@ import type { FastPaths, Plain } from './fast-paths.ts';
 import { forTarget } from './json-target.ts';
 import { settled } from './nominal-error.ts';
 import { Rejection } from './rejection.ts';
+import { checkedRun, ruleOf } from './rule.ts';
+import type { Rule, RuleCheck } from './rule.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
 import type { Shape } from './shapes.ts';
@@ -25,6 +28,48 @@ import { shared } from './shared.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { TextForm } from './text-form.ts';
+
+/**
+ * The parts of a schema before `check()` and the rules added to it, so a second `check()` adds
+ * its rules to the same list.
+ *
+ * @typeParam Output - What the schema gives back.
+ *
+ * @internal
+ */
+interface Checked<Output> {
+  /**
+   * The parts of the schema without its rules.
+   */
+  readonly parts: BuiltParts<Output>;
+  /**
+   * The rules, in the order they were added.
+   */
+  readonly rules: ReadonlyArray<Rule<Output>>;
+}
+
+// Kept beside the schema rather than in a private field, whose type would tie schemas of
+// different values together.
+const checkedOf = new WeakMap<object, object>();
+
+/**
+ * The parts of a schema that also runs `rules` on the value it gave; the parts themselves when
+ * there are no rules.
+ *
+ * @internal
+ */
+export const withRules = <Output>(
+  parts: BuiltParts<Output>,
+  rules: ReadonlyArray<Rule<Output>>,
+): BuiltParts<Output> => {
+  if (rules.length === 0) {
+    return parts;
+  }
+
+  const run = checkedRun(parts.shape.run, rules);
+
+  return { shape: { ...parts.shape, run }, paths: checkedPaths(parts.paths, run) };
+};
 
 /**
  * Whether a schema accepts an array at its top, also behind `optional()` and
@@ -95,10 +140,15 @@ export class TypeSchema<Input, Output> {
       readonly textForm?: TextForm | undefined;
       readonly array?: boolean;
       readonly name?: string;
+      readonly checked?: Checked<Output>;
     } = {},
   ) {
     this.#textForm = options.textForm;
     this.#name = options.name ?? 'n.of()';
+
+    if (options.checked !== undefined) {
+      checkedOf.set(this, options.checked);
+    }
 
     this.#build = typeof parts === 'function' ? parts : () => parts;
     ({ shape: this.#shape, paths: this.#paths } = standInParts(() => this.#settled()));
@@ -297,6 +347,46 @@ export class TypeSchema<Input, Output> {
         name: this.#name,
       },
     );
+  }
+
+  /**
+   * This schema with rules that read the whole value and report any number of issues, for
+   * problems found across items, such as a SKU used in two rows of an import.
+   *
+   * @remarks
+   * The rules run in the order given, only when the value passed this schema, so they read
+   * instances. Every rule runs, unless the issues reach the most one check reports
+   * (`n.configure({ maxIssues })`). The JSON Schema stays the same.
+   *
+   * @param rules - Rules built by `n.rule()`, or checks written in place.
+   * @returns A new schema that also runs the rules.
+   * @throws {@link TypeError} when a rule is neither built by `n.rule()` nor a function.
+   *
+   * @example
+   * ```ts
+   * import { n, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const Ids = n.of(Uuid).array().check((ids, report) => {
+   *   if (ids.length % 2 === 1) report({ code: 'odd_count', message: 'must have pairs of ids' });
+   * });
+   * ```
+   */
+  public check(
+    ...rules: ReadonlyArray<Rule<Output> | RuleCheck<Output>>
+  ): TypeSchema<Input, Output> {
+    // The map holds what this schema was built from, of its own Output.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const before = checkedOf.get(this) as Checked<Output> | undefined;
+    const checked: Checked<Output> = {
+      parts: before?.parts ?? this.#settled(),
+      rules: [...(before?.rules ?? []), ...rules.map((each) => ruleOf(each))],
+    };
+
+    return new TypeSchema(withRules(checked.parts, checked.rules), {
+      array: isArraySchema(this),
+      name: this.#name,
+      checked,
+    });
   }
 
   /**

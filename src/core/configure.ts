@@ -1,8 +1,7 @@
-import { issueCodes } from './issue-codes.ts';
 import type { Messages } from './issue-codes.ts';
 import { issueWriter } from './issue-writer.ts';
 import type { Logger } from './log.ts';
-import { settings } from './settings.ts';
+import { defaultMaxIssues, settings } from './settings.ts';
 
 /**
  * Settings for the whole process, given to `n.configure()`: how messages read, whether they and
@@ -62,6 +61,13 @@ export interface Configuration {
    */
   readonly codegen?: 'auto' | 'off' | undefined;
   /**
+   * The most issues one check reports: past it, the check stops and adds one issue with the code
+   * `too_many_issues`, such as `stopped after 100 issues`. `Infinity` reports every issue.
+   *
+   * @defaultValue `100`
+   */
+  readonly maxIssues?: number | undefined;
+  /**
    * Sends the package's warnings, and the values adapters reject, to the logger of your app;
    * `false` silences them. `undefined` restores the default.
    *
@@ -99,6 +105,10 @@ export interface FullConfiguration {
    */
   readonly codegen: 'auto' | 'off';
   /**
+   * The most issues one check reports.
+   */
+  readonly maxIssues: number;
+  /**
    * Where warnings go: a logger, `false` for nowhere, or `undefined` for `console.warn`.
    */
   readonly logger: Logger | false | undefined;
@@ -112,6 +122,7 @@ const snapshot = (): FullConfiguration =>
     normalize: Object.freeze({ trimStrings: settings.trimStrings }),
     codes: settings.codes,
     codegen: settings.codegen,
+    maxIssues: settings.maxIssues ?? defaultMaxIssues,
     logger: settings.logger,
   });
 
@@ -143,6 +154,7 @@ const options: readonly string[] = [
   'inspect',
   'codes',
   'codegen',
+  'maxIssues',
   'messages',
   'normalize',
   'logger',
@@ -207,8 +219,8 @@ const frozen = (messages: Messages | undefined): Messages | undefined =>
 /**
  * Refuses a `messages` option of the wrong shape.
  *
- * @throws {@link TypeError} when the messages are neither a function nor a map of known issue codes
- * to strings or functions.
+ * @throws {@link TypeError} when the messages are neither a function nor a map of issue codes to
+ * strings or functions.
  *
  * @internal
  */
@@ -224,10 +236,6 @@ const checkMessages = (messages: unknown): void => {
   }
 
   for (const [code, message] of Object.entries(messages)) {
-    if (!issueCodes.some((known) => known === code)) {
-      fail(`there is no issue code ${code}`);
-    }
-
     if (typeof message !== 'string' && typeof message !== 'function') {
       fail(`messages.${code} must be a string or a function`);
     }
@@ -255,6 +263,23 @@ const checkLogger = (logger: unknown): void => {
 };
 
 /**
+ * Refuses a `maxIssues` option that is not a count.
+ *
+ * @throws {@link TypeError} when the value is neither a whole number from 1 up nor `Infinity`.
+ *
+ * @internal
+ */
+const checkMaxIssues = (count: unknown): void => {
+  if (
+    count !== undefined &&
+    count !== Number.POSITIVE_INFINITY &&
+    !(typeof count === 'number' && Number.isSafeInteger(count) && count >= 1)
+  ) {
+    fail('maxIssues must be a whole number from 1 up, or Infinity');
+  }
+};
+
+/**
  * The settings the options change.
  *
  * @throws {@link TypeError} when an option doesn't exist or has a value it doesn't take.
@@ -270,6 +295,7 @@ const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
 
   checkMessages(given.messages);
   checkLogger(given.logger);
+  checkMaxIssues(given.maxIssues);
 
   for (const name of choiceNames) {
     choice(name, given[name], choices[name]);
@@ -281,6 +307,7 @@ const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
   return {
     ...('messages' in given ? { messages: frozen(given.messages) } : {}),
     ...('logger' in given ? { logger: given.logger } : {}),
+    ...(given.maxIssues === undefined ? {} : { maxIssues: given.maxIssues }),
     ...Object.fromEntries(chosen.map((name) => [name, given[name]])),
     ...(trimStrings === undefined ? {} : { trimStrings }),
   };

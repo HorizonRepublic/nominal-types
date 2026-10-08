@@ -1,3 +1,6 @@
+// The record reads its rules as every schema does, one module past the usual limit.
+/* oxlint-disable import/max-dependencies */
+import type { BuiltParts } from './built-parts.ts';
 import { emitRecord } from './collection-emitters.ts';
 import type { ConstraintField, ConstraintInput, ConstraintValue } from './constraint-types.ts';
 import { planOf } from './fast-paths.ts';
@@ -12,9 +15,11 @@ import { keyRunner, keyTypeOf } from './record-keys.ts';
 import { recordAcceptor, recordRun, recordWriter } from './record-shape.ts';
 import type { RecordRules } from './record-shape.ts';
 import { Rejection } from './rejection.ts';
+import { ruleOf } from './rule.ts';
+import type { Rule, RuleCheck } from './rule.ts';
 import { fieldAcceptor } from './shape-acceptors.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
-import { TypeSchema } from './type-schema.ts';
+import { TypeSchema, withRules } from './type-schema.ts';
 
 type KeyText<Key> = Key extends string
   ? Key
@@ -57,6 +62,12 @@ interface RecordOptions {
   readonly partial: boolean;
   readonly min: number;
   readonly max: number;
+  /**
+   * The rules `check()` added.
+   *
+   * @defaultValue None.
+   */
+  readonly rules?: ReadonlyArray<Rule<never>>;
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string';
@@ -169,6 +180,44 @@ const checkedCount = (method: string, count: unknown): number => {
 };
 
 /**
+ * How a record runs, describes and writes itself, and the parts the tools that walk a schema read.
+ *
+ * @internal
+ */
+const builtRecord = (
+  keyField: ConstraintField,
+  valueField: ConstraintField,
+  keys: readonly string[] | undefined,
+  rules: RecordRules,
+): BuiltParts<never> => {
+  const run = recordRun(rules);
+  const write = recordWriter(writerOf(valueField));
+
+  return {
+    shape: {
+      // The function returns a new object of the checked keys and values, or a Rejection.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      run: run as (input: unknown) => never,
+      describe: (side, target) => describeRecord(keyField, valueField, keys, rules, side, target),
+    },
+    paths: {
+      write,
+      accepts: recordAcceptor(rules, fieldAcceptor(valueField, 'n.record()'), run),
+      plan: recordPlan(keyField, valueField, keys, write),
+      parts: {
+        kind: 'record',
+        key: keyField,
+        value: valueField,
+        keys,
+        optional: rules.optional,
+        min: rules.min,
+        max: rules.max,
+      },
+    },
+  };
+};
+
+/**
  * An object whose keys are not known in advance, each key checked by one schema and each value by
  * another: what `n.record()` returns.
  *
@@ -220,37 +269,12 @@ export class RecordSchema<Input, Output> extends TypeSchema<Input, Output> {
       min: options.min,
       max: options.max,
     };
-    const run = recordRun(rules);
-    const write = recordWriter(writerOf(valueField));
 
     addEmitter('record', emitRecord);
 
-    super(
-      {
-        shape: {
-          // The function returns a new object of the checked keys and values, or a Rejection.
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          run: run as (input: unknown) => Output | Rejection,
-          describe: (side, target) =>
-            describeRecord(keyField, valueField, keys, rules, side, target),
-        },
-        paths: {
-          write,
-          accepts: recordAcceptor(rules, fieldAcceptor(valueField, 'n.record()'), run),
-          plan: recordPlan(keyField, valueField, keys, write),
-          parts: {
-            kind: 'record',
-            key: keyField,
-            value: valueField,
-            keys,
-            optional: rules.optional,
-            min: rules.min,
-            max: rules.max,
-          },
-        },
-      },
-      { name: 'n.record()' },
-    );
+    super(withRules(builtRecord(keyField, valueField, keys, rules), options.rules ?? []), {
+      name: 'n.record()',
+    });
     this.keys = keys === undefined ? undefined : Object.freeze([...keys]);
     this.#key = keyField;
     this.#value = valueField;
@@ -313,7 +337,47 @@ export class RecordSchema<Input, Output> extends TypeSchema<Input, Output> {
    */
   public partial(): RecordSchema<Partial<Input>, Partial<Output>> {
     // @throws-ignore the key and the value are the ones this schema already checked
-    return new RecordSchema(this.#key, this.#value, { ...this.#options, partial: true });
+    return new RecordSchema(this.#key, this.#value, {
+      ...this.#options,
+      partial: true,
+      rules: [],
+    });
+  }
+
+  /**
+   * This schema with rules that read the whole record and report any number of issues, each at
+   * its own path, such as two keys whose values clash.
+   *
+   * @remarks
+   * The rules run in the order given, only when every key and value passed, so they read
+   * instances. `min()` and `max()` keep them; `partial()` drops them, since they were written for
+   * a record with every key.
+   *
+   * @param rules - Rules built by `n.rule()`, or checks written in place.
+   * @returns A new schema that also runs the rules.
+   * @throws {@link TypeError} when a rule is neither built by `n.rule()` nor a function.
+   *
+   * @example
+   * ```ts
+   * import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const Stock = n.record(Uuid, PositiveInteger).check((stock, report) => {
+   *   const total = Object.values(stock).reduce((sum, count) => sum + count.value, 0);
+   *
+   *   if (total > 1000) report({ code: 'over_capacity', message: 'must hold at most 1000 items' });
+   * });
+   * ```
+   */
+  public override check(
+    ...rules: ReadonlyArray<Rule<Output> | RuleCheck<Output>>
+  ): RecordSchema<Input, Output> {
+    const added: ReadonlyArray<Rule<never>> = rules.map((each) => ruleOf(each));
+
+    // @throws-ignore the key and the value are the ones this schema already checked
+    return new RecordSchema(this.#key, this.#value, {
+      ...this.#options,
+      rules: [...(this.#options.rules ?? []), ...added],
+    });
   }
 
   /**

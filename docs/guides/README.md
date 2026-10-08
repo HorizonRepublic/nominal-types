@@ -17,6 +17,7 @@ Your own types, and checking input with no other library.
 | accept a list, a missing value or `null`          | [How to accept lists, missing values and null](core/lists-and-optional-values.md)                                 |
 | accept a list of fixed positions, such as a point | [How to accept lists, missing values and null](core/lists-and-optional-values.md#check-a-list-of-fixed-positions) |
 | check one field against another                   | [How to check one field against another](core/check-fields-together.md)                                           |
+| report problems of an import by row and column    | [How to report problems by row and column](core/report-problems-by-row-and-column.md)                             |
 | make a value object of several fields             | [How to make a value object](core/make-a-value-object.md)                                                         |
 | read numbers and booleans from strings            | [How to read numbers and booleans from text](core/read-text-values.md)                                            |
 | check dates and times                             | [How to use dates and times](core/use-dates-and-times.md)                                                         |

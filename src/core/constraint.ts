@@ -9,9 +9,10 @@ import type {
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { forTarget } from './json-target.ts';
-import { atPath, issueOf, rejectedIssue } from './messages.ts';
+import { atPath, rejectedIssue } from './messages.ts';
 import { isNominalType } from './nominal.ts';
 import { Rejection } from './rejection.ts';
+import { Rule } from './rule.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
@@ -79,9 +80,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
    * The fields the rule reads, each key to its type or schema, as given to `n.constraint()`.
    */
   public readonly fields: Fields;
-  readonly #check: (values: ConstraintValues<Fields>) => ConstraintVerdict;
-  readonly #path: readonly PropertyKey[];
-  readonly #message: string;
+  readonly #rule: Rule<ConstraintValues<Fields>>;
   readonly #runners: readonly FieldRunner[];
 
   /**
@@ -97,10 +96,14 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
     const listed: Readonly<Record<string, ConstraintField>> = fields;
     const keys = Object.keys(listed);
 
+    const path = typeof options.path === 'string' ? [options.path] : (options.path ?? []);
+
     this.fields = fields;
-    this.#check = check;
-    this.#path = typeof options.path === 'string' ? [options.path] : (options.path ?? []);
-    this.#message = options.message ?? defaultMessage(keys, this.#path);
+    // @throws-ignore the check and the options were typed by `n.constraint()`
+    this.#rule = new Rule((values) => check(values), {
+      path,
+      message: options.message ?? defaultMessage(keys, path),
+    });
     this.#runners = Object.entries(listed).map(([key, field]) => ({
       key,
       field,
@@ -120,15 +123,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
    * @internal
    */
   public issueFor(values: ConstraintValues<Fields>): StandardSchemaV1.Issue | undefined {
-    const verdict = this.#check(values);
-
-    if (verdict === true) {
-      return undefined;
-    }
-
-    const message = verdict === false ? this.#message : verdict;
-
-    return issueOf('constraint', message, this.#path.length === 0 ? {} : { path: this.#path });
+    return this.#rule.issuesOf(values)[0];
   }
 
   /**

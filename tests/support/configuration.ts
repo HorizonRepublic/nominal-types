@@ -10,6 +10,7 @@ const defaults: Configuration = {
   normalize: { trimStrings: false },
   codes: false,
   codegen: 'auto',
+  maxIssues: 100,
   logger: undefined,
 };
 

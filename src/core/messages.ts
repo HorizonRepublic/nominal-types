@@ -140,6 +140,10 @@ export interface Wording {
    * The highest count or length allowed.
    */
   readonly max?: number | undefined;
+  /**
+   * What a rule of your own gave with the issue.
+   */
+  readonly params?: Readonly<Record<string, unknown>> | undefined;
 }
 
 type Path = NominalIssue['path'];

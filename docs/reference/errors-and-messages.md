@@ -64,31 +64,34 @@ Example: `{ message: 'must be a UUID (was "x")', path: ['items', 0] }` is the fi
 
 An issue from another library keeps its message. Its path segments become plain keys.
 
-With [`n.configure({ codes: true })`](configure.md#codes), every issue of this package also has a `code`, first: `{ code: 'required', message: 'is required', path: ['email'] }`. The type `NominalIssue` describes such an issue.
+With [`n.configure({ codes: true })`](configure.md#codes), every issue of this package also has a `code`, first: `{ code: 'required', message: 'is required', path: ['email'] }`. An issue of a [rule](schemas.md#nrule) that gave its own code has it always. The type `NominalIssue` describes such an issue.
 
 ## Issue codes
 
 A code names the kind of issue. Codes don't change between versions; messages may. An issue gets its code with [`codes: true`](configure.md#codes), and a [`messages`](configure.md#messages) map uses codes as its keys.
 
-| Code             | When                                                                                                     | Message                                              |
-| ---------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `not_a_string`   | a pattern or `AnyString` is given a value that is not a string                                           | `must be a string (was 42)`                          |
-| `pattern`        | a pattern refuses a string: `n.matching()`, a `RegExp`, `Email`, `Uuid` and other built-in pattern types | `must be a UUID (was "nope")`                        |
-| `invalid`        | any other rule of a type refuses the value: `n.satisfying()`, number, big integer, date and time types   | `must be a positive integer (was 0)`                 |
-| `not_one_of`     | `n.oneOf()` or the tag of `n.union()` refuses the value                                                  | `must be one of "draft", "paid" (was "lost")`        |
-| `not_an_object`  | `n.object()`, `n.union()`, `n.record()` or a constraint is given a value that is not an object           | `must be an object (was "x")`                        |
-| `not_an_array`   | `array()` or `n.tuple()` is given a value that is not an array                                           | `must be an array (was "x")`                         |
-| `too_few_items`  | an array has fewer items than `min` or `length`, or a tuple fewer than its positions                     | `must have at least 2 items (was 1)`                 |
-| `too_many_items` | an array has more items than `max` or `length`, or a tuple more than its positions                       | `must have at most 10 items (was 12)`                |
-| `too_few_keys`   | a record has fewer keys than `min()`                                                                     | `must have at least 1 key (was 0)`                   |
-| `too_many_keys`  | a record has more keys than `max()`                                                                      | `must have at most 50 keys (was 51)`                 |
-| `invalid_key`    | a key of `n.record()` is refused by its key schema                                                       | `key must be an ISO 4217 currency code (was "euro")` |
-| `not_unique`     | an item of a `unique` array repeats an earlier one, or two keys of `n.record()` become one               | `must not repeat an item (was "a")`                  |
-| `required`       | a field, or a listed key of `n.record()`, is missing or `undefined`                                      | `is required`                                        |
-| `not_allowed`    | `strict()` or `copyWith()` gets a key the object doesn't declare, or `n.record()` gets `__proto__`       | `is not allowed`                                     |
-| `constraint`     | an `n.constraint()` check fails                                                                          | the constraint's message                             |
+| Code              | When                                                                                                     | Message                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `not_a_string`    | a pattern or `AnyString` is given a value that is not a string                                           | `must be a string (was 42)`                          |
+| `pattern`         | a pattern refuses a string: `n.matching()`, a `RegExp`, `Email`, `Uuid` and other built-in pattern types | `must be a UUID (was "nope")`                        |
+| `invalid`         | any other rule of a type refuses the value: `n.satisfying()`, number, big integer, date and time types   | `must be a positive integer (was 0)`                 |
+| `not_one_of`      | `n.oneOf()` or the tag of `n.union()` refuses the value                                                  | `must be one of "draft", "paid" (was "lost")`        |
+| `not_an_object`   | `n.object()`, `n.union()`, `n.record()` or a constraint is given a value that is not an object           | `must be an object (was "x")`                        |
+| `not_an_array`    | `array()` or `n.tuple()` is given a value that is not an array                                           | `must be an array (was "x")`                         |
+| `too_few_items`   | an array has fewer items than `min` or `length`, or a tuple fewer than its positions                     | `must have at least 2 items (was 1)`                 |
+| `too_many_items`  | an array has more items than `max` or `length`, or a tuple more than its positions                       | `must have at most 10 items (was 12)`                |
+| `too_few_keys`    | a record has fewer keys than `min()`                                                                     | `must have at least 1 key (was 0)`                   |
+| `too_many_keys`   | a record has more keys than `max()`                                                                      | `must have at most 50 keys (was 51)`                 |
+| `invalid_key`     | a key of `n.record()` is refused by its key schema                                                       | `key must be an ISO 4217 currency code (was "euro")` |
+| `not_unique`      | an item of a `unique` array repeats an earlier one, or two keys of `n.record()` become one               | `must not repeat an item (was "a")`                  |
+| `required`        | a field, or a listed key of `n.record()`, is missing or `undefined`                                      | `is required`                                        |
+| `not_allowed`     | `strict()` or `copyWith()` gets a key the object doesn't declare, or `n.record()` gets `__proto__`       | `is not allowed`                                     |
+| `constraint`      | an `n.constraint()` check fails, or a rule of `n.rule()` reports an issue without a code                 | the constraint's or the rule's message               |
+| `too_many_issues` | a check stopped at [`maxIssues`](configure.md#maxissues); always the last issue                          | `stopped after 100 issues`                           |
 
 An issue from a rule of another library, such as a Zod schema, has no code.
+
+A [rule](schemas.md#nrule) of your own may give any other code, such as `duplicate_sku`. The issue carries that code without `codes: true`, and a [`messages`](configure.md#messages) map takes it as a key. The type `AnyIssueCode` is `IssueCode` or any other string.
 
 ## Message format
 

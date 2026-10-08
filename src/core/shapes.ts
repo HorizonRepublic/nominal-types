@@ -2,6 +2,7 @@ import { boundsOf, countIssue } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import { generateFunction } from './compile.ts';
 import { hideValues } from './hidden-values.ts';
+import { cappedIssues, maxIssues } from './issue-limit.ts';
 import { atPath, rejectedIssue, valueIssue } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import { repeatedValue, repeatsIn } from './repeats.ts';
@@ -46,10 +47,12 @@ const arraySource = `function parseArray(input) {
   let issues;
   for (let index = 0; index < count; index += 1) {
     const result = run(input[index]);
-    if (result instanceof Rejection) issues = itemIssues(issues, index, result);
-    else if (issues === undefined) values.push(result);
+    if (result instanceof Rejection) {
+      issues = itemIssues(issues, index, result);
+      if (issues.length > maxIssues()) break;
+    } else if (issues === undefined) values.push(result);
   }
-  return issues === undefined ? values : new Rejection(issues);
+  return issues === undefined ? values : new Rejection(cappedIssues(issues));
 }`;
 
 const itemIssues = (
@@ -69,28 +72,14 @@ const notArray = (input: unknown): Rejection =>
 
 const isRun = (value: unknown): value is (input: unknown) => unknown => typeof value === 'function';
 
-const arrayRun = <Item>(
-  run: (input: unknown) => Item | Rejection,
-  options: ArrayOptions,
-  min: number,
-  max: number,
-  generate?: boolean,
-): ((input: unknown) => readonly Item[] | Rejection) => {
-  const wrongCount = (count: number): Rejection => new Rejection([countIssue(options, count)]);
-  const generated = generateFunction(
-    ['run', 'min', 'max', 'Rejection', 'notArray', 'wrongCount', 'itemIssues'],
-    arraySource,
-    [run, min, max, Rejection, notArray, wrongCount, itemIssues],
-    generate,
-  );
-
-  if (isRun(generated)) {
-    // The source above returns a new array of what `run` gave, or a Rejection.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    return generated as (input: unknown) => readonly Item[] | Rejection;
-  }
-
-  return (input) => {
+const loopRun =
+  <Item>(
+    run: (input: unknown) => Item | Rejection,
+    min: number,
+    max: number,
+    wrongCount: (count: number) => Rejection,
+  ): ((input: unknown) => readonly Item[] | Rejection) =>
+  (input) => {
     if (!Array.isArray(input)) {
       return notArray(input);
     }
@@ -104,18 +93,55 @@ const arrayRun = <Item>(
     const values: Item[] = [];
     let issues: StandardSchemaV1.Issue[] | undefined;
 
-    list.forEach((value, index) => {
+    for (const [index, value] of list.entries()) {
       const result = run(value);
 
       if (result instanceof Rejection) {
         issues = itemIssues(issues, index, result);
+
+        if (issues.length > maxIssues()) {
+          break;
+        }
       } else if (issues === undefined) {
         values.push(result);
       }
-    });
+    }
 
-    return issues === undefined ? values : new Rejection(issues);
+    return issues === undefined ? values : new Rejection(cappedIssues(issues));
   };
+
+const arrayRun = <Item>(
+  run: (input: unknown) => Item | Rejection,
+  options: ArrayOptions,
+  min: number,
+  max: number,
+  generate?: boolean,
+): ((input: unknown) => readonly Item[] | Rejection) => {
+  const wrongCount = (count: number): Rejection => new Rejection([countIssue(options, count)]);
+  const generated = generateFunction(
+    [
+      'run',
+      'min',
+      'max',
+      'Rejection',
+      'notArray',
+      'wrongCount',
+      'itemIssues',
+      'maxIssues',
+      'cappedIssues',
+    ],
+    arraySource,
+    [run, min, max, Rejection, notArray, wrongCount, itemIssues, maxIssues, cappedIssues],
+    generate,
+  );
+
+  if (isRun(generated)) {
+    // The source above returns a new array of what `run` gave, or a Rejection.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    return generated as (input: unknown) => readonly Item[] | Rejection;
+  }
+
+  return loopRun(run, min, max, wrongCount);
 };
 
 // Repeats are looked for once every item is valid, so they are compared as the values they became.
@@ -143,7 +169,7 @@ const uniqueRun =
       }),
     );
 
-    return new Rejection(sensitive ? hideValues(issues) : issues);
+    return new Rejection(cappedIssues(sensitive ? hideValues(issues) : issues));
   };
 
 /**

@@ -51,6 +51,7 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 | `IssueDetails`                              | What a `messages` function gets for an issue. See [IssueDetails](configure.md#issuedetails).        |
 | `Messages`, `MessageMap`, `MessageFunction` | What the `messages` option takes. See [Messages](configure.md#messages-messagemap-messagefunction). |
 | `IssueCode`                                 | The code of an issue, such as `'required'`. See [Issue codes](errors-and-messages.md#issue-codes).  |
+| `AnyIssueCode`                              | `IssueCode`, or a code of your own a rule gives, such as `'duplicate_sku'`.                         |
 | `NominalIssue`                              | An issue of this package: a Standard Schema issue with an optional `code`.                          |
 
 ## Type classes and instances
@@ -135,5 +136,16 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 | `ConstraintValue<Field>`   | The value `check` gets for one field.                                                      |
 | `ConstraintValues<Fields>` | The values `check` gets, one per listed field.                                             |
 | `ConstraintVerdict`        | What `check` returns: `boolean \| string`.                                                 |
+
+## Rules
+
+| Type               | Description                                                                |
+| ------------------ | -------------------------------------------------------------------------- |
+| `Rule<Value>`      | The class `n.rule()` returns. See [`Rule` class](schemas.md#rule-class).   |
+| `RuleCheck<Value>` | The check of a rule: `(value, report) => RuleVerdict`.                     |
+| `RuleVerdict`      | What a rule's check returns: `boolean \| string \| void`.                  |
+| `Report`           | The `report` function a rule's check gets: `(issue: RuleIssue) => void`.   |
+| `RuleIssue`        | What `report()` takes: `path`, `code`, `message`, `params`, each optional. |
+| `RuleOptions`      | The options of `n.rule()`: the default `path`, `code` and `message`.       |
 
 [← Reference](README.md)

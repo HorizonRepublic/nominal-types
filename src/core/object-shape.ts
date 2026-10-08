@@ -1,5 +1,6 @@
 import { generateFunction } from './compile.ts';
 import type { AnyConstraint } from './constraint-types.ts';
+import { cappedIssues, maxIssues } from './issue-limit.ts';
 import { atPath, issueOf, rejectedIssue } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import type { Shape } from './shapes.ts';
@@ -96,6 +97,10 @@ const constraintIssues = (
     if (found.length > 0) {
       all ??= [];
       all.push(...found);
+
+      if (all.length > maxIssues()) {
+        break;
+      }
     }
   }
 
@@ -141,7 +146,7 @@ const loopRun =
 
     issues ??= constraintIssues(undefined, value, constraints);
 
-    return issues === undefined ? value : new Rejection(issues);
+    return issues === undefined ? value : new Rejection(cappedIssues(issues));
   };
 
 const fieldSource = ({ key, optional }: ObjectField, index: number): string => {
@@ -187,7 +192,7 @@ const sourceOf = (
       : `value[${key}] = v${index};`;
   });
   const checkConstraints = hasConstraints
-    ? 'issues = constraintIssues(issues, value, constraints); if (issues !== undefined) return new Rejection(issues);'
+    ? 'issues = constraintIssues(issues, value, constraints); if (issues !== undefined) return new Rejection(cappedIssues(issues));'
     : '';
 
   return `function parseObject(input) {
@@ -195,7 +200,7 @@ const sourceOf = (
     let issues;
     ${fields.map((field, index) => fieldSource(field, index)).join('\n')}
     ${strict ? 'issues = unknownKeyIssues(issues, input, declared);' : ''}
-    if (issues !== undefined) return new Rejection(issues);
+    if (issues !== undefined) return new Rejection(cappedIssues(issues));
     const value = { ${literal} };
     ${stores.join('\n')}
     ${checkConstraints}
@@ -216,6 +221,7 @@ const generatedRun = (
     'hasOwn',
     'unknownKeyIssues',
     'constraintIssues',
+    'cappedIssues',
     'declared',
     'constraints',
     ...fields.map((_field, index) => `run${String(index)}`),
@@ -228,6 +234,7 @@ const generatedRun = (
     Reflect.get(Object.prototype, 'hasOwnProperty'),
     unknownKeyIssues,
     constraintIssues,
+    cappedIssues,
     new Set(fields.map(({ key }) => key)),
     constraints,
     ...fields.map(({ run }) => run),

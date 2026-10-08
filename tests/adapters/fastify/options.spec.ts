@@ -6,6 +6,17 @@ import { answer, CreateOrder, nominalApp, rejection } from './support.ts';
 
 const order = { customer: 'jane@example.com', sku: 'ABC-1234', quantity: 2 };
 
+const Lines = n.object({
+  lines: n
+    .of(PositiveInteger)
+    .array()
+    .check((counts, report) => {
+      counts.forEach((count, index) => {
+        if (count.value > 10) report({ path: [index], code: 'too_many', message: 'over 10' });
+      });
+    }),
+});
+
 describe('fastifyNominal options', () => {
   it('leaves text as text with fromString: false', async () => {
     const app = await nominalApp({ fromString: false });
@@ -84,6 +95,39 @@ describe('fastifyNominal options', () => {
     expect(
       await answer(app, { method: 'POST', url: '/formatted', payload: { ...order, quantity: 0 } }),
     ).toStrictEqual({ status: 400, body: rejection('body: must be a positive integer (was 0)') });
+    await app.close();
+  });
+
+  it('gives every issue of a rule with its path in the validation array', async () => {
+    const app = await nominalApp();
+
+    app.post(
+      '/lines',
+      { schema: { body: Lines }, attachValidation: true },
+      (request) => request.validationError?.validation,
+    );
+
+    expect(
+      await answer(app, { method: 'POST', url: '/lines', payload: { lines: [11, 2, 12] } }),
+    ).toStrictEqual({
+      status: 200,
+      body: [
+        {
+          keyword: 'nominal',
+          instancePath: '/lines/0',
+          schemaPath: '#',
+          params: {},
+          message: 'over 10',
+        },
+        {
+          keyword: 'nominal',
+          instancePath: '/lines/2',
+          schemaPath: '#',
+          params: {},
+          message: 'over 10',
+        },
+      ],
+    });
     await app.close();
   });
 

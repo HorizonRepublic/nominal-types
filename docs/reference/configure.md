@@ -1,6 +1,6 @@
 # n.configure()
 
-The settings of the whole process: how messages read, whether they and logs show values, whether strings are trimmed, whether checks use generated code, and where warnings go. Terms are explained in the [glossary](glossary.md).
+The settings of the whole process: how messages read, whether they and logs show values, whether strings are trimmed, whether checks use generated code, how many issues a check reports, and where warnings go. Terms are explained in the [glossary](glossary.md).
 
 ## Signature
 
@@ -22,11 +22,11 @@ Throws: `TypeError` for an option that doesn't exist or a value it doesn't take.
 | an unknown option           | `n.configure(): there is no option value`                                                           |
 | a value not offered         | `n.configure(): values must be "show", "length" or "hide"`                                          |
 | `messages` of another kind  | `n.configure(): messages must be a function, a map by issue code or undefined`                      |
-| a map with an unknown code  | `n.configure(): there is no issue code missing`                                                     |
 | a map entry of another kind | `n.configure(): messages.required must be a string or a function`                                   |
 | `normalize` of another kind | `n.configure(): normalize must be an object, such as { trimStrings: true }`                         |
 | an unknown normalization    | `n.configure(): there is no option normalize.lowerCase`                                             |
 | `logger` of another kind    | `n.configure(): logger must be an object with a warn method and an optional debug method, or false` |
+| `maxIssues` of another kind | `n.configure(): maxIssues must be a whole number from 1 up, or Infinity`                            |
 
 ## Options
 
@@ -38,6 +38,7 @@ Throws: `TypeError` for an option that doesn't exist or a value it doesn't take.
 | `codes`                 | `boolean`                                          | `false`     | from the next issue             |
 | `normalize.trimStrings` | `boolean`                                          | `false`     | from the next check             |
 | `codegen`               | `'auto' \| 'off'`                                  | `'auto'`    | for checks built after the call |
+| `maxIssues`             | `number`                                           | `100`       | from the next check             |
 | `logger`                | [`Logger`](#logger-interface) \| `false`           | `undefined` | from the next entry             |
 
 An option given as `undefined` keeps its value, except `messages` and `logger`: `messages: undefined` brings the English messages back, and `logger: undefined` brings `console.warn` back.
@@ -53,7 +54,9 @@ Writes the messages of this package in place of the English ones. It takes one o
 
 A function that returns `undefined` keeps the English message. The map is copied when `n.configure()` is called, so changing it afterwards changes nothing.
 
-It writes the messages of types, `n.object()`, `n.of()`, `n.union()`, `n.record()`, `n.tuple()`, `array()` and `n.constraint()`. Messages from a rule of another library, such as a Zod schema, are left as that library writes them.
+The map also takes the codes your own [rules](schemas.md#nrule) give, such as `duplicate_sku`. A message set for such a code replaces the `message` the rule reported. The function gets the `params` the rule gave.
+
+It writes the messages of types, `n.object()`, `n.of()`, `n.union()`, `n.record()`, `n.tuple()`, `array()`, `n.constraint()` and `n.rule()`. Messages from a rule of another library, such as a Zod schema, are left as that library writes them.
 
 `n.hideValues()`, `fromEnv()` and the `hideValues` option of the adapters ask the function again, with the value hidden. A message it wrote never shows more than the English one would.
 
@@ -79,7 +82,7 @@ It also applies to a rule of another library whose message ends in `(was …)` o
 
 `true` gives every issue of this package a `code`, before its message: `{ code: 'required', message: 'is required', path: ['email'] }`. See [Issue codes](errors-and-messages.md#issue-codes).
 
-An issue from a rule of another library has no code.
+An issue from a rule of another library has no code. A [rule](schemas.md#nrule) of your own that gives a code puts it on the issue without `codes: true`.
 
 ### normalize.trimStrings
 
@@ -96,6 +99,27 @@ The JSON Schema of a type doesn't change. With trimming on, it is stricter than 
 `'off'` builds every check without `new Function`, for a Content-Security-Policy without `'unsafe-eval'`. The package never tries code generation then, not even to test for it. The results are the same; the checks are slower.
 
 The package builds no check while it loads, so a call in the first module your app imports comes in time. A check built before the call keeps how it was built.
+
+### maxIssues
+
+The most issues one check reports. Past it, the check stops and adds one more issue, with the code `too_many_issues`:
+
+```ts
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+n.configure({ maxIssues: 2 });
+
+n.of(PositiveInteger).array().parse([0, 0, 0]);
+// { ok: false, issues: [
+//   { message: 'must be a positive integer (was 0)', path: [0] },
+//   { message: 'must be a positive integer (was 0)', path: [1] },
+//   { message: 'stopped after 2 issues' },
+// ] }
+```
+
+It takes a whole number from 1 up, or `Infinity` for every issue. The limit counts the issues of the whole value, nested lists and objects included. A check with exactly `maxIssues` issues reports them all.
+
+It keeps a large bad input, such as a file of 10,000 rows, from building a response with tens of thousands of issues: an array stops checking its items once the limit is passed.
 
 ### logger
 
@@ -127,7 +151,7 @@ The logger is called as a method, `logger.warn(message, details)`, so a class in
 
 ```ts
 interface IssueDetails {
-  readonly code: IssueCode;
+  readonly code: AnyIssueCode;
   readonly message: string;
   readonly description?: string;
   readonly value?: string;
@@ -135,26 +159,29 @@ interface IssueDetails {
   readonly path?: readonly PropertyKey[];
   readonly min?: number;
   readonly max?: number;
+  readonly params?: Readonly<Record<string, unknown>>;
 }
 ```
 
 What a `messages` function gets for each issue.
 
-| Field         | Description                                                                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `code`        | The [issue code](errors-and-messages.md#issue-codes).                                                                                                                     |
-| `message`     | The English message, with `values` and sensitive types applied.                                                                                                           |
-| `description` | What the value must be, such as `'an email address'`. Missing for `required`, `not_allowed`, `constraint`, counts and repeats.                                            |
-| `value`       | The value as the English message writes it, such as `'"nope"'`, `'42'` or `'a string of 4 characters'`. Missing with `values: 'hide'` and where a message names no value. |
-| `typeName`    | The type whose own rule refused the value, such as `'nominal.Uuid'`.                                                                                                      |
-| `path`        | Where the value sits in the input, such as `['address', 'city']`. Missing for an issue of the whole value.                                                                |
-| `min`, `max`  | The fewest and the most items of an array, or keys of a record, for the `too_few_…` and `too_many_…` codes. `max` is missing when there is no limit.                      |
+| Field         | Description                                                                                                                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `code`        | The [issue code](errors-and-messages.md#issue-codes), or the code a [rule](schemas.md#nrule) gave. `AnyIssueCode` is `IssueCode` or any other string.                                           |
+| `message`     | The English message, with `values` and sensitive types applied.                                                                                                                                 |
+| `description` | What the value must be, such as `'an email address'`. Missing for `required`, `not_allowed`, `constraint`, counts and repeats.                                                                  |
+| `value`       | The value as the English message writes it, such as `'"nope"'`, `'42'` or `'a string of 4 characters'`. Missing with `values: 'hide'` and where a message names no value.                       |
+| `typeName`    | The type whose own rule refused the value, such as `'nominal.Uuid'`.                                                                                                                            |
+| `path`        | Where the value sits in the input, such as `['address', 'city']`. Missing for an issue of the whole value.                                                                                      |
+| `min`, `max`  | The fewest and the most items of an array, or keys of a record, for the `too_few_…` and `too_many_…` codes. `max` is missing when there is no limit. For `too_many_issues`, `max` is the limit. |
+| `params`      | What a [rule](schemas.md#nrule) gave with the issue, as it gave it. Missing for other issues. `values: 'hide'` doesn't change it.                                                               |
 
 ## Messages, MessageMap, MessageFunction
 
 ```ts
 type MessageFunction = (issue: IssueDetails) => string | undefined;
-type MessageMap = Readonly<Partial<Record<IssueCode, string | MessageFunction>>>;
+type MessageMap = Readonly<Partial<Record<IssueCode, string | MessageFunction>>> &
+  Readonly<Record<string, string | MessageFunction | undefined>>;
 type Messages = MessageFunction | MessageMap;
 ```
 
@@ -198,6 +225,7 @@ interface FullConfiguration {
   readonly normalize: { readonly trimStrings: boolean };
   readonly codes: boolean;
   readonly codegen: "auto" | "off";
+  readonly maxIssues: number;
   readonly logger: Logger | false | undefined;
 }
 ```

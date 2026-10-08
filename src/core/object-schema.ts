@@ -32,6 +32,8 @@ import type {
   TextInput,
   Tightened,
 } from './object-types.ts';
+import { isRule, ruleOf } from './rule.ts';
+import type { Rule, RuleCheck } from './rule.ts';
 import { TypeSchema } from './type-schema.ts';
 
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './object-types.ts';
@@ -134,6 +136,41 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   public strict(): ObjectSchema<Input, Output> {
     // @throws-ignore the fields are the ones this schema already checked
     return this.#with({ strict: true });
+  }
+
+  /**
+   * This schema with rules that read the whole object and report any number of issues, each at
+   * its own path: the chain form of the constraints `n.object()` takes.
+   *
+   * @remarks
+   * The rules run after the constraints, in the order given, only when every field passed, so
+   * they read instances. `strict()`, `fromEnv()`, `required()` and `extend()` keep them;
+   * `partial()`, `pick()` and `omit()` drop them, since they were written for the whole object.
+   *
+   * @param rules - Rules built by `n.rule()`, or checks written in place.
+   * @returns A new schema that also runs the rules.
+   * @throws {@link TypeError} when a rule is neither built by `n.rule()` nor a function.
+   *
+   * @example
+   * ```ts
+   * import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+   *
+   * const Stay = n.object({ nights: PositiveInteger, guests: PositiveInteger }).check(
+   *   ({ nights, guests }, report) => {
+   *     if (nights.value * guests.value > 60) report({ path: ['nights'], code: 'too_long' });
+   *   },
+   * );
+   * ```
+   */
+  public override check(
+    ...rules: ReadonlyArray<Rule<Output> | RuleCheck<Output>>
+  ): ObjectSchema<Input, Output> {
+    // A rule reads the object its fields make, which is what a constraint reads too.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const added = rules.map((each) => ruleOf(each)) as unknown as readonly AnyConstraint[];
+
+    // @throws-ignore the fields are the ones this schema already checked, and rules read none
+    return this.#with({ constraints: [...this.#constraints, ...added] });
   }
 
   /**
@@ -345,15 +382,18 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
       keys.length === 0 ? new Set(this.keys) : checkedKeys(method, this.keys, keys, false);
 
     // @throws-ignore the fields are the ones this schema already checked
-    return this.#with({ presence: withPresence(this.#presence, named, optional) });
+    return this.#with({
+      presence: withPresence(this.#presence, named, optional),
+      ...(optional ? { constraints: this.#constraints.filter((each) => !isRule(each)) } : {}),
+    });
   }
 
   #keeping(keys: ReadonlySet<string>): ObjectSchema<never, never> {
     // @throws-ignore the fields are the ones this schema already checked
     return this.#with({
       source: Object.fromEntries(Object.entries(this.#source).filter(([key]) => keys.has(key))),
-      constraints: this.#constraints.filter((rule) =>
-        constraintKeys(rule).every((key) => keys.has(key)),
+      constraints: this.#constraints.filter(
+        (rule) => !isRule(rule) && constraintKeys(rule).every((key) => keys.has(key)),
       ),
       presence: keptPresence(this.#presence, keys),
     });

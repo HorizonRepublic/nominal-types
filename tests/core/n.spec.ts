@@ -1,3 +1,5 @@
+// Every member of `n` is imported from its own module, to compare them one by one.
+/* oxlint-disable import/max-dependencies */
 import { describe, expect, it } from 'vitest';
 
 import { configure } from '../../src/core/configure.ts';
@@ -10,6 +12,7 @@ import { matching } from '../../src/core/pattern-schema.ts';
 import { plain } from '../../src/core/plain.ts';
 import { satisfying } from '../../src/core/predicate-schema.ts';
 import { record } from '../../src/core/record-schema.ts';
+import { rule } from '../../src/core/rule.ts';
 import { schemaOf } from '../../src/core/schema-of.ts';
 import { tuple } from '../../src/core/tuple-schema.ts';
 import { union } from '../../src/core/union-schema.ts';
@@ -28,6 +31,7 @@ const members = {
   oneOf,
   plain,
   record,
+  rule,
   satisfying,
   tuple,
   union,
@@ -54,6 +58,7 @@ describe('n', () => {
     'oneOf',
     'plain',
     'record',
+    'rule',
     'satisfying',
     'schemaOf',
     'tuple',

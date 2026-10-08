@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { cpus } from 'node:os';
 import { fileURLToPath } from 'node:url';
+
+import { environment } from '../environment.ts';
 
 const scenario = fileURLToPath(new URL('dist/nest/scenario.js', import.meta.url));
 const typia = fileURLToPath(new URL('../typia/dist/validators.js', import.meta.url));
@@ -48,6 +49,8 @@ const format = (value: number): string =>
   value >= 1000 ? `${(value / 1000).toFixed(1)} s` : `${value.toFixed(0)} ms`;
 
 const lines = rows.map(([setup, unrelated]) => {
+  process.stderr.write(`timing ${setup}, ${unrelated} other DTOs\n`);
+
   const times = measure(setup, unrelated);
   const name = unrelated === 0 ? setup : `${setup}, with ${unrelated} other DTOs in the app`;
 
@@ -55,7 +58,7 @@ const lines = rows.map(([setup, unrelated]) => {
 });
 
 console.log(
-  `\nA 3 MB JSON body posted to a NestJS 12 app on Fastify; time per request, median of five. ${cpus()[0]?.model ?? 'unknown CPU'}, Node.js ${process.version}, ${new Date().toISOString().slice(0, 10)}.\n`,
+  `\nA 3 MB JSON body posted to a NestJS 12 app on Fastify; time per request, median of nine after three warm-ups, each setup in a process of its own. ${environment()}.\n`,
 );
 console.log('| Setup | Valid | One error deep inside | Every hundredth email broken |');
 console.log('| --- | ---: | ---: | ---: |');

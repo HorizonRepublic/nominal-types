@@ -155,11 +155,13 @@ for (const [name, payload, status] of payloads) {
     throw new Error(`${setup} answered ${answered} instead of ${status} for ${name}`);
   }
 
-  await send(payload);
+  for (let warmUp = 0; warmUp < 3; warmUp += 1) {
+    await send(payload);
+  }
 
   const times: number[] = [];
 
-  for (let run = 0; run < 5; run += 1) {
+  for (let run = 0; run < 9; run += 1) {
     const started = performance.now();
 
     await send(payload);
@@ -167,7 +169,7 @@ for (const [name, payload, status] of payloads) {
   }
 
   times.sort((left, right) => left - right);
-  results[name] = times[2] ?? Number.NaN;
+  results[name] = times[4] ?? Number.NaN;
 }
 
 await app.close();

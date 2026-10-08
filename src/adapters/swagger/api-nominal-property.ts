@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
 
 import type { NominalTarget } from '../../core/target.ts';
-import { isRequired, openApiSchemaOf, propertyOf } from './openapi-schema.ts';
+import { fieldOf, isRequired, openApiSchemaOf, propertyOf } from './openapi-schema.ts';
 
 /**
  * Documents a DTO property as a nominal type, for projects that describe DTOs to `@nestjs/swagger`
@@ -31,5 +31,5 @@ export const ApiNominalProperty = (
 ): PropertyDecorator => {
   const schema = openApiSchemaOf(target, 'ApiNominalProperty');
 
-  return ApiProperty({ ...propertyOf(schema, isRequired(target)), ...options });
+  return ApiProperty({ ...propertyOf(fieldOf(schema), isRequired(target)), ...options });
 };

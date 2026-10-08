@@ -84,7 +84,7 @@ export class CreateOrderDto {
 }
 ```
 
-Nominal types add a few percent to class-validator's own time. class-validator itself is much slower than the schema libraries, and gets slower as an app registers more DTO classes. So it is not the choice for new code.
+Nominal types add about a tenth to class-validator's own time. class-validator itself is much slower than the schema libraries, and gets slower as an app registers more DTO classes. So it is not the choice for new code.
 
 ## Any other Standard Schema library
 

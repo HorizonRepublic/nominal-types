@@ -2,6 +2,8 @@
 
 The repository keeps `package-lock.json`. `.node-version` names the Node.js release the checks run on. `npm run build` needs Node.js 24.11 or later.
 
+Building needs Node.js 24.11 or later: the build checks the package with `@arethetypeswrong/core`, which an older Node.js 24 can't load. With nvm, run `nvm install 24` and `nvm use 24`. The scripts that build first, such as `npm run bench`, need it too.
+
 A pull request that adds or changes public behaviour updates the README and the pages under `docs/` it touches, in the same change. Its title follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), such as `feat(core): …`.
 
 ## Scripts

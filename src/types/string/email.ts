@@ -1,27 +1,11 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { AnyString } from './any-string.ts';
-import { labelFragment } from './dns-name.ts';
-
-const atom = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
-const label = labelFragment;
-const topLevel = '(?:[A-Za-z]{2,63}|xn--[A-Za-z0-9-]{1,59})';
-const address = `${atom}(?:\\.${atom})*@(?:${label}\\.)+${topLevel}`;
-const pattern = new RegExp(`^(?=.{6,254}$)(?=[^@]{1,64}@)${address}$`, 'u');
+import { atom, emailRule, label, pattern, topLevel } from './email-rule.ts';
 
 const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtype(
   'nominal.Email',
-  // JSON Schema tools built on RE2 have no lookaheads, so the schema states the limits of the
-  // pattern as lengths, and refuses more than 64 characters before the @ with `not`.
-  matching(pattern, 'an email address', {
-    pattern: `^${address}$`,
-    format: 'email',
-    minLength: 6,
-    maxLength: 254,
-    not: { pattern: '^[^@]{65}' },
-    examples: ['jane.doe@example.com'],
-  }),
+  emailRule,
   { sensitive: true },
 );
 

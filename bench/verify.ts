@@ -1,33 +1,25 @@
 import { libraries } from './libraries.ts';
-
-type Scenario = 'sku' | 'uuid' | 'email' | 'positiveInteger' | 'uuidList';
-
-const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
-
-const cases: ReadonlyArray<readonly [Scenario, unknown, unknown]> = [
-  ['sku', 'SKU-1234', 'SKU-12'],
-  ['uuid', id, 'nope'],
-  ['email', 'jane.doe@example.com', 'not an address'],
-  ['positiveInteger', 42, 0],
-  ['uuidList', [id], [id, 'nope']],
-];
+import { scenarios } from './scenarios.ts';
 
 let failures = 0;
 
 for (const library of libraries) {
-  for (const [scenario, valid, invalid] of cases) {
-    const check = library[scenario];
+  for (const scenario of scenarios) {
+    const check = scenario.pick(library);
 
     if (check === undefined) {
       continue;
     }
 
-    const good = library.accepted(check(valid));
-    const bad = library.accepted(check(invalid));
+    const wrong = scenario.inputs.filter(
+      (input) => library.accepted(check(input)) !== scenario.valid,
+    );
 
-    if (!good || bad) {
+    if (wrong.length > 0) {
       failures += 1;
-      console.log(`${library.name} ${scenario}: valid ${String(good)}, invalid ${String(bad)}`);
+      console.log(
+        `${library.name}, ${scenario.title}: ${wrong.length} answers wrong, such as ${JSON.stringify(wrong[0])?.slice(0, 80)}`,
+      );
     }
   }
 }

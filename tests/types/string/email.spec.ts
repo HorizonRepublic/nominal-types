@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
 import { Email, n, NominalError } from '../../../src/index.ts';
+import { randomTexts } from '../../support/random-text.ts';
+
+const domainOf = (length: number): string =>
+  `${`${'b'.repeat(63)}.`.repeat(3)}${'c'.repeat(length - 195)}.co`;
+
+const odd = ['@', '.', '-', ' ', 'é', '😀', '\n', '"'];
+const locals = [
+  ...randomTexts(['jane', 'x', 'doe', '.', '+', "'", 'abcdefgh'], 20_000, 16, 1),
+  ...randomTexts(['jane', 'x', '.', '+', ...odd], 20_000, 8, 2),
+];
+const domains = [
+  ...randomTexts(['example.', 'b.', 'mail-1.', `${'b'.repeat(60)}.`], 20_000, 6, 3),
+  ...randomTexts(['example', 'b.', '-', 'xn--p1ai', ...odd], 20_000, 6, 4),
+];
+const generated = [
+  ...randomTexts(['a', 'Z', '0', 'co', 'xn--', '+', ...odd], 20_000, 12, 5),
+  ...locals.map((local, index) => `${local}@${domains[index] ?? ''}${index % 3 ? 'co' : ''}`),
+];
 
 describe('Email', () => {
   it.each([
@@ -33,6 +51,47 @@ describe('Email', () => {
     '@b.co',
   ])('rejects %s', (address) => {
     expect(() => new Email(address)).toThrow(NominalError);
+  });
+
+  describe('length limits', () => {
+    it.each([
+      ['six characters', 'a@b.co', true],
+      ['five characters', 'a@b.c', false],
+      ['254 characters', `a@${domainOf(252)}`, true],
+      ['255 characters', `a@${domainOf(253)}`, false],
+      ['64 characters before the @', `${'x'.repeat(64)}@b.co`, true],
+      ['65 characters before the @', `${'x'.repeat(65)}@b.co`, false],
+    ])('%s', (_title, address, accepted) => {
+      expect(Email.parse(address).ok).toBe(accepted);
+    });
+
+    it('builds the boundary addresses it means to', () => {
+      expect(`a@${domainOf(252)}`).toHaveLength(254);
+      expect(`a@${domainOf(253)}`).toHaveLength(255);
+    });
+  });
+
+  it.each([undefined, null, 42, ['a@b.co'], { value: 'a@b.co' }, new Object('a@b.co')])(
+    'rejects %o, which is not a string',
+    (input) => {
+      expect(Email.parse(input).ok).toBe(false);
+    },
+  );
+
+  it.each(['a@b.co\n', '\na@b.co', 'a😀@b.co', 'a@b.co😀', 'a@@b.co', 'a@b@c.co'])(
+    'rejects %j',
+    (address) => {
+      expect(Email.parse(address).ok).toBe(false);
+    },
+  );
+
+  it('accepts exactly the strings its pattern matches', () => {
+    const disagreements = generated.filter(
+      (text) => Email.parse(text).ok !== Email.pattern.test(text),
+    );
+
+    expect(generated.filter((text) => Email.pattern.test(text)).length).toBeGreaterThan(500);
+    expect(disagreements).toEqual([]);
   });
 
   it('reports the rejection in words', () => {

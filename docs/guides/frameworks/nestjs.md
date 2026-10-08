@@ -431,6 +431,7 @@ To keep rejected values out of answers and logs, pass `hideValues: true`, as in 
 - `@Body() order: CreateOrderBody` with no pipe and no `{ schema }` is not checked. `CreateOrderBody` is a type, not a class, so the global pipe can't see it.
 - Give the type of a schema's value its own name, as in `type CreateOrderBody = ValueOf<typeof CreateOrder>`. Bun and SWC record the schema itself as the type of `order: CreateOrder` when the schema and the type share the name. The global `NominalPipe` then checks the body. But `@nestjs/swagger` writes a broken `$ref` (`#/components/schemas/`), and a global `ValidationPipe` answers with status 500.
 - Under `NominalSerializerInterceptor`, a getter that class-transformer calls sees values, not instances. In `@Expose() get domain() { return this.email.domain; }`, `this.email` is a string, so `domain` is left out of the answer. Set such a value in a plain field instead.
+- Under `NominalSerializerInterceptor`, the copy of an object that holds an instance has no `#private` fields. A getter or method that reads one, such as `@Expose() get hint() { return this.#hint; }`, throws `TypeError: Cannot read private member #hint from an object whose class did not declare it`, and the request fails with status 500. Use a plain field, or a `private` field without `#`.
 - Nest doesn't run pipes on `@Headers()`. Check a header inside the handler with `parse()`:
 
   ```ts

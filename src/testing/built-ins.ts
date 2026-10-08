@@ -5,6 +5,7 @@ import { codeArbitraries } from './built-in-codes.ts';
 import { grammarArbitraries } from './built-in-grammars.ts';
 import { networkArbitraries } from './built-in-network.ts';
 import { numberArbitraries } from './built-in-numbers.ts';
+import { temporalArbitraries } from './built-in-temporal.ts';
 import { textArbitraries } from './built-in-text.ts';
 import { valueArbitraries } from './built-in-values.ts';
 import { arbitraryFromJson } from './json-arbitrary.ts';
@@ -87,6 +88,12 @@ export const builtInArbitrary = (
 
   if (make !== undefined) {
     return make();
+  }
+
+  const temporal = temporalArbitraries[name]?.();
+
+  if (temporal !== undefined) {
+    return temporal;
   }
 
   const className = temporalClasses[name];

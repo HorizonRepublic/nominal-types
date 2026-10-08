@@ -80,8 +80,8 @@ const cases = [
   [
     'testing',
     `import { Email } from '${name}'; import { arbitraryOf } from '${name}/testing'; globalThis.out = arbitraryOf(Email);`,
-    55,
-    20.5,
+    57,
+    21,
   ],
   ['arktype', adapter('arktype', 'toArk'), 27, 9.5],
   ['class-validator', adapter('class-validator', 'NominalField'), 27, 9.5],

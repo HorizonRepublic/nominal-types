@@ -2,7 +2,15 @@ import 'temporal-polyfill/global';
 import { describe, expect, it, vi } from 'vitest';
 
 import { n, NominalError } from '../../src/index.ts';
-import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
+import {
+  Duration,
+  Instant,
+  PlainDate,
+  PlainDateTime,
+  PlainTime,
+  TimeZoneId,
+  ZonedDateTime,
+} from '../../src/temporal/index.ts';
 import { allPatternsIn, backtrackingSyntax } from '../support/json-schema.ts';
 import { issuesOf, thrownBy, valueOf } from '../support/results.ts';
 
@@ -29,14 +37,17 @@ describe('the Temporal types', () => {
     });
   });
 
-  it.each([PlainTime, PlainDateTime])('describe %o with a pattern and no format', (type) => {
-    const schema = type['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+  it.each([PlainTime, PlainDateTime, ZonedDateTime, Duration, TimeZoneId])(
+    'describe %o with a pattern and no format',
+    (type) => {
+      const schema = type['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
 
-    expect(schema).toMatchObject({ type: 'string', pattern: type.pattern.source });
-    expect(schema).not.toHaveProperty('format');
-  });
+      expect(schema).toMatchObject({ type: 'string', pattern: type.pattern.source });
+      expect(schema).not.toHaveProperty('format');
+    },
+  );
 
-  it.each([Instant, PlainDate, PlainDateTime, PlainTime])(
+  it.each([Instant, PlainDate, PlainDateTime, PlainTime, ZonedDateTime, Duration, TimeZoneId])(
     'describe %o with patterns that hold no lookaround or backreference',
     (type) => {
       const patterns = allPatternsIn(
@@ -57,6 +68,16 @@ describe('the Temporal types', () => {
     expect(valueOf(Instant.parse(other)).equals(new Instant('2024-05-01T09:30:00Z'))).toBe(true);
     expect(new Instant('2024-05-01T09:30:00Z').equals(other)).toBe(true);
     expect(valueOf(PlainDate.parse(new copy.PlainDate('2024-05-01'))).toJSON()).toBe('2024-05-01');
+
+    const meeting = '2024-05-01T09:30:00+02:00[Europe/Paris]';
+
+    expect(new ZonedDateTime(meeting).equals(new copy.ZonedDateTime(meeting))).toBe(true);
+    expect(valueOf(ZonedDateTime.parse(new copy.ZonedDateTime(meeting))).toJSON()).toBe(meeting);
+    expect(
+      valueOf(Duration.parse(new copy.Duration('PT1.5S'))).equals(new Duration('PT1.5S')),
+    ).toBe(true);
+    expect(valueOf(TimeZoneId.parse(new copy.TimeZoneId('utc'))).canonical().value).toBe('UTC');
+    expect(new TimeZoneId('UTC').equals(new copy.TimeZoneId('Etc/UTC'))).toBe(true);
   });
 
   it('take subtypes with rules on the Temporal value', () => {
@@ -81,6 +102,13 @@ describe('the Temporal types', () => {
       expect(() => Instant.parse('2024-05-01T09:30:00Z')).toThrow(/temporal-polyfill\/global/u);
       expect(PlainTime.parse('nope').ok).toBe(false);
       expect(PlainTime.parse(42).ok).toBe(false);
+      expect(() => ZonedDateTime.parse('2024-05-01T09:30:00+09:00[Asia/Tokyo]')).toThrow(
+        /nominal\.ZonedDateTime needs Temporal/u,
+      );
+      expect(() => Duration.parse('PT1S')).toThrow(/nominal\.Duration needs Temporal/u);
+      expect(() => TimeZoneId.parse('Asia/Seoul')).toThrow(/nominal\.TimeZoneId needs Temporal/u);
+      expect(TimeZoneId.parse('+09:00').ok).toBe(false);
+      expect(Duration.parse('-PT1S').ok).toBe(false);
     } finally {
       Object.defineProperty(globalThis, 'Temporal', temporal);
     }
@@ -99,5 +127,26 @@ describe('the Temporal types', () => {
     expect(new Set(results.map((result) => result.join()))).toStrictEqual(
       new Set(['true,false,true,false']),
     );
+  });
+
+  it('parse zoned date-times, durations and zone names fast enough with the polyfill', () => {
+    const started = performance.now();
+    const results = rounds
+      .slice(0, 2000)
+      .map((index) => [
+        ZonedDateTime.parse('2024-05-01T11:30:00.123+02:00[Europe/Paris]').ok,
+        ZonedDateTime.parse('2024-05-01T11:30:00.123+01:00[Europe/Paris]').ok,
+        ZonedDateTime.parse('2024-05-01 11:30:00+02:00[Europe/Paris]').ok,
+        TimeZoneId.parse('america/new_york').ok,
+        TimeZoneId.parse(`Mars/Base${String(index % 100)}`).ok,
+        Duration.parse('-P1D').ok,
+      ]);
+    const durations = rounds.slice(0, 100).map(() => Duration.parse('P1DT12H').ok);
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(new Set(results.map((result) => result.join()))).toStrictEqual(
+      new Set(['true,false,false,true,false,false']),
+    );
+    expect(new Set(durations)).toStrictEqual(new Set([true]));
   });
 });

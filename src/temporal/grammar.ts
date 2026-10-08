@@ -26,6 +26,19 @@ export const wallTime = '(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d{1,9})?
 export const timeOffset = '(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)';
 
 /**
+ * Internal: a numeric `time-numoffset` up to `±23:59` that states the local offset, so without
+ * `-00:00`, which RFC 9557 §2 reads as "offset unknown", like `Z`.
+ */
+export const localOffset =
+  '(?:\\+(?:[01]\\d|2[0-3]):[0-5]\\d|-(?:00:(?:0[1-9]|[1-5]\\d)|(?:0[1-9]|1\\d|2[0-3]):[0-5]\\d))';
+
+/**
+ * Internal: an IANA time zone name as RFC 9557 `time-zone-name` writes it, such as
+ * `America/Argentina/Buenos_Aires`, in at most three parts as every name of the database has.
+ */
+export const timeZoneName = '[A-Za-z._][\\w.+-]{0,13}(?:/[A-Za-z._][\\w.+-]{0,13}){0,2}';
+
+/**
  * Internal: a whole-string pattern from fragments.
  */
 export const whole = (source: string): RegExp => new RegExp(`^${source}$`, 'u');

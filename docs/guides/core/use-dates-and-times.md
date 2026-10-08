@@ -1,6 +1,6 @@
 # How to use dates and times
 
-This guide shows how to check dates and times with the four [Temporal](../../reference/glossary.md) types: `Instant`, `PlainDate`, `PlainTime` and `PlainDateTime`.
+This guide shows how to check dates, times, time zones and lengths of time with the [Temporal](../../reference/glossary.md) types: `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`, `ZonedDateTime`, `Duration` and `TimeZoneId`.
 
 ## Load Temporal
 
@@ -23,14 +23,17 @@ Without it, building a value throws `TypeError: nominal.Instant needs Temporal, 
 
 ## Pick the type
 
-| The value                                   | Type            | Example text           |
-| ------------------------------------------- | --------------- | ---------------------- |
-| a moment, such as when an order was paid    | `Instant`       | `2024-05-01T09:30:00Z` |
-| a calendar date, such as a birthday         | `PlainDate`     | `2024-05-01`           |
-| a time of day, such as an opening hour      | `PlainTime`     | `09:30:00`             |
-| a date and time in no zone, a local meeting | `PlainDateTime` | `2024-05-01T09:30:00`  |
+| The value                                   | Type            | Example text                              |
+| ------------------------------------------- | --------------- | ----------------------------------------- |
+| a moment, such as when an order was paid    | `Instant`       | `2024-05-01T09:30:00Z`                    |
+| a calendar date, such as a birthday         | `PlainDate`     | `2024-05-01`                              |
+| a time of day, such as an opening hour      | `PlainTime`     | `09:30:00`                                |
+| a date and time in no zone, a local meeting | `PlainDateTime` | `2024-05-01T09:30:00`                     |
+| a date and time in a time zone, a flight    | `ZonedDateTime` | `2024-05-01T09:30:00+02:00[Europe/Paris]` |
+| a length of time, such as a timeout         | `Duration`      | `PT1M30S`                                 |
+| a time zone, such as a user's               | `TimeZoneId`    | `Europe/Paris`                            |
 
-An `Instant` needs an offset in its text, such as `Z` or `+02:00`. The other three refuse one.
+An `Instant` needs an offset in its text, such as `Z` or `+02:00`. A `ZonedDateTime` needs an offset and a zone name. `PlainDate`, `PlainTime` and `PlainDateTime` refuse an offset.
 
 ## Check a request body
 
@@ -135,9 +138,60 @@ if (result.ok) {
 
 An `Instant` still needs seconds and an offset. A form has no input that sends them.
 
+## Keep the time zone
+
+An `Instant` is a moment and forgets where it was written. When the zone matters, use a `ZonedDateTime`. Adding six months then keeps the local time across a change of [daylight saving time](../../reference/glossary.md):
+
+```ts
+import 'temporal-polyfill/global';
+import { ZonedDateTime } from '@horizon-republic/nominal-types/temporal';
+
+const departure = new ZonedDateTime('2024-05-01T09:30:00+02:00[Europe/Paris]');
+
+departure.value.add({ months: 6 }).toString(); // '2024-11-01T09:30:00+01:00[Europe/Paris]'
+departure.toInstant().toJSON(); // '2024-05-01T07:30:00Z'
+```
+
+The offset in the text must be the one the zone has at that time. A client that sends `+01:00` for Paris in May gets an error rather than a moment one hour off.
+
+To store a user's zone on its own, use `TimeZoneId`. It takes the names the runtime knows, in any case:
+
+```ts
+import 'temporal-polyfill/global';
+import { TimeZoneId } from '@horizon-republic/nominal-types/temporal';
+
+const zone = new TimeZoneId('europe/paris');
+
+zone.canonical().value; // 'Europe/Paris'
+Temporal.Now.zonedDateTimeISO(zone.value).timeZoneId; // 'Europe/Paris'
+TimeZoneId.parse('+02:00').ok; // false
+```
+
+## Check a length of time
+
+A `Duration` reads ISO 8601 text such as `PT30S` or `P1M`. Read its length in one unit with `total()`:
+
+```ts
+import 'temporal-polyfill/global';
+import { n } from '@horizon-republic/nominal-types';
+import { Duration } from '@horizon-republic/nominal-types/temporal';
+
+const Settings = n.object({ timeout: Duration, trial: Duration });
+
+const body: unknown = { timeout: 'PT1M30S', trial: 'P14D' };
+const result = Settings.parse(body);
+
+if (result.ok) {
+  result.value.timeout.value.total('milliseconds'); // 90000
+  result.value.trial.value.total('days'); // 14
+}
+```
+
+A month or a year has no fixed length. `total()` needs a start date for them: `new Duration('P1M').value.total({ unit: 'days', relativeTo: '2024-02-01' })` gives `29`.
+
 ## Store in a database
 
-The database adapters give each type a column: `timestamptz`, `date`, `time` and `timestamp`. Some drivers return a `Date` for these columns. [Database columns](../../reference/adapters/database-columns.md#dates-and-times) says which reads work and what to set.
+The database adapters give each type a column: `timestamptz`, `date`, `time` and `timestamp`, and `text` for `ZonedDateTime`, `Duration` and `TimeZoneId`. Some drivers return a `Date` for these columns. [Database columns](../../reference/adapters/database-columns.md#dates-and-times) says which reads work and what to set.
 
 ## See also
 

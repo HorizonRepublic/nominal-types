@@ -664,15 +664,15 @@ What it does with an input:
 
 Keys:
 
-| Key schema                                        | Which keys                                                                                                 |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| a nominal type, such as `CurrencyCode`            | any key the type accepts; none is required                                                                 |
-| `n.oneOf('s', 'm', 'l')`                          | only the listed keys, and every one of them is required, as in a TypeScript `Record<'s' \| 'm' \| 'l', V>` |
-| `n.oneOf(...)` after [`partial()`](#recordschema) | only the listed keys, each one may be missing                                                              |
+| Key schema                                                      | Which keys                                                                                                 |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| a nominal type, such as `CurrencyCode`, or `n.of(CurrencyCode)` | any key the type accepts; none is required                                                                 |
+| `n.oneOf('s', 'm', 'l')`                                        | only the listed keys, and every one of them is required, as in a TypeScript `Record<'s' \| 'm' \| 'l', V>` |
+| `n.oneOf(...)` after [`partial()`](#recordschema)               | only the listed keys, each one may be missing                                                              |
 
 More rules:
 
-- A key named `__proto__` is refused: `is not allowed`. `constructor` and `prototype` are plain keys.
+- A key named `__proto__`, or one that `Key` turns into `__proto__`, is refused: `is not allowed`. `constructor` and `prototype` are plain keys.
 - A value given as `undefined` counts as a missing key. When `Value` accepts `undefined`, such as `n.of(Type).optional()`, every key may be missing.
 - When `Key` changes a key, for example with [`trimStrings`](configure.md), two keys that become one are refused: `must not repeat a key`.
 - Only the input's own string keys are read.

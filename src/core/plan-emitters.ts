@@ -38,6 +38,10 @@ export interface EmitTools {
    * Statements that append `prefix` and the text a variable holds, or run `none` for none.
    */
   readonly appendText: (t: string, prefix: Piece, none: string) => string;
+  /**
+   * Whether every value of a type is a string JSON writes between quotes as it is.
+   */
+  readonly holdsSafeText: (type: object) => boolean;
 }
 
 /**

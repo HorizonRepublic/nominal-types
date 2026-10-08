@@ -3,7 +3,8 @@ import { Controller, Get, NotFoundException, UseInterceptors } from '@nestjs/com
 import type { ExecutionContext, INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { FastifyAdapter, RouteSchema } from '@nestjs/platform-fastify';
+import * as platformFastify from '@nestjs/platform-fastify';
+import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { lastValueFrom, of } from 'rxjs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -18,6 +19,14 @@ import type { ValueOf } from '../../../src/index.ts';
 import { valueOf } from '../../support/results.ts';
 import { first, platforms } from './support.ts';
 import type { Platform } from './support.ts';
+
+// @RouteSchema() came after Nest 11.0, the oldest release the adapter supports.
+const routeSchema: typeof platformFastify.RouteSchema | undefined = Reflect.get(
+  platformFastify,
+  'RouteSchema',
+);
+const RouteSchema: typeof platformFastify.RouteSchema =
+  routeSchema ?? ((): MethodDecorator => () => {});
 
 const Order = n.object({
   id: Uuid,
@@ -154,21 +163,24 @@ describe.each(
   });
 });
 
-describe('NominalResponse on a Fastify route with a response schema', () => {
-  let served: Awaited<ReturnType<typeof serve>>;
+describe.runIf(routeSchema !== undefined)(
+  'NominalResponse on a Fastify route with a response schema',
+  () => {
+    let served: Awaited<ReturnType<typeof serve>>;
 
-  beforeAll(async () => {
-    served = await serve('fastify', false);
-  });
+    beforeAll(async () => {
+      served = await serve('fastify', false);
+    });
 
-  afterAll(async () => {
-    await served.app.close();
-  });
+    afterAll(async () => {
+      await served.app.close();
+    });
 
-  it('writes false as false, which Fastify writes as true from instances', async () => {
-    expect((await served.get('/orders/schema')).text).toBe(orderText);
-  });
-});
+    it('writes false as false, which Fastify writes as true from instances', async () => {
+      expect((await served.get('/orders/schema')).text).toBe(orderText);
+    });
+  },
+);
 
 describe('NominalResponseInterceptor outside HTTP', () => {
   it('passes the value as it is', async () => {

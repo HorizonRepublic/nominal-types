@@ -94,6 +94,30 @@ invitation.email instanceof Email; // true
 
 For ArkType itself, the [ArkType adapter](arktype.md) is much faster. Use `n.of()` this way for libraries without an adapter.
 
+## Classes with members of their own
+
+A library takes the type of its output from `~standard`. TypeScript gives a class the `~standard` of the type it extends. So when your class adds a getter or a method, the library's types don't show it.
+
+Declare `~standard` with `StandardOf`, one line in the class:
+
+```ts
+// username.ts
+import { AnyString } from '@horizon-republic/nominal-types';
+import type { StandardOf } from '@horizon-republic/nominal-types';
+
+export class Username extends AnyString.subtype('shop.Username', /^[a-z0-9_]{3,20}$/u) {
+  declare static readonly '~standard': StandardOf<typeof Username>;
+
+  get initial(): string {
+    return this.value.charAt(0);
+  }
+}
+```
+
+Now a library that reads Standard Schema types its output as `Username`, with `initial`.
+
+You don't need the line for a built-in type, such as `Email`, or for a class without members of its own. `n.of(Username)` also keeps the members, without the line.
+
 ## Errors
 
 A rejected value gives Standard Schema issues. Each has a `message` and, inside a list or an object, a `path`:

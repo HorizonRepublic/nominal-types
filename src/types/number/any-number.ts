@@ -1,6 +1,7 @@
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { defineTextForm } from '../../core/text-form.ts';
 
 const numberText = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[Ee][+-]?\d+)?$/u;
@@ -23,6 +24,8 @@ const AnyNumberBase: NominalType<'nominal.AnyNumber', NominalSchema<number, numb
  * `FiniteNumber` where a value travels as JSON. `n.of(Type).fromString()` reads a number
  * written the way JSON writes one, such as `'2'`, `'-1.5'` or `'1e3'`.
  */
-export class AnyNumber extends AnyNumberBase {}
+export class AnyNumber extends AnyNumberBase {
+  declare public static readonly '~standard': StandardOf<typeof AnyNumber>;
+}
 
 defineTextForm(AnyNumber, numberFromText);

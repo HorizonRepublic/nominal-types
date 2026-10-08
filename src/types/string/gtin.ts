@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { hasGs1CheckDigit } from './check-digits.ts';
@@ -44,6 +45,8 @@ const gtin14Of = (text: string): string => text.padStart(14, '0');
  * ```
  */
 export class Gtin extends GtinBase {
+  declare public static readonly '~standard': StandardOf<typeof Gtin>;
+
   /**
    * The shape of a GTIN, which the JSON Schema carries; the check digit is checked apart from it.
    */

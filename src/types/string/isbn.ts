@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import {
@@ -61,6 +62,8 @@ const isbn13Of = (text: string): string => {
  * ```
  */
 export class Isbn extends IsbnBase {
+  declare public static readonly '~standard': StandardOf<typeof Isbn>;
+
   /**
    * The shape of an ISBN-10 or an ISBN-13 in its compact form, which the JSON Schema carries; the
    * check digit is checked apart from it.

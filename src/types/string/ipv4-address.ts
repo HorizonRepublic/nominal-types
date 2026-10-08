@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { IpAddress } from './ip-address.ts';
 import { ipv4Source } from './ip-patterns.ts';
@@ -34,6 +35,8 @@ const Ipv4AddressBase: SubtypeOf<typeof IpAddress, 'nominal.Ipv4Address'> = IpAd
  * ```
  */
 export class Ipv4Address extends Ipv4AddressBase {
+  declare public static readonly '~standard': StandardOf<typeof Ipv4Address>;
+
   /**
    * The same address; IPv4 text has one form only.
    */

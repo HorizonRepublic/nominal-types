@@ -1,6 +1,6 @@
 # How to use nominal types with tRPC
 
-tRPC checks a procedure's input with a [Standard Schema](../../reference/glossary.md). With one small helper, the procedure gets instances, such as an `Email`. With superjson, the client gets instances back.
+tRPC checks a procedure's input with the schema you give `.input()`. Give it a nominal schema or type, and the procedure gets instances, such as an `Email`. With superjson, the client gets instances back.
 
 ## Before you start
 
@@ -10,37 +10,23 @@ tRPC checks a procedure's input with a [Standard Schema](../../reference/glossar
   npm install @horizon-republic/nominal-types @trpc/server @trpc/client superjson
   ```
 
-- This page uses tRPC 11.
-- Don't pass a nominal schema to `.input()` as it is. tRPC calls the schema's `parse()` as if it threw, so a bad input reaches the procedure. Pass it through the `standard()` helper below. See [Limits](#limits).
+- This page uses tRPC 11. No adapter is needed.
 
 ## Quick example
 
-The helper hands tRPC only the schema's `~standard` property, so tRPC reads it as a Standard Schema:
-
-```ts
-// standard.ts
-import type { StandardSchemaV1 } from '@horizon-republic/nominal-types';
-
-export const standard = <Input, Output>(
-  schema: StandardSchemaV1<Input, Output>,
-): StandardSchemaV1<Input, Output> => ({ '~standard': schema['~standard'] });
-```
-
-Give it the input schema of each procedure:
+Pass the schema to `.input()` as it is:
 
 ```ts
 // router.ts
 import { initTRPC } from '@trpc/server';
 import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-import { standard } from './standard.ts';
-
 const t = initTRPC.create();
 
 const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
 
 export const appRouter = t.router({
-  createOrder: t.procedure.input(standard(CreateOrder)).mutation(({ input }) => ({
+  createOrder: t.procedure.input(CreateOrder).mutation(({ input }) => ({
     domain: input.customer.domain, // input.customer is an Email
     quantity: input.quantity.value,
   })),
@@ -49,28 +35,28 @@ export const appRouter = t.router({
 export type AppRouter = typeof appRouter;
 ```
 
-A call with `{ customer: 'jane@example.com', quantity: 2 }` returns `{ domain: 'example.com', quantity: 2 }`.
+A call with `{ customer: 'jane@example.com', quantity: 2 }` returns `{ domain: 'example.com', quantity: 2 }`. A call with `{ customer: 'jane', quantity: 0 }` fails with `BAD_REQUEST`, and the procedure doesn't run.
 
 ## Take one value as input
 
-Wrap a single type in `n.of()`. Then TypeScript knows the input is a `Uuid`:
+Pass the type itself:
 
 ```ts
 // router.ts
 import { initTRPC } from '@trpc/server';
-import { n, Uuid } from '@horizon-republic/nominal-types';
-
-import { standard } from './standard.ts';
+import { Uuid } from '@horizon-republic/nominal-types';
 
 const t = initTRPC.create();
 
 export const appRouter = t.router({
-  user: t.procedure.input(standard(n.of(Uuid))).query(({ input }) => ({
+  user: t.procedure.input(Uuid).query(({ input }) => ({
     id: input.value,
     version: input.version, // 7 for '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'
   })),
 });
 ```
+
+For a list, pass `n.of(Uuid).array()`.
 
 ## Send instances to the client
 
@@ -96,13 +82,12 @@ Build the router with that `t`, and return instances:
 // router.ts
 import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
 
-import { standard } from './standard.ts';
 import { t } from './trpc.ts';
 
 const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
 
 export const appRouter = t.router({
-  createOrder: t.procedure.input(standard(CreateOrder)).mutation(({ input }) => ({
+  createOrder: t.procedure.input(CreateOrder).mutation(({ input }) => ({
     id: new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'),
     customer: input.customer,
   })),
@@ -133,24 +118,25 @@ The client still sends plain values, such as `'jane@example.com'`. The server's 
 
 ## Errors
 
-A rejected input fails the call with the code `BAD_REQUEST`, status 400. The error's message is the first issue's message:
+A rejected input fails the call with the code `BAD_REQUEST`, status 400. The error's message names the schema and every issue:
 
 ```text
-TRPCClientError: must be an email address (was a string of 4 characters)
+TRPCClientError: n.object(): customer: must be an email address (was a string of 4 characters); quantity: must be a positive integer (was 0)
 ```
 
-To send every issue, add them in an `errorFormatter`. tRPC puts them on a `StandardSchemaV1Error`:
+On the server, `error.cause` is a [`NominalError`](../../reference/errors-and-messages.md#nominalerror). To send the issues to the client as data, add them in an `errorFormatter`:
 
 ```ts
 // trpc.ts
-import { initTRPC, StandardSchemaV1Error } from '@trpc/server';
+import { initTRPC } from '@trpc/server';
+import { NominalError } from '@horizon-republic/nominal-types';
 
 export const t = initTRPC.create({
   errorFormatter: ({ shape, error }) => ({
     ...shape,
     data: {
       ...shape.data,
-      issues: error.cause instanceof StandardSchemaV1Error ? error.cause.issues : undefined,
+      issues: error.cause instanceof NominalError ? error.cause.issues : undefined,
     },
   }),
 });
@@ -161,8 +147,8 @@ export const t = initTRPC.create({
 
 ## Limits
 
-- `.input(CreateOrder)` without `standard()` doesn't check anything. tRPC calls `CreateOrder.parse()`, which returns `{ ok: false, issues }` instead of throwing, and the procedure gets that object as its input.
-- `standard(Email)` with the class itself checks the value, but TypeScript types the input as the base type. Write `standard(n.of(Email))`.
+- A class of your own with getters or methods: TypeScript doesn't see them on `input` until the class declares `StandardOf`. See [Classes with members of their own](../validators/standard-schema.md#classes-with-members-of-their-own).
+- tRPC 10 is not supported. It calls a class as a function, so `.input(Email)` refuses every call, and it types the input of a schema as the result of `parse()`.
 
 ## See also
 

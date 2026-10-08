@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -33,6 +34,8 @@ const UlidBase: SubtypeOf<typeof AnyString, 'nominal.Ulid'> = AnyString.subtype(
  * ```
  */
 export class Ulid extends UlidBase {
+  declare public static readonly '~standard': StandardOf<typeof Ulid>;
+
   /**
    * Twenty-six characters of Crockford's base32 in either case, the first one `0` to `7`.
    */

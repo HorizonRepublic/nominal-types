@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -24,4 +25,6 @@ const NonEmptyStringBase: SubtypeOf<typeof AnyString, 'nominal.NonEmptyString'> 
  * A string of spaces passes; reach for `NonBlankString` where it should not. The value is kept as
  * given and never trimmed.
  */
-export class NonEmptyString extends NonEmptyStringBase {}
+export class NonEmptyString extends NonEmptyStringBase {
+  declare public static readonly '~standard': StandardOf<typeof NonEmptyString>;
+}

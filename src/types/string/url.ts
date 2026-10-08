@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -34,6 +35,8 @@ const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
  * since the parser would drop them and the value would differ from the URL it read.
  */
 export class Url extends UrlBase {
+  declare public static readonly '~standard': StandardOf<typeof Url>;
+
   /**
    * A fresh `URL` for this address; each call builds a new one, since `URL` is mutable.
    */

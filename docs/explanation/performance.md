@@ -66,31 +66,7 @@ A schema writes the values it gave faster. Its [`stringify()`](../reference/sche
 - When a framework writes the response for you, give it the schema's [`toPlain()`](../reference/schemas.md#toplain).
 - For a value that doesn't come from one schema, call [`n.plain()`](../reference/schemas.md#nplain).
 - In NestJS, put [`@NominalResponse(schema)`](../guides/frameworks/nestjs.md#send-responses-fast) on the route. For routes without a schema, [`NominalSerializerInterceptor`](../guides/frameworks/nestjs.md#send-instances-in-responses) converts the response before class-transformer runs.
-
-A Fastify route with a response schema doesn't use `JSON.stringify()`. It writes some instances wrong. Let the schema write such a route instead: give the route a `serializerCompiler` that calls `stringify()`. The JSON Schema stays in `schema.response`, so `@fastify/swagger` still documents the route:
-
-```ts
-// server.ts
-import Fastify from 'fastify';
-import { AnyBoolean, n, Uuid } from '@horizon-republic/nominal-types';
-import type { ValueOf } from '@horizon-republic/nominal-types';
-
-const Order = n.object({ id: Uuid, paid: AnyBoolean });
-type OrderValue = ValueOf<typeof Order>;
-
-const app = Fastify();
-const order = Order.parse({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', paid: false });
-
-app.get(
-  '/orders/latest',
-  {
-    schema: { response: { 200: Order['~standard'].jsonSchema.output({ target: 'draft-07' }) } },
-    serializerCompiler: () => (data: OrderValue) => Order.stringify(data),
-  },
-  () => (order.ok ? order.value : null),
-);
-// GET /orders/latest  200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","paid":false}
-```
+- In Fastify, register the [`fastifyNominal` plugin](../guides/frameworks/fastify.md#send-responses) and give the route's response a schema. The plugin writes the response with `stringify()`.
 
 ## Memory
 

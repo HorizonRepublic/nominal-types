@@ -81,7 +81,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
 
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    super(ownShape as never, { paths });
+    super(ownShape as never, { paths, name: 'n.object()' });
     this.keys = fields.map(({ key }) => key);
     this.#source = source;
     this.#constraints = constraints;

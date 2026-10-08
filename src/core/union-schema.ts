@@ -174,6 +174,7 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
             write: paths.write,
           },
         },
+        name: 'n.union()',
       },
     );
     this.key = key;

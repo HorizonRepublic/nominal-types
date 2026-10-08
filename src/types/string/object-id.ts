@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 const pattern = /^[\dA-Fa-f]{24}$/u;
@@ -31,6 +32,8 @@ const ObjectIdBase: SubtypeOf<typeof AnyString, 'nominal.ObjectId'> = AnyString.
  * ```
  */
 export class ObjectId extends ObjectIdBase {
+  declare public static readonly '~standard': StandardOf<typeof ObjectId>;
+
   /**
    * Twenty-four hex digits in either case.
    */

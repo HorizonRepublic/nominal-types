@@ -1,3 +1,4 @@
+import type { AnyNominalType, InputOf } from './contracts.ts';
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
 /**
@@ -25,3 +26,26 @@ export interface StandardProps<Input, Output>
 export interface StandardSchema<Input, Output> {
   readonly '~standard': StandardProps<Input, Output>;
 }
+
+/**
+ * The `~standard` property of a class that adds members of its own, typed with the class itself,
+ * so Standard Schema libraries such as tRPC, Hono and Elysia see those members.
+ *
+ * @remarks
+ * TypeScript types an inherited static property as the parent declared it, so without this line
+ * the libraries see the instance of the type the class extends. A class that adds no members needs
+ * nothing.
+ *
+ * @example
+ * ```ts
+ * class Username extends AnyString.subtype('shop.Username', /^[a-z0-9_]{3,20}$/u) {
+ *   declare static readonly '~standard': StandardOf<typeof Username>;
+ *
+ *   get initial(): string {
+ *     return this.value.charAt(0);
+ *   }
+ * }
+ * ```
+ */
+export type StandardOf<Type extends AnyNominalType & (abstract new (input: never) => unknown)> =
+  StandardProps<InputOf<Type['rule']>, InstanceType<Type>>;

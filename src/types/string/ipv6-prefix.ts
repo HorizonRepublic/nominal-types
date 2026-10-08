@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { canonicalPrefix } from './ip-network.ts';
 import { ipv6PrefixSource } from './ip-patterns.ts';
@@ -33,6 +34,8 @@ const Ipv6PrefixBase: SubtypeOf<typeof IpPrefix, 'nominal.Ipv6Prefix'> = IpPrefi
  * ```
  */
 export class Ipv6Prefix extends Ipv6PrefixBase {
+  declare public static readonly '~standard': StandardOf<typeof Ipv6Prefix>;
+
   /**
    * The first address of the network.
    */

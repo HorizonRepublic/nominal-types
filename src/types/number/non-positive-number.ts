@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
@@ -14,4 +15,6 @@ const NonPositiveNumberBase: SubtypeOf<typeof FiniteNumber, 'nominal.NonPositive
  * @remarks
  * Unlike `NegativeNumber`, it takes 0 and `-0`.
  */
-export class NonPositiveNumber extends NonPositiveNumberBase {}
+export class NonPositiveNumber extends NonPositiveNumberBase {
+  declare public static readonly '~standard': StandardOf<typeof NonPositiveNumber>;
+}

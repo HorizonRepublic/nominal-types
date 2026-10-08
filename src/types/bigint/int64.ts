@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyBigInt } from './any-bigint.ts';
 import { bigintRule } from './bigint-rule.ts';
 
@@ -22,4 +23,6 @@ const Int64Base: SubtypeOf<typeof AnyBigInt, 'nominal.Int64'> = AnyBigInt.subtyp
  * JSON Schema bounds the string's length rather than the value, so a string of the right length
  * beyond the range passes the schema and is refused when the type is built.
  */
-export class Int64 extends Int64Base {}
+export class Int64 extends Int64Base {
+  declare public static readonly '~standard': StandardOf<typeof Int64>;
+}

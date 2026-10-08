@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { NonEmptyString } from './non-empty-string.ts';
 
 // The 25 code points with the Unicode White_Space property, spelled out because not every JSON
@@ -23,6 +24,8 @@ const NonBlankStringBase: SubtypeOf<typeof NonEmptyString, 'nominal.NonBlankStri
  * never trimmed.
  */
 export class NonBlankString extends NonBlankStringBase {
+  declare public static readonly '~standard': StandardOf<typeof NonBlankString>;
+
   /**
    * Matches any character outside Unicode `White_Space`.
    */

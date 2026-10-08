@@ -8,16 +8,16 @@ What a rejected value looks like: the error `new` throws, the issues `parse()` r
 class NominalError extends TypeError
 ```
 
-Thrown by `new` and by `copyWith()` when a value breaks a rule. `parse()`, `validate` and the adapters return the same issues instead of throwing.
+Thrown by `new` and by `copyWith()` when a value breaks a rule. `parseAsync()` rejects with it. `parse()`, `validate` and the adapters return the same issues instead of throwing.
 
 `error instanceof NominalError` is also `true` for an error thrown by [another copy of the package](glossary.md), such as one loaded with `require` next to one loaded with `import`.
 
-| Member     | Type               | Description                                                 |
-| ---------- | ------------------ | ----------------------------------------------------------- |
-| `name`     | `string`           | `'NominalError'`                                            |
-| `typeName` | `string`           | The name of the type that rejected the value.               |
-| `issues`   | `readonly Issue[]` | Every reason the value was rejected. See [Issues](#issues). |
-| `message`  | `string`           | `<type name>: <issues>`.                                    |
+| Member     | Type               | Description                                                                                                     |
+| ---------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `name`     | `string`           | `'NominalError'`                                                                                                |
+| `typeName` | `string`           | The name of the type that rejected the value, or of the function that built the schema, such as `'n.object()'`. |
+| `issues`   | `readonly Issue[]` | Every reason the value was rejected. See [Issues](#issues).                                                     |
+| `message`  | `string`           | `<type name>: <issues>`.                                                                                        |
 
 `message` is the type name, a colon, then every issue joined by `; `. An issue with a path shows the path first, joined by dots:
 

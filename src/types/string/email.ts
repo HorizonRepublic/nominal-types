@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 import { atom, emailRule, label, pattern, topLevel } from './email-rule.ts';
 
@@ -27,6 +28,8 @@ const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtyp
  * ```
  */
 export class Email extends EmailBase {
+  declare public static readonly '~standard': StandardOf<typeof Email>;
+
   /**
    * The characters one dot-separated piece of the local part may hold, as a pattern fragment.
    */

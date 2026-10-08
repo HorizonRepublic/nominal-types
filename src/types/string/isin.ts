@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { passesLuhnCheck } from './check-digits.ts';
@@ -41,6 +42,8 @@ const IsinBase: SubtypeOf<typeof AnyString, 'nominal.Isin'> = AnyString.subtype(
  * ```
  */
 export class Isin extends IsinBase {
+  declare public static readonly '~standard': StandardOf<typeof Isin>;
+
   /**
    * The shape of an ISIN, which the JSON Schema carries; the check digit is checked apart from it.
    */

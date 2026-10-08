@@ -3,6 +3,7 @@ import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 const longest = 100;
@@ -88,6 +89,8 @@ export const decimalText = (amount: bigint, scale: number): string => {
  * ```
  */
 export class DecimalString extends DecimalStringBase {
+  declare public static readonly '~standard': StandardOf<typeof DecimalString>;
+
   /**
    * The grammar with the length limit, in a form JavaScript runs.
    */

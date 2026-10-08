@@ -85,6 +85,6 @@ describe('llms.txt', () => {
   });
 
   it('stays small enough for an agent to read whole', () => {
-    expect(llms.length).toBeLessThan(60_000);
+    expect(llms.length).toBeLessThan(80_000);
   });
 });

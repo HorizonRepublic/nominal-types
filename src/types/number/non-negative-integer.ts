@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { Integer } from './integer.ts';
 import { NonNegativeNumber } from './non-negative-number.ts';
 import { numberRule } from './number-rule.ts';
@@ -21,4 +22,6 @@ const NonNegativeIntegerBase: SubtypeOf<
  * Unlike `PositiveInteger`, it takes 0. `-0` passes and stays `-0`; `equals` compares with
  * `Object.is`, so it differs from `0`.
  */
-export class NonNegativeInteger extends NonNegativeIntegerBase {}
+export class NonNegativeInteger extends NonNegativeIntegerBase {
+  declare public static readonly '~standard': StandardOf<typeof NonNegativeInteger>;
+}

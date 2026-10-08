@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { Float32 } from './float32.ts';
 import { Int32 } from './int32.ts';
 import { Integer } from './integer.ts';
@@ -17,4 +18,6 @@ const Uint16Base: SubtypeOf<
 /**
  * An integer from 0 to 65535, the range of an unsigned 16-bit integer.
  */
-export class Uint16 extends Uint16Base {}
+export class Uint16 extends Uint16Base {
+  declare public static readonly '~standard': StandardOf<typeof Uint16>;
+}

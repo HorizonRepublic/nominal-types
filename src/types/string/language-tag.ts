@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -98,6 +99,8 @@ const LanguageTagBase: SubtypeOf<typeof AnyString, 'nominal.LanguageTag'> = AnyS
  * ```
  */
 export class LanguageTag extends LanguageTagBase {
+  declare public static readonly '~standard': StandardOf<typeof LanguageTag>;
+
   /**
    * The grammar of a tag, without the check for a variant or extension written twice.
    *

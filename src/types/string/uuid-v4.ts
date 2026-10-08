@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { uuidVersion } from './uuid-version.ts';
 import { Uuid } from './uuid.ts';
 
@@ -19,6 +20,8 @@ const UuidV4Base: SubtypeOf<typeof Uuid, 'nominal.UuidV4'> = Uuid.subtype(
  * The nil and max UUIDs are refused. Like `Uuid`, either case passes and is kept as written.
  */
 export class UuidV4 extends UuidV4Base {
+  declare public static readonly '~standard': StandardOf<typeof UuidV4>;
+
   /**
    * A version 4 UUID with the RFC 9562 variant, in either case, for building patterns of your own.
    *

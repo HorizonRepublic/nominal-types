@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
@@ -18,4 +19,6 @@ const Float32Base: SubtypeOf<typeof FiniteNumber, 'nominal.Float32'> = FiniteNum
  * `Math.fround` before constructing. JSON Schema can't say this, so it describes a plain number
  * with the `float` format.
  */
-export class Float32 extends Float32Base {}
+export class Float32 extends Float32Base {
+  declare public static readonly '~standard': StandardOf<typeof Float32>;
+}

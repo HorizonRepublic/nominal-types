@@ -4,6 +4,7 @@ import { mustBe } from '../../core/messages.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { runnableSchema } from '../../core/runner.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { asText, defineTextForm } from '../../core/text-form.ts';
 import { bigintJsonOf } from './bigint-rule.ts';
 
@@ -70,6 +71,8 @@ const AnyBigIntBase: NominalType<
  * ```
  */
 export class AnyBigInt extends AnyBigIntBase {
+  declare public static readonly '~standard': StandardOf<typeof AnyBigInt>;
+
   /**
    * The integer in decimal, since `JSON.stringify` can't write a bigint.
    */

@@ -100,7 +100,7 @@ export const app = new Hono().post(
 
 ## Limits
 
-- `sValidator('json', Email)` with the class itself checks the value, but TypeScript types it as the base type, without `domain`. Write `sValidator('json', n.of(Email))`.
+- A class of your own with getters or methods: TypeScript doesn't see them on `c.req.valid()` until the class declares `StandardOf`. See [Classes with members of their own](../validators/standard-schema.md#classes-with-members-of-their-own).
 - A query value read from text needs `n.of(Type).fromString()`. A plain `PositiveInteger` field gets `"2"` and refuses it: `must be a number (was "2")`.
 
 ## See also

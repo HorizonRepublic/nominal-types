@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { hasMod11CheckCharacter } from './check-digits.ts';
@@ -38,6 +39,8 @@ const IssnBase: SubtypeOf<typeof AnyString, 'nominal.Issn'> = AnyString.subtype(
  * ```
  */
 export class Issn extends IssnBase {
+  declare public static readonly '~standard': StandardOf<typeof Issn>;
+
   /**
    * The shape of an ISSN, which the JSON Schema carries; the check character is checked apart
    * from it.

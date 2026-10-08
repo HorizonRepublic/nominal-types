@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { uuidVersion } from './uuid-version.ts';
 import { Uuid } from './uuid.ts';
 
@@ -24,6 +25,8 @@ const UuidV7Base: SubtypeOf<typeof Uuid, 'nominal.UuidV7'> = Uuid.subtype(
  * ```
  */
 export class UuidV7 extends UuidV7Base {
+  declare public static readonly '~standard': StandardOf<typeof UuidV7>;
+
   /**
    * A version 7 UUID with the RFC 9562 variant, in either case, for building patterns of your own.
    *

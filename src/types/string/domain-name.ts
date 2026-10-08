@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { hasTopLevelText, topLevelPattern } from './dns-name.ts';
 import { Hostname } from './hostname.ts';
@@ -31,6 +32,8 @@ const DomainNameBase: SubtypeOf<typeof Hostname, 'nominal.DomainName'> = Hostnam
  * ```
  */
 export class DomainName extends DomainNameBase {
+  declare public static readonly '~standard': StandardOf<typeof DomainName>;
+
   /**
    * The same name in lowercase, the form DNS compares names in.
    */

@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { digitsLastPattern, hostnamePattern, isHostnameText, uLabelOf } from './dns-name.ts';
@@ -39,6 +40,8 @@ const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname'> = AnyString.
  * ```
  */
 export class Hostname extends HostnameBase {
+  declare public static readonly '~standard': StandardOf<typeof Hostname>;
+
   /**
    * The labels between the dots, from the leftmost.
    */

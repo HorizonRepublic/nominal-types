@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { IpAddress } from './ip-address.ts';
@@ -39,6 +40,8 @@ const IpPrefixBase: SubtypeOf<typeof AnyString, 'nominal.IpPrefix'> = AnyString.
  * ```
  */
 export class IpPrefix extends IpPrefixBase {
+  declare public static readonly '~standard': StandardOf<typeof IpPrefix>;
+
   /**
    * The IP version of the address.
    */

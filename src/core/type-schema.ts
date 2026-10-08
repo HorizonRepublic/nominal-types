@@ -1,5 +1,5 @@
 import type { ArrayOptions } from './array-bounds.ts';
-import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
+import type { Parsed } from './contracts.ts';
 import {
   arrayPaths,
   nullablePaths,
@@ -7,13 +7,10 @@ import {
   registerPaths,
   stringifyFor,
   textPaths,
-  typePaths,
 } from './fast-paths.ts';
 import type { FastPaths, Plain } from './fast-paths.ts';
-import { sensitiveSlot } from './hierarchy.ts';
-import { forTarget, withoutUri } from './json-target.ts';
-import { describeValue } from './messages.ts';
-import { isNominalType, ownTypes } from './nominal.ts';
+import { forTarget } from './json-target.ts';
+import { settled } from './nominal-error.ts';
 import { Rejection } from './rejection.ts';
 import { runners } from './runner.ts';
 import { arrayShape, nullableShape, optionalShape, textShape } from './shapes.ts';
@@ -21,9 +18,7 @@ import type { Shape } from './shapes.ts';
 import { shared } from './shared.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
-import { textFormOf } from './text-form.ts';
 import type { TextForm } from './text-form.ts';
-import { constructorFor } from './type-functions.ts';
 
 const { arraySchemas } = shared;
 
@@ -59,10 +54,12 @@ export class TypeSchema<Input, Output> {
   readonly #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
   readonly #paths: FastPaths;
+  readonly #name: string;
   #stringify: ((value: unknown) => string) | undefined;
 
   /**
-   * Internal: built by `n.of()` and the methods below; `paths` know the shape.
+   * Internal: built by `n.of()` and the methods below; `paths` know the shape, `name` is the
+   * function that built it, for the message of `parseAsync()`.
    */
   public constructor(
     shape: Shape<Output>,
@@ -70,11 +67,13 @@ export class TypeSchema<Input, Output> {
       readonly paths: FastPaths;
       readonly textForm?: TextForm | undefined;
       readonly array?: boolean;
+      readonly name?: string;
     },
   ) {
     this.#shape = shape;
     this.#textForm = options.textForm;
     this.#paths = options.paths;
+    this.#name = options.name ?? 'n.of()';
     this['~standard'] = standardProps(shape.run, (side, target) =>
       forTarget(target, shape.describe(side, target)),
     );
@@ -101,6 +100,25 @@ export class TypeSchema<Input, Output> {
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
+  }
+
+  /**
+   * The value, or a Promise rejected with a `NominalError`, for libraries that await a parser and
+   * expect it to throw, such as tRPC.
+   *
+   * @remarks
+   * tRPC calls a schema's `parseAsync()` before its `parse()`, so `.input(schema)` refuses a bad
+   * value with `BAD_REQUEST`. In your own code, read the result of `parse()`, which builds no
+   * exception.
+   *
+   * @example
+   * ```ts
+   * await n.object({ customer: Email }).parseAsync({ customer: 'jane' });
+   * // rejects: NominalError: n.object(): customer: must be an email address (was a string of 4 characters)
+   * ```
+   */
+  public parseAsync(input: unknown): Promise<Output> {
+    return settled(this.#shape.run(input), this.#name);
   }
 
   /**
@@ -192,6 +210,7 @@ export class TypeSchema<Input, Output> {
     return new TypeSchema(shape, {
       array: true,
       paths: arrayPaths(this.#paths, options, shape.run),
+      name: this.#name,
     });
   }
 
@@ -226,6 +245,7 @@ export class TypeSchema<Input, Output> {
 
     return new TypeSchema<Input | string, Output>(textShape(this.#shape, form), {
       paths: textPaths(this.#paths, form),
+      name: this.#name,
     });
   }
 
@@ -240,6 +260,7 @@ export class TypeSchema<Input, Output> {
     return new TypeSchema(optionalShape(this.#shape), {
       array: isArraySchema(this),
       paths: optionalPaths(this.#paths),
+      name: this.#name,
     });
   }
 
@@ -254,47 +275,7 @@ export class TypeSchema<Input, Output> {
     return new TypeSchema(nullableShape(this.#shape), {
       array: isArraySchema(this),
       paths: nullablePaths(this.#paths),
+      name: this.#name,
     });
   }
 }
-
-/**
- * A nominal type as a plain Standard Schema object, to pass where a class doesn't fit and to
- * build arrays and optional values from.
- *
- * @remarks
- * Libraries that parse their own definitions, such as ArkType, treat a class as one of their own
- * constructs, so they take this object instead. The same object goes to `NominalPipe` and to
- * NestJS's `{ schema }`.
- *
- * @throws TypeError when `type` is not a nominal type.
- *
- * @example
- * ```ts
- * type({ email: n.of(Email), team: n.of(Uuid) });
- * n.of(Uuid).array({ min: 1, max: 100 });
- * n.of(Email).optional();
- * ```
- */
-export const schemaOf = <Type extends AnyNominalType>(
-  type: Type,
-): TypeSchema<InputOf<Type['rule']>, Type['prototype']> => {
-  if (!isNominalType(type)) {
-    throw new TypeError(`n.of() takes a nominal type (was ${describeValue(type)})`);
-  }
-
-  const construct = constructorFor(type);
-
-  return new TypeSchema<InputOf<Type['rule']>, Type['prototype']>(
-    {
-      // The function makes an instance of `type` or a Rejection; the compiler can't follow the
-      // class hierarchy that far, and parse() would allocate a result object per value.
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      run: construct as (input: unknown) => Type['prototype'] | Rejection,
-      describe: (side, options) => withoutUri(type['~standard'].jsonSchema[side](options)),
-      // A type from another copy of the package keeps whether it is sensitive to itself.
-      sensitive: !ownTypes.isOwn(type) || Reflect.get(type, sensitiveSlot) === true,
-    },
-    { textForm: textFormOf(type), paths: typePaths(type) },
-  );
-};

@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
 
 const isSafeInteger = (value: unknown): value is number => Number.isSafeInteger(value);
@@ -20,4 +21,6 @@ const IntegerBase: SubtypeOf<typeof FiniteNumber, 'nominal.Integer'> = FiniteNum
  * @remarks
  * Larger counts lose precision silently, so they are rejected rather than rounded.
  */
-export class Integer extends IntegerBase {}
+export class Integer extends IntegerBase {
+  declare public static readonly '~standard': StandardOf<typeof Integer>;
+}

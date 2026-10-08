@@ -8,7 +8,7 @@
 
 Runtime-validated nominal types for TypeScript, for the validators and frameworks you already use.
 
-## The bug
+## The problem
 
 To TypeScript, an email address and a team ID are both `string`. Swap them, and the code still compiles:
 
@@ -23,7 +23,7 @@ const teamId = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 sendInvite(teamId, email); // compiles, and invites a UUID to a team called jane@example.com
 ```
 
-## The fix
+## The solution
 
 Give each kind of value its own type. `new` checks the value, and the compiler keeps the types apart:
 

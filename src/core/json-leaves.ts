@@ -25,7 +25,13 @@ export type Plan =
       readonly write: Write;
     }
   | { readonly kind: 'tag'; readonly tag: string }
-  | { readonly kind: 'record'; readonly value: Plan; readonly write: Write }
+  | {
+      readonly kind: 'record';
+      readonly value: Plan;
+      readonly write: Write;
+      readonly keyType: object | undefined;
+      readonly keys: readonly string[] | undefined;
+    }
   | {
       readonly kind: 'tuple';
       readonly items: readonly Plan[];

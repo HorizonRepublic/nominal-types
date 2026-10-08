@@ -217,6 +217,7 @@ const emit = (source: Source, plan: Plan, expr: string, prefix: Piece, none: str
         emit(source, inner, innerExpr, innerPrefix, innerNone),
       append,
       appendText,
+      holdsSafeText: (type) => leafOf(type, source.instances) === 'safe',
     };
 
     return added(tools, plan, expr, prefix, none);

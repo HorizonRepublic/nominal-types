@@ -6,13 +6,14 @@ import { describeValue } from './messages.ts';
 import { isNominalType } from './nominal.ts';
 import { fieldRunner } from './object-helpers.ts';
 import { writerOf } from './plain-writers.ts';
+import type { Write } from './plain-writers.ts';
 import { addEmitter } from './plan-emitters.ts';
+import { keyRunner, keyTypeOf } from './record-keys.ts';
 import { recordAcceptor, recordRun, recordWriter } from './record-shape.ts';
 import type { RecordRules } from './record-shape.ts';
 import { Rejection } from './rejection.ts';
 import { fieldAcceptor } from './shape-acceptors.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
-import { checkerFor } from './type-functions.ts';
 import { TypeSchema } from './type-schema.ts';
 
 type KeyText<Key> = Key extends string
@@ -87,7 +88,8 @@ const draft = { target: 'draft-2020-12' } as const;
 
 /**
  * The listed keys of a key schema that gives the listed strings themselves, such as `n.oneOf()`;
- * a nominal type gives instances, so its keys stay open, as TypeScript types them `string`.
+ * a nominal type, alone or in `n.of()`, gives instances, so its keys stay open, as TypeScript types
+ * them `string`.
  *
  * @throws {@link TypeError} when the key schema describes values other than strings, or lists
  * `__proto__`.
@@ -113,7 +115,7 @@ const closedKeys = (
       throw new TypeError('n.record(): the key must be a type or schema of strings');
     }
 
-    if (isNominalType(key) || !isString(runKey(listed[0]))) {
+    if (keyTypeOf(key) !== undefined || !isString(runKey(listed[0]))) {
       return undefined;
     }
 
@@ -131,9 +133,23 @@ const closedKeys = (
   return undefined;
 };
 
-// A key is a string, so a nominal type of keys runs its rules without making an instance.
-const keyRunner = (key: ConstraintField): ((input?: unknown) => unknown) =>
-  isNominalType(key) ? checkerFor(key) : fieldRunner(key, 'n.record()');
+/**
+ * How the JSON writer reads a record: the key type or the listed keys tell how a key is written.
+ *
+ * @internal
+ */
+const recordPlan = (
+  key: ConstraintField,
+  value: ConstraintField,
+  keys: readonly string[] | undefined,
+  write: Write,
+): ReturnType<typeof planOf> => ({
+  kind: 'record',
+  value: planOf(value),
+  write,
+  keyType: keyTypeOf(key),
+  keys,
+});
 
 /**
  * A limit on the key count, checked.
@@ -221,7 +237,7 @@ export class RecordSchema<Input, Output> extends TypeSchema<Input, Output> {
         paths: {
           write,
           accepts: recordAcceptor(rules, fieldAcceptor(valueField, 'n.record()'), run),
-          plan: { kind: 'record', value: planOf(valueField), write },
+          plan: recordPlan(keyField, valueField, keys, write),
           parts: {
             kind: 'record',
             key: keyField,
@@ -368,7 +384,7 @@ const describeRecord = (
  * Every key and every value is checked, and every issue collected with the key in its path; a bad
  * key is reported as `key must be …`. Keys listed by `n.oneOf()` are all required, as in a
  * TypeScript `Record`, and no other key is allowed; `partial()` lets them be missing. A key named
- * `__proto__` is refused. A value given as `undefined` counts as a missing key. The result is a
+ * `__proto__`, or one the key schema turns into `__proto__`, is refused. A value given as `undefined` counts as a missing key. The result is a
  * new object, read-only by type; given to `Nominal()`, it is frozen.
  *
  * @typeParam Key - The type or schema of the keys.

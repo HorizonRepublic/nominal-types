@@ -1,4 +1,23 @@
+import { text } from './json-leaves.ts';
 import type { Emitter, Piece } from './plan-emitters.ts';
+
+/**
+ * A key of a type that needs no escaping, between quotes as it is once a scan of its characters
+ * agrees, since the record may not come from `parse()`.
+ *
+ * @internal
+ */
+const safeKeyText = (key: string): string => {
+  for (let at = 0; at < key.length; at += 1) {
+    const code = key.codePointAt(at) ?? 0;
+
+    if (code < 32 || code === 34 || code === 92 || (code >= 0xd800 && code <= 0xdfff)) {
+      return text(key);
+    }
+  }
+
+  return `"${key}"`;
+};
 
 /**
  * The statements that write a record: each key whose value JSON leaves out is skipped, as
@@ -14,7 +33,12 @@ export const emitRecord: Emitter<'record'> = (tools, plan, expr, prefix, none) =
   const index = fresh('i');
   const key = fresh('y');
   const wrote = fresh('w');
-  const separator: Piece = { code: `(${wrote} ? ',' : '') + text(${key}) + ':'` };
+  const safe = plan.keyType !== undefined && tools.holdsSafeText(plan.keyType);
+  const keyText =
+    plan.keys === undefined
+      ? `${safe ? ref(safeKeyText) : 'text'}(${key})`
+      : `(${ref(new Map(plan.keys.map((name) => [name, JSON.stringify(name)])))}.get(${key}) ?? text(${key}))`;
+  const separator: Piece = { code: `(${wrote} ? ',' : '') + ${keyText} + ':'` };
   const body = emit(plan.value, `${o}[${key}]`, separator, 'continue;');
 
   return `const ${o} = ${expr}; if (typeof ${o} !== 'object' || ${o} === null || Array.isArray(${o})) { const ${t} = JSON.stringify(${ref(plan.write)}(${o})); ${appendText(t, prefix, none)} } else { ${append(prefix, '{')} const ${keys} = Object.keys(${o}); let ${wrote} = false; for (let ${index} = 0; ${index} < ${keys}.length; ${index}++) { const ${key} = ${keys}[${index}]; ${body} ${wrote} = true; } s += '}'; }`;

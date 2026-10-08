@@ -121,8 +121,8 @@ const helpers = {
     new Rejection([countIssue(min, max, count)]),
   keyIssues: (issues: Issues, key: string, rejection: Rejection): StandardSchemaV1.Issue[] =>
     pushed(issues, keyIssue(key, rejection)),
-  protoIssues: (issues: Issues): StandardSchemaV1.Issue[] =>
-    pushed(issues, issueOf('not_allowed', 'is not allowed', { path: ['__proto__'] })),
+  protoIssues: (issues: Issues, key: string): StandardSchemaV1.Issue[] =>
+    pushed(issues, issueOf('not_allowed', 'is not allowed', { path: [key] })),
   missingIssues: (issues: Issues, key: string): StandardSchemaV1.Issue[] =>
     pushed(issues, issueOf('required', 'is required', { path: [key] })),
   missingKeys: (
@@ -142,11 +142,30 @@ const helpers = {
   },
   repeatIssues: (issues: Issues, key: string): StandardSchemaV1.Issue[] =>
     pushed(issues, issueOf('not_unique', 'must not repeat a key', { path: [key] })),
+  // An object turns into a dictionary as it grows past about 128 keys, which costs more than
+  // starting as one, and an object without a prototype starts as one.
+  emptyRecord: (large: boolean): Record<string, unknown> => {
+    const empty: Record<string, unknown> = {};
+
+    if (large) {
+      Reflect.setPrototypeOf(empty, null);
+    }
+
+    return empty;
+  },
+  finished: (value: Record<string, unknown>, large: boolean): Record<string, unknown> => {
+    if (large) {
+      Reflect.setPrototypeOf(value, Object.prototype);
+    }
+
+    return value;
+  },
 };
 
 type Helpers = typeof helpers;
 
-// A closed set of keys reports a missing value once, among the required keys.
+// A closed set of keys reports a missing value once, among the required keys. A key that is or
+// becomes `__proto__` is refused, since a large record gets its prototype only at the end.
 const makeRun =
   (h: Helpers, rules: RecordRules): Run =>
   (input) => {
@@ -161,7 +180,8 @@ const makeRun =
       return h.wrongCount(rules.min, rules.max, names.length);
     }
 
-    const value: Record<string, unknown> = {};
+    const large = names.length > 128;
+    const value = h.emptyRecord(large);
     let issues: Issues;
     let changed = false;
 
@@ -169,9 +189,10 @@ const makeRun =
       const name = key === '__proto__' ? undefined : rules.key(key);
       const raw = input[key];
       const result = name === undefined || raw === undefined ? undefined : rules.value(raw);
+      const text = typeof name === 'string' ? name : h.keyText(name);
 
-      if (name === undefined) {
-        issues = h.protoIssues(issues);
+      if (name === undefined || text === '__proto__') {
+        issues = h.protoIssues(issues, key);
       } else if (name instanceof h.Rejection) {
         issues = h.keyIssues(issues, key, name);
       } else if (raw === undefined) {
@@ -179,8 +200,6 @@ const makeRun =
       } else if (result instanceof h.Rejection) {
         issues = h.valueIssues(issues, key, result);
       } else if (issues === undefined) {
-        const text = typeof name === 'string' ? name : h.keyText(name);
-
         changed ||= text !== key;
 
         if (changed && Object.hasOwn(value, text)) {
@@ -193,7 +212,7 @@ const makeRun =
 
     issues = rules.optional ? issues : h.missingKeys(issues, input, rules.required);
 
-    return issues === undefined ? value : new h.Rejection(issues);
+    return issues === undefined ? h.finished(value, large) : new h.Rejection(issues);
   };
 
 /**
@@ -202,8 +221,9 @@ const makeRun =
  * read-only by type.
  *
  * @remarks
- * A key named `__proto__` is refused, so a value never gets another prototype. A key schema that
- * changes keys, such as one that trims, may make two keys one; the second is refused.
+ * A key that is `__proto__`, or that its schema turns into `__proto__`, is refused, so a value never
+ * gets another prototype. A key schema that changes keys, such as one that trims, may make two keys
+ * one; the second is refused.
  *
  * @internal
  */
@@ -276,9 +296,11 @@ const makeWrite =
       return h.plain(value);
     }
 
-    const copy: Record<string, unknown> = {};
+    const names = Object.keys(value);
+    const large = names.length > 128;
+    const copy = h.emptyRecord(large);
 
-    for (const key of Object.keys(value)) {
+    for (const key of names) {
       const item = value[key];
 
       if (item !== undefined && key === '__proto__') {
@@ -293,7 +315,7 @@ const makeWrite =
       }
     }
 
-    return copy;
+    return h.finished(copy, large);
   };
 
 /**

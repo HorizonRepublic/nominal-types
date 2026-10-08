@@ -1,3 +1,4 @@
+import { describeValue } from './messages.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
 const numberText = /^-?(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|Infinity)$|^NaN$/u;
@@ -10,6 +11,26 @@ const cutText = /^a string of (\d+) characters starting (".*")…$/su;
  */
 export const charactersOf = (count: number): string =>
   count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
+
+/**
+ * Internal: a rejected value as the message of a sensitive type names it, by its kind only: what
+ * `hideValues` makes of the value `describeValue` writes.
+ */
+export const describeHidden = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value.length === 0 ? 'an empty string' : charactersOf(value.length);
+  }
+
+  if (typeof value === 'number') {
+    return 'a number';
+  }
+
+  if (typeof value === 'bigint') {
+    return 'a bigint';
+  }
+
+  return typeof value === 'boolean' ? 'a boolean' : describeValue(value);
+};
 
 // JSON text that opens with a quote parses to a string or not at all.
 const lengthOf = (text: string): number | undefined => {

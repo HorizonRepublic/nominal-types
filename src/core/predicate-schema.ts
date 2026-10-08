@@ -26,8 +26,8 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
     this.#json = json;
   }
 
-  public messageFor(value: unknown): string {
-    return mustBe(this.description, value);
+  public messageFor(value: unknown, describe?: (value: unknown) => string): string {
+    return mustBe(this.description, value, describe);
   }
 
   protected jsonBody(_side: 'input' | 'output'): Record<string, unknown> {

@@ -42,10 +42,14 @@ export const describeValue = (value: unknown): string => {
 };
 
 /**
- * The message for a value a rule rejects: `must be <expected> (was <value>)`.
+ * The message for a value a rule rejects: `must be <expected> (was <value>)`, with the value
+ * written by `describe`.
  */
-export const mustBe = (expected: string, value: unknown): string =>
-  `must be ${expected} (was ${describeValue(value)})`;
+export const mustBe = (
+  expected: string,
+  value: unknown,
+  describe: (value: unknown) => string = describeValue,
+): string => `must be ${expected} (was ${describe(value)})`;
 
 /**
  * Internal: a value as JSON text, with bigints written as decimal strings.

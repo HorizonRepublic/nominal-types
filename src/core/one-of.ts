@@ -96,8 +96,8 @@ export class OneOfSchema<Value extends OneOfValue> extends NativeSchema<Value> {
     }
   }
 
-  public messageFor(value: unknown): string {
-    return mustBe(this.description, value);
+  public messageFor(value: unknown, describe?: (value: unknown) => string): string {
+    return mustBe(this.description, value, describe);
   }
 
   protected jsonBody(): Record<string, unknown> {

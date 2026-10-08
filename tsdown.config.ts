@@ -12,6 +12,46 @@ const namespaceN = {
       : undefined,
 };
 
+// Every module under core/ but the entry of `n`. A declaration module keeps `.d` at the end of its
+// chunk name, which the declaration build reads.
+const corePath = /[\\/]src[\\/]core[\\/](?!n\.).+?(\.d)?\.ts$/u;
+// Every module under types/ and temporal/ but the temporal entry itself.
+const typePath = /[\\/]src[\\/]((?:types|temporal)[\\/](?!index\.).+)\.ts$/u;
+// A module under adapters/, kept in place when more than one adapter uses it.
+const adapterPath = /[\\/]src[\\/](adapters[\\/].+)\.ts$/u;
+
+const pathName = (path: RegExp, id: string): string | null =>
+  path.exec(id)?.[1]?.replaceAll('\\', '/') ?? null;
+
+// Bundlers drop whole modules an app doesn't use, by `sideEffects: false`, so each type stays a
+// module of its own; a type declared at the top level of a shared chunk would stay in every bundle.
+// The core every type needs is one chunk, since plain Node pays for every module it loads.
+const esmChunks = {
+  chunkFileNames: '[name].js',
+  codeSplitting: {
+    groups: [
+      {
+        name: (id: string) => {
+          const core = corePath.exec(id);
+
+          return core === null ? null : `core/shared${core[1] ?? ''}`;
+        },
+        priority: 2,
+      },
+      {
+        name: (id: string) => pathName(typePath, id),
+        priority: 1,
+        includeDependenciesRecursively: false,
+      },
+      {
+        name: (id: string) => pathName(adapterPath, id),
+        minShareCount: 2,
+        includeDependenciesRecursively: false,
+      },
+    ],
+  },
+};
+
 const config: UserConfig = {
   entry: {
     index: 'src/index.ts',
@@ -37,13 +77,11 @@ const config: UserConfig = {
   target: 'es2022',
   dts: true,
   sourcemap: true,
-  // Bundlers drop whole modules an app doesn't use, by `sideEffects: false`, only when each
-  // source file stays a module of its own. CommonJS can't be tree-shaken, so it stays one file
-  // per entry, which Node loads faster.
+  // CommonJS can't be tree-shaken, so it stays one file per entry, which Node loads faster.
   outputOptions: (options, format, { cjsDts }) => ({
     ...options,
     sourcemapExcludeSources: true,
-    ...(format === 'es' && !cjsDts ? { preserveModules: true, preserveModulesRoot: 'src' } : {}),
+    ...(format === 'es' && !cjsDts ? esmChunks : {}),
   }),
   clean: true,
   publint: true,

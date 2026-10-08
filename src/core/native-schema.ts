@@ -1,4 +1,5 @@
 import { forTarget } from './json-target.ts';
+import { describeValue } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import { standardProps } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
@@ -28,15 +29,19 @@ export abstract class NativeSchema<Value> {
   public abstract readonly accepts: (value: unknown) => value is Value;
 
   /**
-   * The message a rejected value is reported with.
+   * The message a rejected value is reported with, the value written by `describe`, which a
+   * sensitive type passes to leave the value out.
    */
-  public abstract messageFor(value: unknown): string;
+  public abstract messageFor(value: unknown, describe?: (value: unknown) => string): string;
 
   /**
-   * The issues a rejected value is reported with.
+   * The issues a rejected value is reported with, the value written by `describe`.
    */
-  public issuesFor(value: unknown): readonly StandardSchemaV1.Issue[] {
-    return [{ message: this.messageFor(value) }];
+  public issuesFor(
+    value: unknown,
+    describe: (value: unknown) => string = describeValue,
+  ): readonly StandardSchemaV1.Issue[] {
+    return [{ message: this.messageFor(value, describe) }];
   }
 
   /**

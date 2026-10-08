@@ -1,6 +1,8 @@
 import type { NominalSchema } from './contracts.ts';
+import { describeHidden, hideValues } from './hidden-values.ts';
 import { NativeSchema } from './native-schema.ts';
 import { PatternSchema } from './pattern-schema.ts';
+import { PredicateSchema } from './predicate-schema.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
@@ -12,9 +14,30 @@ export interface Step {
   readonly issues: (value: unknown, input: unknown) => readonly StandardSchemaV1.Issue[];
 }
 
-const stepOf = (rule: NativeSchema<unknown>): Step => ({
+// A rule whose messages are built by one of these writes the value only through `describe`; any
+// other, such as a subclass with a message of its own, may name the value in its own words.
+const describesThrough = (rule: NativeSchema<unknown>): boolean =>
+  rule.issuesFor === NativeSchema.prototype.issuesFor &&
+  (rule.messageFor === PatternSchema.prototype.messageFor ||
+    rule.messageFor === PredicateSchema.prototype.messageFor);
+
+const issuesOf = (
+  rule: NativeSchema<unknown>,
+  input: unknown,
+  hidden: boolean,
+): readonly StandardSchemaV1.Issue[] => {
+  if (!hidden) {
+    return rule.issuesFor(input);
+  }
+
+  return describesThrough(rule)
+    ? rule.issuesFor(input, describeHidden)
+    : hideValues(rule.issuesFor(input));
+};
+
+const stepOf = (rule: NativeSchema<unknown>, hidden: boolean): Step => ({
   accepts: rule.accepts,
-  issues: (_value, input) => rule.issuesFor(input),
+  issues: (_value, input) => issuesOf(rule, input, hidden),
 });
 
 // Joined into one expression, a backreference would count the groups of the patterns before it,
@@ -28,9 +51,13 @@ const mergeable = (rule: NominalSchema): rule is PatternSchema =>
   !rule.pattern.source.includes('|') &&
   !groupReference.test(rule.pattern.source);
 
-const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step => {
+const mergedStep = (
+  first: PatternSchema,
+  rest: readonly PatternSchema[],
+  hidden: boolean,
+): Step => {
   if (rest.length === 0) {
-    return stepOf(first);
+    return stepOf(first, hidden);
   }
 
   const patterns = [first, ...rest];
@@ -42,7 +69,7 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
   return {
     accepts: (value) => typeof value === 'string' && combined.test(value),
     issues: (value, input) =>
-      (patterns.find((schema) => !schema.accepts(value)) ?? first).issuesFor(input),
+      issuesOf(patterns.find((schema) => !schema.accepts(value)) ?? first, input, hidden),
   };
 };
 
@@ -53,9 +80,12 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
  * Neighbouring patterns that start with `^`, hold no `|`, no backreference and no named group, and
  * share their flags are folded into one expression of lookaheads, which tests the string once; such
  * patterns match only from the start, so testing them together there is the same as testing them
- * apart.
+ * apart. With `hidden`, the issues leave the rejected value out, as those of a sensitive type do.
  */
-export const planOf = (rules: ReadonlyArray<NativeSchema<unknown>>): readonly Step[] => {
+export const planOf = (
+  rules: ReadonlyArray<NativeSchema<unknown>>,
+  hidden: boolean = false,
+): readonly Step[] => {
   const steps: Step[] = [];
   let group: PatternSchema[] = [];
 
@@ -63,7 +93,7 @@ export const planOf = (rules: ReadonlyArray<NativeSchema<unknown>>): readonly St
     const [first, ...rest] = group;
 
     if (first !== undefined) {
-      steps.push(mergedStep(first, rest));
+      steps.push(mergedStep(first, rest, hidden));
     }
 
     group = [];
@@ -72,7 +102,7 @@ export const planOf = (rules: ReadonlyArray<NativeSchema<unknown>>): readonly St
   for (const rule of rules) {
     if (!mergeable(rule)) {
       flush();
-      steps.push(stepOf(rule));
+      steps.push(stepOf(rule, hidden));
     } else if (group[0] !== undefined && group[0].pattern.flags !== rule.pattern.flags) {
       flush();
       group.push(rule);
@@ -96,17 +126,19 @@ export interface ConvertStep {
 
 /**
  * Internal: the rules of a type as steps: checks for patterns and guards, folded as `planOf` folds
- * them, and a mapping step for each rule from another library.
+ * them, and a mapping step for each rule from another library. `hidden` is passed on to `planOf`;
+ * the mapping steps hide values themselves.
  */
 export const stepsOf = (
   rules: readonly NominalSchema[],
   convertOf: (rule: NominalSchema) => ConvertStep,
+  hidden: boolean = false,
 ): ReadonlyArray<Step | ConvertStep> => {
   const steps: Array<Step | ConvertStep> = [];
   let native: Array<NativeSchema<unknown>> = [];
 
   const flush = (): void => {
-    steps.push(...planOf(native));
+    steps.push(...planOf(native, hidden));
     native = [];
   };
 

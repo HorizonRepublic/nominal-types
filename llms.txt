@@ -133,7 +133,7 @@ A field of an `n.object()` type can't be named `value`, `equals`, `copyWith`, `t
 ### Schemas
 
 - `n.of(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `n.of()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
-- `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string and makes every field optional in the input type, so `new Config(process.env)` compiles. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
+- `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string, makes every field optional in the input type, so `new Config(process.env)` compiles, and hides the values in its messages. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
 - `n.constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
 - `n.isObject(value)`, `n.isConstraint(value)` tell those apart.
 
@@ -186,9 +186,9 @@ config.PORT.value; // 3000 for PORT=3000
 ### Errors and messages
 
 - `NominalError` extends `TypeError`. Members: `typeName`, `issues` (`{ message, path? }[]`), and `message` such as `'nominal.Uuid: must be a UUID (was "x")'`, with a path in front of each issue that has one: `'booking.Stay: guests: must not exceed the capacity'`.
-- Messages read `must be <description> (was <value>)`. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`).
-- A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email`, `IpAddress` (and the types under it) and `MacAddress` are sensitive.
-- `n.hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")` and Valibot's `received "x"`.
+- Messages read `must be <description> (was <value>)`, the value as it was given. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`). A string over 64 characters is cut: `(was a string of 30000 characters starting "<first 32>"…)`.
+- A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email`, `IpAddress` (and the types under it) and `MacAddress` are sensitive. A `.fromEnv()` schema hides the values of all its fields the same way.
+- `n.hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")`, the cut form `(was a string of N characters starting "x"…)` and Valibot's `received "x"`.
 - Rules from other libraries keep their own messages.
 
 ### JSON Schema
@@ -216,7 +216,7 @@ config.PORT.value; // 3000 for PORT=3000
 | `Ulid` | `nominal.Ulid` | 26 Crockford base32 characters, first `0`–`7`, `I`/`L`/`O`/`U` refused, any case; `timestamp`, `canonical()` (uppercase); `equals` ignores case | yes |
 | `ObjectId` | `nominal.ObjectId` | a MongoDB ObjectId, 24 hex digits in any case; `timestamp` (seconds), `canonical()` (lowercase); `equals` ignores case | yes |
 | `SemVer` | `nominal.SemVer` | Semantic Versioning 2.0.0, no `v` prefix, up to 256 characters, numbers up to `Number.MAX_SAFE_INTEGER`; `major`, `minor`, `patch`, `prerelease`, `build`, `isPrerelease`, `compare(other)` (precedence, build ignored), `isNewerThan(other)`; `equals` compares the text | yes |
-| `Url` | `nominal.Url` | an absolute URL; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
+| `Url` | `nominal.Url` | an absolute URL with any scheme (`javascript:`, `data:`, `file:` too; use `HttpUrl` for links), no control characters, no space at either end; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
 | `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code or `XK` (Kosovo), upper case (`UK`, `EU` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
 | `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |
@@ -232,7 +232,7 @@ config.PORT.value; // 3000 for PORT=3000
 | `IpPrefix` | `nominal.IpPrefix` | CIDR `address/length` with host bits zero (JSON Schema can't check those); `version`, `address`, `length`, `contains(address or prefix)`, `canonical()`; `equals` compares the network | yes |
 | `Ipv4Prefix`, `Ipv6Prefix` | `nominal.…` | under `IpPrefix`, one version | yes |
 | `MacAddress` | `nominal.MacAddress` | EUI-48: six hex pairs, all `:` or all `-`; sensitive; `toBytes()`, `isMulticast`, `isLocallyAdministered`, `canonical()` (lowercase, colons), `pattern`; `equals` compares bytes | yes |
-| `Isbn` | `nominal.Isbn` | ISO 2108 ISBN-10 (mod 11, uppercase `X` last) or ISBN-13 (978, 979-1…9; 979-0 ISMN refused), compact digits only, hyphens and spaces refused (not stripped); `format` (10 or 13), `canonical()` (the ISBN-13), `toIsbn10()` (`undefined` for 979), `pattern`; `equals` holds between an ISBN-10 and its ISBN-13; JSON Schema can't check the digit | yes |
+| `Isbn` | `nominal.Isbn` | ISO 2108 ISBN-10 (mod 11, uppercase `X` last) or ISBN-13 (978, 979-1…9; 979-0 ISMN refused), compact digits only, hyphens and spaces refused (not stripped) with `must be an ISBN without hyphens or spaces`; `format` (10 or 13), `canonical()` (the ISBN-13), `toIsbn10()` (`undefined` for 979), `pattern`; `equals` holds between an ISBN-10 and its ISBN-13; JSON Schema can't check the digit | yes |
 | `Issn` | `nominal.Issn` | ISO 3297 `NNNN-NNNC`, hyphen required, mod 11 check, uppercase `X`; `pattern`; JSON Schema can't check the digit | yes |
 | `Gtin` | `nominal.Gtin` | GS1 GTIN-8, -12, -13 or -14 (EAN, UPC), digits only, mod 10 check, all zeros accepted; `format` (8, 12, 13, 14), `canonical()` (14 digits, zeros in front), `pattern`; `equals` compares the 14-digit form; JSON Schema can't check the digit | yes |
 | `Isin` | `nominal.Isin` | ISO 6166: 2 letters, 9 letters or digits, Luhn check digit on letters as 10–35, upper case only, prefix not checked against countries (`XS` passes); `prefix`, `nsin`, `pattern`; JSON Schema can't check the digit | yes |
@@ -257,8 +257,8 @@ Dates and times, from `@horizon-republic/nominal-types/temporal`. Each is a root
 | --- | --- | --- | --- |
 | `Instant` | `nominal.Instant` | `2024-05-01T09:30:00Z` or `…+02:00` (offset required, up to `±23:59`), a `Temporal.Instant`; `toJSON()` writes UTC; `toDate()`; format `date-time` | yes |
 | `PlainDate` | `nominal.PlainDate` | `2024-05-01`, a `Temporal.PlainDate` in the ISO calendar; format `date` | yes |
-| `PlainTime` | `nominal.PlainTime` | `09:30:00[.f]`, no offset, a `Temporal.PlainTime`; no `format` | yes |
-| `PlainDateTime` | `nominal.PlainDateTime` | `2024-05-01T09:30:00[.f]`, no offset, a `Temporal.PlainDateTime`; no `format` | yes |
+| `PlainTime` | `nominal.PlainTime` | `09:30:00[.f]` or `09:30`, no offset, a `Temporal.PlainTime`; no `format` | yes |
+| `PlainDateTime` | `nominal.PlainDateTime` | `2024-05-01T09:30:00[.f]` or `2024-05-01T09:30`, no offset, a `Temporal.PlainDateTime`; no `format` | yes |
 
 ```ts
 import 'temporal-polyfill/global';

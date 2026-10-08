@@ -43,6 +43,19 @@ describe.each([
     ]);
   });
 
+  it('reports a check after a mapping step about the input as given', () => {
+    const shown: Step = {
+      accepts: (value) => value !== '',
+      issues: (value, input) => [
+        { message: `${JSON.stringify(value)} from ${JSON.stringify(input)}` },
+      ],
+    };
+
+    expect(outcome(compileRun([trim, shown], generate)('   '))).toStrictEqual([
+      { message: '"" from "   "' },
+    ]);
+  });
+
   it('returns the value with no steps', () => {
     expect(compileRun([], generate)('anything')).toBe('anything');
   });

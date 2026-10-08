@@ -2,6 +2,8 @@ import type { StandardSchemaV1 } from './standard-spec.ts';
 
 const numberText = /^-?(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|Infinity)$|^NaN$/u;
 const bigintText = /^-?\d+n$/u;
+// A long string, as a message cuts it: `a string of 30000 characters starting "abc"…`.
+const cutText = /^a string of (\d+) characters starting (".*")…$/su;
 
 const charactersOf = (count: number): string =>
   count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
@@ -20,6 +22,12 @@ const lengthOf = (text: string): number | undefined => {
  * which names no value.
  */
 const outlineOf = (text: string): string | undefined => {
+  const cut = cutText.exec(text);
+
+  if (cut?.[1] !== undefined && cut[2] !== undefined && lengthOf(cut[2]) !== undefined) {
+    return charactersOf(Number(cut[1]));
+  }
+
   if (text.startsWith('"')) {
     const length = lengthOf(text);
 

@@ -94,7 +94,7 @@ export class BirthDate extends PlainDate.subtype(
 ) {}
 
 new BirthDate('1990-07-15').value.year; // 1990
-BirthDate.parse('1899-12-31'); // { ok: false, issues: [{ message: 'must be a date from 1900 on (was object)' }] }
+BirthDate.parse('1899-12-31'); // { ok: false, issues: [{ message: 'must be a date from 1900 on (was "1899-12-31")' }] }
 ```
 
 Keep rules that depend on today, such as "in the past", out of the type. A value valid today would turn invalid later. Check them where the value is used.
@@ -112,6 +112,28 @@ class Config extends Nominal('app.Config', n.object({ BACKUP_AT: PlainTime }).fr
 
 new Config({ BACKUP_AT: '03:00:00' }).BACKUP_AT.value.hour; // 3
 ```
+
+## Read an HTML form
+
+An HTML `time` input sends `09:30`, and a `datetime-local` input sends `2024-05-01T09:30`. `PlainTime` and `PlainDateTime` take this text without seconds:
+
+```ts
+import 'temporal-polyfill/global';
+import { n } from '@horizon-republic/nominal-types';
+import { PlainDate, PlainDateTime, PlainTime } from '@horizon-republic/nominal-types/temporal';
+
+const Booking = n.object({ day: PlainDate, opensAt: PlainTime, startsAt: PlainDateTime });
+
+const form: unknown = { day: '2024-05-01', opensAt: '09:30', startsAt: '2024-05-01T09:30' };
+const result = Booking.parse(form);
+
+if (result.ok) {
+  result.value.opensAt.toJSON(); // '09:30:00'
+  result.value.startsAt.toJSON(); // '2024-05-01T09:30:00'
+}
+```
+
+An `Instant` still needs seconds and an offset. A form has no input that sends them.
 
 ## Store in a database
 

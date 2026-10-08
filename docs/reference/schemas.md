@@ -351,6 +351,7 @@ The class `n.object()` returns. It extends [`TypeSchema`](#typeschema), so `pars
 - It keeps other fields as they are, such as `n.of(…)` and `n.object(…)` schemas. Give them `fromString()` yourself.
 - It drops undeclared keys, so the whole `process.env` can be passed.
 - It keeps the constraints and the `strict()` setting.
+- It leaves the values out of its messages, as a [sensitive type](errors-and-messages.md#sensitive-types) does, since configuration holds secrets. This covers every field, nested objects and the constraints.
 
 `fromString()` throws on an `ObjectSchema`. Use `fromEnv()` there.
 
@@ -377,8 +378,8 @@ Config.parse({ PORT: '3000', DEBUG: 'false', DATABASE_URL: 'postgres://localhost
 // { ok: true, value: { PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url } }
 Config.parse({ PORT: 'abc', DEBUG: 'yes' });
 // { ok: false, issues: [
-//   { message: 'must be a number (was "abc")', path: ['PORT'] },
-//   { message: 'must be a boolean (was "yes")', path: ['DEBUG'] },
+//   { message: 'must be a number (was a string of 3 characters)', path: ['PORT'] },
+//   { message: 'must be a boolean (was a string of 3 characters)', path: ['DEBUG'] },
 //   { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
 // ] }
 ```

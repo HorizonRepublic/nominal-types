@@ -63,8 +63,10 @@ for (const line of lines) {
   console.log(Row.parse(cells));
 }
 // { ok: true, value: { sku: Sku { value: 'ABC-1234' }, quantity: PositiveInteger { value: 2 } } }
-// { ok: false, issues: [{ message: 'must be a number (was "zero")', path: ['quantity'] }] }
+// { ok: false, issues: [{ message: 'must be a number (was a string of 4 characters)', path: ['quantity'] }] }
 ```
+
+A `fromEnv()` schema leaves the values out of its messages, since environment variables hold secrets. That is why the message gives the length of `zero`, not the text.
 
 ## Read a list
 

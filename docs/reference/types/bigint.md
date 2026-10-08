@@ -58,6 +58,6 @@ Each sign type, and `Int64` and `Uint64`, adds an example its JSON Schema accept
 | `Int64`  | -2^63 to 2^63 - 1 | `{ type: 'string', format: 'int64', maxLength: 20 }`               | `{ type: 'integer' }`             |
 | `Uint64` | 0 to 2^64 - 1     | `{ type: 'string', pattern: '^(?:0\|[1-9]\\d*)$', maxLength: 20 }` | `{ type: 'integer', minimum: 0 }` |
 
-The JSON Schema limits the length of the string, not the value: `'9223372036854775808'` passes the schema of `Int64` and is rejected by the type. Messages end with `a signed 64-bit integer (was 9223372036854775808n)`.
+The JSON Schema limits the length of the string, not the value: `'9223372036854775808'` passes the schema of `Int64` and is rejected by the type. Messages show the value as it was given: `must be a signed 64-bit integer (was "9223372036854775808")` for the string, `(was 9223372036854775808n)` for the bigint.
 
 [← Built-in types](README.md)

@@ -42,7 +42,7 @@ Text must follow [RFC 3339](../glossary.md), the date and time format of the int
 - `T` and `Z` are upper case. A space in place of `T` is refused.
 - Years run from `0000` to `9999`, with four digits.
 - The day must exist in its month: `2024-02-29` passes, `2023-02-29` and `2024-04-31` don't.
-- Seconds are required: `09:30` is refused.
+- `Instant` requires seconds: `2024-05-01T09:30Z` is refused. `PlainTime` and `PlainDateTime` take a time without them, `09:30`, as HTML `time` and `datetime-local` inputs send it.
 - A fraction of a second has 1 to 9 digits after a dot. A comma is refused.
 - The leap second `:60` is refused.
 - Week dates (`2021-W53-1`), day-of-year dates (`2009-130`), the compact form (`20240501T093000Z`) and zone names in brackets (`[Europe/Paris]`) are refused.
@@ -131,19 +131,20 @@ A time of day with no date and no offset, like `09:30:00`.
 
 The JSON Schema has no `format`, since the `time` format requires an offset.
 
-| Property    | Value                                                                     |
-| ----------- | ------------------------------------------------------------------------- |
-| Accepts     | `00:00:00`, `09:30:00.25`, `23:59:59.999999999`, a `Temporal.PlainTime`   |
-| Rejects     | `09:30`, `9:30:00`, `24:00:00`, `23:59:60`, `09:30:00Z`, `09:30:00+01:00` |
-| JSON Schema | `{ type: 'string', pattern: PlainTime.pattern.source }`, with an example  |
-| Message     | `must be a time of day as hh:mm:ss (was "09:30")`                         |
+| Property    | Value                                                                            |
+| ----------- | -------------------------------------------------------------------------------- |
+| Accepts     | `00:00:00`, `09:30`, `09:30:00.25`, `23:59:59.999999999`, a `Temporal.PlainTime` |
+| Rejects     | `9:30`, `09:3`, `24:00`, `23:59:60`, `09:30Z`, `09:30:00+01:00`                  |
+| JSON Schema | `{ type: 'string', pattern: PlainTime.pattern.source }`, with an example         |
+| Message     | `must be a time of day as hh:mm or hh:mm:ss (was "9:30")`                        |
 
 ```ts
 import 'temporal-polyfill/global';
 import { PlainTime } from '@horizon-republic/nominal-types/temporal';
 
-const opens = new PlainTime('09:30:00');
+const opens = new PlainTime('09:30');
 
+opens.toJSON(); // '09:30:00'
 opens.value.add({ minutes: 45 }).toString(); // '10:15:00'
 ```
 
@@ -153,12 +154,12 @@ A date and a time of day with no offset and no zone, like `2024-05-01T09:30:00`.
 
 The JSON Schema has no `format`, since the `date-time` format requires an offset.
 
-| Property    | Value                                                                                           |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| Accepts     | `2024-05-01T09:30:00`, `2024-02-29T12:00:00.5`, a `Temporal.PlainDateTime` in the ISO calendar  |
-| Rejects     | `2024-05-01T09:30:00Z`, `2024-05-01T09:30:00+02:00`, `2024-05-01 09:30:00`, `2024-05-01T09:30`  |
-| JSON Schema | `{ type: 'string', pattern: PlainDateTime.pattern.source }`, with an example                    |
-| Message     | `must be a date and time as YYYY-MM-DDThh:mm:ss without an offset (was "2024-05-01T09:30:00Z")` |
+| Property    | Value                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| Accepts     | `2024-05-01T09:30:00`, `2024-05-01T09:30`, `2024-02-29T12:00:00.5`, a `Temporal.PlainDateTime` in the ISO calendar  |
+| Rejects     | `2024-05-01T09:30:00Z`, `2024-05-01T09:30:00+02:00`, `2024-05-01 09:30:00`, `2024-05-01T09`                         |
+| JSON Schema | `{ type: 'string', pattern: PlainDateTime.pattern.source }`, with an example                                        |
+| Message     | `must be a date and time as YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss without an offset (was "2024-05-01T09:30:00Z")` |
 
 ```ts
 import 'temporal-polyfill/global';

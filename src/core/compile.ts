@@ -54,7 +54,7 @@ const loopOver =
     for (const step of steps) {
       if (isCheck(step)) {
         if (!step.accepts(value)) {
-          return new Rejection(step.issues(value));
+          return new Rejection(step.issues(value, input));
         }
       } else {
         value = step.convert(value);
@@ -76,7 +76,7 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Run => {
       names.push(`accepts${index}`, `issues${index}`);
       values.push(step.accepts, step.issues);
 
-      return `if (!accepts${index}(value)) return new Rejection(issues${index}(value));`;
+      return `if (!accepts${index}(value)) return new Rejection(issues${index}(value, input));`;
     }
 
     names.push(`convert${index}`);
@@ -86,7 +86,7 @@ const generated = (steps: ReadonlyArray<Step | ConvertStep>): Run => {
   });
   const compiled = generateFunction(
     names,
-    `(value) => { ${lines.join(' ')} return value; }`,
+    `(input) => { let value = input; ${lines.join(' ')} return value; }`,
     values,
   );
 

@@ -303,13 +303,14 @@ versions.sort((a, b) => a.compare(b)).map(String); // ['0.9.12', '1.0.0-beta', '
 
 An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accepts.
 
-- Any scheme is accepted, including `mailto:` and `javascript:`. Use `HttpUrl` for web addresses only.
+- Any scheme is accepted, including `javascript:`, `data:`, `file:` and `mailto:`. Use `HttpUrl` for a link shown to users or opened by your server.
 - `value` keeps the text as given. The members read the parsed URL.
+- Control characters anywhere, and a space at either end, are refused: `' https://example.com'`, `'https://exa\nmple.com'`. `new URL()` drops them, so the value would differ from the URL it read.
 - The host is read as browsers read it: `http://0x7f.1` has the `hostname` `127.0.0.1`. To refuse internal hosts, check `hostname` with [`IpAddress`](#ipaddress) and its `isGlobal`.
 
 | Property    | Value                                                            |
 | ----------- | ---------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', format: 'uri' }`, with an example             |
+| JSON Schema | `{ type: 'string', format: 'uri', pattern }`, with an example    |
 | Message     | `must be a URL (was "x")`, also for a value that is not a string |
 
 ```ts
@@ -877,13 +878,14 @@ A book number ([ISBN](../glossary.md)) like `9780306406157`: an ISBN-13, or an I
 
 - Digits only. An ISBN-10 may end in `X`, upper case only.
 - An ISBN-13 starts with `978` or `979`. It can't start with `9790`, which is a number for printed music.
-- Hyphens and spaces are refused. Remove them before you check the value: `text.replaceAll(/[\s-]/gu, '')`.
+- Hyphens and spaces are refused, with their own message. Remove them before you check the value: `text.replaceAll(/[\s-]/gu, '')`.
 - `value` keeps the form as given. `equals()` finds an ISBN-10 equal to its ISBN-13.
 
 | Property    | Value                                                                                           |
 | ----------- | ----------------------------------------------------------------------------------------------- |
 | JSON Schema | `{ type: 'string', pattern: Isbn.pattern.source, minLength: 10, maxLength: 13 }`, with examples |
 | Message     | `must be an ISBN with a valid check digit (was "9780306406158")`                                |
+| Message     | `must be an ISBN without hyphens or spaces (was "978-0-306-40615-7")`                           |
 | Limits      | the `pattern` can't compute the check digit, so the schema accepts `9780306406158`              |
 
 ```ts
@@ -893,7 +895,7 @@ const isbn = new Isbn('0306406152');
 
 isbn.canonical().value; // '9780306406157'
 isbn.equals(new Isbn('9780306406157')); // true
-new Isbn('978-0-306-40615-7'); // throws NominalError: nominal.Isbn: must be an ISBN with a valid check digit (was "978-0-306-40615-7")
+new Isbn('978-0-306-40615-7'); // throws NominalError: nominal.Isbn: must be an ISBN without hyphens or spaces (was "978-0-306-40615-7")
 ```
 
 Members, with results for this `isbn`:

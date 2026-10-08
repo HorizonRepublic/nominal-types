@@ -7,6 +7,7 @@ import type {
 } from './constraint-types.ts';
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
+import { hideValues } from './hidden-values.ts';
 import { isNominalType } from './nominal.ts';
 import { objectMark } from './object-members.ts';
 import { objectShape } from './object-shape.ts';
@@ -77,6 +78,18 @@ const fieldsOf = (fields: ObjectFields): ObjectField[] =>
     };
   });
 
+type ObjectShape = ReturnType<typeof objectShape>;
+
+const hidingValues = (shape: ObjectShape): ObjectShape => ({
+  run: (input) => {
+    const result = shape.run(input);
+
+    return result instanceof Rejection ? new Rejection(hideValues(result.issues)) : result;
+  },
+  describe: shape.describe,
+  sensitive: true,
+});
+
 /**
  * An object made of fields, each checked by its own schema: what `n.object()` returns.
  *
@@ -92,11 +105,18 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   readonly #source: ObjectFields;
   readonly #constraints: readonly AnyConstraint[];
   readonly #strict: boolean;
+  readonly #hidden: boolean;
 
   /**
-   * Internal: built by `n.object()`, `strict()` and `fromEnv()`.
+   * Internal: built by `n.object()`, `strict()` and `fromEnv()`; `hidden` leaves the values out of
+   * the messages.
    */
-  public constructor(source: ObjectFields, constraints: readonly AnyConstraint[], strict: boolean) {
+  public constructor(
+    source: ObjectFields,
+    constraints: readonly AnyConstraint[],
+    strict: boolean,
+    hidden: boolean = false,
+  ) {
     const fields = fieldsOf(source);
 
     checkConstraintFields(
@@ -105,13 +125,16 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
       constraints,
     );
 
+    const shape = objectShape(fields, constraints, strict);
+
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    super(objectShape(fields, constraints, strict) as never);
+    super((hidden ? hidingValues(shape) : shape) as never);
     this.keys = fields.map(({ key }) => key);
     this.#source = source;
     this.#constraints = constraints;
     this.#strict = strict;
+    this.#hidden = hidden;
     Object.defineProperty(this, objectMark, { value: true });
   }
 
@@ -119,7 +142,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * This schema, refusing keys it doesn't declare instead of dropping them.
    */
   public strict(): ObjectSchema<Input, Output> {
-    return new ObjectSchema(this.#source, this.#constraints, true);
+    return new ObjectSchema(this.#source, this.#constraints, true, this.#hidden);
   }
 
   /**
@@ -130,7 +153,8 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * @remarks
    * Fields of other kinds, such as `n.of()` and `n.object()` schemas, are kept as they are;
    * give them `fromString()` yourself where they read text. Undeclared keys are dropped, so the
-   * whole `process.env` can be passed.
+   * whole `process.env` can be passed. Messages leave the values out, as those of a sensitive type
+   * do, since configuration holds secrets: `must be a URL (was a string of 31 characters)`.
    *
    * @example
    * ```ts
@@ -153,7 +177,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
       ]),
     );
 
-    return new ObjectSchema(fields, this.#constraints, this.#strict);
+    return new ObjectSchema(fields, this.#constraints, this.#strict, true);
   }
 }
 

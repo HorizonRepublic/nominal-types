@@ -15,6 +15,35 @@ describe('Url', () => {
     expect(() => new Url(text)).toThrow(NominalError);
   });
 
+  it.each([
+    ['a space before it', ' https://example.com'],
+    ['a space after it', 'https://example.com '],
+    ['a line break inside', 'https://exa\nmple.com'],
+    ['a carriage return inside', 'https://exa\rmple.com'],
+    ['a tab inside', 'https://example.com/a\tb'],
+    ['a NUL before it', '\u0000https://example.com'],
+    ['a control character in the path', 'https://example.com/a\u001Fb'],
+    ['a line break after it', 'https://example.com\n'],
+  ])('refuses text the parser would clean up: %s', (_, text) => {
+    expect(URL.canParse(text)).toBe(true);
+    expect(Url.parse(text).ok).toBe(false);
+    expect(HttpUrl.parse(text).ok).toBe(false);
+  });
+
+  it('keeps the first character after the controls, and DEL, which the parser encodes', () => {
+    expect(new Url('https://example.com/!').value).toBe('https://example.com/!');
+    expect(new Url('https://example.com/a\u007Fb').canonical().value).toBe(
+      'https://example.com/a%7Fb',
+    );
+  });
+
+  it('takes javascript:, data: and file: URLs, which HttpUrl refuses', () => {
+    for (const text of ['javascript:alert(1)', 'data:text/html,<b>hi</b>', 'file:///etc/passwd']) {
+      expect(Url.parse(text).ok).toBe(true);
+      expect(HttpUrl.parse(text).ok).toBe(false);
+    }
+  });
+
   it('reads the parsed parts', () => {
     const url = new Url('https://Example.com:8443/a/b?x=1&y=2#top');
 
@@ -77,6 +106,7 @@ describe('Url as JSON Schema', () => {
       title: 'nominal.Url',
       type: 'string',
       format: 'uri',
+      pattern: '^[^\\u0000-\\u0020](?:[^\\u0000-\\u001F]*[^\\u0000-\\u0020])?$',
       example: 'https://example.com/docs',
       description: 'a URL',
     });

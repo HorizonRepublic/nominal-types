@@ -183,6 +183,19 @@ describe('AnyBigInt input', () => {
     ]);
   });
 
+  it('reports a value out of range as it was given, not as the bigint it became', () => {
+    expect(issuesOf(Int64.parse('9223372036854775808'))).toStrictEqual([
+      { message: 'must be a signed 64-bit integer (was "9223372036854775808")' },
+    ]);
+    expect(issuesOf(Uint64.parse('-1'))).toStrictEqual([
+      { message: 'must be an unsigned 64-bit integer (was "-1")' },
+    ]);
+    expect(issuesOf(PositiveBigInt.parse(0))).toStrictEqual([
+      { message: 'must be a positive integer (was 0)' },
+    ]);
+    expect(Int64.parse('9223372036854775807').ok).toBe(true);
+  });
+
   it('describes its input as a string or a safe integer, and its JSON output as the string', () => {
     const { input, output } = AnyBigInt['~standard'].jsonSchema;
     const string = { type: 'string', pattern: '^(?:0|-?[1-9]\\d*)$', maxLength: 1000 };

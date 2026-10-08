@@ -4,16 +4,17 @@ import { PatternSchema } from './pattern-schema.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
- * Internal: one check of a flat plan, and the issues it reports when it fails.
+ * Internal: one check of a flat plan, and the issues it reports when it fails: about the input as
+ * given, which a rule from another library before the check may have converted into `value`.
  */
 export interface Step {
   readonly accepts: (value: unknown) => boolean;
-  readonly issues: (value: unknown) => readonly StandardSchemaV1.Issue[];
+  readonly issues: (value: unknown, input: unknown) => readonly StandardSchemaV1.Issue[];
 }
 
 const stepOf = (rule: NativeSchema<unknown>): Step => ({
   accepts: rule.accepts,
-  issues: (value) => rule.issuesFor(value),
+  issues: (_value, input) => rule.issuesFor(input),
 });
 
 const mergeable = (rule: NominalSchema): rule is PatternSchema =>
@@ -34,8 +35,8 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
 
   return {
     accepts: (value) => typeof value === 'string' && combined.test(value),
-    issues: (value) =>
-      (patterns.find((schema) => !schema.accepts(value)) ?? first).issuesFor(value),
+    issues: (value, input) =>
+      (patterns.find((schema) => !schema.accepts(value)) ?? first).issuesFor(input),
   };
 };
 

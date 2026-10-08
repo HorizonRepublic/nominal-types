@@ -2,10 +2,10 @@ import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { inOneLine } from '../core/same-value.ts';
 import { asText, defineTextForm } from '../core/text-form.ts';
-import { partialTime, timeFields, whole } from './grammar.ts';
+import { timeFields, wallTime, whole } from './grammar.ts';
 import { noPrimitive, temporalRule } from './temporal-rule.ts';
 
-const pattern = whole(partialTime);
+const pattern = whole(wallTime);
 
 const PlainTimeBase: NominalType<
   'nominal.PlainTime',
@@ -16,7 +16,7 @@ const PlainTimeBase: NominalType<
     typeName: 'nominal.PlainTime',
     tag: 'Temporal.PlainTime',
     pattern,
-    description: 'a time of day as hh:mm:ss',
+    description: 'a time of day as hh:mm or hh:mm:ss',
     json: { examples: ['09:30:00'] },
     accepts: (temporal, value): value is Temporal.PlainTime => value instanceof temporal.PlainTime,
     build: (temporal, text) => new temporal.PlainTime(...timeFields(text, 0)),
@@ -28,8 +28,9 @@ const PlainTimeBase: NominalType<
  * an alarm, a SQL `time`.
  *
  * @remarks
- * Text is an RFC 3339 §5.6 `partial-time`, `09:30:00` or `09:30:00.250`: seconds required, a
- * fraction of at most nine digits, no offset and no leap second `:60`. A `Temporal.PlainTime` is
+ * Text is an RFC 3339 §5.6 `partial-time`, `09:30:00` or `09:30:00.250`, or `09:30` without the
+ * seconds, as an HTML `time` input sends it: a fraction of at most nine digits, no offset and no
+ * leap second `:60`. A `Temporal.PlainTime` is
  * taken as well. The JSON Schema carries a `pattern` and no `format`, since the `time` format
  * requires an offset.
  *

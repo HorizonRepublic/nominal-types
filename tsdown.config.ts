@@ -22,9 +22,10 @@ const config: UserConfig = {
   target: 'es2022',
   dts: true,
   sourcemap: true,
+  outputOptions: { sourcemapExcludeSources: true },
   clean: true,
   publint: true,
-  attw: { profile: 'node16', level: 'error' },
+  attw: { profile: 'strict', level: 'error' },
 };
 
 export default config;

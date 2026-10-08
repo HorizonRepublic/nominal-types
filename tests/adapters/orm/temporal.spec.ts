@@ -4,7 +4,7 @@ import { defineEntity, MikroORM } from '@mikro-orm/sqlite';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { customType, getTableConfig, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
-import { Model, Sequelize } from 'sequelize';
+import { Model } from 'sequelize';
 import { Column, DataSource, Entity, PrimaryColumn } from 'typeorm';
 import { describe, expect, it } from 'vitest';
 
@@ -17,6 +17,9 @@ import { toSequelize } from '../../../src/adapters/sequelize/index.ts';
 import { toTypeOrm } from '../../../src/adapters/typeorm/index.ts';
 import { n, NominalError } from '../../../src/index.ts';
 import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../../src/temporal/index.ts';
+// One file covers the Temporal columns of every ORM, so it imports each of them.
+// oxlint-disable-next-line import/max-dependencies
+import { memorySequelize } from '../../support/node-sqlite.ts';
 
 const sent = '2024-05-01T09:30:00.123Z';
 const due = '2024-02-29';
@@ -191,7 +194,7 @@ describe('toSequelize with Temporal types', () => {
     declare public meeting: PlainDateTime;
   }
 
-  const sequelize = new Sequelize({ dialect: 'sqlite', storage: ':memory:', logging: false });
+  const sequelize = memorySequelize();
 
   Booking.init(
     {
@@ -205,7 +208,9 @@ describe('toSequelize with Temporal types', () => {
 
   it('gives each attribute its column type', () => {
     const types = Object.fromEntries(
-      Object.entries(Booking.getAttributes()).map(([name, attribute]) => [
+      // rawAttributes: Sequelize 6.1, the oldest release supported, has no getAttributes()
+      // oxlint-disable-next-line typescript/no-deprecated
+      Object.entries(Booking.rawAttributes).map(([name, attribute]) => [
         name,
         String(attribute.type),
       ]),

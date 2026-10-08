@@ -63,9 +63,9 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # the npm that comes with Node builds native dependencies such as better-sqlite3;
-      # the latest npm is needed only for staging
+      # npm 12 is needed only for staging, pinned so a new npm release cannot break a publish
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npm install --global npm@latest
+      - run: npm install --global npm@12.2.0
       - run: npm stage publish --access public

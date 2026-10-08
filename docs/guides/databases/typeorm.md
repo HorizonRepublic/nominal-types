@@ -11,7 +11,7 @@
   ```
 
 - The helper comes from the adapter's entry point, `@horizon-republic/nominal-types/adapters/typeorm`. Nothing from TypeORM loads unless you import it.
-- It works with TypeORM 0.3 and 1.
+- It works with TypeORM 0.3.13 or later, and TypeORM 1.
 - TypeORM entities use decorators. Turn on `experimentalDecorators` and `emitDecoratorMetadata` in `tsconfig.json`.
 
 ## Quick example

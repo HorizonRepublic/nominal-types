@@ -1,6 +1,6 @@
 # typeorm
 
-Entry point: `@horizon-republic/nominal-types/adapters/typeorm`. Needs `typeorm` 0.3 or 1.
+Entry point: `@horizon-republic/nominal-types/adapters/typeorm`. Needs `typeorm` 0.3.13 or later, or 1.
 
 | Export           | Kind     | Use it for                                             |
 | ---------------- | -------- | ------------------------------------------------------ |

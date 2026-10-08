@@ -10,19 +10,23 @@ import { samePrefix } from './ip-bits.ts';
 import { canonicalPrefix, isIpPrefixText, networkOf } from './ip-network.ts';
 import { ipv4PrefixSource, ipv6PrefixSource } from './ip-patterns.ts';
 import { bitsOf } from './ip-text.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
-const IpPrefixBase: SubtypeOf<typeof AnyString, 'nominal.IpPrefix'> = AnyString.subtype(
-  'nominal.IpPrefix',
-  stringOnly(
-    satisfying(isIpPrefixText, 'an IP prefix whose host bits are zero', {
-      type: 'string',
-      anyOf: [{ pattern: ipv4PrefixSource }, { pattern: ipv6PrefixSource }],
-      minLength: 4,
-      maxLength: 49,
-      examples: ['192.0.2.0/24', '2001:db8::/32'],
-    }),
-  ),
-);
+const IpPrefixBase: SubtypeOf<typeof AnyString, 'nominal.IpPrefix', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.IpPrefix',
+    stringOnly(
+      satisfying(isIpPrefixText, 'an IP prefix whose host bits are zero', {
+        type: 'string',
+        anyOf: [{ pattern: ipv4PrefixSource }, { pattern: ipv6PrefixSource }],
+        minLength: 4,
+        maxLength: 49,
+        examples: ['192.0.2.0/24', '2001:db8::/32'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * A network as an IPv4 or IPv6 prefix in CIDR notation, such as `192.0.2.0/24` or `2001:db8::/32`.
@@ -108,10 +112,8 @@ export class IpPrefix extends IpPrefixBase {
    * @returns `true` when both are the same network.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof IpPrefix &&
-      canonicalPrefix(other.value) === canonicalPrefix(this.value)
-    );
+    return other instanceof IpPrefix
+      ? inOneLine(this, other) && canonicalPrefix(other.value) === canonicalPrefix(this.value)
+      : super.equals(other);
   }
 }

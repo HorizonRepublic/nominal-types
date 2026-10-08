@@ -3,12 +3,11 @@ import { sameType } from '../../core/same-type.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 import { atom, emailRule, label, pattern, topLevel } from './email-rule.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
-const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email'> = AnyString.subtype(
-  'nominal.Email',
-  emailRule,
-  { sensitive: true },
-);
+const EmailBase: SubtypeOf<typeof AnyString, 'nominal.Email', string, typeof NonBlankString> =
+  AnyString.subtype('nominal.Email', emailRule, { implies: [nonBlankString], sensitive: true });
 
 /**
  * An email address in the dot-atom form RFC 5322 defines, with plus addressing understood.

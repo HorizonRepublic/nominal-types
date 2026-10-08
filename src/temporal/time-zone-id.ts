@@ -5,6 +5,8 @@ import { inOneLine } from '../core/same-value.ts';
 import type { StandardOf } from '../core/standard-schema.ts';
 import { stringOnly } from '../core/string-rule.ts';
 import { AnyString } from '../types/string/any-string.ts';
+import { nonBlankString } from '../types/string/non-blank-brands.ts';
+import type { NonBlankString } from '../types/string/non-blank-string.ts';
 import { timeZoneName, whole } from './grammar.ts';
 import { temporalFor } from './temporal-rule.ts';
 import type { TemporalApi } from './temporal-rule.ts';
@@ -106,7 +108,12 @@ const canonicalOf = (text: string): string => {
   return canonical;
 };
 
-const TimeZoneIdBase: SubtypeOf<typeof AnyString, 'nominal.TimeZoneId'> = AnyString.subtype(
+const TimeZoneIdBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.TimeZoneId',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.TimeZoneId',
   stringOnly(
     satisfying(isTimeZoneId, 'an IANA time zone name the runtime knows, such as Europe/Paris', {
@@ -115,6 +122,7 @@ const TimeZoneIdBase: SubtypeOf<typeof AnyString, 'nominal.TimeZoneId'> = AnyStr
       examples: ['Europe/Paris'],
     }),
   ),
+  { implies: [nonBlankString] },
 );
 
 /**
@@ -184,10 +192,8 @@ export class TimeZoneId extends TimeZoneIdBase {
    */
   public override equals(other: unknown): boolean {
     // @throws-ignore an instance exists only once Temporal has checked its name
-    return (
-      inOneLine(this, other) &&
-      other instanceof TimeZoneId &&
-      canonicalOf(other.value) === canonicalOf(this.value)
-    );
+    return other instanceof TimeZoneId
+      ? inOneLine(this, other) && canonicalOf(other.value) === canonicalOf(this.value)
+      : super.equals(other);
   }
 }

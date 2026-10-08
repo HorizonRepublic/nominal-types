@@ -4,24 +4,28 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { hasMod11CheckCharacter } from './check-digits.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^\d{4}-\d{3}[\dX]$/u;
 
 const isIssnText = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && hasMod11CheckCharacter(value);
 
-const IssnBase: SubtypeOf<typeof AnyString, 'nominal.Issn'> = AnyString.subtype(
-  'nominal.Issn',
-  stringOnly(
-    satisfying(isIssnText, 'an ISSN with a valid check digit', {
-      type: 'string',
-      pattern: pattern.source,
-      minLength: 9,
-      maxLength: 9,
-      examples: ['0378-5955'],
-    }),
-  ),
-);
+const IssnBase: SubtypeOf<typeof AnyString, 'nominal.Issn', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Issn',
+    stringOnly(
+      satisfying(isIssnText, 'an ISSN with a valid check digit', {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 9,
+        maxLength: 9,
+        examples: ['0378-5955'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * An International Standard Serial Number of ISO 3297, which names a journal or another serial,

@@ -77,7 +77,9 @@ describe('TimeZoneId', () => {
     expect(new TimeZoneId('Asia/Kolkata').equals(new TimeZoneId('Asia/Calcutta'))).toBe(true);
     expect(new TimeZoneId('Europe/Paris').equals(new TimeZoneId('Europe/Berlin'))).toBe(false);
     expect(utc.equals('UTC')).toBe(false);
-    expect(utc.equals(new AnyString('UTC'))).toBe(false);
+    expect(utc.equals(new AnyString('UTC'))).toBe(true);
+    expect(utc.equals(new AnyString('Etc/UTC'))).toBe(false);
+    expect(new AnyString('Etc/UTC').equals(utc)).toBe(false);
   });
 
   it('says what it expects', () => {

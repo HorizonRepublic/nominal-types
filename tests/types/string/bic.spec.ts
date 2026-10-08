@@ -104,7 +104,8 @@ describe('Bic', () => {
     expect(new Bic('DEUTDEFFXXX').equals(new copy.Bic('DEUTDEFF'))).toBe(true);
     expect(new Bic('DEUTDEFF').equals(new Bic('DEUTDEFF500'))).toBe(false);
     expect(new Bic('DEUTDEFF').equals('DEUTDEFF')).toBe(false);
-    expect(new Bic('DEUTDEFF').equals(new AnyString('DEUTDEFF'))).toBe(false);
+    expect(new Bic('DEUTDEFF').equals(new AnyString('DEUTDEFF'))).toBe(true);
+    expect(new Bic('DEUTDEFF').equals(new AnyString('DEUTDEFFXXX'))).toBe(false);
   });
 });
 

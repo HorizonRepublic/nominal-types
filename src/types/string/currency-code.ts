@@ -3,6 +3,8 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 // ISO 4217 List One, the current currency and funds codes, as SIX, the maintenance agency,
 // published it on 17 September 2026: 178 codes, grouped by minor units. The codes ISO lists with
@@ -40,7 +42,12 @@ const codes: readonly string[] = Object.freeze([...minorUnitsOf.keys()].toSorted
 const isCurrencyCode = (value: unknown): value is string =>
   typeof value === 'string' && minorUnitsOf.has(value);
 
-const CurrencyCodeBase: SubtypeOf<typeof AnyString, 'nominal.CurrencyCode'> = AnyString.subtype(
+const CurrencyCodeBase: SubtypeOf<
+  typeof AnyString,
+  'nominal.CurrencyCode',
+  string,
+  typeof NonBlankString
+> = AnyString.subtype(
   'nominal.CurrencyCode',
   stringOnly(
     satisfying(isCurrencyCode, 'an ISO 4217 currency code', {
@@ -51,6 +58,7 @@ const CurrencyCodeBase: SubtypeOf<typeof AnyString, 'nominal.CurrencyCode'> = An
       examples: ['EUR'],
     }),
   ),
+  { implies: [nonBlankString] },
 );
 
 /**

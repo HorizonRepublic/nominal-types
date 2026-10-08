@@ -3,6 +3,8 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { ibanRegistry, ibanRemainderOf } from './iban-registry.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 import { SeparatedRule } from './separated-rule.ts';
 
 const bbanSourceOf = (format: string): string =>
@@ -40,24 +42,25 @@ const isIbanText = (value: unknown): value is string =>
   isCheckDigits(value) &&
   ibanRemainderOf(value) === 1;
 
-const IbanBase: SubtypeOf<typeof AnyString, 'nominal.Iban'> = AnyString.subtype(
-  'nominal.Iban',
-  stringOnly(
-    new SeparatedRule(
-      isIbanText,
-      'an IBAN with valid check digits',
-      { separators, description: 'an IBAN without spaces' },
-      {
-        type: 'string',
-        pattern: pattern.source,
-        minLength: 15,
-        maxLength: 34,
-        examples: ['GB82WEST12345698765432'],
-      },
+const IbanBase: SubtypeOf<typeof AnyString, 'nominal.Iban', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Iban',
+    stringOnly(
+      new SeparatedRule(
+        isIbanText,
+        'an IBAN with valid check digits',
+        { separators, description: 'an IBAN without spaces' },
+        {
+          type: 'string',
+          pattern: pattern.source,
+          minLength: 15,
+          maxLength: 34,
+          examples: ['GB82WEST12345698765432'],
+        },
+      ),
     ),
-  ),
-  { sensitive: true },
-);
+    { implies: [nonBlankString], sensitive: true },
+  );
 
 /**
  * An International Bank Account Number of ISO 13616-1, such as `GB82WEST12345698765432`: a country

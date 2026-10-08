@@ -6,24 +6,28 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { hasGs1CheckDigit } from './check-digits.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^(?:\d{8}|\d{12,14})$/u;
 
 const isGtinText = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && hasGs1CheckDigit(value);
 
-const GtinBase: SubtypeOf<typeof AnyString, 'nominal.Gtin'> = AnyString.subtype(
-  'nominal.Gtin',
-  stringOnly(
-    satisfying(isGtinText, 'a GTIN with a valid check digit', {
-      type: 'string',
-      pattern: pattern.source,
-      minLength: 8,
-      maxLength: 14,
-      examples: ['4006381333931'],
-    }),
-  ),
-);
+const GtinBase: SubtypeOf<typeof AnyString, 'nominal.Gtin', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Gtin',
+    stringOnly(
+      satisfying(isGtinText, 'a GTIN with a valid check digit', {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 8,
+        maxLength: 14,
+        examples: ['4006381333931'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 const gtin14Of = (text: string): string => text.padStart(14, '0');
 
@@ -88,10 +92,8 @@ export class Gtin extends GtinBase {
    * @returns `true` when both are the same number.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Gtin &&
-      gtin14Of(other.value) === gtin14Of(this.value)
-    );
+    return other instanceof Gtin
+      ? inOneLine(this, other) && gtin14Of(other.value) === gtin14Of(this.value)
+      : super.equals(other);
   }
 }

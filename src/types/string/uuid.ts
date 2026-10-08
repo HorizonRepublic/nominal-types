@@ -4,14 +4,14 @@ import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 import { pattern, uuidRule } from './uuid-rule.ts';
 
 const hasUpperCase = /[A-F]/u;
 
-const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid'> = AnyString.subtype(
-  'nominal.Uuid',
-  uuidRule,
-);
+const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid', string, typeof NonBlankString> =
+  AnyString.subtype('nominal.Uuid', uuidRule, { implies: [nonBlankString] });
 
 /**
  * A UUID in its canonical 8-4-4-4-12 text form, any version from 1 to 8 plus the nil and max
@@ -100,11 +100,9 @@ export class Uuid extends UuidBase {
    * @returns `true` when both are the same UUID.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Uuid &&
-      other.value.toLowerCase() === this.value.toLowerCase()
-    );
+    return other instanceof Uuid
+      ? inOneLine(this, other) && other.value.toLowerCase() === this.value.toLowerCase()
+      : super.equals(other);
   }
 }
 

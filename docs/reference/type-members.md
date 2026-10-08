@@ -350,6 +350,8 @@ How values are compared:
 | a `Uuid`                   | ignoring case                                                  |
 | a date or time type        | Temporal's `equals()`: the same moment, date or time           |
 
+A type with its own comparison, such as `Uuid`, uses it only when both are of that type. Against a type above it or a type it implies, such as `AnyString` or `NonBlankString`, the strings must be the same, case included. The answer is the same both ways.
+
 A variant and its source are not equal. A plain value, such as a string, is never equal to an instance.
 
 Example:

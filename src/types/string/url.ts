@@ -4,6 +4,8 @@ import { sameType } from '../../core/same-type.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 // A URL holds no spaces or control characters (RFC 3986). The WHATWG parser would drop some of
 // them and encode others, so text holding them would pass while the value differs from the URL.
@@ -13,17 +15,19 @@ const parsedAsWritten = /^[^\u0000-\u0020\u007F]+$/u;
 const isAbsoluteUrl = (value: unknown): value is string =>
   typeof value === 'string' && parsedAsWritten.test(value) && URL.canParse(value);
 
-const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
-  'nominal.Url',
-  stringOnly(
-    satisfying(isAbsoluteUrl, 'a URL', {
-      type: 'string',
-      format: 'uri',
-      pattern: parsedAsWritten.source,
-      examples: ['https://example.com/docs'],
-    }),
-  ),
-);
+const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Url',
+    stringOnly(
+      satisfying(isAbsoluteUrl, 'a URL', {
+        type: 'string',
+        format: 'uri',
+        pattern: parsedAsWritten.source,
+        examples: ['https://example.com/docs'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * An absolute URL as the WHATWG URL standard parses it, with any scheme.

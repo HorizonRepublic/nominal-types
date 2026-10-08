@@ -4,18 +4,22 @@ import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const pattern = /^[0-7][\dA-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$/u;
 
-const UlidBase: SubtypeOf<typeof AnyString, 'nominal.Ulid'> = AnyString.subtype(
-  'nominal.Ulid',
-  matching(pattern, 'a ULID', {
-    minLength: 26,
-    maxLength: 26,
-    examples: ['01ARZ3NDEKTSV4RRFFQ69G5FAV'],
-  }),
-);
+const UlidBase: SubtypeOf<typeof AnyString, 'nominal.Ulid', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Ulid',
+    matching(pattern, 'a ULID', {
+      minLength: 26,
+      maxLength: 26,
+      examples: ['01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+    }),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * A ULID as its specification (github.com/ulid/spec) writes it: 26 characters of Crockford's
@@ -77,10 +81,8 @@ export class Ulid extends UlidBase {
    * @returns `true` when both are the same ULID.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Ulid &&
-      other.value.toUpperCase() === this.value.toUpperCase()
-    );
+    return other instanceof Ulid
+      ? inOneLine(this, other) && other.value.toUpperCase() === this.value.toUpperCase()
+      : super.equals(other);
   }
 }

@@ -4,24 +4,28 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { passesLuhnCheck } from './check-digits.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^[A-Z]{2}[\dA-Z]{9}\d$/u;
 
 const isIsinText = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && passesLuhnCheck(value);
 
-const IsinBase: SubtypeOf<typeof AnyString, 'nominal.Isin'> = AnyString.subtype(
-  'nominal.Isin',
-  stringOnly(
-    satisfying(isIsinText, 'an ISIN with a valid check digit', {
-      type: 'string',
-      pattern: pattern.source,
-      minLength: 12,
-      maxLength: 12,
-      examples: ['US0378331005'],
-    }),
-  ),
-);
+const IsinBase: SubtypeOf<typeof AnyString, 'nominal.Isin', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Isin',
+    stringOnly(
+      satisfying(isIsinText, 'an ISIN with a valid check digit', {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 12,
+        maxLength: 12,
+        examples: ['US0378331005'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 /**
  * An International Securities Identification Number of ISO 6166, which names a share, a bond or

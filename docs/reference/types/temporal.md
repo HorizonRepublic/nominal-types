@@ -257,7 +257,7 @@ new Duration('P1D').equals(new Duration('PT24H')); // false
 
 ## TimeZoneId
 
-The name of an [IANA time zone](../glossary.md), like `Europe/Paris` or `UTC`. It is a string type under `AnyString`.
+The name of an [IANA time zone](../glossary.md), like `Europe/Paris` or `UTC`. It is a string type under `AnyString`, and it [implies](string.md#implied-types) `NonEmptyString` and `NonBlankString`.
 
 - The name must be one the runtime knows.
 - Case is free and kept as given.

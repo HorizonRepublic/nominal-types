@@ -4,6 +4,8 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { decodeBase64 } from './base64-decode.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const digit = '[\\dA-Za-z_-]';
 
@@ -70,20 +72,21 @@ const isJwtText = (value: unknown): value is string => {
   );
 };
 
-const JwtBase: SubtypeOf<typeof AnyString, 'nominal.Jwt'> = AnyString.subtype(
-  'nominal.Jwt',
-  stringOnly(
-    satisfying(isJwtText, 'a JWT in compact form', {
-      type: 'string',
-      pattern: pattern.source,
-      maxLength: longest,
-      examples: [
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTQyIiwiZXhwIjoxNzY3MjI1NjAwfQ.ov8aVnMn4lXxVLhUxcOz6r8OM1VJKnuKptMFIyhE0wU',
-      ],
-    }),
-  ),
-  { sensitive: true },
-);
+const JwtBase: SubtypeOf<typeof AnyString, 'nominal.Jwt', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Jwt',
+    stringOnly(
+      satisfying(isJwtText, 'a JWT in compact form', {
+        type: 'string',
+        pattern: pattern.source,
+        maxLength: longest,
+        examples: [
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTQyIiwiZXhwIjoxNzY3MjI1NjAwfQ.ov8aVnMn4lXxVLhUxcOz6r8OM1VJKnuKptMFIyhE0wU',
+        ],
+      }),
+    ),
+    { implies: [nonBlankString], sensitive: true },
+  );
 
 const partAt = (text: string, index: number): JsonObject =>
   objectIn(text.split('.')[index] ?? '') ?? {};

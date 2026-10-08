@@ -6,6 +6,8 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 import { CountryCode } from './country-code.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 const pattern = /^[A-Z]{4}[A-Z]{2}[\dA-Z]{2}(?:[\dA-Z]{3})?$/u;
 
@@ -16,18 +18,20 @@ const primaryOffice = 'XXX';
 const isBicText = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && countries.has(value.slice(4, 6));
 
-const BicBase: SubtypeOf<typeof AnyString, 'nominal.Bic'> = AnyString.subtype(
-  'nominal.Bic',
-  stringOnly(
-    satisfying(isBicText, 'a BIC', {
-      type: 'string',
-      pattern: pattern.source,
-      minLength: 8,
-      maxLength: 11,
-      examples: ['DEUTDEFF', 'DEUTDEFF500'],
-    }),
-  ),
-);
+const BicBase: SubtypeOf<typeof AnyString, 'nominal.Bic', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.Bic',
+    stringOnly(
+      satisfying(isBicText, 'a BIC', {
+        type: 'string',
+        pattern: pattern.source,
+        minLength: 8,
+        maxLength: 11,
+        examples: ['DEUTDEFF', 'DEUTDEFF500'],
+      }),
+    ),
+    { implies: [nonBlankString] },
+  );
 
 const elevenOf = (text: string): string => (text.length === 8 ? text + primaryOffice : text);
 
@@ -115,10 +119,8 @@ export class Bic extends BicBase {
    * @returns `true` when both name the same office.
    */
   public override equals(other: unknown): boolean {
-    return (
-      inOneLine(this, other) &&
-      other instanceof Bic &&
-      elevenOf(other.value) === elevenOf(this.value)
-    );
+    return other instanceof Bic
+      ? inOneLine(this, other) && elevenOf(other.value) === elevenOf(this.value)
+      : super.equals(other);
   }
 }

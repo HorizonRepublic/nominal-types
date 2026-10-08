@@ -2,6 +2,8 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 
 // Decimal numbers from 0 to `limit` without leading zeros, as alternatives of a pattern: shorter
 // numbers, then each digit of the limit with a smaller one in its place, then the limit itself.
@@ -40,16 +42,18 @@ const grammar =
   `(?:\\+${buildIdentifier}(?:\\.${buildIdentifier})*)?`;
 const pattern = new RegExp(`^(?=.{5,256}$)${grammar}$`, 'u');
 
-const SemVerBase: SubtypeOf<typeof AnyString, 'nominal.SemVer'> = AnyString.subtype(
-  'nominal.SemVer',
-  // The length lookahead stays out of the JSON Schema, which RE2-based tools couldn't compile.
-  matching(pattern, 'a semantic version', {
-    pattern: `^${grammar}$`,
-    minLength: 5,
-    maxLength: 256,
-    examples: ['1.4.2', '2.0.0-rc.1+build.5'],
-  }),
-);
+const SemVerBase: SubtypeOf<typeof AnyString, 'nominal.SemVer', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.SemVer',
+    // The length lookahead stays out of the JSON Schema, which RE2-based tools couldn't compile.
+    matching(pattern, 'a semantic version', {
+      pattern: `^${grammar}$`,
+      minLength: 5,
+      maxLength: 256,
+      examples: ['1.4.2', '2.0.0-rc.1+build.5'],
+    }),
+    { implies: [nonBlankString] },
+  );
 
 interface Parts {
   readonly core: readonly [number, number, number];

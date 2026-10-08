@@ -4,6 +4,8 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import type { PredicateSchema } from '../../core/predicate-schema.ts';
 import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
+import { nonBlankString } from './non-blank-brands.ts';
+import type { NonBlankString } from './non-blank-string.ts';
 import { uuidV7Bytes } from './uuid-v7-bytes.ts';
 import { Uuid } from './uuid.ts';
 
@@ -14,14 +16,16 @@ const pattern = new RegExp(`^(?:${prefixGrammar}_)?[0-7][0-9a-hjkmnp-tv-z]{25}$`
 const prefixPattern = new RegExp(`^(?:${prefixGrammar})?$`, 'u');
 const uuidText = /^[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12}$/u;
 
-const TypeIdBase: SubtypeOf<typeof AnyString, 'nominal.TypeId'> = AnyString.subtype(
-  'nominal.TypeId',
-  matching(pattern, 'a TypeID', {
-    minLength: suffixLength,
-    maxLength: 90,
-    examples: ['user_01h455vb4pex5vsknk084sn02q'],
-  }),
-);
+const TypeIdBase: SubtypeOf<typeof AnyString, 'nominal.TypeId', string, typeof NonBlankString> =
+  AnyString.subtype(
+    'nominal.TypeId',
+    matching(pattern, 'a TypeID', {
+      minLength: suffixLength,
+      maxLength: 90,
+      examples: ['user_01h455vb4pex5vsknk084sn02q'],
+    }),
+    { implies: [nonBlankString] },
+  );
 
 // 128 bits behind two zero bits, five bits to a character.
 const encode = (bytes: Uint8Array): string => {

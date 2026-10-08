@@ -32,9 +32,9 @@ applyRate(new PositiveInteger(3)); // 3
 new PositiveInteger(3) instanceof PositiveNumber; // true
 ```
 
-The built-in types follow one rule. A type implies another when every value it accepts is accepted by the other. Each type lists its implied types by hand, and the list is checked by tests. The package never works them out at runtime. The lists are in [Numbers](../reference/types/number.md#implied-types) and [Big integers](../reference/types/bigint.md#implied-types).
+The built-in types follow one rule. A type implies another when every value it accepts is accepted by the other. Each type lists its implied types by hand, and the list is checked by tests. The package never works them out at runtime. The lists are in [Strings](../reference/types/string.md#implied-types), [Numbers](../reference/types/number.md#implied-types) and [Big integers](../reference/types/bigint.md#implied-types).
 
-Only ranges and signs are implied, never a meaning. `Port` implies `PositiveInteger`, but nothing implies `Port`, `Latitude` or `Longitude`. The number 45 fits the range of `Latitude`, but it isn't a latitude because of that.
+Only ranges, signs and the shapes `NonEmptyString` and `NonBlankString` are implied, never a meaning. An email address is never empty or blank, so every `Email` passes for a `NonBlankString`. `Base64` implies nothing, since it accepts `''`. `Port` implies `PositiveInteger`, but nothing implies `Port`, `Latitude` or `Longitude`. The number 45 fits the range of `Latitude`, but it isn't a latitude because of that.
 
 An implication is a promise the type makes, not a check. So `parse()` of the implied type checks the value again and returns an instance of its own:
 

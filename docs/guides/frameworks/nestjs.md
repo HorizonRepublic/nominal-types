@@ -353,6 +353,65 @@ ClassSerializerInterceptor     200 {"id":{"value":"0190f1c2-3b4a-7c5d-8e9f-0a1b2
 NominalSerializerInterceptor   200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","email":"jane@example.com"}
 ```
 
+## Send responses fast
+
+When a route always returns the same shape, let its schema write the answer. `@NominalResponse()` writes the value with the schema's [`stringify()`](../../reference/schemas.md#stringify). That is several times faster than Nest's `JSON.stringify()` of instances. It works on Express and on Fastify.
+
+1. Describe the answer with `n.object()`, or reuse the schema you parse with:
+
+   ```ts
+   // order.ts
+   import { AnyBoolean, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   import type { ValueOf } from '@horizon-republic/nominal-types';
+
+   export const Order = n.object({ id: Uuid, quantity: PositiveInteger, paid: AnyBoolean });
+
+   export type OrderValue = ValueOf<typeof Order>;
+   ```
+
+2. Put `@NominalResponse(Order)` on the route, and return a value the schema gave:
+
+   ```ts
+   // orders.controller.ts
+   import { Controller, Get, NotFoundException } from '@nestjs/common';
+   import { NominalResponse } from '@horizon-republic/nominal-types/adapters/nest';
+
+   import { Order, type OrderValue } from './order';
+
+   @Controller('orders')
+   export class OrdersController {
+     @Get('latest')
+     @NominalResponse(Order)
+     public latest(): OrderValue {
+       const order = Order.parse({
+         id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f',
+         quantity: 2,
+         paid: false,
+       });
+
+       if (!order.ok) {
+         throw new NotFoundException();
+       }
+
+       return order.value;
+     }
+   }
+   ```
+
+3. Call the route:
+
+   ```text
+   GET /orders/latest  200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","quantity":2,"paid":false}
+   ```
+
+What to know:
+
+- The answer has only the fields the schema declares, in the order it declares them.
+- A list takes the array schema: `@NominalResponse(Order.array())`. A single instance takes its type: `@NominalResponse(Uuid)`.
+- An error the route throws is answered by Nest as usual.
+- A global `NominalSerializerInterceptor` leaves these answers alone. Keep it for routes without a schema.
+- For every route of a controller, put `@UseInterceptors(new NominalResponseInterceptor(Order))` on the class.
+
 ## Send instances from a route with a Fastify response schema
 
 On Fastify, a route with a response schema, set with `@RouteSchema()`, is not written by `JSON.stringify()`. Fastify's own writer reads instances wrong:
@@ -361,7 +420,7 @@ On Fastify, a route with a response schema, set with `@RouteSchema()`, is not wr
 - a nullable field, such as `n.of(Email).nullable()`, fails with status 500;
 - a date or time type, such as `Instant`, fails with status 500.
 
-`NominalSerializerInterceptor` turns instances into plain values before Fastify writes them, so these routes work under it. Without the interceptor, return plain values from the handler with the schema's [`toPlain()`](../../reference/schemas.md#toplain):
+`@NominalResponse()` from [Send responses fast](#send-responses-fast) fixes these routes: Fastify sends its text as it is. `NominalSerializerInterceptor` fixes them too, since it turns instances into plain values before Fastify writes them. Without either, return plain values from the handler with the schema's [`toPlain()`](../../reference/schemas.md#toplain):
 
 ```ts
 // orders.controller.ts
@@ -458,7 +517,8 @@ To keep rejected values out of answers and logs, pass `hideValues: true`, as in 
 
 ## See also
 
-- [NestJS adapter reference](../../reference/adapters/nest.md): every option of `NominalPipe`, with defaults.
+- [NestJS adapter reference](../../reference/adapters/nest.md): every option of `NominalPipe`, with defaults, and `NominalResponse`.
+- [Performance](../../explanation/performance.md#writing-responses-as-json), for what each way of writing a response costs.
 - [How to check a request body with n.object()](../core/check-an-object.md)
 - [How to describe types in Swagger](../api-docs/swagger.md)
 - [How to use nominal types with GraphQL](graphql.md)

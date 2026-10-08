@@ -1,4 +1,4 @@
-import { registerPaths } from './fast-paths.ts';
+import { planOf, registerPaths } from './fast-paths.ts';
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { describeValue, mustBe } from './messages.ts';
@@ -52,7 +52,11 @@ const tagField = (tag: string): StandardSchemaV1 => {
       options.target === 'openapi-3.0' ? { type: 'string', enum: [tag] } : { const: tag },
   );
 
-  registerPaths(field, { accepts: (value) => value === tag, write: (value) => value });
+  registerPaths(field, {
+    accepts: (value) => value === tag,
+    write: (value) => value,
+    plan: { kind: 'tag', tag },
+  });
 
   return field;
 };
@@ -159,7 +163,18 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
         }),
         sensitive: tagged.some(([, variant]) => objectParts.get(variant)?.hidden === true),
       },
-      { paths: { accepts: paths.accepts, write: paths.write } },
+      {
+        paths: {
+          accepts: paths.accepts,
+          write: paths.write,
+          plan: {
+            kind: 'union',
+            key,
+            variants: tagged.map(([tag, variant]) => ({ tag, plan: planOf(variant) })),
+            write: paths.write,
+          },
+        },
+      },
     );
     this.key = key;
     this.tags = Object.freeze(tags);

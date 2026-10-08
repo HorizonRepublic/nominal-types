@@ -77,6 +77,19 @@ What each level of a chain adds to `parse()`:
 | `n.plain(parsed)` alone                 |   1.20 µs |           — |
 | `Order.toPlain(parsed)` alone           |   0.33 µs |           — |
 
+## Writing JSON with stringify()
+
+Node.js 24.21, 8 Oct 2026, best of three runs. Each case runs in a process of its own with mitata, over a pool of different inputs: 256 orders, 8 lists of 1000 orders, 3 documents. The order has a UUID, an email, a name, two numbers, an optional note and a second UUID, then 20 items. The document is the 3 MB one from [A large document](#a-large-document). Without code generation, Node.js runs with `--disallow-code-generation-from-strings`, and a plain loop times the call, since mitata generates its own.
+
+| Operation                                           | One order | 1000 orders | 3 MB document |
+| --------------------------------------------------- | --------: | ----------: | ------------: |
+| `JSON.stringify(plain values)`                      |   1.22 µs |     1.47 ms |       4.94 ms |
+| `JSON.stringify(parsed)`                            |   4.22 µs |     4.60 ms |       13.3 ms |
+| `JSON.stringify(n.plain(parsed))`                   |   2.62 µs |     2.99 ms |       10.4 ms |
+| `JSON.stringify(Schema.toPlain(parsed))`            |   1.54 µs |     1.88 ms |       6.93 ms |
+| `Schema.stringify(parsed)`                          |   0.58 µs |     0.83 ms |       4.42 ms |
+| `Schema.stringify(parsed)`, without code generation |   2.42 µs |     2.75 ms |       9.03 ms |
+
 ## Memory
 
 `node --expose-gc bench/memory.ts`. Heap per order, from 10,000 orders, Node.js 24.2.

@@ -47,6 +47,14 @@ const fields = {
 };
 
 beforeAll(async () => {
+  fastify.get(
+    '/stringify',
+    {
+      schema: responseSchema,
+      serializerCompiler: () => (data: typeof order) => Order.stringify(data),
+    },
+    () => order,
+  );
   fastify.get('/to-plain', { schema: responseSchema }, () => Order.toPlain(order));
   fastify.get('/n-plain', { schema: responseSchema }, () => n.plain(order));
 
@@ -83,6 +91,15 @@ describe('a Fastify route with a response schema', () => {
     const reply = await fastify.inject({ url: `/instances/${name}` });
 
     expect(reply.statusCode).toBe(500);
+  });
+
+  it("writes instances with the schema's stringify() as the route's serializer", async () => {
+    const reply = await fastify.inject({ url: '/stringify' });
+
+    expect(reply.statusCode).toBe(200);
+    expect(reply.headers['content-type']).toBe('application/json; charset=utf-8');
+    expect(reply.body).toBe(JSON.stringify(order));
+    expect(reply.body).toContain('"paid":false');
   });
 
   it.each(['/to-plain', '/n-plain'])('writes plain values from %s', async (url) => {

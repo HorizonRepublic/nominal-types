@@ -4,6 +4,9 @@ import { boundsOf } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyConstraint } from './constraint-types.ts';
 import type { AnyNominalType } from './contracts.ts';
+import { plans } from './json-leaves.ts';
+import type { Plan } from './json-leaves.ts';
+import { isNominalType, ownTypes } from './nominal.ts';
 import {
   arrayWriter,
   emptyOrWriter,
@@ -20,6 +23,7 @@ import {
   objectAcceptor,
   typeAcceptor,
 } from './shape-acceptors.ts';
+import { stringifierOf, textOf } from './stringify.ts';
 import type { TextForm } from './text-form.ts';
 
 export type { Plain } from './plain.ts';
@@ -31,6 +35,7 @@ export type { Plain } from './plain.ts';
 export interface FastPaths {
   readonly write: Write;
   readonly accepts: Accepts;
+  readonly plan: Plan;
 }
 
 /**
@@ -40,6 +45,31 @@ export interface FastPaths {
 export const registerPaths = (schema: object, paths: FastPaths): void => {
   writers.set(schema, paths.write);
   acceptors.set(schema, paths.accepts);
+  plans.set(schema, paths.plan);
+};
+
+/**
+ * Internal: the plan of a field or a variant: its schema's own when it has one, writing through
+ * its plain copy otherwise.
+ */
+export const planOf = (field: unknown): Plan => {
+  if (isNominalType(field)) {
+    return { kind: 'type', type: field };
+  }
+
+  const own = typeof field === 'object' && field !== null ? plans.get(field) : undefined;
+
+  return own ?? { kind: 'json', write: writerOf(field) };
+};
+
+/**
+ * Internal: the function `stringify()` of a schema calls, generated for its plan; without code
+ * generation, its plain copy goes to `JSON.stringify()`.
+ */
+export const stringifyFor = ({ plan, write }: FastPaths): ((value: unknown) => string) => {
+  const stringify = stringifierOf(plan, ownTypes, (value) => JSON.stringify(write(value)));
+
+  return (value) => textOf(stringify, value);
 };
 
 /**
@@ -48,6 +78,7 @@ export const registerPaths = (schema: object, paths: FastPaths): void => {
 export const typePaths = (type: AnyNominalType): FastPaths => ({
   write: instanceWriter(),
   accepts: typeAcceptor(type),
+  plan: { kind: 'type', type },
 });
 
 /**
@@ -65,12 +96,14 @@ export const arrayPaths = (
     write: arrayWriter(item.write),
     accepts:
       options.unique === true ? acceptsByRunning(run) : arrayAcceptor(item.accepts, min, max),
+    plan: { kind: 'array', item: item.plan },
   };
 };
 
 const emptyOrPaths = (item: FastPaths, empty?: null): FastPaths => ({
   write: emptyOrWriter(item.write, empty),
   accepts: emptyOrAcceptor(item.accepts, empty),
+  plan: { kind: 'empty', item: item.plan, empty },
 });
 
 /**
@@ -89,6 +122,7 @@ export const nullablePaths = (item: FastPaths): FastPaths => emptyOrPaths(item, 
 export const textPaths = (item: FastPaths, form: TextForm): FastPaths => ({
   write: item.write,
   accepts: (input) => item.accepts(typeof input === 'string' ? (form(input) ?? input) : input),
+  plan: item.plan,
 });
 
 /**
@@ -103,19 +137,28 @@ export const objectPaths = (
     readonly constraints: readonly AnyConstraint[];
     readonly run: (input: unknown) => unknown;
   },
-): FastPaths => ({
-  write: objectWriter(
+): FastPaths => {
+  const write = objectWriter(
     fields.map(({ key, optional }) => ({ key, optional, write: writerOf(source[key]) })),
-  ),
-  accepts:
-    options.constraints.length > 0
-      ? acceptsByRunning(options.run)
-      : objectAcceptor(
-          fields.map(({ key, optional }) => ({
-            key,
-            optional,
-            accepts: fieldAcceptor(source[key], 'n.object()'),
-          })),
-          options.strict,
-        ),
-});
+  );
+
+  return {
+    write,
+    accepts:
+      options.constraints.length > 0
+        ? acceptsByRunning(options.run)
+        : objectAcceptor(
+            fields.map(({ key, optional }) => ({
+              key,
+              optional,
+              accepts: fieldAcceptor(source[key], 'n.object()'),
+            })),
+            options.strict,
+          ),
+    plan: {
+      kind: 'object',
+      fields: fields.map(({ key, optional }) => ({ key, optional, plan: planOf(source[key]) })),
+      write,
+    },
+  };
+};

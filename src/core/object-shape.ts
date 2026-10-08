@@ -154,17 +154,22 @@ const sourceOf = (
   hasConstraints: boolean,
   strict: boolean,
 ): string => {
-  const required = fields.filter((field) => !field.optional);
-  const literal = required
-    .map((field) => `${JSON.stringify(field.key)}: v${String(fields.indexOf(field))}`)
+  // The fields before the first optional one go in an object literal, which V8 builds fastest; the
+  // rest are stored in order, so the value keeps the declared order with optional fields missing.
+  const firstOptional = fields.findIndex(({ optional }) => optional);
+  const literalCount = firstOptional === -1 ? fields.length : firstOptional;
+  const literal = fields
+    .slice(0, literalCount)
+    .map((field, index) => `${JSON.stringify(field.key)}: v${String(index)}`)
     .join(', ');
-  const optionalStores = fields
-    .filter((field) => field.optional)
-    .map((field) => {
-      const index = String(fields.indexOf(field));
+  const stores = fields.slice(literalCount).map((field, offset) => {
+    const index = String(literalCount + offset);
+    const key = JSON.stringify(field.key);
 
-      return `if (present${index}) value[${JSON.stringify(field.key)}] = value${index};`;
-    });
+    return field.optional
+      ? `if (present${index}) value[${key}] = value${index};`
+      : `value[${key}] = v${index};`;
+  });
   const checkConstraints = hasConstraints
     ? 'issues = constraintIssues(issues, value, constraints); if (issues !== undefined) return new Rejection(issues);'
     : '';
@@ -176,7 +181,7 @@ const sourceOf = (
     ${strict ? 'issues = unknownKeyIssues(issues, input, declared);' : ''}
     if (issues !== undefined) return new Rejection(issues);
     const value = { ${literal} };
-    ${optionalStores.join('\n')}
+    ${stores.join('\n')}
     ${checkConstraints}
     return value;
   }`;

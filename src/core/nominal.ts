@@ -19,6 +19,7 @@ import {
   isVariantPair,
   levelOf,
   levelSlot,
+  rulesOf,
   sensitiveSlot,
   variantSourceSlot,
 } from './hierarchy.ts';
@@ -40,6 +41,9 @@ import { parserFor } from './value-parser.ts';
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
 
 let isTrusted: (target: typeof NominalRoot, instance: object) => boolean;
+let checkedOf: (instance: object) => unknown;
+
+const unchecked = Symbol('unchecked');
 
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
@@ -67,6 +71,7 @@ class NominalRoot {
       Object.is(instance.#checked, instance.value) &&
       (Object.getPrototypeOf(instance) === target.prototype ||
         Object.prototype.isPrototypeOf.call(target.prototype, instance));
+    checkedOf = (instance) => (#checked in instance ? instance.#checked : unchecked);
   }
 
   public static get '~standard'(): StandardProps<unknown, NominalRoot> {
@@ -96,6 +101,24 @@ class NominalRoot {
 
   public static accepts(this: typeof NominalRoot, input: unknown): boolean {
     return acceptsOwn(this, input);
+  }
+
+  public static stringify(this: typeof NominalRoot, value: unknown): string {
+    const write = objectWriterOf(this);
+    const checked =
+      typeof value === 'object' && value !== null && value.constructor === this
+        ? checkedOf(value)
+        : unchecked;
+    const text =
+      write !== undefined && checked === Reflect.get(value ?? {}, 'value')
+        ? write(checked)
+        : JSON.stringify(value);
+
+    if (text === undefined) {
+      throw new TypeError(`stringify(): JSON has no text for ${typeof value}`);
+    }
+
+    return text;
   }
 
   public static subtype(
@@ -227,7 +250,44 @@ export const ownTypes: {
   readonly isOwn: (value: unknown) => value is Type;
   readonly construct: (target: Type, input: unknown) => NominalRoot | Rejection;
   readonly parserOf: (target: Type) => ValueParser;
-} = { root: NominalRoot, isOwn: isOwnType, construct: constructOwn, parserOf: valueParserOf };
+  readonly checked: (instance: object) => unknown;
+} = {
+  root: NominalRoot,
+  isOwn: isOwnType,
+  construct: constructOwn,
+  parserOf: valueParserOf,
+  checked: checkedOf,
+};
+
+type ObjectWriter = (value: unknown) => string;
+
+const objectWriters = new WeakMap<object, ObjectWriter | false>();
+
+// The generated writer of a type built on `n.object()`, whose instances write their value as it
+// is: the object schema's own `stringify()`. Any other type is written by `JSON.stringify()`,
+// which costs little for one value and keeps the writer out of a bundle that needs only types.
+const findObjectWriter = (target: Type): ObjectWriter | false => {
+  const rule = rulesOf(NominalRoot, target).at(-1);
+  const stringify: unknown =
+    objectKeysOf(rule) === undefined ? undefined : Reflect.get(rule ?? {}, 'stringify');
+  const ownJson =
+    Reflect.get(target.prototype, 'toJSON') === Reflect.get(NominalRoot.prototype, 'toJSON');
+
+  return typeof stringify === 'function' && ownJson
+    ? (value) => String(Reflect.apply(stringify, rule, [value]))
+    : false;
+};
+
+const objectWriterOf = (target: Type): ObjectWriter | undefined => {
+  let write = objectWriters.get(target);
+
+  if (write === undefined) {
+    write = findObjectWriter(target);
+    objectWriters.set(target, write);
+  }
+
+  return write === false ? undefined : write;
+};
 
 const derive = (
   parent: typeof NominalRoot,

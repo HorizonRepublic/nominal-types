@@ -1,8 +1,10 @@
 import { PredicateSchema } from '../../core/predicate-schema.ts';
 
 /**
- * Internal: the rule of a type whose printed form puts spaces or other separators into the text,
+ * The rule of a type whose printed form puts spaces or other separators into the text,
  * which tells such text apart from text that is wrong in other ways in its message.
+ *
+ * @internal
  */
 export class SeparatedRule extends PredicateSchema<string> {
   readonly #separators: RegExp;

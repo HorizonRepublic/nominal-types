@@ -5,24 +5,32 @@ import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 export type { StandardProps } from './standard-schema.ts';
 
 /**
- * Internal: the vendor every schema of this package names in its `~standard`, which is also how
+ * The vendor every schema of this package names in its `~standard`, which is also how
  * another copy of the package is recognised.
+ *
+ * @internal
  */
 export const vendor = '@horizon-republic/nominal-types';
 
 /**
- * Internal: whether a schema names this package as its vendor, also one from another copy.
+ * Whether a schema names this package as its vendor, also one from another copy.
+ *
+ * @internal
  */
 export const isOwnVendor = (schema: object): boolean =>
   Reflect.get(Reflect.get(schema, '~standard') ?? {}, 'vendor') === vendor;
 
 /**
- * Internal: runs a schema, returning the accepted value itself or a `Rejection`.
+ * Runs a schema, returning the accepted value itself or a `Rejection`.
+ *
+ * @internal
  */
 export type Run<Output> = (input: unknown) => Output | Rejection;
 
 /**
- * Internal: describes a schema as JSON Schema for one side and target.
+ * Describes a schema as JSON Schema for one side and target.
+ *
+ * @internal
  */
 export type Describe = (
   side: 'input' | 'output',
@@ -30,8 +38,10 @@ export type Describe = (
 ) => Record<string, unknown>;
 
 /**
- * Internal: the `~standard` property of a schema, built from how it runs and how it describes
+ * The `~standard` property of a schema, built from how it runs and how it describes
  * itself.
+ *
+ * @internal
  */
 export const standardProps = <Input, Output>(
   run: Run<Output>,

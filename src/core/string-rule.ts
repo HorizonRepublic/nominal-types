@@ -12,7 +12,9 @@ class StringRule extends PredicateSchema<string> {
 }
 
 /**
- * Internal: the rule of `AnyString`.
+ * The rule of `AnyString`.
+ *
+ * @internal
  */
 export const stringRule: PredicateSchema<string> = new StringRule(isString, 'a string', {
   type: 'string',
@@ -21,8 +23,10 @@ export const stringRule: PredicateSchema<string> = new StringRule(isString, 'a s
 const stringOnlyRules = new WeakSet<NominalSchema>();
 
 /**
- * Internal: marks a built-in rule that rejects anything but a string by itself, so the string
+ * Marks a built-in rule that rejects anything but a string by itself, so the string
  * check of `AnyString` can be left out in front of it.
+ *
+ * @internal
  */
 export const stringOnly = <Schema extends NominalSchema>(schema: Schema): Schema => {
   stringOnlyRules.add(schema);
@@ -34,8 +38,10 @@ const checksString = (rule: NominalSchema | undefined): boolean =>
   rule instanceof PatternSchema || (rule !== undefined && stringOnlyRules.has(rule));
 
 /**
- * Internal: the rules without the string check of `AnyString` where the next rule makes it
+ * The rules without the string check of `AnyString` where the next rule makes it
  * redundant, which leaves a type such as `Email` with a single rule to run.
+ *
+ * @internal
  */
 export const withoutImpliedString = (rules: readonly NominalSchema[]): readonly NominalSchema[] =>
   rules.some((rule, index) => rule === stringRule && checksString(rules[index + 1]))

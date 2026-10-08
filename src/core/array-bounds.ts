@@ -6,11 +6,28 @@ import { issueOf } from './messages.ts';
  * whether an item may repeat.
  */
 export interface ArrayOptions {
+  /**
+   * The exact number of items; it can't be combined with `min` or `max`.
+   *
+   * @defaultValue `undefined`, any number of items within `min` and `max`.
+   */
   readonly length?: number;
+  /**
+   * The fewest items allowed.
+   *
+   * @defaultValue `0`
+   */
   readonly min?: number;
+  /**
+   * The most items allowed.
+   *
+   * @defaultValue `undefined`, no upper limit.
+   */
   readonly max?: number;
   /**
    * Refuses an item equal to an earlier one, compared as `equals()` compares them.
+   *
+   * @defaultValue `false`
    */
   readonly unique?: boolean;
 }
@@ -21,10 +38,12 @@ const isCount = (value: unknown): value is number =>
 const items = (count: number): string => (count === 1 ? '1 item' : `${count} items`);
 
 /**
- * Internal: the lowest and highest count `options` allow.
+ * The lowest and highest count `options` allow.
  *
- * @throws TypeError for counts that are not whole numbers from 0 up, `length` mixed with `min` or
- * `max`, `min` above `max`, or a `unique` that is not a boolean.
+ * @throws {@link TypeError} when a count is not a whole number from 0 up, `length` is mixed with
+ * `min` or `max`, `min` is above `max`, or `unique` is not a boolean.
+ *
+ * @internal
  */
 export const boundsOf = (options: ArrayOptions): { readonly min: number; readonly max: number } => {
   const { length, min, max } = options;
@@ -66,8 +85,10 @@ const countMessage = (options: ArrayOptions, count: number): string => {
 };
 
 /**
- * Internal: the issue for an array whose count `options` don't allow; the count is shown whatever
+ * The issue for an array whose count `options` don't allow; the count is shown whatever
  * the `values` setting, since it is not the value.
+ *
+ * @internal
  */
 export const countIssue = (options: ArrayOptions, count: number): NominalIssue => {
   const { min, max } = boundsOf(options);

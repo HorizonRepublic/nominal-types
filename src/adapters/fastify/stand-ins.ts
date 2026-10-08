@@ -35,8 +35,10 @@ const describe = (
 };
 
 /**
- * Internal: the nominal type or schema a route schema stands for, given the schema itself or the
+ * The nominal type or schema a route schema stands for, given the schema itself or the
  * JSON Schema `fastifyNominal` put in its place.
+ *
+ * @internal
  */
 export const targetOf = (schema: unknown): NominalTarget | undefined => {
   if (isTarget(schema)) {
@@ -86,9 +88,11 @@ const replaced = (value: unknown, side: Side, standIn: StandIn): unknown => {
 };
 
 /**
- * Internal: a maker of route schemas with JSON Schemas in place of the nominal ones, so Fastify
+ * A maker of route schemas with JSON Schemas in place of the nominal ones, so Fastify
  * and `@fastify/swagger` read JSON Schema while the compilers still find the nominal schema
  * behind each.
+ *
+ * @internal
  */
 export const standInMaker = (
   dialect: FastifyJsonTarget,

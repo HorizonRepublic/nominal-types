@@ -38,12 +38,17 @@ const IpAddressBase: SubtypeOf<typeof AnyString, 'nominal.IpAddress'> = AnyStrin
  *
  * @example
  * ```ts
+ * import { IpAddress } from '@horizon-republic/nominal-types';
+ *
  * const address = new IpAddress('2001:DB8:0:0:0:0:0:1');
  * address.canonical().value; // '2001:db8::1'
  * address.isGlobal; // false, a documentation address
  * ```
  */
 export class IpAddress extends IpAddressBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof IpAddress>;
 
   /**
@@ -54,7 +59,9 @@ export class IpAddress extends IpAddressBase {
   }
 
   /**
-   * The address in network byte order: 4 bytes for IPv4, 16 for IPv6.
+   * The address in network byte order, for a socket API or a binary column.
+   *
+   * @returns A new array of 4 bytes for IPv4, 16 for IPv6.
    */
   public toBytes(): Uint8Array {
     return bytesOf(bitsOf(this.value));
@@ -117,6 +124,8 @@ export class IpAddress extends IpAddressBase {
   /**
    * The address as RFC 5952 writes it: lowercase, no leading zeros, the longest run of zero groups
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`. IPv4 text is already canonical.
+   *
+   * @returns An address of the same class.
    */
   public canonical(): this {
     return sameType(this, textOf(bitsOf(this.value)));
@@ -128,6 +137,9 @@ export class IpAddress extends IpAddressBase {
    *
    * @remarks
    * An IPv4 address and the IPv4-mapped IPv6 address that carries it are different addresses.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same address.
    */
   public override equals(other: unknown): boolean {
     return (

@@ -18,10 +18,15 @@ const AnyStringBase: NominalType<'nominal.AnyString', NominalSchema<string, stri
  *
  * @example
  * ```ts
+ * import { AnyString } from '@horizon-republic/nominal-types';
+ *
  * export class Slug extends AnyString.subtype('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
  * ```
  */
 export class AnyString extends AnyStringBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof AnyString>;
 }
 

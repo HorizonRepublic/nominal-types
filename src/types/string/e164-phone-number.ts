@@ -71,12 +71,17 @@ const E164PhoneNumberBase: SubtypeOf<typeof AnyString, 'nominal.E164PhoneNumber'
  *
  * @example
  * ```ts
+ * import { E164PhoneNumber } from '@horizon-republic/nominal-types';
+ *
  * const phone = new E164PhoneNumber('+380441234567');
  * phone.countryCallingCode; // '380'
  * phone.nationalNumber; // '441234567'
  * ```
  */
 export class E164PhoneNumber extends E164PhoneNumberBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof E164PhoneNumber>;
 
   /**

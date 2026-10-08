@@ -76,9 +76,11 @@ const matcherOf = (node: unknown, branches: readonly unknown[]): Matcher => {
 };
 
 /**
- * Internal: the plan for a union: the first branch whose plan matches the value builds it.
+ * The plan for a union: the first branch whose plan matches the value builds it.
  *
- * @throws TypeError when branches holding `toArk()` nodes can't be told apart.
+ * @throws {@link TypeError} when branches holding `toArk()` nodes can't be told apart.
+ *
+ * @internal
  */
 export const unionPlan = (branches: readonly unknown[], planOf: PlanOf): Plan | undefined => {
   const planned = branches.flatMap((branch) => {

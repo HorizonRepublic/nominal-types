@@ -1,5 +1,7 @@
 /**
- * Internal: thrown by a rule of this package that was declared without a JSON Schema.
+ * Thrown by a rule of this package that was declared without a JSON Schema.
+ *
+ * @internal
  */
 export class NoJsonSchema extends TypeError {
   public constructor() {

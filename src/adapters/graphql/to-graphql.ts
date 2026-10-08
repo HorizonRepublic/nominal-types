@@ -11,29 +11,40 @@ import { isUnder } from '../orm/column.ts';
 import { typeJsonOf } from '../type-json.ts';
 
 /**
- * Options of `toGraphQL()`.
+ * Options of {@link toGraphQL}.
+ *
+ * @typeParam Instance - The instances of the type.
  */
 export interface GraphQLOptions<Instance> {
   /**
-   * The scalar's name in the schema; by default the last part of the type's name, such as `Email`
-   * for `nominal.Email`.
+   * The scalar's name in the schema.
+   *
+   * @defaultValue The last part of the type's name, such as `Email` for `nominal.Email`.
    */
   readonly name?: string;
   /**
-   * The scalar's description; by default the type's own, such as `an email address`.
+   * The scalar's description.
+   *
+   * @defaultValue The type's own description, such as `an email address`.
    */
   readonly description?: string;
   /**
-   * What a value is sent as; the instance's `toJSON()` by default.
+   * What a value is sent as.
+   *
+   * @defaultValue The instance's `toJSON()`.
    */
   readonly serialize?: (value: Instance) => unknown;
   /**
    * A URL of the scalar's specification, shown by GraphQL tools.
+   *
+   * @defaultValue No URL.
    */
   readonly specifiedByURL?: string;
   /**
    * Leaves rejected values out of error messages, for every type, since GraphQL sends the messages
    * to the client. Types declared `sensitive` leave them out anyway.
+   *
+   * @defaultValue `false`
    */
   readonly hideValues?: boolean;
 }
@@ -89,12 +100,31 @@ const literalReader =
  * integer types are read from their text, without losing digits. The scalar carries the type's
  * JSON Schema in `extensions.jsonSchema`.
  *
+ * @typeParam Target - The nominal type.
+ * @param target - The nominal type the scalar holds.
+ * @param options - The scalar's name, description and how values are sent.
+ * @returns The scalar, to use in a schema or a resolver map.
+ *
  * @example
  * ```ts
+ * import { GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+ * import { Email } from '@horizon-republic/nominal-types';
+ * import { toGraphQL } from '@horizon-republic/nominal-types/adapters/graphql';
+ *
  * const EmailScalar = toGraphQL(Email);
  *
- * const typeDefs = `scalar Email  type Query { user(email: Email!): User }`;
- * const resolvers = { Email: EmailScalar, Query: { user: (_, { email }) => findUser(email) } };
+ * const schema = new GraphQLSchema({
+ *   query: new GraphQLObjectType({
+ *     name: 'Query',
+ *     fields: {
+ *       domain: {
+ *         type: GraphQLString,
+ *         args: { email: { type: new GraphQLNonNull(EmailScalar) } },
+ *         resolve: (_source, args: { email: Email }) => args.email.domain,
+ *       },
+ *     },
+ *   }),
+ * });
  * ```
  */
 export const toGraphQL = <Target extends AnyNominalType>(

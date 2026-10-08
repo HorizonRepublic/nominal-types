@@ -55,7 +55,9 @@ const nat64 = rangesOf('64:ff9b::/96');
 const sixToFour = rangesOf('2002::/16');
 
 /**
- * Internal: the special-purpose blocks an address falls in, each a question an `IpAddress` answers.
+ * The special-purpose blocks an address falls in, each a question an `IpAddress` answers.
+ *
+ * @internal
  */
 export const ipRanges: {
   readonly isLoopback: (bits: IpBits) => boolean;

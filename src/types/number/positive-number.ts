@@ -20,7 +20,19 @@ const PositiveNumberBase: SubtypeOf<
  *
  * @remarks
  * Zero is not positive, `-0` included; reach for `NonNegativeNumber` where 0 is a valid value.
+ *
+ * @example
+ * ```ts
+ * import { PositiveNumber } from '@horizon-republic/nominal-types';
+ *
+ * new PositiveNumber(0.5).value; // 0.5
+ * PositiveNumber.parse(0).ok; // false
+ * ```
  */
 export class PositiveNumber extends PositiveNumberBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PositiveNumber>;
 }

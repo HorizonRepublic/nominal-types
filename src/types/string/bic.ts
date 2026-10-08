@@ -44,12 +44,17 @@ const elevenOf = (text: string): string => (text.length === 8 ? text + primaryOf
  *
  * @example
  * ```ts
+ * import { Bic } from '@horizon-republic/nominal-types';
+ *
  * const bic = new Bic('DEUTDEFF');
  * bic.countryCode; // 'DE'
  * bic.canonical().value; // 'DEUTDEFFXXX'
  * ```
  */
 export class Bic extends BicBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Bic>;
 
   /**
@@ -94,6 +99,8 @@ export class Bic extends BicBase {
 
   /**
    * The 11-character form, with `XXX` for the primary office, so one office has one text.
+   *
+   * @returns A BIC of the same class, 11 characters long.
    */
   public canonical(): this {
     return sameType(this, elevenOf(this.value));
@@ -102,6 +109,9 @@ export class Bic extends BicBase {
   /**
    * Whether the other value names the same office, with 8 or 11 characters, and belongs to this
    * type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both name the same office.
    */
   public override equals(other: unknown): boolean {
     return (

@@ -1,5 +1,7 @@
 /**
- * Internal: marks that no value is waiting for a constructor.
+ * Marks that no value is waiting for a constructor.
+ *
+ * @internal
  */
 export const nothingPending: unique symbol = Symbol('nothingPending');
 
@@ -12,8 +14,10 @@ let pendingInput: unknown;
 let pendingValue: unknown;
 
 /**
- * Internal: hands a value `parse` already checked to the constructor it is about to call, so the
+ * Hands a value `parse` already checked to the constructor it is about to call, so the
  * constructor doesn't check it again.
+ *
+ * @internal
  */
 export const remember = (target: object, input: unknown, value: unknown): void => {
   pendingTarget = target;
@@ -22,7 +26,9 @@ export const remember = (target: object, input: unknown, value: unknown): void =
 };
 
 /**
- * Internal: the value waiting for this constructor call, or `nothingPending`; taking it clears it.
+ * The value waiting for this constructor call, or `nothingPending`; taking it clears it.
+ *
+ * @internal
  */
 export const takePending = (target: object, input: unknown): unknown => {
   if (pendingTarget !== target || !Object.is(pendingInput, input)) {
@@ -35,8 +41,10 @@ export const takePending = (target: object, input: unknown): unknown => {
 };
 
 /**
- * Internal: empties the slot once the `new` it was filled for has returned or thrown, so a
+ * Empties the slot once the `new` it was filled for has returned or thrown, so a
  * constructor that throws before `super()` leaves no value for a later call with the same input.
+ *
+ * @internal
  */
 export const forget = (): void => {
   pendingTarget = undefined;

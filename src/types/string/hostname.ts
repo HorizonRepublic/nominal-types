@@ -34,12 +34,17 @@ const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname'> = AnyString.
  *
  * @example
  * ```ts
+ * import { Hostname } from '@horizon-republic/nominal-types';
+ *
  * const host = new Hostname('API.Example.com');
  * host.labels; // ['API', 'Example', 'com']
  * host.canonical().value; // 'api.example.com'
  * ```
  */
 export class Hostname extends HostnameBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Hostname>;
 
   /**
@@ -51,6 +56,8 @@ export class Hostname extends HostnameBase {
 
   /**
    * The same name in lowercase, the form DNS compares names in.
+   *
+   * @returns A name of the same class.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());
@@ -61,6 +68,8 @@ export class Hostname extends HostnameBase {
    *
    * @remarks
    * The result is display text, not a host name, so it comes back as a plain string.
+   *
+   * @returns The name in Unicode.
    */
   public toUnicode(): string {
     return this.labels
@@ -71,6 +80,9 @@ export class Hostname extends HostnameBase {
   /**
    * Whether this name is the other one or lies below it, ignoring case, as RFC 1034 §3.1 defines a
    * subdomain: `api.example.com` is under `example.com`, and so is `example.com` itself.
+   *
+   * @param other - The name that may contain this one.
+   * @returns `true` when this name is the other one or below it.
    */
   public isSubdomainOf(other: Hostname): boolean {
     const mine = this.value.toLowerCase();
@@ -82,6 +94,9 @@ export class Hostname extends HostnameBase {
   /**
    * Whether the other value is the same name, ignoring case, and belongs to this type, a type under
    * it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same name.
    */
   public override equals(other: unknown): boolean {
     return (

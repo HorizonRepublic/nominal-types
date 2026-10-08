@@ -1,17 +1,32 @@
 import { PredicateSchema } from '../../core/predicate-schema.ts';
 
 /**
- * Internal: the JSON Schema of a bigint rule, as an integer string and as a JSON integer.
+ * The JSON Schema of a bigint rule, as an integer string and as a JSON integer.
+ *
+ * @internal
  */
 export interface BigIntJson {
+  /**
+   * The keywords for the value written as an integer string.
+   */
   readonly string: Readonly<Record<string, unknown>>;
+
+  /**
+   * The keywords for the value written as a JSON integer, on the input side only.
+   */
   readonly integer: Readonly<Record<string, unknown>>;
+
+  /**
+   * Example values, added to both sides.
+   */
   readonly examples?: readonly unknown[];
 }
 
 /**
- * Internal: the input of a big integer type comes as a string or as a safe integer, while its
- * output is always the string `toJSON` writes.
+ * The JSON Schema of a bigint rule for one side: the integer string or the JSON integer on
+ * input, and on output the string `toJSON` writes.
+ *
+ * @internal
  */
 export const bigintJsonOf = (
   json: BigIntJson,
@@ -41,7 +56,9 @@ class BigIntRule extends PredicateSchema<bigint> {
 }
 
 /**
- * Internal: a rule for bigints that pass `test`.
+ * A rule for bigints that pass `test`.
+ *
+ * @internal
  */
 export const bigintRule = (
   description: string,

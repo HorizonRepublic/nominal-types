@@ -76,8 +76,10 @@ const readInteger = (
 };
 
 /**
- * Internal: the code points a lowercase Punycode string stands for, or `undefined` when it is not
+ * The code points a lowercase Punycode string stands for, or `undefined` when it is not
  * one, per RFC 3492 §6.2.
+ *
+ * @internal
  */
 export const decodePunycode = (input: string): readonly number[] | undefined => {
   const delimiter = input.lastIndexOf('-');
@@ -137,8 +139,10 @@ const smallestFrom = (points: readonly number[], lowest: number): number =>
   Math.min(...points.filter((point) => point >= lowest));
 
 /**
- * Internal: code points as Punycode, per RFC 3492 §6.3; the labels it encodes are short enough
+ * Code points as Punycode, per RFC 3492 §6.3; the labels it encodes are short enough
  * that no overflow can occur.
+ *
+ * @internal
  */
 export const encodePunycode = (points: readonly number[]): string => {
   const basic = points.filter((point) => point < initialN);

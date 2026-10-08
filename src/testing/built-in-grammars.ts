@@ -175,8 +175,10 @@ const mediaType: Arbitrary<string> = fc
   .map(([type, subtype, parameters]) => `${type}/${subtype}${parameters.join('')}`);
 
 /**
- * Internal: generators for the built-in types whose grammar is too loose for fast-check to make
+ * Generators for the built-in types whose grammar is too loose for fast-check to make
  * text of a usual length from its pattern.
+ *
+ * @internal
  */
 export const grammarArbitraries: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   'nominal.LanguageTag': () => languageTag,

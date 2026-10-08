@@ -71,6 +71,13 @@ const keyReader = (): ((item: unknown) => unknown) => {
 
 /**
  * Whether an item with a key repeats an earlier one; if not, it is remembered under its key.
+ *
+ * @param byKey - The items seen so far, by their key: one item, or a bucket of items whose keys
+ * clash.
+ * @param unkeyed - The items seen so far that have no key.
+ * @param key - The key of the item.
+ * @param item - The item to look up.
+ * @returns Whether the item repeats an earlier one.
  */
 const repeatsKeyed = (
   byKey: Map<unknown, unknown>,
@@ -101,12 +108,14 @@ const repeatsKeyed = (
 };
 
 /**
- * Internal: the indexes of the items that repeat an earlier one, compared as `equals()` compares
+ * The indexes of the items that repeat an earlier one, compared as `equals()` compares
  * them, or `undefined` when every item is new.
  *
  * @remarks
  * Items with a key are looked up by it, so a list of them takes linear time; the rest, such as
  * plain objects, are compared with every item before them.
+ *
+ * @internal
  */
 export const repeatsIn = (items: readonly unknown[]): number[] | undefined => {
   const byKey = new Map<unknown, unknown>();
@@ -136,8 +145,10 @@ export const repeatsIn = (items: readonly unknown[]): number[] | undefined => {
 };
 
 /**
- * Internal: an item that repeats an earlier one as its message names it: a nominal instance by its
+ * An item that repeats an earlier one as its message names it: a nominal instance by its
  * value.
+ *
+ * @internal
  */
 export const repeatedValue = (item: unknown): unknown =>
   typeof item === 'object' && item !== null && Reflect.get(item, equalityKeySlot) !== undefined

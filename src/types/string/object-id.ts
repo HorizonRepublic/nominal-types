@@ -27,11 +27,16 @@ const ObjectIdBase: SubtypeOf<typeof AnyString, 'nominal.ObjectId'> = AnyString.
  *
  * @example
  * ```ts
+ * import { ObjectId } from '@horizon-republic/nominal-types';
+ *
  * const id = new ObjectId('507f1f77bcf86cd799439011');
  * id.timestamp; // 2012-10-17T21:13:27.000Z
  * ```
  */
 export class ObjectId extends ObjectIdBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof ObjectId>;
 
   /**
@@ -48,6 +53,8 @@ export class ObjectId extends ObjectIdBase {
 
   /**
    * The same ObjectId in lowercase.
+   *
+   * @returns An ObjectId of the same class.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());
@@ -56,6 +63,9 @@ export class ObjectId extends ObjectIdBase {
   /**
    * Whether the other value has the same digits, ignoring case, and belongs to this type, a type
    * under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same ObjectId.
    */
   public override equals(other: unknown): boolean {
     return (

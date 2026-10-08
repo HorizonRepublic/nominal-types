@@ -265,7 +265,7 @@ const otherInstance = (value: unknown, instances: Instances): string | undefined
 };
 
 /**
- * Internal: a function that writes what `plan` describes as JSON text, generated for the plan;
+ * A function that writes what `plan` describes as JSON text, generated for the plan;
  * `slow` writes it where code generation is forbidden.
  *
  * @remarks
@@ -273,6 +273,8 @@ const otherInstance = (value: unknown, instances: Instances): string | undefined
  * from that value, strings of escape-free types between quotes as they are. Anything else, such as
  * an instance from another copy of the package, a changed instance or a plain value, goes through
  * `JSON.stringify()`, so the text is the same either way.
+ *
+ * @internal
  */
 export const stringifierOf = (
   plan: Plan,
@@ -282,9 +284,11 @@ export const stringifierOf = (
 ): Stringify => generated(plan, instances, 'other', generate) ?? slow;
 
 /**
- * Internal: the text a stringifier gives for a value at the top of a response.
+ * The text a stringifier gives for a value at the top of a response.
  *
- * @throws TypeError for a value JSON has no text for, such as `undefined`.
+ * @throws {@link TypeError} if JSON has no text for the value, such as `undefined`.
+ *
+ * @internal
  */
 export const textOf = (stringify: Stringify, value: unknown): string => {
   const written = stringify(value);

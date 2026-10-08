@@ -13,7 +13,9 @@ const sextetAt = (text: string, index: number): number =>
   sextets[text.codePointAt(index) ?? 0] ?? 0;
 
 /**
- * Internal: the number of bytes a checked base64 or base64url text decodes to, padded or not.
+ * The number of bytes a checked base64 or base64url text decodes to, padded or not.
+ *
+ * @internal
  */
 export const decodedLength = (text: string): number => {
   let digits = text.length;
@@ -62,8 +64,10 @@ const decodeHere = (text: string): Uint8Array => {
 };
 
 /**
- * Internal: the bytes of a checked base64 or base64url text, in a new array, decoded by
+ * The bytes of a checked base64 or base64url text, in a new array, decoded by
  * `Uint8Array.fromBase64` where the runtime has it.
+ *
+ * @internal
  */
 export const decodeBase64 = (text: string, alphabet: 'base64' | 'base64url'): Uint8Array => {
   const decoded: unknown =

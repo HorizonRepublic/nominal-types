@@ -5,16 +5,28 @@ import { fieldOf, isRequired, openApiSchemaOf, propertyOf } from './openapi-sche
 import type { OpenApiSchema } from './openapi-schema.ts';
 
 /**
- * Options for `@ApiNominalBody()`.
+ * Options for {@link ApiNominalBody}.
  */
 export interface ApiNominalBodyOptions {
   /**
    * The name the body's schema gets under `components.schemas`, so the document refers to it with
    * a `$ref` and lists it once. Taken only by an object schema, such as one from `n.object()`;
    * without a name, the schema is written into the request body.
+   *
+   * @defaultValue No name: the schema is written into the request body.
    */
   readonly name?: string;
+  /**
+   * The description of the request body in the document.
+   *
+   * @defaultValue No description.
+   */
   readonly description?: string;
+  /**
+   * Whether the request must have a body.
+   *
+   * @defaultValue `true`, unless the schema accepts `undefined`.
+   */
   readonly required?: boolean;
 }
 
@@ -78,16 +90,30 @@ const fieldsOf = (schema: OpenApiSchema): OpenApiSchema | undefined => {
  * `components.schemas` with that name and the body refers to it. The body is required unless
  * the schema accepts `undefined`; `required` and `description` in `options` win.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `n.of()` or `n.object()`
- * schema.
+ * @param target - The nominal type or schema the body is checked with.
+ * @param options - The component name, description and whether the body is required.
+ * @returns A decorator for a route.
+ * @throws {@link TypeError} when `target` is neither a nominal type nor a `n.of()` or
+ * `n.object()` schema.
  *
  * @example
  * ```ts
+ * import { Body, Controller, Post } from '@nestjs/common';
+ * import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ * import type { ValueOf } from '@horizon-republic/nominal-types';
+ * import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+ * import { ApiNominalBody } from '@horizon-republic/nominal-types/adapters/swagger';
+ *
  * const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
  *
- * @Post()
- * @ApiNominalBody(CreateOrder, { name: 'CreateOrder' })
- * create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody) {}
+ * @Controller('orders')
+ * export class OrdersController {
+ *   @Post()
+ *   @ApiNominalBody(CreateOrder, { name: 'CreateOrder' })
+ *   public create(@Body(new NominalPipe(CreateOrder)) order: ValueOf<typeof CreateOrder>): number {
+ *     return order.quantity.value;
+ *   }
+ * }
  * ```
  */
 export const ApiNominalBody = (

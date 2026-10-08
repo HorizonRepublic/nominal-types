@@ -79,10 +79,12 @@ const replaceNodes = (
 };
 
 /**
- * Internal: an ArkType schema as JSON Schema, with each `toArk()` node replaced by its type's own
+ * An ArkType schema as JSON Schema, with each `toArk()` node replaced by its type's own
  * schema and the input side of every morph.
  *
- * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.
+ * @throws {@link TypeError} when the target is not `draft-2020-12`, `draft-07` or `openapi-3.0`.
+ *
+ * @internal
  */
 export const describeArk = (
   ark: Type,

@@ -170,7 +170,7 @@ const tidied = (schema: Schema): Schema => {
 };
 
 /**
- * Internal: the JSON Schemas of a type's rules, from the root down, as one schema where they fit
+ * The JSON Schemas of a type's rules, from the root down, as one schema where they fit
  * together, or an `allOf` of the parts that don't.
  *
  * @remarks
@@ -178,6 +178,8 @@ const tidied = (schema: Schema): Schema => {
  * its own and no keyword says two different things: `number` and `integer` make `integer`, bounds
  * keep the strictest, a number format keeps the narrowest, and the description of the rule further
  * down wins. Two different patterns, or anything else that differs, start a new entry.
+ *
+ * @internal
  */
 export const flattened = (parts: readonly Schema[]): Schema => {
   const groups: Array<{ readonly schema: Schema; readonly joined: boolean }> = [];

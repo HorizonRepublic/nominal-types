@@ -35,10 +35,15 @@ const IssnBase: SubtypeOf<typeof AnyString, 'nominal.Issn'> = AnyString.subtype(
  *
  * @example
  * ```ts
+ * import { Issn } from '@horizon-republic/nominal-types';
+ *
  * new Issn('2049-3630').value; // '2049-3630'
  * ```
  */
 export class Issn extends IssnBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Issn>;
 
   /**

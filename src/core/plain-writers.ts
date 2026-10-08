@@ -4,14 +4,18 @@ import { isNominalType, ownTypes } from './nominal.ts';
 import { plainValue } from './plain.ts';
 
 /**
- * Internal: turns a value a schema gives into plain values, as `n.plain()` does, knowing the
+ * Turns a value a schema gives into plain values, as `n.plain()` does, knowing the
  * schema's shape.
+ *
+ * @internal
  */
 export type Write = (value: unknown) => unknown;
 
 /**
- * Internal: the writers of the schemas this copy of the package built, so an object that holds one
+ * The writers of the schemas this copy of the package built, so an object that holds one
  * as a field can call it directly.
+ *
+ * @internal
  */
 export const writers: WeakMap<object, Write> = new WeakMap();
 
@@ -31,8 +35,10 @@ const instanceLoop: Write = (value) =>
   typeof value === 'object' && value !== null ? plainValue(value) : value;
 
 /**
- * Internal: the writer for a field of a nominal type: an instance becomes what its `toJSON()`
+ * The writer for a field of a nominal type: an instance becomes what its `toJSON()`
  * returns, generated so V8 sees the field's class at its call.
+ *
+ * @internal
  */
 export const instanceWriter = (generate?: boolean): Write => {
   const built = generateFunction(
@@ -54,7 +60,9 @@ const arraySource = `function writeArray(value) {
 }`;
 
 /**
- * Internal: the writer for an array of what `item` writes.
+ * The writer for an array of what `item` writes.
+ *
+ * @internal
  */
 export const arrayWriter = (item: Write, generate?: boolean): Write => {
   const built = generateFunction(['item', 'plain'], arraySource, [item, plainValue], generate);
@@ -68,7 +76,9 @@ export const arrayWriter = (item: Write, generate?: boolean): Write => {
 };
 
 /**
- * Internal: the writer for `item` or `undefined`, or `null`; both are written as they are.
+ * The writer for `item` or `undefined`, or `null`; both are written as they are.
+ *
+ * @internal
  */
 export const emptyOrWriter =
   (item: Write, empty: undefined | null): Write =>
@@ -76,8 +86,10 @@ export const emptyOrWriter =
     value === empty ? value : item(value);
 
 /**
- * Internal: the writer for a field of an object or a constraint: its schema's own writer when it
+ * The writer for a field of an object or a constraint: its schema's own writer when it
  * has one, `n.plain()` otherwise.
+ *
+ * @internal
  */
 export const writerOf = (field: unknown): Write => {
   if (isNominalType(field)) {
@@ -102,11 +114,22 @@ export const writerOf = (field: unknown): Write => {
 };
 
 /**
- * Internal: a field of an object as its writer sees it.
+ * A field of an object as its writer sees it.
+ *
+ * @internal
  */
 export interface WrittenField {
+  /**
+   * The key of the field in the object.
+   */
   readonly key: string;
+  /**
+   * Turns the value of the field into a plain value.
+   */
   readonly write: Write;
+  /**
+   * Whether the field may be missing, so the copy leaves it out when it is.
+   */
   readonly optional: boolean;
 }
 
@@ -159,11 +182,13 @@ const objectLoop =
   };
 
 /**
- * Internal: the writer for an `n.object()` schema: a new object of the declared fields, each
+ * The writer for an `n.object()` schema: a new object of the declared fields, each
  * through its own writer, generated per object so every field has a call site of its own.
  *
  * @remarks
  * Keys the object doesn't declare are left out, as `parse()` leaves them out.
+ *
+ * @internal
  */
 export const objectWriter = (fields: readonly WrittenField[], generate?: boolean): Write => {
   const built = generateFunction(

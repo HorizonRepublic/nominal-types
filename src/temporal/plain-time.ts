@@ -41,12 +41,18 @@ const PlainTimeBase: NominalType<
  *
  * @example
  * ```ts
+ * import { PlainTime } from '@horizon-republic/nominal-types/temporal';
+ *
  * const opens = new PlainTime('09:30:00');
  * opens.value.hour; // 9
  * opens.value.add({ minutes: 45 }).toString(); // '10:15:00'
  * ```
  */
 export class PlainTime extends PlainTimeBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PlainTime>;
 
   /**
@@ -61,6 +67,9 @@ export class PlainTime extends PlainTimeBase {
   /**
    * Whether the other value is the same time and belongs to this type, a type under it or the
    * type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return inOneLine(this, other) && other instanceof PlainTime && this.value.equals(other.value);
@@ -68,6 +77,8 @@ export class PlainTime extends PlainTimeBase {
 
   /**
    * The time as `hh:mm:ss`, with a fraction when there is one.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -75,6 +86,8 @@ export class PlainTime extends PlainTimeBase {
 
   /**
    * The time as `toJSON()` writes it.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -83,6 +96,10 @@ export class PlainTime extends PlainTimeBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two times would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

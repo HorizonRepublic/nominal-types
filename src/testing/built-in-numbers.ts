@@ -56,7 +56,9 @@ const bigintFrom = (min: bigint, max: bigint): Arbitrary<unknown> =>
     });
 
 /**
- * Internal: a generator for each built-in number, big integer and boolean type, by name.
+ * A generator for each built-in number, big integer and boolean type, by name.
+ *
+ * @internal
  */
 export const numberArbitraries: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   'nominal.AnyNumber': () => fc.double(),

@@ -16,9 +16,14 @@ import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 import { stringRule, withoutImpliedString } from './string-rule.ts';
 
 /**
- * Internal: what the functions below need of a nominal type class.
+ * What the functions below need of a nominal type class.
+ *
+ * @internal
  */
 export interface TypeClass {
+  /**
+   * The name of the type, for its messages and its JSON Schema `title`.
+   */
   readonly typeName: string;
 }
 
@@ -39,15 +44,19 @@ const rulesFor = (root: object, target: TypeClass): readonly NominalSchema[] => 
 };
 
 /**
- * Internal: whether every rule of a type only checks values, so the value a type holds is the
+ * Whether every rule of a type only checks values, so the value a type holds is the
  * input itself whenever the input is a primitive, trimmed when the type trims strings.
+ *
+ * @internal
  */
 export const onlyChecks = (root: object, target: TypeClass): boolean =>
   rulesFor(root, target).every((rule) => rule instanceof NativeSchema);
 
 /**
- * Internal: whether a type trims a string before its checks while `n.configure()` asks for it: a
+ * Whether a type trims a string before its checks while `n.configure()` asks for it: a
  * type under `AnyString` that doesn't opt out with `normalize: false`.
+ *
+ * @internal
  */
 export const trimsStrings = (root: object, target: TypeClass): boolean =>
   Reflect.get(target, normalizeSlot) !== false && rulesOf(root, target).includes(stringRule);
@@ -89,8 +98,10 @@ const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown
 };
 
 /**
- * Internal: the function generated for a type's rules, returning the value or a `Rejection`, with
+ * The function generated for a type's rules, returning the value or a `Rejection`, with
  * object values not frozen yet.
+ *
+ * @internal
  */
 export const rulesRunnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
   let runner = typeRunners.get(target);
@@ -106,8 +117,10 @@ export const rulesRunnerOf = (root: object, target: TypeClass): ((input: unknown
 const typeAcceptors = new WeakMap<object, Accepts>();
 
 /**
- * Internal: the function generated to tell whether a value passes every rule of a type, without
+ * The function generated to tell whether a value passes every rule of a type, without
  * building the value or its issues.
+ *
+ * @internal
  */
 export const rulesAcceptsOf = (root: object, target: TypeClass): Accepts => {
   let accepts = typeAcceptors.get(target);
@@ -130,13 +143,16 @@ export const rulesAcceptsOf = (root: object, target: TypeClass): Accepts => {
 };
 
 /**
- * Internal: runs every rule of a type on a value, returning the value or a `Rejection`.
+ * Runs every rule of a type on a value, returning the value or a `Rejection`.
  *
  * @remarks
  * Each type runs one function generated for its rules, rules from other libraries included. An
  * object value comes back frozen all the way down.
  *
- * @throws TypeError naming the type when a rule fails to run, such as an asynchronous schema.
+ * @throws {@link TypeError} when a rule fails to run, such as an asynchronous schema; the
+ * message names the type.
+ *
+ * @internal
  */
 export const runType = (root: object, target: TypeClass, input: unknown): unknown => {
   const value = rulesRunnerOf(root, target)(input);
@@ -145,9 +161,11 @@ export const runType = (root: object, target: TypeClass, input: unknown): unknow
 };
 
 /**
- * Internal: a type's JSON Schema, with its name as `title` and only the examples it accepts.
+ * A type's JSON Schema, with its name as `title` and only the examples it accepts.
  *
- * @throws TypeError naming the type when a rule can't describe itself.
+ * @throws {@link TypeError} when a rule can't describe itself; the message names the type.
+ *
+ * @internal
  */
 export const describeType = (
   root: object,

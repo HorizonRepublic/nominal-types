@@ -23,14 +23,18 @@ const gs1Sum = (digits: string, lastWeight: number): number => {
 };
 
 /**
- * Internal: the GS1 mod 10 check digit of GS1 General Specifications §7.9.1 for the digits before
+ * The GS1 mod 10 check digit of GS1 General Specifications §7.9.1 for the digits before
  * it, which are weighted 3 and 1 in turn from the right.
+ *
+ * @internal
  */
 export const gs1CheckDigit = (digits: string): string =>
   String((10 - (gs1Sum(digits, 3) % 10)) % 10);
 
 /**
- * Internal: whether the last digit of the text is the GS1 check digit of the ones before it.
+ * Whether the last digit of the text is the GS1 check digit of the ones before it.
+ *
+ * @internal
  */
 export const hasGs1CheckDigit = (digits: string): boolean => gs1Sum(digits, 1) % 10 === 0;
 
@@ -51,8 +55,10 @@ const mod11Sum = (text: string, lastWeight: number): number => {
 };
 
 /**
- * Internal: the mod 11 check character of ISBN-10 and ISSN for the digits before it, which are
+ * The mod 11 check character of ISBN-10 and ISSN for the digits before it, which are
  * weighted 2, 3 and up from the right; `X` stands for 10.
+ *
+ * @internal
  */
 export const mod11CheckCharacter = (digits: string): string => {
   const check = (11 - (mod11Sum(digits, 2) % 11)) % 11;
@@ -61,8 +67,10 @@ export const mod11CheckCharacter = (digits: string): string => {
 };
 
 /**
- * Internal: whether the last character of the text, `X` for 10, is the mod 11 check character of
+ * Whether the last character of the text, `X` for 10, is the mod 11 check character of
  * the digits before it. Hyphens are skipped.
+ *
+ * @internal
  */
 export const hasMod11CheckCharacter = (text: string): boolean => mod11Sum(text, 1) % 11 === 0;
 
@@ -77,9 +85,11 @@ const luhnTerm = (digit: number, doubled: boolean): number => {
 };
 
 /**
- * Internal: whether the text passes the Luhn check of ISO/IEC 7812-1 Annex B once each letter is
+ * Whether the text passes the Luhn check of ISO/IEC 7812-1 Annex B once each letter is
  * written as two digits, `A` as 10 to `Z` as 35, as ISO 6166 checks an ISIN. The text holds
  * digits and uppercase letters only.
+ *
+ * @internal
  */
 export const passesLuhnCheck = (text: string): boolean => {
   let sum = 0;

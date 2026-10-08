@@ -33,12 +33,27 @@ const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
  * for a link shown to users or fetched by the server. The value keeps the text as given, while the
  * accessors read the parsed form. Control characters, and a space at either end, are refused,
  * since the parser would drop them and the value would differ from the URL it read.
+ *
+ * @example
+ * ```ts
+ * import { Url } from '@horizon-republic/nominal-types';
+ *
+ * const link = new Url('HTTPS://Example.com:443/docs?page=2');
+ * link.hostname; // 'example.com'
+ * link.searchParams.get('page'); // '2'
+ * link.canonical().value; // 'https://example.com/docs?page=2'
+ * ```
  */
 export class Url extends UrlBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Url>;
 
   /**
-   * A fresh `URL` for this address; each call builds a new one, since `URL` is mutable.
+   * A `URL` object for this address, for the code that needs one.
+   *
+   * @returns A new `URL` on each call, since `URL` is mutable.
    */
   public toURL(): URL {
     return new URL(this.value);
@@ -88,6 +103,8 @@ export class Url extends UrlBase {
 
   /**
    * The URL serialised by the WHATWG parser: scheme and host lowered, default port dropped.
+   *
+   * @returns A URL of the same class.
    */
   public canonical(): this {
     return sameType(this, this.toURL().href);

@@ -3,43 +3,57 @@ const monthDay =
 const leapYear = '(?:\\d\\d(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00)';
 
 /**
- * Internal: RFC 3339 `full-date` with a real calendar day, leap years included, as a pattern
+ * RFC 3339 `full-date` with a real calendar day, leap years included, as a pattern
  * fragment.
+ *
+ * @internal
  */
 export const fullDate: string = `(?:\\d{4}-${monthDay}|${leapYear}-02-29)`;
 
 /**
- * Internal: RFC 3339 `partial-time` without the leap second `60`, and with at most nine fraction
+ * RFC 3339 `partial-time` without the leap second `60`, and with at most nine fraction
  * digits, the nanoseconds Temporal holds.
+ *
+ * @internal
  */
 export const partialTime = '(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?';
 
 /**
- * Internal: `partialTime` with the seconds optional, `hh:mm` as HTML `time` and `datetime-local`
+ * `partialTime` with the seconds optional, `hh:mm` as HTML `time` and `datetime-local`
  * inputs send it.
+ *
+ * @internal
  */
 export const wallTime = '(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d{1,9})?)?';
 
 /**
- * Internal: RFC 3339 `time-offset`, `Z` or a numeric offset up to `±23:59`.
+ * RFC 3339 `time-offset`, `Z` or a numeric offset up to `±23:59`.
+ *
+ * @internal
  */
 export const timeOffset = '(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)';
 
 /**
- * Internal: a numeric `time-numoffset` up to `±23:59` that states the local offset, so without
+ * A numeric `time-numoffset` up to `±23:59` that states the local offset, so without
  * `-00:00`, which RFC 9557 §2 reads as "offset unknown", like `Z`.
+ *
+ * @internal
  */
 export const localOffset =
   '(?:\\+(?:[01]\\d|2[0-3]):[0-5]\\d|-(?:00:(?:0[1-9]|[1-5]\\d)|(?:0[1-9]|1\\d|2[0-3]):[0-5]\\d))';
 
 /**
- * Internal: an IANA time zone name as RFC 9557 `time-zone-name` writes it, such as
+ * An IANA time zone name as RFC 9557 `time-zone-name` writes it, such as
  * `America/Argentina/Buenos_Aires`, in at most three parts as every name of the database has.
+ *
+ * @internal
  */
 export const timeZoneName = '[A-Za-z._][\\w.+-]{0,13}(?:/[A-Za-z._][\\w.+-]{0,13}){0,2}';
 
 /**
- * Internal: a whole-string pattern from fragments.
+ * A whole-string pattern from fragments.
+ *
+ * @internal
  */
 export const whole = (source: string): RegExp => new RegExp(`^${source}$`, 'u');
 
@@ -47,7 +61,9 @@ const digitsAt = (text: string, start: number, end: number): number =>
   Number(text.slice(start, end));
 
 /**
- * Internal: the year, month and day of text that starts with a `full-date`.
+ * The year, month and day of text that starts with a `full-date`.
+ *
+ * @internal
  */
 export const dateFields = (text: string): readonly [number, number, number] => [
   digitsAt(text, 0, 4),
@@ -59,8 +75,10 @@ const fractionEnd = (text: string, start: number): number =>
   start + text.slice(start).search(/\D|$/u);
 
 /**
- * Internal: the hour, minute, second, millisecond, microsecond and nanosecond of text holding a
+ * The hour, minute, second, millisecond, microsecond and nanosecond of text holding a
  * `partial-time` from `start`, its seconds possibly left out.
+ *
+ * @internal
  */
 export const timeFields = (
   text: string,
@@ -82,8 +100,10 @@ export const timeFields = (
 };
 
 /**
- * Internal: the days from 1970-01-01 to a date of the proleptic Gregorian calendar, year 0
+ * The days from 1970-01-01 to a date of the proleptic Gregorian calendar, year 0
  * included.
+ *
+ * @internal
  */
 export const epochDays = (year: number, month: number, day: number): number => {
   const shifted = month <= 2 ? year - 1 : year;
@@ -102,7 +122,9 @@ export const epochDays = (year: number, month: number, day: number): number => {
 };
 
 /**
- * Internal: the seconds a `time-offset` at the end of text adds to UTC, `Z` being zero.
+ * The seconds a `time-offset` at the end of text adds to UTC, `Z` being zero.
+ *
+ * @internal
  */
 export const offsetSeconds = (text: string): number => {
   if (text.endsWith('Z')) {

@@ -8,17 +8,26 @@ import type { ColumnKind } from './column.ts';
 
 /**
  * Options every ORM adapter takes.
+ *
+ * @typeParam Instance - The instance the column holds.
  */
 export interface StorageOptions<Instance> {
   /**
-   * What is stored for an instance; the instance's `toJSON()` by default. It also runs on values in
-   * query conditions, so a lookup is made with what is stored.
+   * What is stored for an instance. It also runs on values in query conditions, so a lookup is
+   * made with what is stored.
+   *
+   * @defaultValue The instance's `toJSON()`.
    */
   readonly serialize?: (value: Instance) => unknown;
+
   /**
-   * Builds instances from stored values without checking them. Values read from the database are
-   * checked by default, so rows written before a rule changed fail loudly instead of passing as
-   * valid.
+   * Builds instances from stored values without checking them.
+   *
+   * @remarks
+   * Values read from the database are checked by default, so rows written before a rule changed
+   * fail loudly instead of passing as valid.
+   *
+   * @defaultValue `false`
    */
   readonly trusted?: boolean;
 }
@@ -102,12 +111,15 @@ const lostDigits = (target: AnyNominalType, raw: number): NominalError =>
   ]);
 
 /**
- * Internal: turns a stored value into an instance: `null` and `undefined` as they are, numbers and
+ * Turns a stored value into an instance: `null` and `undefined` as they are, numbers and
  * booleans read from the text or integers some drivers return, a driver's `Date` as an instant,
  * JSON text parsed, then checked unless `trusted`. A driver's number beyond 2^53 - 1 is refused by
  * big integer types, and any number by a decimal column, since it may have lost digits.
  *
- * @throws NominalError naming the type for a stored value it doesn't accept.
+ * @throws {@link NominalError} when the type doesn't accept a stored value, or a decimal column
+ * gives a number.
+ *
+ * @internal
  */
 export const readerOf = (
   target: AnyNominalType,
@@ -136,7 +148,7 @@ export const readerOf = (
 };
 
 /**
- * Internal: turns a value into what is stored: `null` and `undefined` as they are; an instance, or
+ * Turns a value into what is stored: `null` and `undefined` as they are; an instance, or
  * a plain value the type accepts, through `serialize` or its `toJSON()`; any other plain value as
  * it is. For a JSON column, the instances left inside are written by `JSON.stringify()`, which
  * calls their `toJSON()` too.
@@ -145,6 +157,8 @@ export const readerOf = (
  * ORMs run the same conversion for values written and for values in query conditions, where a
  * pattern such as `%@example.com` is no valid value of the type and must still reach the query.
  * Entities hold instances, so what is written has been checked.
+ *
+ * @internal
  */
 export const writerOf = (
   target: AnyNominalType,
@@ -170,8 +184,10 @@ export const writerOf = (
 };
 
 /**
- * Internal: a stored value for a JSON column as JSON text, for drivers and columns that take text;
+ * A stored value for a JSON column as JSON text, for drivers and columns that take text;
  * text, such as a condition value written as JSON, stays as it is.
+ *
+ * @internal
  */
 export const jsonTextOf = (stored: unknown): unknown =>
   typeof stored === 'object' && stored !== null ? JSON.stringify(stored) : stored;

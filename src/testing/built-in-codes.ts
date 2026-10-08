@@ -104,8 +104,10 @@ const jwt = fc
   .filter((text) => text.length <= 8192);
 
 /**
- * Internal: generators for the built-in codes whose rule reads a table or decodes the text: phone
+ * Generators for the built-in codes whose rule reads a table or decodes the text: phone
  * numbers, IBANs, BICs and JWTs.
+ *
+ * @internal
  */
 export const codeArbitraries: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   'nominal.E164PhoneNumber': () => e164PhoneNumber,

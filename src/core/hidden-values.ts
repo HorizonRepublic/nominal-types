@@ -21,6 +21,9 @@ const lengthOf = (text: string): number | undefined => {
 /**
  * The value as a message names it, told by its kind only; `undefined` for a kind such as `object`,
  * which names no value.
+ *
+ * @param text - The value as the message writes it, such as `"jane"` or `42`.
+ * @returns The kind of the value, such as `a string of 4 characters`, or `undefined`.
  */
 const outlineOf = (text: string): string | undefined => {
   const cut = cutText.exec(text);
@@ -95,8 +98,13 @@ const hiddenMessage = (message: string, leaveOut: boolean): string => {
  * package and ArkType, or `received "x"` written by Valibot. A message that names the value in
  * another way is left as it is.
  *
+ * @param issues - The issues to rewrite, from this package or another Standard Schema library.
+ * @returns The issues with the values left out of their messages.
+ *
  * @example
  * ```ts
+ * import { n } from '@horizon-republic/nominal-types';
+ *
  * n.hideValues([{ message: 'must be an email address (was "jane@example")' }]);
  * // [{ message: 'must be an email address (was a string of 12 characters)' }]
  * ```
@@ -117,9 +125,11 @@ export const hideValues = (
   });
 
 /**
- * Internal: the issues of a rule from another library as the `values` setting of `n.configure()`
+ * The issues of a rule from another library as the `values` setting of `n.configure()`
  * asks: as they are, with values told by their length, or with the values left out where the
  * message ends in `(was …)`.
+ *
+ * @internal
  */
 export const valuesAsConfigured = (
   issues: readonly StandardSchemaV1.Issue[],

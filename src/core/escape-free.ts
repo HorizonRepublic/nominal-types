@@ -98,7 +98,7 @@ const isSafeToken = (token: string, depth: number): boolean => {
 };
 
 /**
- * Internal: whether every string a pattern matches is free of `"`, `\`, control characters and
+ * Whether every string a pattern matches is free of `"`, `\`, control characters and
  * anything beyond printable ASCII, so it is written to JSON between quotes as it is.
  *
  * @remarks
@@ -106,6 +106,8 @@ const isSafeToken = (token: string, depth: number): boolean => {
  * outside a group, and every character it can consume has to be safe. Lookarounds consume nothing,
  * so their content doesn't count. Anything the scan doesn't know, such as `.`, a negated class or
  * a backreference, fails the proof.
+ *
+ * @internal
  */
 export const provesEscapeFree = ({ source, flags }: RegExp): boolean => {
   const found = source.match(tokens) ?? [];
@@ -164,9 +166,11 @@ const finalChecks = (rules: readonly NominalSchema[]): readonly NominalSchema[] 
 };
 
 /**
- * Internal: whether a type of this copy of the package holds only strings that need no escaping
+ * Whether a type of this copy of the package holds only strings that need no escaping
  * in JSON: one of its final rules is a pattern `provesEscapeFree()` accepts, or the rule of a
  * built-in type known to be escape-free.
+ *
+ * @internal
  */
 export const holdsEscapeFreeText = (root: object, target: object): boolean => {
   const named = namedRules(root, target);

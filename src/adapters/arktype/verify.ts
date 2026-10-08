@@ -5,8 +5,10 @@ import { metaOf } from './json-node.ts';
 import { constraintsKey, registry } from './registry.ts';
 
 /**
- * Internal: runs the constraints at and below a place of the built value, adding issues with
+ * Runs the constraints at and below a place of the built value, adding issues with
  * their full paths.
+ *
+ * @internal
  */
 export type Verify = (
   value: unknown,
@@ -18,7 +20,9 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null;
 
 /**
- * Internal: runs each verifier on a key of the value, with the key added to the path.
+ * Runs each verifier on a key of the value, with the key added to the path.
+ *
+ * @internal
  */
 export const verifyKeys =
   (verifiers: ReadonlyArray<readonly [PropertyKey, Verify]>): Verify =>
@@ -44,9 +48,11 @@ const withPath = (
 };
 
 /**
- * Internal: the constraints `constrainArk()` attached to an object node.
+ * The constraints `constrainArk()` attached to an object node.
  *
- * @throws TypeError for an id no constraint was registered under.
+ * @throws {@link TypeError} when no constraint was registered under an id.
+ *
+ * @internal
  */
 export const constraintsOf = (node: JsonNode): readonly AnyConstraint[] => {
   const ids = metaOf(node, constraintsKey);
@@ -63,7 +69,9 @@ export const constraintsOf = (node: JsonNode): readonly AnyConstraint[] => {
 };
 
 /**
- * Internal: runs constraints on one object.
+ * Runs constraints on one object.
+ *
+ * @internal
  */
 export const verifyConstraints =
   (constraints: readonly AnyConstraint[]): Verify =>
@@ -78,7 +86,9 @@ export const verifyConstraints =
   };
 
 /**
- * Internal: one verifier that runs both, where both exist.
+ * One verifier that runs both, where both exist.
+ *
+ * @internal
  */
 export const combine = (
   first: Verify | undefined,

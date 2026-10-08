@@ -12,30 +12,53 @@ import { textFormOf } from './text-form.ts';
 import { instanceParserFor } from './type-functions.ts';
 
 /**
- * Internal: the fields `partial()` made optional (`true`) and `required()` made required
+ * The fields `partial()` made optional (`true`) and `required()` made required
  * (`false`).
+ *
+ * @internal
  */
 export type Presence = ReadonlyMap<string, boolean>;
 
 /**
- * Internal: what an `n.object()` schema is built from.
+ * What an `n.object()` schema is built from.
+ *
+ * @internal
  */
 export interface ObjectParts {
+  /**
+   * The fields as declared, each key to its schema.
+   */
   readonly source: ObjectFields;
+  /**
+   * The constraints across the fields.
+   */
   readonly constraints: readonly AnyConstraint[];
+  /**
+   * Whether undeclared keys are refused rather than dropped.
+   */
   readonly strict: boolean;
+  /**
+   * Whether the messages leave the values out.
+   */
   readonly hidden: boolean;
+  /**
+   * The fields made optional or required by the methods of the schema.
+   */
   readonly presence: Presence;
 }
 
 /**
- * Internal: what each `n.object()` schema of this copy of the package was built from, so
+ * What each `n.object()` schema of this copy of the package was built from, so
  * `n.union()` can build its variants with the tag as a field.
+ *
+ * @internal
  */
 export const objectParts: WeakMap<object, ObjectParts> = new WeakMap();
 
 /**
- * Internal: no field made optional or required.
+ * No field made optional or required.
+ *
+ * @internal
  */
 export const noPresence: Presence = new Map();
 
@@ -43,9 +66,11 @@ const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
   isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, 'n.object()');
 
 /**
- * Internal: the fields of an `n.object()` schema as its shape runs them.
+ * The fields of an `n.object()` schema as its shape runs them.
  *
- * @throws TypeError for a field named `__proto__`.
+ * @throws {@link TypeError} when a field is named `__proto__`.
+ *
+ * @internal
  */
 export const fieldsOf = (fields: ObjectFields, presence: Presence): ObjectField[] =>
   Object.entries(fields).map(([key, field]) => {
@@ -66,7 +91,9 @@ export const fieldsOf = (fields: ObjectFields, presence: Presence): ObjectField[
 type ObjectShape = ReturnType<typeof objectShape>;
 
 /**
- * Internal: the shape of an object whose messages leave the values out.
+ * The shape of an object whose messages leave the values out.
+ *
+ * @internal
  */
 export const hidingValues = (shape: ObjectShape): ObjectShape => ({
   run: (input) => {
@@ -79,7 +106,9 @@ export const hidingValues = (shape: ObjectShape): ObjectShape => ({
 });
 
 /**
- * Internal: the fields with each nominal type that has a text form read from a string first.
+ * The fields with each nominal type that has a text form read from a string first.
+ *
+ * @internal
  */
 export const textFields = (fields: ObjectFields): ObjectFields =>
   Object.fromEntries(
@@ -92,11 +121,13 @@ export const textFields = (fields: ObjectFields): ObjectFields =>
   );
 
 /**
- * Internal: the keys a method of an object schema names, checked against the fields the object
+ * The keys a method of an object schema names, checked against the fields the object
  * declares.
  *
- * @throws TypeError naming the method and the first key the object doesn't declare, or, when
- * `atLeastOne`, for no key at all.
+ * @throws {@link TypeError} when a key is not a declared field, or no key is given while
+ * `atLeastOne` is set.
+ *
+ * @internal
  */
 export const checkedKeys = (
   method: string,
@@ -118,7 +149,9 @@ export const checkedKeys = (
 };
 
 /**
- * Internal: the keys a constraint reads.
+ * The keys a constraint reads.
+ *
+ * @internal
  */
 export const constraintKeys = (rule: AnyConstraint): readonly string[] => {
   const listed: unknown = Reflect.get(rule, 'fields');
@@ -132,8 +165,10 @@ const whenPresent = (rule: AnyConstraint, keys: readonly string[]): AnyConstrain
 });
 
 /**
- * Internal: the constraints as the object runs them: one that reads fields `partial()` made
+ * The constraints as the object runs them: one that reads fields `partial()` made
  * optional runs only when every one of them is present.
+ *
+ * @internal
  */
 export const gatedConstraints = (
   constraints: readonly AnyConstraint[],
@@ -146,13 +181,17 @@ export const gatedConstraints = (
   });
 
 /**
- * Internal: the presence of the fields `keys` only.
+ * The presence of the fields `keys` only.
+ *
+ * @internal
  */
 export const keptPresence = (presence: Presence, keys: ReadonlySet<string>): Presence =>
   new Map([...presence].filter(([key]) => keys.has(key)));
 
 /**
- * Internal: the presence with the fields `keys` made optional or required.
+ * The presence with the fields `keys` made optional or required.
+ *
+ * @internal
  */
 export const withPresence = (
   presence: Presence,

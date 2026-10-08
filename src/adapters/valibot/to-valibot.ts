@@ -8,6 +8,10 @@ import { instanceParserFor } from '../../core/type-functions.ts';
 
 /**
  * The Valibot schema `toValibot()` returns: it takes the type's input and gives an instance.
+ *
+ * @typeParam Target - The nominal type the schema parses into.
+ *
+ * @see {@link toValibot}
  */
 export type ValibotField<Target extends AnyNominalType> = v.BaseSchema<
   InputOf<Target['rule']>,
@@ -29,10 +33,25 @@ const standardIssue = (issue: v.BaseIssue<unknown>): StandardSchemaV1.Issue => (
  * makes the instance in one step, with the type's messages. Use Valibot's `v.array()`,
  * `v.optional()` and `v.nullable()` around it.
  *
+ * @typeParam Target - The nominal type the schema parses into.
+ * @param target - The nominal type to wrap.
+ * @returns A Valibot schema that parses the type's input into an instance.
+ *
  * @example
  * ```ts
+ * import { Email, Uuid } from '@horizon-republic/nominal-types';
+ * import { toValibot } from '@horizon-republic/nominal-types/adapters/valibot';
+ * import * as v from 'valibot';
+ *
  * const CreateUser = v.object({ id: toValibot(Uuid), email: toValibot(Email), name: v.string() });
+ *
+ * declare const body: unknown;
+ *
+ * const user = v.parse(CreateUser, body);
+ * user.email; // an Email instance
  * ```
+ *
+ * @see {@link constrainValibot}
  */
 export const toValibot = <Target extends AnyNominalType>(target: Target): ValibotField<Target> => {
   const parse = instanceParserFor(target);

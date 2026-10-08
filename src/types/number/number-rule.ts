@@ -2,7 +2,9 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import type { PredicateSchema } from '../../core/predicate-schema.ts';
 
 /**
- * Internal: a rule for numbers that pass `test`.
+ * A rule for numbers that pass `test`.
+ *
+ * @internal
  */
 export const numberRule = (
   description: string,
@@ -16,8 +18,10 @@ export const numberRule = (
   );
 
 /**
- * Internal: a rule for whole numbers from `lowest` to `highest`, with the same bounds in its JSON
+ * A rule for whole numbers from `lowest` to `highest`, with the same bounds in its JSON
  * Schema.
+ *
+ * @internal
  */
 export const integerBetween = (
   lowest: number,

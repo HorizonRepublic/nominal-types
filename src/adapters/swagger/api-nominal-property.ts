@@ -15,13 +15,22 @@ import { fieldOf, isRequired, openApiSchemaOf, propertyOf } from './openapi-sche
  * `n.of(Email).optional()` does. `options` are `@ApiProperty`'s own and win over the
  * generated ones.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `n.of()` schema.
+ * @param target - The nominal type or `n.of()` schema of the property.
+ * @param options - Options of `@ApiProperty()` that replace the generated ones.
+ * @returns A decorator for a DTO property.
+ * @throws {@link TypeError} when `target` is neither a nominal type nor a `n.of()` schema.
  *
  * @example
  * ```ts
- * class CreateOrderDto {
- *   @ApiNominalProperty(Email) contact!: Email;
- *   @ApiNominalProperty(n.of(Uuid).array({ min: 1 })) items!: readonly Uuid[];
+ * import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+ * import { ApiNominalProperty } from '@horizon-republic/nominal-types/adapters/swagger';
+ *
+ * export class CreateOrderDto {
+ *   @ApiNominalProperty(Email)
+ *   public contact!: Email;
+ *
+ *   @ApiNominalProperty(n.of(Uuid).array({ min: 1 }))
+ *   public items!: readonly Uuid[];
  * }
  * ```
  */

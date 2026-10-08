@@ -58,6 +58,8 @@ const scaleOf = (currency: CurrencyCode, ...amounts: readonly DecimalString[]): 
  *
  * @example
  * ```ts
+ * import { Money } from '@horizon-republic/nominal-types';
+ *
  * const price = new Money({ amount: '12.34', currency: 'EUR' });
  *
  * price.add(new Money({ amount: '0.66', currency: 'EUR' })).amount.value; // '13.00'
@@ -65,14 +67,30 @@ const scaleOf = (currency: CurrencyCode, ...amounts: readonly DecimalString[]): 
  * ```
  */
 export class Money extends MoneyBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Money>;
 
   /**
    * The money for a count of minor units, such as `1234n` cents for 12.34 EUR, the form payment
    * providers often send.
    *
-   * @throws TypeError when the currency has no minor units, such as `XAU`.
-   * @throws NominalError when the currency code is not an ISO 4217 code.
+   * @typeParam Type - The class it is called on, `Money` or a class under it.
+   * @param minor - The count of minor units, such as cents.
+   * @param currency - The ISO 4217 code, as text or as a `CurrencyCode`.
+   * @returns The money, an instance of the class it is called on.
+   * @throws {@link TypeError} when the currency has no minor units, such as `XAU`.
+   * @throws {@link NominalError} when the currency code is not an ISO 4217 code.
+   *
+   * @example
+   * ```ts
+   * import { Money } from '@horizon-republic/nominal-types';
+   *
+   * Money.fromMinor(1234n, 'EUR').amount.value; // '12.34'
+   * Money.fromMinor(500n, 'JPY').amount.value; // '500'
+   * ```
    */
   public static fromMinor<Type extends new (input: { amount: string; currency: string }) => Money>(
     this: Type,
@@ -95,7 +113,7 @@ export class Money extends MoneyBase {
   /**
    * The amount as a count of minor units, such as `1234n` cents for 12.34 EUR.
    *
-   * @throws TypeError when the currency has no minor units, such as `XAU`.
+   * @throws {@link TypeError} when the currency has no minor units, such as `XAU`.
    */
   public get minor(): bigint {
     const { minorUnits } = this.currency;
@@ -124,7 +142,9 @@ export class Money extends MoneyBase {
   /**
    * The sum, written with the currency's minor units: `12.5 EUR` plus `1 EUR` is `13.50 EUR`.
    *
-   * @throws TypeError when the currencies differ.
+   * @param other - The money to add, in the same currency.
+   * @returns A new value of this type.
+   * @throws {@link TypeError} when the currencies differ.
    */
   public add(other: Money): this {
     return this.#combine('add', other, 1n);
@@ -133,7 +153,9 @@ export class Money extends MoneyBase {
   /**
    * The difference, written with the currency's minor units.
    *
-   * @throws TypeError when the currencies differ.
+   * @param other - The money to take away, in the same currency.
+   * @returns A new value of this type.
+   * @throws {@link TypeError} when the currencies differ.
    */
   public subtract(other: Money): this {
     return this.#combine('subtract', other, -1n);
@@ -142,7 +164,9 @@ export class Money extends MoneyBase {
   /**
    * The amount times a whole number, such as a price times a quantity.
    *
-   * @throws RangeError when the factor is not a whole number.
+   * @param factor - A bigint, or a number that is a safe integer.
+   * @returns A new value of this type.
+   * @throws {@link RangeError} when the factor is a number that is not a safe integer.
    */
   public multiply(factor: bigint | number): this {
     if (typeof factor === 'number' && !Number.isSafeInteger(factor)) {
@@ -157,9 +181,11 @@ export class Money extends MoneyBase {
   }
 
   /**
-   * `-1` if this amount is smaller than the other, `1` if larger, `0` if they are equal.
+   * Which of two amounts in one currency is larger, for sorting.
    *
-   * @throws TypeError when the currencies differ.
+   * @param other - The money to compare with, in the same currency.
+   * @returns `-1` if this amount is smaller than the other, `1` if larger, `0` if they are equal.
+   * @throws {@link TypeError} when the currencies differ.
    */
   public compare(other: Money): -1 | 0 | 1 {
     this.#checkCurrency('compare', other);
@@ -171,6 +197,8 @@ export class Money extends MoneyBase {
    * The same money with exactly the currency's minor units after the point: `12.5 EUR` becomes
    * `12.50 EUR`, and `-0 EUR` becomes `0.00 EUR`; for a currency without minor units, the
    * shortest text of the amount.
+   *
+   * @returns A new value of this type.
    */
   public canonical(): this {
     const { minorUnits } = this.currency;
@@ -186,6 +214,10 @@ export class Money extends MoneyBase {
    * The amount as people read it, such as `€12.34` in `en-US`, through `Intl.NumberFormat` with
    * the digits of the currency's minor units. For display only: the text depends on the locale
    * and on the runtime's locale data, so never parse it back.
+   *
+   * @param locales - The locale or locales to format for, such as `'en-US'`; the runtime's
+   *   default when left out.
+   * @returns The formatted text.
    */
   public format(locales?: string | readonly string[]): string {
     const digits = scaleOf(this.currency, this.amount);
@@ -204,6 +236,9 @@ export class Money extends MoneyBase {
   /**
    * Whether the other value is the same amount in the same currency, ignoring trailing zeros, and
    * belongs to this type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return (

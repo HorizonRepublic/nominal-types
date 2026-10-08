@@ -40,8 +40,10 @@ const builder =
   };
 
 /**
- * Internal: the plan for an array or a tuple: its leading elements, the rest, and the elements
+ * The plan for an array or a tuple: its leading elements, the rest, and the elements
  * after the rest, counted from the end.
+ *
+ * @internal
  */
 export const sequencePlan = (sequence: unknown, planOf: PlanOf): Plan | undefined => {
   const structured =

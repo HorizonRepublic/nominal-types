@@ -4,10 +4,11 @@ export { Nominal } from './core/nominal.ts';
  * import brings all of them.
  *
  * @remarks
- * `n.object()` and `n.of()` build schemas, `n.constraint()` checks fields together,
- * `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`, `n.hideValues()`
- * masks values in issues, `n.plain()` turns instances into plain values for a response, and `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a
- * value is. `n.configure()` sets messages, values, trimming and code generation for the process.
+ * `n.object()`, `n.of()` and `n.union()` build schemas, and `n.constraint()` checks fields
+ * together. `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`.
+ * `n.hideValues()` masks values in issues, and `n.plain()` turns instances into plain values for
+ * a response. `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a value is.
+ * `n.configure()` sets messages, values, trimming and code generation for the process.
  *
  * @example
  * ```ts

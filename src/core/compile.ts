@@ -5,15 +5,22 @@ import { settings } from './settings.ts';
 type Run = (value: unknown) => unknown;
 
 /**
- * Internal: the step in front of the checks of a string type, which trims a string when
+ * The step in front of the checks of a string type, which trims a string when
  * `n.configure({ normalize: { trimStrings: true } })` is set; the setting is read on each run.
+ *
+ * @internal
  */
 export interface TrimStep {
+  /**
+   * Marks the step as the one that trims.
+   */
   readonly trim: true;
 }
 
 /**
- * Internal: any step a type's function runs.
+ * Any step a type's function runs.
+ *
+ * @internal
  */
 export type AnyStep = Step | ConvertStep | TrimStep;
 
@@ -24,17 +31,23 @@ const isTrim = (step: AnyStep): step is TrimStep => 'trim' in step;
 const isCheck = (step: Step | ConvertStep): step is Step => 'accepts' in step;
 
 /**
- * Internal: the step that trims strings while the setting asks for it.
+ * The step that trims strings while the setting asks for it.
+ *
+ * @internal
  */
 export const trimStep: TrimStep = { trim: true };
 
 /**
- * Internal: text trimmed while the setting asks for it.
+ * Text trimmed while the setting asks for it.
+ *
+ * @internal
  */
 export const trimmedText = (text: string): string => (settings.trimStrings ? text.trim() : text);
 
 /**
- * Internal: a string trimmed while the setting asks for it, anything else as it is.
+ * A string trimmed while the setting asks for it, anything else as it is.
+ *
+ * @internal
  */
 export const trimmed = (value: unknown): unknown =>
   typeof value === 'string' ? trimmedText(value) : value;
@@ -56,18 +69,22 @@ const probe = (): boolean => {
 };
 
 /**
- * Internal: whether functions are generated now: not with `codegen: 'off'`, nor where the runtime
+ * Whether functions are generated now: not with `codegen: 'off'`, nor where the runtime
  * forbids it.
+ *
+ * @internal
  */
 export const canGenerate = (): boolean => settings.codegen !== 'off' && (probed ??= probe());
 
 /**
- * Internal: a function built from source with `new Function`, called with `values` for `names`,
+ * A function built from source with `new Function`, called with `values` for `names`,
  * or `undefined` where code generation is off or forbidden.
  *
  * @remarks
  * A generated function gets a call site of its own for everything it calls, which V8 can inline
  * where a function shared by every type can't. `generate` overrides the setting, for tests.
+ *
+ * @internal
  */
 export const generateFunction = (
   names: readonly string[],
@@ -112,7 +129,9 @@ const loopOver =
   };
 
 /**
- * Internal: the source of a trim step in a generated function, which reads `settings`.
+ * The source of a trim step in a generated function, which reads `settings`.
+ *
+ * @internal
  */
 export const trimSource =
   "if (settings.trimStrings && typeof value === 'string') value = value.trim();";
@@ -148,7 +167,7 @@ const generated = (steps: readonly AnyStep[], generate: boolean | undefined): Ru
 };
 
 /**
- * Internal: one function that runs every step of a type and returns the value, or the
+ * One function that runs every step of a type and returns the value, or the
  * `Rejection` of the first step that fails; generated per type, so the engine sees a call site of
  * its own for each check and can inline it.
  *
@@ -157,17 +176,21 @@ const generated = (steps: readonly AnyStep[], generate: boolean | undefined): Ru
  * inline; a function generated for one type keeps each call monomorphic. Rules from other
  * libraries are steps too, so a type mixing them with patterns is generated as well. Where code
  * generation is forbidden, the steps run through a loop instead.
+ *
+ * @internal
  */
 export const compileRun = (steps: readonly AnyStep[], generate?: boolean): Run =>
   generate !== false && steps.length > 0 ? generated(steps, generate) : loopOver(steps);
 
 /**
- * Internal: whether a value carries the brand `key`, as one function per type, generated where
+ * Whether a value carries the brand `key`, as one function per type, generated where
  * code generation is allowed.
  *
  * @remarks
- * `instanceof` of every type used to run one shared function, whose property reads saw every
- * brand and couldn't be optimised; a function per type reads one brand only.
+ * A function shared by every type would read every brand at one property access, which the engine
+ * can't optimise; a function per type reads one brand only.
+ *
+ * @internal
  */
 export const brandCheck = (key: symbol, generate?: boolean): ((value: unknown) => boolean) => {
   const generatedCheck = generateFunction(

@@ -7,11 +7,19 @@ import { PredicateSchema } from './predicate-schema.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
 /**
- * Internal: one check of a flat plan, and the issues it reports when it fails: about the input as
+ * One check of a flat plan, and the issues it reports when it fails: about the input as
  * given, which a rule from another library before the check may have converted into `value`.
+ *
+ * @internal
  */
 export interface Step {
+  /**
+   * Whether the value passes the check.
+   */
   readonly accepts: (value: unknown) => boolean;
+  /**
+   * The issues to report when the check fails, about the input as given.
+   */
   readonly issues: (value: unknown, input: unknown) => readonly StandardSchemaV1.Issue[];
 }
 
@@ -23,11 +31,19 @@ const describesThrough = (rule: NativeSchema<unknown>): boolean =>
     rule.messageFor === PredicateSchema.prototype.messageFor);
 
 /**
- * Internal: how the issues of a type's rules are written: whether they leave the value out, and
+ * How the issues of a type's rules are written: whether they leave the value out, and
  * the name of the type, for a messages function.
+ *
+ * @internal
  */
 export interface Reporting {
+  /**
+   * Whether the issues leave the value out, as those of a sensitive type do.
+   */
   readonly hidden: boolean;
+  /**
+   * The name of the type, passed to a messages function.
+   */
   readonly typeName?: string | undefined;
 }
 
@@ -86,13 +102,15 @@ const mergedStep = (
 };
 
 /**
- * Internal: patterns and type guards as a flat list of checks.
+ * Patterns and type guards as a flat list of checks.
  *
  * @remarks
  * Neighbouring patterns that start with `^`, hold no `|`, no backreference and no named group, and
  * share their flags are folded into one expression of lookaheads, which tests the string once; such
  * patterns match only from the start, so testing them together there is the same as testing them
  * apart. With `hidden`, the issues leave the rejected value out, as those of a sensitive type do.
+ *
+ * @internal
  */
 export const planOf = (
   rules: ReadonlyArray<NativeSchema<unknown>>,
@@ -129,17 +147,24 @@ export const planOf = (
 };
 
 /**
- * Internal: a rule from another library inside a type's rules, which may change the value; it
+ * A rule from another library inside a type's rules, which may change the value; it
  * returns the value the next rule sees, or a `Rejection`.
+ *
+ * @internal
  */
 export interface ConvertStep {
+  /**
+   * Runs the rule: the value the next rule sees, or a `Rejection`.
+   */
   readonly convert: (value: unknown) => unknown;
 }
 
 /**
- * Internal: the rules of a type as steps: checks for patterns and guards, folded as `planOf` folds
+ * The rules of a type as steps: checks for patterns and guards, folded as `planOf` folds
  * them, and a mapping step for each rule from another library. `reporting` is passed on to
  * `planOf`; the mapping steps hide values themselves.
+ *
+ * @internal
  */
 export const stepsOf = (
   rules: readonly NominalSchema[],

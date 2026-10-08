@@ -1,9 +1,18 @@
 /**
- * Internal: an IP address as 16-bit groups, two for IPv4 and eight for IPv6, the form every
+ * An IP address as 16-bit groups, two for IPv4 and eight for IPv6, the form every
  * comparison and classification reads.
+ *
+ * @internal
  */
 export interface IpBits {
+  /**
+   * The IP version the groups belong to.
+   */
   readonly version: 4 | 6;
+
+  /**
+   * The groups, most significant first.
+   */
   readonly groups: Uint16Array;
 }
 
@@ -23,11 +32,13 @@ const hexValue = (code: number): number => {
 };
 
 /**
- * Internal: the dotted quad between `from` and `to` as an unsigned 32-bit number, or -1.
+ * The dotted quad between `from` and `to` as an unsigned 32-bit number, or -1.
  *
  * @remarks
  * Exactly four decimal parts from 0 to 255. A part with a leading zero is refused, since
  * `inet_aton` reads it as octal, which is what CVE-2021-28918 and CVE-2021-29921 came from.
+ *
+ * @internal
  */
 export const readIpv4 = (text: string, from: number, to: number): number => {
   if (to - from < 7 || to - from > 15) {
@@ -139,9 +150,11 @@ const readRun = (
 };
 
 /**
- * Internal: reads the IPv6 text between `from` and `to` into eight groups, as RFC 4291 §2.2 writes
+ * Reads the IPv6 text between `from` and `to` into eight groups, as RFC 4291 §2.2 writes
  * it: full, with one `::` standing for one or more zero groups, or with a dotted quad in the last
  * 32 bits. Zone identifiers and brackets are refused.
+ *
+ * @internal
  */
 export const readIpv6 = (text: string, from: number, to: number, groups: Uint16Array): boolean => {
   if (to - from < 2 || to - from > 45) {
@@ -181,30 +194,38 @@ export const readIpv6 = (text: string, from: number, to: number, groups: Uint16A
 const scratch = new Uint16Array(8);
 
 /**
- * Internal: whether a value is IPv4 or IPv6 text.
+ * Whether a value is IPv4 or IPv6 text.
+ *
+ * @internal
  */
 export const isIpText = (value: unknown): value is string =>
   typeof value === 'string' &&
   (readIpv4(value, 0, value.length) !== -1 || readIpv6(value, 0, value.length, scratch));
 
 /**
- * Internal: whether text an IP type has already accepted is IPv4, which has no colon.
+ * Whether text an IP type has already accepted is IPv4, which has no colon.
  *
  * @remarks
  * The rules of the family types run after the rule of the type above them, which checked the
  * whole text, so the family is all that is left for them to tell.
+ *
+ * @internal
  */
 export const isIpv4Family = (value: unknown): value is string =>
   typeof value === 'string' && !value.includes(':');
 
 /**
- * Internal: whether text an IP type has already accepted is IPv6, which has a colon.
+ * Whether text an IP type has already accepted is IPv6, which has a colon.
+ *
+ * @internal
  */
 export const isIpv6Family = (value: unknown): value is string =>
   typeof value === 'string' && value.includes(':');
 
 /**
- * Internal: the groups of the address text before `to`, which a type has already accepted.
+ * The groups of the address text before `to`, which a type has already accepted.
+ *
+ * @internal
  */
 export const bitsOf = (text: string, to: number = text.length): IpBits => {
   if (text.lastIndexOf(':', to) === -1) {

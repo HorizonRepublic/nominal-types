@@ -31,14 +31,21 @@ const Ipv4AddressBase: SubtypeOf<typeof IpAddress, 'nominal.Ipv4Address'> = IpAd
  *
  * @example
  * ```ts
+ * import { Ipv4Address } from '@horizon-republic/nominal-types';
+ *
  * new Ipv4Address('10.0.0.1').isPrivate; // true
  * ```
  */
 export class Ipv4Address extends Ipv4AddressBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Ipv4Address>;
 
   /**
    * The same address; IPv4 text has one form only.
+   *
+   * @returns An address of the same class.
    */
   public override canonical(): this {
     return sameType(this, this.value);

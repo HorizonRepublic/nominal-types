@@ -33,12 +33,17 @@ const Base64Base: SubtypeOf<typeof AnyString, 'nominal.Base64'> = AnyString.subt
  *
  * @example
  * ```ts
+ * import { Base64 } from '@horizon-republic/nominal-types';
+ *
  * const data = new Base64('aGVsbG8=');
  * data.byteLength; // 5
  * new TextDecoder().decode(data.toBytes()); // 'hello'
  * ```
  */
 export class Base64 extends Base64Base {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Base64>;
 
   /**
@@ -58,7 +63,9 @@ export class Base64 extends Base64Base {
   }
 
   /**
-   * The bytes the text encodes, in a new array the caller may change.
+   * The bytes the text encodes.
+   *
+   * @returns A new array the caller may change.
    */
   public toBytes(): Uint8Array {
     return decodeBase64(this.value, 'base64');

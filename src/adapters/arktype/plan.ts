@@ -42,10 +42,13 @@ const morphPlan = (node: JsonNode): Plan | undefined => {
 };
 
 /**
- * Internal: the plan for a node of ArkType's `.json`, or `undefined` where nothing below it needs
+ * The plan for a node of ArkType's `.json`, or `undefined` where nothing below it needs
  * building or verifying.
  *
- * @throws TypeError for an `toArk()` node in a place whose branch can't be told at runtime.
+ * @throws {@link TypeError} when a `toArk()` node sits in a place whose branch can't be told at
+ * runtime, or names a type `toArk()` was never given.
+ *
+ * @internal
  */
 export const planOf = (node: unknown): Plan | undefined => {
   if (Array.isArray(node)) {

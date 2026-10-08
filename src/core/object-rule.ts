@@ -1,30 +1,45 @@
 /**
- * Internal: the mark an `n.object()` schema carries, shared by every copy of this package.
+ * The mark an `n.object()` schema carries, shared by every copy of this package.
+ *
+ * @internal
  */
 export const objectMark: symbol = Symbol.for('@horizon-republic/nominal-types/object-schema');
 
 /**
- * Internal: where an `n.object()` schema keeps what a type built on it needs: the members of its
+ * Where an `n.object()` schema keeps what a type built on it needs: the members of its
  * instances and the check of a constraint added below it.
  *
  * @remarks
  * The schema carries them rather than the root class, so a bundle that declares no type on
  * `n.object()` leaves them out, and a schema from another copy of the package brings its own.
+ *
+ * @internal
  */
 export const objectMembersSlot: symbol = Symbol.for(
   '@horizon-republic/nominal-types/object-members',
 );
 
 /**
- * Internal: what an `n.object()` schema keeps under `objectMembersSlot`.
+ * What an `n.object()` schema keeps under `objectMembersSlot`.
+ *
+ * @internal
  */
 export interface ObjectMembers {
+  /**
+   * Adds a getter for each field and `copyWith()` to the prototype of a type's instances.
+   */
   readonly define: (prototype: object, keys: readonly string[]) => void;
+  /**
+   * Throws when a constraint given to `subtype()` or `variant()` reads a field the object
+   * doesn't declare.
+   */
   readonly check: (owner: 'subtype' | 'variant', keys: readonly string[], rule: unknown) => void;
 }
 
 /**
- * Internal: the field names of an `n.object()` schema, or `undefined` for any other rule.
+ * The field names of an `n.object()` schema, or `undefined` for any other rule.
+ *
+ * @internal
  */
 export const objectKeysOf = (rule: unknown): readonly string[] | undefined => {
   if (typeof rule !== 'object' || rule === null || Reflect.get(rule, objectMark) !== true) {
@@ -43,7 +58,9 @@ const isObjectMembers = (value: unknown): value is ObjectMembers =>
   typeof Reflect.get(value, 'check') === 'function';
 
 /**
- * Internal: the members an `n.object()` schema gives the types built on it.
+ * The members an `n.object()` schema gives the types built on it.
+ *
+ * @internal
  */
 export const objectMembersOf = (rule: unknown): ObjectMembers | undefined => {
   const members: unknown =
@@ -53,7 +70,9 @@ export const objectMembersOf = (rule: unknown): ObjectMembers | undefined => {
 };
 
 /**
- * Internal: the closest `n.object()` rule a type builds on, from its own level up.
+ * The closest `n.object()` rule a type builds on, from its own level up.
+ *
+ * @internal
  */
 export const objectRuleAbove = (target: object): unknown => {
   for (

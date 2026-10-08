@@ -65,16 +65,24 @@ const AnyBigIntBase: NominalType<
  *
  * @example
  * ```ts
+ * import { AnyBigInt } from '@horizon-republic/nominal-types';
+ *
  * new AnyBigInt('9007199254740993').value; // 9007199254740993n
  * new AnyBigInt(42).value; // 42n
  * JSON.stringify({ id: new AnyBigInt(42n) }); // '{"id":"42"}'
  * ```
  */
 export class AnyBigInt extends AnyBigIntBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof AnyBigInt>;
 
   /**
    * The integer in decimal, since `JSON.stringify` can't write a bigint.
+   *
+   * @returns The decimal text, such as `'-42'`.
    */
   public override toJSON(): string {
     return this.value.toString();

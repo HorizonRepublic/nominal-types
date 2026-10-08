@@ -1,10 +1,12 @@
 const typeNamePattern = /^[\w-]+(?:\.[\w-]+)*$/u;
 
 /**
- * Internal: refuses a type name that can't serve as a schema name in OpenAPI: one or more parts of
+ * Refuses a type name that can't serve as a schema name in OpenAPI: one or more parts of
  * letters, digits, `_` and `-`, joined by dots, such as `billing.InvoiceNumber`.
  *
- * @throws TypeError for any other name.
+ * @throws {@link TypeError} when the name is anything else.
+ *
+ * @internal
  */
 export const checkTypeName = (name: unknown): void => {
   if (typeof name !== 'string' || !typeNamePattern.test(name)) {

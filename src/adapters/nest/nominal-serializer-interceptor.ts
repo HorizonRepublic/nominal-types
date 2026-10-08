@@ -98,10 +98,27 @@ const jsonForm = (value: unknown, path: object[]): unknown => {
  *
  * @example
  * ```ts
+ * import { Module } from '@nestjs/common';
+ * import { NestFactory, Reflector } from '@nestjs/core';
+ * import { NominalSerializerInterceptor } from '@horizon-republic/nominal-types/adapters/nest';
+ *
+ * @Module({})
+ * class AppModule {}
+ *
+ * const app = await NestFactory.create(AppModule);
+ *
  * app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)));
  * ```
  */
 export class NominalSerializerInterceptor extends ClassSerializerInterceptor {
+  /**
+   * Replaces the nominal instances in a response with their values, then serializes it as
+   * `ClassSerializerInterceptor` does. Nest calls it for you.
+   *
+   * @param response - What the route returned.
+   * @param options - The class-transformer options for this route.
+   * @returns The plain response.
+   */
   public override serialize(
     response: PlainLiteralObject | PlainLiteralObject[],
     options: ClassSerializerContextOptions,

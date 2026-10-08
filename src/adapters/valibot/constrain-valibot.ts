@@ -41,13 +41,32 @@ const pathItems = (
  * The constraints see the object Valibot gives, with `toValibot()` fields as instances, and add
  * their issues with paths from this object.
  *
+ * @typeParam Schema - The Valibot object schema the constraints check.
+ * @param object - The Valibot object to check.
+ * @param constraints - The constraints to run on the object, made with `n.constraint()`.
+ * @returns A Valibot schema that runs the object, then the constraints.
+ * @throws {@link TypeError} when a constraint reads a field the object does not declare, and the
+ * object drops or refuses undeclared keys.
+ *
  * @example
  * ```ts
+ * import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+ * import { constrainValibot, toValibot } from '@horizon-republic/nominal-types/adapters/valibot';
+ * import * as v from 'valibot';
+ *
+ * const withinCapacity = n.constraint(
+ *   { guests: PositiveInteger, capacity: PositiveInteger },
+ *   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
+ *   { path: 'guests' },
+ * );
+ *
  * const Stay = constrainValibot(
  *   v.object({ guests: toValibot(PositiveInteger), capacity: toValibot(PositiveInteger) }),
  *   withinCapacity,
  * );
  * ```
+ *
+ * @see {@link toValibot}
  */
 export const constrainValibot = <
   Schema extends v.BaseSchema<unknown, Record<string, unknown>, v.BaseIssue<unknown>>,

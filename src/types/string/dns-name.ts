@@ -1,8 +1,10 @@
 import { decodePunycode, encodePunycode } from './punycode.ts';
 
 /**
- * Internal: one LDH label as a pattern fragment, letters, digits and inner hyphens, up to 63
+ * One LDH label as a pattern fragment, letters, digits and inner hyphens, up to 63
  * characters; `Email` builds its domain from it too.
+ *
+ * @internal
  */
 export const labelFragment = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?';
 
@@ -18,19 +20,25 @@ const hostLabel =
   `(?:${end}(?:${inner}{0,59}${end})?|-${end}(?:${inner}{0,58}${end})?))`;
 
 /**
- * Internal: a host name as a pattern, for JSON Schema, with the length limits left to `minLength`
+ * A host name as a pattern, for JSON Schema, with the length limits left to `minLength`
  * and `maxLength`; the runtime check also decodes `xn--` labels, which a pattern cannot.
+ *
+ * @internal
  */
 export const hostnamePattern: RegExp = new RegExp(`^(?:${hostLabel}\\.)*${hostLabel}$`, 'u');
 
 /**
- * Internal: a host name whose last label is all digits, which a host name never is, as a pattern
+ * A host name whose last label is all digits, which a host name never is, as a pattern
  * for the `not` of a JSON Schema.
+ *
+ * @internal
  */
 export const digitsLastPattern: RegExp = /(?:^|\.)[0-9]+$/u;
 
 /**
- * Internal: the top-level label `DomainName` requires, as a pattern searched from the last dot.
+ * The top-level label `DomainName` requires, as a pattern searched from the last dot.
+ *
+ * @internal
  */
 export const topLevelPattern: RegExp = /\.(?:[A-Za-z]{2,63}|[Xx][Nn]--[A-Za-z0-9-]{1,59})$/u;
 
@@ -61,9 +69,11 @@ const isULabel = (label: string): boolean =>
   label.normalize('NFKC') === label;
 
 /**
- * Internal: the U-label an A-label stands for, or `undefined` when the text after `xn--` is not
+ * The U-label an A-label stands for, or `undefined` when the text after `xn--` is not
  * the Punycode of a valid one (RFC 5891 §5.4): it decodes, has a character outside ASCII, encodes
  * back to the same text and passes the checks of `isULabel`.
+ *
+ * @internal
  */
 export const uLabelOf = (aLabel: string): string | undefined => {
   const encoded = aLabel.slice(4).toLowerCase();
@@ -103,9 +113,11 @@ const isLabel = (text: string, from: number, to: number): boolean => {
 };
 
 /**
- * Internal: whether a value is a host name per RFC 1123 §2.1: LDH labels of 1 to 63 characters
+ * Whether a value is a host name per RFC 1123 §2.1: LDH labels of 1 to 63 characters
  * joined by dots, 253 characters at most, no trailing dot, a last label that is not all digits,
  * and `xn--` labels that decode.
+ *
+ * @internal
  */
 export const isHostnameText = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0 || value.length > 253) {
@@ -138,8 +150,10 @@ export const isHostnameText = (value: unknown): value is string => {
 };
 
 /**
- * Internal: whether a host name ends in a top-level label of letters, or an A-label, after at
+ * Whether a host name ends in a top-level label of letters, or an A-label, after at
  * least one dot.
+ *
+ * @internal
  */
 export const hasTopLevelText = (value: unknown): value is string => {
   if (typeof value !== 'string') {

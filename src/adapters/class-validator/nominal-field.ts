@@ -18,13 +18,16 @@ const toPlain = (value: unknown): unknown => {
 };
 
 /**
- * Options of `@NominalField()`: class-validator's own, and how the value is written back.
+ * Options of {@link NominalField}: class-validator's own, and how the value is written back.
+ *
+ * @typeParam Value - The value the property holds.
  */
 export interface NominalFieldOptions<Value> extends ValidationOptions {
   /**
    * What the property becomes when the DTO is turned back into a plain object, as
-   * `ClassSerializerInterceptor` does; by default, the value. `undefined` and `null` are written as
-   * they are.
+   * `ClassSerializerInterceptor` does. `undefined` and `null` are written as they are.
+   *
+   * @defaultValue The instance's value.
    */
   readonly serialize?: (value: NonNullable<Value>) => unknown;
 }
@@ -100,14 +103,26 @@ const checkOf =
  * value again, or what `serialize` makes of it. The property counts as known for `whitelist`.
  * The other options are class-validator's own, such as `message` or `groups`.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `n.of()` schema.
+ * @typeParam Target - The nominal type or schema of the property.
+ * @param target - The nominal type or `n.of()` schema the property must match.
+ * @param options - Options of class-validator, and `serialize` for writing the value back.
+ * @returns A decorator for a DTO property.
+ * @throws {@link TypeError} when `target` is neither a nominal type nor a `n.of()` schema.
  *
  * @example
  * ```ts
- * class CreateOrderDto {
- *   @NominalField(Email) contact!: Email;
- *   @NominalField(n.of(Uuid).array({ min: 1, max: 50 })) items!: readonly Uuid[];
- *   @NominalField(n.of(Email).optional()) backup?: Email;
+ * import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+ * import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
+ *
+ * export class CreateOrderDto {
+ *   @NominalField(Email)
+ *   public contact!: Email;
+ *
+ *   @NominalField(n.of(Uuid).array({ min: 1, max: 50 }))
+ *   public items!: readonly Uuid[];
+ *
+ *   @NominalField(n.of(Email).optional())
+ *   public backup?: Email;
  * }
  * ```
  */

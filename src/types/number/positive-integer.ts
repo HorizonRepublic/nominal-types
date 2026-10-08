@@ -22,7 +22,21 @@ const PositiveIntegerBase: SubtypeOf<
  *
  * @remarks
  * Zero is not positive; reach for `NonNegativeInteger` where 0 is a valid value.
+ *
+ * @example
+ * ```ts
+ * import { PositiveInteger } from '@horizon-republic/nominal-types';
+ *
+ * export class Quantity extends PositiveInteger.subtype('shop.Quantity') {}
+ *
+ * new Quantity(3).value; // 3
+ * Quantity.parse(0).ok; // false
+ * ```
  */
 export class PositiveInteger extends PositiveIntegerBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PositiveInteger>;
 }

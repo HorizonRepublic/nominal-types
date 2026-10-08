@@ -9,12 +9,40 @@ import { NoJsonSchema } from './no-json-schema.ts';
  * Nominal types recognise it and call the guard directly, without going through `validate`, so a
  * type declared from a guard costs about as much as the guard itself. Without a JSON Schema body,
  * the schema refuses to describe itself.
+ *
+ * @typeParam Value - The values the guard approves.
+ *
+ * @example
+ * ```ts
+ * import { n } from '@horizon-republic/nominal-types';
+ *
+ * const isEven = (value: unknown): value is number =>
+ *   typeof value === 'number' && Number.isInteger(value) && value % 2 === 0;
+ *
+ * const even = n.satisfying(isEven, 'an even number');
+ *
+ * even.accepts(4); // true
+ * even.description; // 'an even number'
+ * ```
  */
 export class PredicateSchema<Value> extends NativeSchema<Value> {
+  /**
+   * The type guard; a plain function, so it can be called on its own.
+   */
   public readonly accepts: (value: unknown) => value is Value;
+  /**
+   * What an approved value is, completing "must be …" in messages.
+   */
   public readonly description: string;
   readonly #json: Readonly<Record<string, unknown>> | undefined;
 
+  /**
+   * Builds the schema; `n.satisfying()` does the same and reads better in a chain.
+   *
+   * @param check - The type guard that approves a value.
+   * @param description - What an approved value is, completing "must be …" in messages.
+   * @param json - The JSON Schema the guard corresponds to; without it the schema has none.
+   */
   public constructor(
     check: (value: unknown) => value is Value,
     description: string,
@@ -51,8 +79,16 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
  * The description completes the sentence "must be …" in error messages. Pass the JSON Schema the
  * guard corresponds to, if the type should describe itself.
  *
+ * @typeParam Value - The values the guard approves.
+ * @param check - The type guard that approves a value.
+ * @param description - What an approved value is, completing "must be …" in messages.
+ * @param json - The JSON Schema the guard corresponds to; without it the schema has none.
+ * @returns The schema of the values the guard approves.
+ *
  * @example
  * ```ts
+ * import { n, Nominal } from '@horizon-republic/nominal-types';
+ *
  * const isEven = (value: unknown): value is number =>
  *   typeof value === 'number' && Number.isInteger(value) && value % 2 === 0;
  *

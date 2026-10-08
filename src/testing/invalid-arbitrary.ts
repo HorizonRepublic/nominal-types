@@ -91,7 +91,9 @@ const recordChange = (record: object): Arbitrary<unknown> => {
 };
 
 /**
- * Internal: a value close to a valid one, changed a little in a way that depends on its kind.
+ * A value close to a valid one, changed a little in a way that depends on its kind.
+ *
+ * @internal
  */
 export const changed = (value: unknown): Arbitrary<unknown> => {
   if (typeof value === 'string') {
@@ -122,8 +124,10 @@ export const changed = (value: unknown): Arbitrary<unknown> => {
 };
 
 /**
- * Internal: values of the wrong kind and valid values changed a little, before the filter that
+ * Values of the wrong kind and valid values changed a little, before the filter that
  * keeps the ones the target refuses.
+ *
+ * @internal
  */
 export const nearAndWrong = (valid: Arbitrary<unknown>): Arbitrary<unknown> =>
   fc.oneof(

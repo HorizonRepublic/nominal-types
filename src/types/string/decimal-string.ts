@@ -58,8 +58,10 @@ const checkScale = (method: string, scale: number): void => {
 };
 
 /**
- * Internal: the decimal text of `amount` divided by ten to the power of `scale`, with exactly
+ * The decimal text of `amount` divided by ten to the power of `scale`, with exactly
  * `scale` digits after the point.
+ *
+ * @internal
  */
 export const decimalText = (amount: bigint, scale: number): string => {
   const negative = amount < 0n;
@@ -83,12 +85,17 @@ export const decimalText = (amount: bigint, scale: number): string => {
  *
  * @example
  * ```ts
+ * import { DecimalString } from '@horizon-republic/nominal-types';
+ *
  * const price = new DecimalString('12.50');
  * price.toMinorUnits(2); // 1250n
  * DecimalString.fromMinorUnits(1250n, 2).value; // '12.50'
  * ```
  */
 export class DecimalString extends DecimalStringBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof DecimalString>;
 
   /**
@@ -100,8 +107,13 @@ export class DecimalString extends DecimalStringBase {
    * The number `amount / 10^scale`, written with exactly `scale` digits after the point, such as
    * `12.50` for `1250n` and 2: the way back from `toMinorUnits()`.
    *
-   * @throws RangeError when the scale is not a whole number from 0 up.
-   * @throws NominalError when the text is longer than 100 characters, or the class refuses it.
+   * @typeParam Type - The class it is called on, `DecimalString` or a subclass.
+   * @param amount - The number in minor units, such as cents.
+   * @param scale - How many digits go after the point.
+   * @returns An instance of the class it is called on.
+   * @throws {@link RangeError} when the scale is not a whole number from 0 up.
+   * @throws {@link NominalError} when the text is longer than 100 characters, or the class refuses
+   * it.
    */
   public static fromMinorUnits<Type extends new (input: string) => DecimalString>(
     this: Type,
@@ -145,8 +157,10 @@ export class DecimalString extends DecimalStringBase {
   /**
    * The number times `10^scale`, as a bigint: `1250n` for `'12.5'` and 2, the count of cents.
    *
-   * @throws RangeError when the scale is not a whole number from 0 up, or when the number has
-   * digits other than zero past `scale` places after the point, which would be lost.
+   * @param scale - How many digits after the point the minor unit stands for.
+   * @returns The number in minor units.
+   * @throws {@link RangeError} when the scale is not a whole number from 0 up, or when the number
+   * has digits other than zero past `scale` places after the point, which would be lost.
    */
   public toMinorUnits(scale: number): bigint {
     checkScale('toMinorUnits()', scale);
@@ -165,6 +179,9 @@ export class DecimalString extends DecimalStringBase {
   /**
    * `-1` if this number is smaller than the other, `1` if larger, `0` if they are equal, read
    * exactly from the digits; it suits `Array.prototype.sort()`.
+   *
+   * @param other - The number to compare with.
+   * @returns The order of the two numbers.
    */
   public compare(other: DecimalString): -1 | 0 | 1 {
     const left = partsOf(this.value);
@@ -182,6 +199,8 @@ export class DecimalString extends DecimalStringBase {
   /**
    * The shortest text of the same number: trailing zeros after the point dropped, the point too
    * when nothing follows it, and `-0` written `0`.
+   *
+   * @returns A number of the same class.
    */
   public canonical(): this {
     return sameType(this, canonicalText(this.value));
@@ -190,6 +209,9 @@ export class DecimalString extends DecimalStringBase {
   /**
    * Whether the other value is the same number, however many trailing zeros either has, and
    * belongs to this type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same number.
    */
   public override equals(other: unknown): boolean {
     return (

@@ -1,9 +1,12 @@
 /**
- * Internal: a new instance of the class `instance` belongs to, built from `value`, for methods of
+ * A new instance of the class `instance` belongs to, built from `value`, for methods of
  * built-in types such as `canonical()` that keep a subtype: a `StaffEmail` gives a `StaffEmail`.
  *
- * @throws NominalError when the class refuses the value, such as a subtype whose rule the new
- * value breaks.
+ * @throws {@link NominalError} when the class refuses the value, such as a subtype whose rule the
+ * new value breaks.
+ * @throws {@link TypeError} if the instance has no class to build a copy with.
+ *
+ * @internal
  */
 export const sameType = <Instance extends object>(instance: Instance, value: unknown): Instance => {
   const type: unknown = instance.constructor;

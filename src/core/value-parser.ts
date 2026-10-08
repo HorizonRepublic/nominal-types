@@ -52,12 +52,14 @@ const loopParser =
   };
 
 /**
- * Internal: a function that runs a type's rules on a plain value and makes the instance, one per
+ * A function that runs a type's rules on a plain value and makes the instance, one per
  * type: generated where code generation is allowed, so V8 sees one class at its `new`.
  *
  * @remarks
  * A constructor of the type's own may hand `super()` a changed input, which the rules then check
  * again; its `NominalError` comes back as a `Rejection` like any other.
+ *
+ * @internal
  */
 export const parserFor = <Instance>(
   target: new (input: unknown) => Instance,

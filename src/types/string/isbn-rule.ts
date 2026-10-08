@@ -3,8 +3,10 @@ import { PredicateSchema } from '../../core/predicate-schema.ts';
 const separated = /[\s-]/u;
 
 /**
- * Internal: the rule of `Isbn`, which tells text with hyphens or spaces apart from a wrong check
+ * The rule of `Isbn`, which tells text with hyphens or spaces apart from a wrong check
  * digit in its message.
+ *
+ * @internal
  */
 export class IsbnRule extends PredicateSchema<string> {
   public override descriptionFor(value: unknown): string {

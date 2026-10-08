@@ -9,7 +9,9 @@ import { AnyNumber } from '../../types/number/any-number.ts';
 import { typeJsonOf } from '../type-json.ts';
 
 /**
- * Internal: the kind of column a nominal type is stored in, with its size where it has one.
+ * The kind of column a nominal type is stored in, with its size where it has one.
+ *
+ * @internal
  */
 export type ColumnKind =
   | { readonly kind: 'text'; readonly length?: number }
@@ -27,7 +29,9 @@ export type ColumnKind =
   | { readonly kind: 'timestamp' };
 
 /**
- * Internal: whether a type is a base type or declared under it.
+ * Whether a type is a base type or declared under it.
+ *
+ * @internal
  */
 export const isUnder = (root: object, target: AnyNominalType): boolean =>
   target === root || Object.prototype.isPrototypeOf.call(root, target);
@@ -114,12 +118,14 @@ const temporalKinds: ReadonlyArray<readonly [object, ColumnKind]> = [
 ];
 
 /**
- * Internal: the column a type is stored in by default. The family comes from the base type it is
+ * The column a type is stored in by default. The family comes from the base type it is
  * declared under; the size is found by asking the type itself about values at the edges: `integer`
  * when it refuses everything past 32 bits, `bigint` within 64 bits, `decimal(20)` for unsigned
  * 64-bit values, `double` for fractions; `uuid` for a UUID and text with the type's longest length.
  * The Temporal types take the SQL type of their kind: `timestamptz`, `date`, `time`, `timestamp`.
  * `DecimalString` takes `numeric`, and a type whose values are objects or arrays a JSON column.
+ *
+ * @internal
  */
 export const columnKindOf = (target: AnyNominalType): ColumnKind => {
   const temporal = temporalKinds.find(([root]) => isUnder(root, target));

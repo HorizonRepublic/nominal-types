@@ -50,11 +50,13 @@ const describeForOpenApi = (
 };
 
 /**
- * Internal: the JSON Schema of a type's rules: the rule's own schema when there is one, the
+ * The JSON Schema of a type's rules: the rule's own schema when there is one, the
  * schemas of all of them, from the root down, merged as far as they fit together when there are
  * several.
  *
- * @throws TypeError naming the type when a rule can't describe itself.
+ * @throws {@link TypeError} when a rule can't describe itself; the message names the type.
+ *
+ * @internal
  */
 export const describeRules = (
   typeName: string,

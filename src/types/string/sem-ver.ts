@@ -121,18 +121,23 @@ const orderLists = (
  * @remarks
  * A leading `v` is refused, as the specification says `v1.2.3` is not a semantic version. The text
  * is at most 256 characters, as in the `semver` package on npm, and every number in it, prerelease
- * numbers included, at most `Number.MAX_SAFE_INTEGER`, so no number loses digits. `compare()` orders versions by the
- * precedence of section 11, where build metadata doesn't count; `equals()` compares the text, so
- * `1.0.0+a` and `1.0.0+b` compare as 0 yet are not equal.
+ * numbers included, at most `Number.MAX_SAFE_INTEGER`, so no number loses digits. `compare()`
+ * orders versions by the precedence of section 11, where build metadata doesn't count; `equals()`
+ * compares the text, so `1.0.0+a` and `1.0.0+b` compare as 0 yet are not equal.
  *
  * @example
  * ```ts
+ * import { SemVer } from '@horizon-republic/nominal-types';
+ *
  * const version = new SemVer('2.0.0-rc.1+build.5');
  * version.prerelease; // ['rc', 1]
  * version.isNewerThan(new SemVer('2.0.0-beta.9')); // true
  * ```
  */
 export class SemVer extends SemVerBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof SemVer>;
 
   /**
@@ -183,8 +188,12 @@ export class SemVer extends SemVerBase {
   }
 
   /**
-   * -1 when this version comes before the other, 1 when after, 0 when both have the same
-   * precedence; sorts an array with `versions.sort((a, b) => a.compare(b))`.
+   * The order of this version and the other by precedence, for sorting with
+   * `versions.sort((a, b) => a.compare(b))`.
+   *
+   * @param other - The version to compare with.
+   * @returns `-1` when this version comes before the other, `1` when after, `0` when both have the
+   * same precedence.
    */
   public compare(other: SemVer): -1 | 0 | 1 {
     const left = partsOf(this.value);
@@ -206,6 +215,9 @@ export class SemVer extends SemVerBase {
 
   /**
    * Whether this version comes after the other by precedence.
+   *
+   * @param other - The version to compare with.
+   * @returns `true` when this version is newer.
    */
   public isNewerThan(other: SemVer): boolean {
     return this.compare(other) === 1;

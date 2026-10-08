@@ -26,6 +26,9 @@ type Tags<Variants> = Extract<keyof Variants, string>;
 /**
  * What an `n.union()` schema accepts: for each tag, the input of its variant with the tag under
  * the key.
+ *
+ * @typeParam Key - The field that holds the tag.
+ * @typeParam Variants - Each tag to the `n.object()` schema of its shape.
  */
 export type UnionInput<Key extends string, Variants extends UnionVariants> = {
   [Tag in Tags<Variants>]: Variants[Tag] extends ObjectSchema<infer Input, unknown>
@@ -36,6 +39,9 @@ export type UnionInput<Key extends string, Variants extends UnionVariants> = {
 /**
  * What an `n.union()` schema gives: for each tag, the value of its variant with the tag under the
  * key, so checking the key narrows the value to one variant.
+ *
+ * @typeParam Key - The field that holds the tag.
+ * @typeParam Variants - Each tag to the `n.object()` schema of its shape.
  */
 export type UnionValue<Key extends string, Variants extends UnionVariants> = {
   [Tag in Tags<Variants>]: Variants[Tag] extends ObjectSchema<unknown, infer Output>
@@ -128,6 +134,22 @@ const expectedTags = (tags: readonly string[]): string =>
  * @remarks
  * It is a `TypeSchema`, so `array()`, `optional()` and `nullable()` build on it, `n.object()` takes
  * it as a field, and a nominal type takes it as its rule.
+ *
+ * @typeParam Input - What the schema accepts.
+ * @typeParam Output - What the schema gives back.
+ *
+ * @example
+ * ```ts
+ * import { Email, n, NonBlankString } from '@horizon-republic/nominal-types';
+ *
+ * const Payment = n.union('method', {
+ *   card: n.object({ token: NonBlankString }),
+ *   invoice: n.object({ email: Email }),
+ * });
+ *
+ * Payment.key; // 'method'
+ * Payment.tags; // ['card', 'invoice']
+ * ```
  */
 export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
   /**
@@ -140,7 +162,9 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
   public readonly tags: readonly string[];
 
   /**
-   * Internal: built by `n.union()`.
+   * Built by `n.union()`.
+   *
+   * @internal
    */
   public constructor(key: string, variants: UnionVariants) {
     const entries = checkedVariants(key, variants);
@@ -202,11 +226,18 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
  * The value holds the tag under the key, whether or not the variant declares that field; a field
  * the variant declares under the key is replaced by the tag. Tags are strings, compared with `===`.
  *
- * @throws TypeError for a key that is not a string or is `__proto__`, no variants, or a variant
- * that is not an `n.object()` schema.
+ * @typeParam Key - The field that holds the tag.
+ * @typeParam Variants - Each tag to the `n.object()` schema of its shape.
+ * @param key - The field that holds the tag.
+ * @param variants - Each tag to the `n.object()` schema of its shape.
+ * @returns The schema of the union.
+ * @throws {@link TypeError} when the key is not a string or is `__proto__`, no variant is given,
+ * or a variant is not an `n.object()` schema.
  *
  * @example
  * ```ts
+ * import { Email, n, NonBlankString } from '@horizon-republic/nominal-types';
+ *
  * const Payment = n.union('method', {
  *   card: n.object({ token: NonBlankString }),
  *   invoice: n.object({ email: Email }),

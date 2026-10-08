@@ -12,7 +12,21 @@ const HttpUrlBase: SubtypeOf<typeof Url, 'nominal.HttpUrl'> = Url.subtype(
 
 /**
  * An absolute URL whose scheme is `http` or `https`.
+ *
+ * @remarks
+ * It is a subtype of {@link Url}, so it has the same members.
+ *
+ * @example
+ * ```ts
+ * import { HttpUrl } from '@horizon-republic/nominal-types';
+ *
+ * const docs = new HttpUrl('https://example.com/docs');
+ * HttpUrl.accepts('ftp://example.com/file'); // false
+ * ```
  */
 export class HttpUrl extends HttpUrlBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof HttpUrl>;
 }

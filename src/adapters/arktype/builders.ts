@@ -3,11 +3,24 @@ import { generateFunction } from '../../core/compile.ts';
 type Build = (value: unknown) => unknown;
 
 /**
- * Internal: a field ArkType declared on an object, with the builder for its value, if any.
+ * A field ArkType declared on an object, with the builder for its value, if any.
+ *
+ * @internal
  */
 export interface DeclaredField {
+  /**
+   * The field's key.
+   */
   readonly key: string;
+
+  /**
+   * Whether ArkType declared the field optional.
+   */
   readonly optional: boolean;
+
+  /**
+   * The builder for the field's value, or `undefined` where the value stays as it is.
+   */
   readonly build: Build | undefined;
 }
 
@@ -35,13 +48,15 @@ const fieldSource = (field: DeclaredField, index: number): string => {
 };
 
 /**
- * Internal: a generated function that builds an object from one ArkType accepted: a literal with
+ * A generated function that builds an object from one ArkType accepted: a literal with
  * every declared field, optional ones only where present, and undeclared keys copied only when the
  * value has any; `undefined` where code generation is forbidden.
  *
  * @remarks
  * A literal gives V8 one shape and no keyed stores, about five times faster than a loop over the
  * fields with a spread.
+ *
+ * @internal
  */
 export const generatedObjectBuilder = (
   fields: readonly DeclaredField[],
@@ -82,8 +97,10 @@ export const generatedObjectBuilder = (
 };
 
 /**
- * Internal: a generated function that builds every item of an array with one builder, or
+ * A generated function that builds every item of an array with one builder, or
  * `undefined` where code generation is forbidden.
+ *
+ * @internal
  */
 export const generatedArrayBuilder = (build: Build, generate?: boolean): Build | undefined => {
   const built = generateFunction(

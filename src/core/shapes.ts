@@ -10,11 +10,21 @@ import type { StandardSchemaV1 } from './standard-spec.ts';
 import type { TextForm } from './text-form.ts';
 
 /**
- * Internal: how a `n.of()` schema runs and describes itself, without `$schema`.
+ * How a `n.of()` schema runs and describes itself, without `$schema`.
+ *
+ * @internal
  */
 export interface Shape<Output> {
+  /**
+   * Runs the schema: the value, or a `Rejection`.
+   */
   readonly run: Run<Output>;
+
+  /**
+   * The JSON Schema of the schema for one side and target, without its `$schema`.
+   */
   readonly describe: Describe;
+
   /**
    * Whether messages about the value leave it out, as the messages of a sensitive type do.
    */
@@ -135,14 +145,16 @@ const uniqueRun =
   };
 
 /**
- * Internal: a new array of what `item` accepts, with its count checked first and every bad item
+ * A new array of what `item` accepts, with its count checked first and every bad item
  * reported with its index, then, with `unique`, every item that repeats an earlier one. It is
  * read-only by type; a nominal type built on it freezes it.
  *
  * @remarks
  * Each array schema runs a loop generated for it, so V8 sees one item schema at its call.
  *
- * @throws TypeError for options `boundsOf` refuses.
+ * @throws {@link TypeError} when the options hold bounds that `boundsOf` refuses.
+ *
+ * @internal
  */
 export const arrayShape = <Item>(
   item: Shape<Item>,
@@ -166,7 +178,9 @@ export const arrayShape = <Item>(
 };
 
 /**
- * Internal: `item`, or `undefined`.
+ * `item`, or `undefined`.
+ *
+ * @internal
  */
 export const optionalShape = <Item>(item: Shape<Item>): Shape<Item | undefined> => ({
   run: (input) => (input === undefined ? undefined : item.run(input)),
@@ -175,7 +189,9 @@ export const optionalShape = <Item>(item: Shape<Item>): Shape<Item | undefined> 
 });
 
 /**
- * Internal: `item`, or `null`; OpenAPI 3.0 has no `null` type and marks the schema `nullable`.
+ * `item`, or `null`; OpenAPI 3.0 has no `null` type and marks the schema `nullable`.
+ *
+ * @internal
  */
 export const nullableShape = <Item>(item: Shape<Item>): Shape<Item | null> => ({
   run: (input) => (input === null ? null : item.run(input)),
@@ -187,7 +203,9 @@ export const nullableShape = <Item>(item: Shape<Item>): Shape<Item | null> => ({
 });
 
 /**
- * Internal: `item`, reading a string through the type's text form first.
+ * `item`, reading a string through the type's text form first.
+ *
+ * @internal
  */
 export const textShape = <Item>(item: Shape<Item>, form: TextForm): Shape<Item> => ({
   run: (input) => item.run(typeof input === 'string' ? (form(input) ?? input) : input),

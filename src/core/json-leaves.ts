@@ -5,7 +5,9 @@ import { rulesOf } from './hierarchy.ts';
 type Write = (value: unknown) => unknown;
 
 /**
- * Internal: the shape of what a schema gives, as the JSON writer generated for it reads it.
+ * The shape of what a schema gives, as the JSON writer generated for it reads it.
+ *
+ * @internal
  */
 export type Plan =
   | { readonly kind: 'type'; readonly type: object }
@@ -26,39 +28,66 @@ export type Plan =
   | { readonly kind: 'json'; readonly write: Write };
 
 /**
- * Internal: a field of an object plan.
+ * A field of an object plan.
+ *
+ * @internal
  */
 export interface PlanField {
+  /**
+   * The key of the field in the object.
+   */
   readonly key: string;
+  /**
+   * Whether the field may be missing, so the text leaves it out when it is.
+   */
   readonly optional: boolean;
+  /**
+   * How the value of the field is written.
+   */
   readonly plan: Plan;
 }
 
 /**
- * Internal: the plans of the schemas this copy of the package built, so a schema that holds
+ * The plans of the schemas this copy of the package built, so a schema that holds
  * another as a field writes it in the same function.
+ *
+ * @internal
  */
 export const plans: WeakMap<object, Plan> = new WeakMap();
 
 /**
- * Internal: what the writer needs of the root class, which it can't import without a cycle.
+ * What the writer needs of the root class, which it can't import without a cycle.
+ *
+ * @internal
  */
 export interface Instances {
+  /**
+   * The root class every nominal type of this copy of the package extends.
+   */
   readonly root: object;
+  /**
+   * Whether a value is a nominal type declared with this copy of the package.
+   */
   readonly isOwn: (value: unknown) => boolean;
-  /** The value an instance was built with, or a value no instance holds. */
+  /**
+   * The value an instance was built with, or a value no instance holds.
+   */
   readonly checked: (instance: object) => unknown;
 }
 
 /**
- * Internal: JSON text, or `undefined` for a value JSON leaves out.
+ * JSON text, or `undefined` for a value JSON leaves out.
+ *
+ * @internal
  */
 export type Stringify = (value: unknown) => string | undefined;
 
 /**
- * Internal: how a type's instances are written: a string known to need no escaping, any primitive
+ * How a type's instances are written: a string known to need no escaping, any primitive
  * value, a big integer, as an object plan, or through `JSON.stringify()`, which calls a `toJSON()`
  * of the type's own and covers the types of another copy of the package.
+ *
+ * @internal
  */
 export type Leaf = 'safe' | 'value' | 'bigint' | 'json' | Plan;
 
@@ -101,7 +130,9 @@ const findLeaf = (type: object, { root, isOwn }: Instances): Leaf => {
 const leaves = new WeakMap<object, Leaf>();
 
 /**
- * Internal: how the instances of `type` are written, worked out once per type.
+ * How the instances of `type` are written, worked out once per type.
+ *
+ * @internal
  */
 export const leafOf = (type: object, instances: Instances): Leaf => {
   let leaf = leaves.get(type);
@@ -120,17 +151,25 @@ export const leafOf = (type: object, instances: Instances): Leaf => {
 const needsEscape = /["\\\u0000-\u001F\uD800-\uDFFF]/u;
 
 /**
- * Internal: a helper the generated writers call.
+ * A string as JSON text, between quotes, escaped only when it holds a character that needs it.
+ * The generated writers call it.
+ *
+ * @internal
  */
 export const text = (value: string): string =>
   needsEscape.test(value) ? JSON.stringify(value) : `"${value}"`;
 
 /**
- * Internal: a helper the generated writers call.
+ * A number as JSON text, `null` for `NaN` and the infinities, as `JSON.stringify()` writes
+ * them. The generated writers call it.
+ *
+ * @internal
  */
 export const number = (value: number): string => (Number.isFinite(value) ? `${value}` : 'null');
 
 /**
- * Internal: a helper the generated writers call.
+ * A value as `JSON.stringify()` writes it, for the generated writers to call.
+ *
+ * @internal
  */
 export const json = (value: unknown): string | undefined => JSON.stringify(value);

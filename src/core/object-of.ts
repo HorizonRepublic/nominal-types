@@ -6,6 +6,17 @@ import type { ObjectFields, ObjectInput, ObjectValue } from './object-types.ts';
 
 /**
  * Whether a value is a schema built by `n.object()`, also by another copy of this package.
+ *
+ * @param value - The value to test.
+ * @returns `true` for an `n.object()` schema, `false` for anything else.
+ *
+ * @example
+ * ```ts
+ * import { Email, n } from '@horizon-republic/nominal-types';
+ *
+ * n.isObject(n.object({ email: Email })); // true
+ * n.isObject(Email); // false
+ * ```
  */
 export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, unknown> =>
   typeof value === 'object' && value !== null && Reflect.get(value, objectMark) === true;
@@ -24,10 +35,20 @@ export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, u
  *
  * Given to `Nominal()`, it makes a class with a getter for each field and `copyWith()`.
  *
- * @throws TypeError for a field named `__proto__`.
+ * @typeParam Fields - The fields, each key to its schema.
+ * @param fields - The fields, each key to a nominal type, a `n.of()` or `n.object()` schema, or a
+ * synchronous Standard Schema.
+ * @param constraints - Checks that read several fields together, built by `n.constraint()`.
+ * @returns The schema of the object.
+ * @throws {@link TypeError} when a field is named `__proto__`, or a constraint reads a field the
+ * object doesn't declare.
  *
  * @example
  * ```ts
+ * import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ *
+ * declare const body: unknown;
+ *
  * export const CreateOrder = n.object({
  *   email: Email,
  *   quantity: PositiveInteger,
@@ -44,8 +65,10 @@ export const objectOf = <const Fields extends ObjectFields>(
   new ObjectSchema(fields, constraints, false);
 
 /**
- * Internal: `objectOf()` for a type this package declares as it loads, which builds its checks
+ * `objectOf()` for a type this package declares as it loads, which builds its checks
  * at the first use, so loading the package generates no code before `n.configure()` runs.
+ *
+ * @internal
  */
 export const deferredObjectOf = <const Fields extends ObjectFields>(
   fields: Fields,

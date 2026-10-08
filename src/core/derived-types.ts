@@ -17,6 +17,8 @@ declare const impliedBrands: unique symbol;
 
 /**
  * The brands every listed type carries, as one brand.
+ *
+ * @internal
  */
 export type ImpliedBrands<Implied extends AnyNominalType> = (
   Implied extends AnyNominalType ? (brands: BrandsOf<Implied['prototype']>) => void : never
@@ -27,8 +29,13 @@ export type ImpliedBrands<Implied extends AnyNominalType> = (
 /**
  * The phantom part of a type class that names the brands its level adds through `implies`, which a
  * variant made from it drops with the type's own brand.
+ *
+ * @internal
  */
 export interface Implying<Names> {
+  /**
+   * The names of the implied brands. It exists only at compile time.
+   */
   readonly [impliedBrands]?: Names;
 }
 
@@ -46,6 +53,11 @@ type OwnImplied<Brands, Implied extends AnyNominalType> = [Implied] extends [nev
 /**
  * The class `Nominal()` returns: a `NominalType`, whose instances also carry the brands of the
  * types listed in `implies`.
+ *
+ * @typeParam Name - The type name.
+ * @typeParam Schema - The rule of the type's own level.
+ * @typeParam Instance - The type of its instances.
+ * @typeParam Implied - The types listed in `implies`, or `never` for none.
  */
 export type ImplyingType<
   Name extends string,
@@ -59,6 +71,11 @@ export type ImplyingType<
 
 /**
  * An instance of a subtype: the parent's instance, with the narrower value and a brand of its own.
+ *
+ * @typeParam Parent - The type the subtype extends.
+ * @typeParam Name - The subtype's name.
+ * @typeParam Value - The value type its rule narrows to.
+ * @typeParam Implied - The types listed in `implies`, or `never` for none.
  */
 export type SubtypeInstance<
   Parent extends AnyNominalType,
@@ -73,6 +90,11 @@ export type SubtypeInstance<
  *
  * @remarks
  * A rule that narrows the value, such as `n.oneOf()`, narrows `value` on the instance too.
+ *
+ * @typeParam Parent - The type the subtype extends.
+ * @typeParam Name - The subtype's name.
+ * @typeParam Value - The value type its rule narrows to.
+ * @typeParam Implied - The types listed in `implies`, or `never` for none.
  */
 export type SubtypeOf<
   Parent extends AnyNominalType,
@@ -81,9 +103,24 @@ export type SubtypeOf<
   Implied extends AnyNominalType = never,
 > = Omit<Parent, 'prototype' | 'typeName' | '~standard' | typeof impliedBrands> &
   Implying<OwnImplied<BrandsOf<Parent['prototype']>, Implied>> & {
+    /**
+     * Checks the input against the parent's rules and the subtype's own, and makes an instance.
+     *
+     * @param input - The value to check.
+     * @throws {@link NominalError} when the input breaks a rule.
+     */
     new (input: InputOf<Parent['rule']>): SubtypeInstance<Parent, Name, Value, Implied>;
+    /**
+     * The prototype of the instances, which carries their type.
+     */
     readonly prototype: SubtypeInstance<Parent, Name, Value, Implied>;
+    /**
+     * The name the subtype was declared with.
+     */
     readonly typeName: Name;
+    /**
+     * The Standard Schema and Standard JSON Schema properties, typed with the subtype's instances.
+     */
     readonly '~standard': StandardProps<
       InputOf<Parent['rule']>,
       SubtypeInstance<Parent, Name, Value, Implied>
@@ -99,6 +136,10 @@ type VariantBrands<Source extends AnyNominalType, Name extends string> = Omit<
 /**
  * An instance of a variant: the behaviour of the type it was made from, without that type's brand
  * or the brands the type's level implies.
+ *
+ * @typeParam Source - The type the variant was made from.
+ * @typeParam Name - The variant's name.
+ * @typeParam Implied - The types listed in `implies`, or `never` for none.
  */
 export type VariantInstance<
   Source extends AnyNominalType,
@@ -113,6 +154,10 @@ export type VariantInstance<
  * @remarks
  * A variant sits next to its source rather than below it, so neither passes for the other; moving
  * a value between them goes through `parse`, which checks it against the target's rules.
+ *
+ * @typeParam Source - The type the variant was made from.
+ * @typeParam Name - The variant's name.
+ * @typeParam Implied - The types listed in `implies`, or `never` for none.
  */
 export type VariantOf<
   Source extends AnyNominalType,
@@ -120,9 +165,25 @@ export type VariantOf<
   Implied extends AnyNominalType = never,
 > = Omit<Source, 'prototype' | 'typeName' | '~standard' | typeof impliedBrands> &
   Implying<OwnImplied<VariantBrands<Source, Name>, Implied>> & {
+    /**
+     * Checks the input against the rules above the source and the variant's own, and makes an
+     * instance.
+     *
+     * @param input - The value to check.
+     * @throws {@link NominalError} when the input breaks a rule.
+     */
     new (input: InputOf<Source['rule']>): VariantInstance<Source, Name, Implied>;
+    /**
+     * The prototype of the instances, which carries their type.
+     */
     readonly prototype: VariantInstance<Source, Name, Implied>;
+    /**
+     * The name the variant was declared with.
+     */
     readonly typeName: Name;
+    /**
+     * The Standard Schema and Standard JSON Schema properties, typed with the variant's instances.
+     */
     readonly '~standard': StandardProps<
       InputOf<Source['rule']>,
       VariantInstance<Source, Name, Implied>

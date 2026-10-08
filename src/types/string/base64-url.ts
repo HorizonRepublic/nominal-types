@@ -33,12 +33,17 @@ const Base64UrlBase: SubtypeOf<typeof AnyString, 'nominal.Base64Url'> = AnyStrin
  *
  * @example
  * ```ts
+ * import { Base64Url } from '@horizon-republic/nominal-types';
+ *
  * const token = new Base64Url('aGVsbG8');
  * token.byteLength; // 5
  * new TextDecoder().decode(token.toBytes()); // 'hello'
  * ```
  */
 export class Base64Url extends Base64UrlBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Base64Url>;
 
   /**
@@ -58,7 +63,9 @@ export class Base64Url extends Base64UrlBase {
   }
 
   /**
-   * The bytes the text encodes, in a new array the caller may change.
+   * The bytes the text encodes.
+   *
+   * @returns A new array the caller may change.
    */
   public toBytes(): Uint8Array {
     return decodeBase64(this.value, 'base64url');

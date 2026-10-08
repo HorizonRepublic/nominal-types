@@ -16,6 +16,11 @@ export type { NominalTarget, TargetValue } from '../core/target.ts';
 
 /**
  * What a target takes as input: the input of a nominal type's rule, or of a schema.
+ *
+ * @remarks
+ * `arbitraryOf()` and `sampleOf()` make values of this type unless `as` is `'instances'`.
+ *
+ * @typeParam Target - The nominal type or schema whose input it is.
  */
 export type TargetInput<Target extends NominalTarget> = InputOf<
   Target extends AnyNominalType ? Target['rule'] : Extract<Target, NominalSchema>
@@ -23,26 +28,40 @@ export type TargetInput<Target extends NominalTarget> = InputOf<
 
 /**
  * How `arbitraryOf()`, `invalidArbitraryOf()` and `sampleOf()` make values.
+ *
+ * @see {@link SampleOptions}
  */
 export interface ArbitraryOptions {
   /**
    * `'inputs'`, the default, makes the plain values the target accepts, such as strings for
    * `Email`; `'instances'` makes what `parse()` gives for them.
+   *
+   * @defaultValue `'inputs'`
    */
   readonly as?: 'inputs' | 'instances';
   /**
    * Generators of your own, for a nominal type, a schema or a field of another library, used
    * wherever the target holds it.
+   *
+   * @remarks
+   * The key is the nominal type, the schema or the field schema; the value is a fast-check
+   * arbitrary of its inputs. Values an override makes are still checked against the target.
+   *
+   * @defaultValue No generators of your own.
    */
   readonly overrides?: ReadonlyMap<object, Arbitrary<unknown>>;
 }
 
 /**
- * What `sampleOf()` takes besides the target.
+ * What `sampleOf()` takes besides the target and the count.
+ *
+ * @see {@link ArbitraryOptions}
  */
 export interface SampleOptions extends ArbitraryOptions {
   /**
    * The seed of the random generator: the same seed gives the same values on every run.
+   *
+   * @defaultValue A new random seed on every call.
    */
   readonly seed?: number;
 }
@@ -127,23 +146,46 @@ const instancesOf = (target: NominalTarget, inputs: Arbitrary<unknown>): Arbitra
  * their tags. A constructor of your own is not run, so a type whose constructor refuses more
  * than its rules can get values `parse()` refuses.
  *
- * @throws TypeError when the target is not a nominal type or a schema of this package, or when
- * nothing can be generated for it; then pass a generator of your own in `overrides`.
+ * When nothing can be generated for a type, pass a generator of your own in `overrides`.
+ *
+ * @typeParam Target - The nominal type or schema to make values of.
+ * @param target - A nominal type, or a schema built by `n.of()`, `n.object()` or `n.union()`.
+ * @param options - Whether to make inputs or instances, and generators of your own.
+ * @returns An arbitrary of inputs the target accepts, or of instances with `as: 'instances'`.
+ * @throws {@link TypeError} when the target is not a nominal type or a schema of this package.
+ * @throws {@link TypeError} when nothing can be generated for the target or one of its fields.
  *
  * @example
  * ```ts
  * import fc from 'fast-check';
+ * import { Email } from '@horizon-republic/nominal-types';
+ * import { arbitraryOf } from '@horizon-republic/nominal-types/testing';
  *
  * fc.assert(fc.property(arbitraryOf(Email), (text) => Email.parse(text).ok));
  * ```
+ *
+ * @see {@link invalidArbitraryOf}
+ * @see {@link sampleOf}
  */
 export function arbitraryOf<const Target extends NominalTarget>(
   target: Target,
-  options: ArbitraryOptions & { readonly as: 'instances' },
+  options: ArbitraryOptions & {
+    /**
+     * Makes what `parse()` gives for the inputs.
+     */
+    readonly as: 'instances';
+  },
 ): Arbitrary<TargetValue<Target>>;
 export function arbitraryOf<const Target extends NominalTarget>(
   target: Target,
-  options?: ArbitraryOptions & { readonly as?: 'inputs' },
+  options?: ArbitraryOptions & {
+    /**
+     * Makes the plain values the target accepts.
+     *
+     * @defaultValue `'inputs'`
+     */
+    readonly as?: 'inputs';
+  },
 ): Arbitrary<TargetInput<Target>>;
 export function arbitraryOf(target: unknown, options: ArbitraryOptions = {}): Arbitrary<unknown> {
   return valuesOf('arbitraryOf', target, options);
@@ -159,13 +201,25 @@ export function arbitraryOf(target: unknown, options: ArbitraryOptions = {}): Ar
  * item, objects with a field missing, changed or added. Values of the wrong kind, such as `null`
  * or a number for a string type, come in between. Each one is checked to fail `accepts()`.
  *
- * @throws TypeError as `arbitraryOf()` does; generation throws an Error when the target accepts
- * nearly every value made for it.
+ * Drawing from the arbitrary throws an `Error` when the target accepts nearly every value made
+ * for it, since there is too little it refuses to generate from.
+ *
+ * @param target - A nominal type, or a schema built by `n.of()`, `n.object()` or `n.union()`.
+ * @param options - Generators of your own for the valid values the refused ones are made from.
+ * @returns An arbitrary of values the target refuses.
+ * @throws {@link TypeError} when the target is not a nominal type or a schema of this package.
+ * @throws {@link TypeError} when nothing can be generated for the target or one of its fields.
  *
  * @example
  * ```ts
+ * import fc from 'fast-check';
+ * import { Email } from '@horizon-republic/nominal-types';
+ * import { invalidArbitraryOf } from '@horizon-republic/nominal-types/testing';
+ *
  * fc.assert(fc.property(invalidArbitraryOf(Email), (value) => !Email.parse(value).ok));
  * ```
+ *
+ * @see {@link arbitraryOf}
  */
 export const invalidArbitraryOf = (
   target: NominalTarget,
@@ -187,23 +241,49 @@ export const invalidArbitraryOf = (
  * @remarks
  * Ten values unless `count` says otherwise. Pass a `seed` to get the same values on every run.
  *
- * @throws TypeError as `arbitraryOf()` does.
+ * @typeParam Target - The nominal type or schema to make values of.
+ * @param target - A nominal type, or a schema built by `n.of()`, `n.object()` or `n.union()`.
+ * @param count - How many values to make; `undefined` makes ten.
+ * @param options - Whether to make inputs or instances, the seed, and generators of your own.
+ * @returns The values: inputs the target accepts, or instances with `as: 'instances'`.
+ * @throws {@link TypeError} when the target is not a nominal type or a schema of this package.
+ * @throws {@link TypeError} when nothing can be generated for the target or one of its fields.
+ * @throws {@link Error} when the target refuses nearly every value made for it.
  *
  * @example
  * ```ts
+ * import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ * import { sampleOf } from '@horizon-republic/nominal-types/testing';
+ *
+ * const CreateOrder = n.object({ contact: Email, quantity: PositiveInteger });
+ *
  * const emails = sampleOf(Email, 3, { seed: 42 });
  * const orders = sampleOf(CreateOrder, 5, { as: 'instances' });
  * ```
+ *
+ * @see {@link arbitraryOf}
  */
 export function sampleOf<const Target extends NominalTarget>(
   target: Target,
   count: number | undefined,
-  options: SampleOptions & { readonly as: 'instances' },
+  options: SampleOptions & {
+    /**
+     * Makes what `parse()` gives for the inputs.
+     */
+    readonly as: 'instances';
+  },
 ): Array<TargetValue<Target>>;
 export function sampleOf<const Target extends NominalTarget>(
   target: Target,
   count?: number,
-  options?: SampleOptions & { readonly as?: 'inputs' },
+  options?: SampleOptions & {
+    /**
+     * Makes the plain values the target accepts.
+     *
+     * @defaultValue `'inputs'`
+     */
+    readonly as?: 'inputs';
+  },
 ): Array<TargetInput<Target>>;
 export function sampleOf(
   target: NominalTarget,

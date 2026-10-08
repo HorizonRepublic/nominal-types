@@ -8,6 +8,8 @@ import { isNominalType, ownTypes } from './nominal.ts';
  * @remarks
  * Arrays and objects become new, mutable ones. Other objects, such as a `Date` or an instance of a
  * class of your own, keep their type.
+ *
+ * @typeParam Value - The value whose instances are replaced.
  */
 export type Plain<Value> =
   Value extends NominalInstance<string, unknown>
@@ -111,8 +113,10 @@ const plainOf = (value: object, path: object[]): unknown => {
 };
 
 /**
- * Internal: `n.plain()` without its type, for the writers that know a schema's shape and fall
+ * `n.plain()` without its type, for the writers that know a schema's shape and fall
  * back to it for the parts they don't.
+ *
+ * @internal
  */
 export const plainValue = (value: unknown): unknown =>
   typeof value === 'object' && value !== null ? plainOf(value, []) : value;
@@ -129,11 +133,19 @@ export const plainValue = (value: unknown): unknown =>
  * value is kept as it is: a `Date`, a `Map`, an instance of a class of your own. The input is not
  * changed. For an `n.object()` or `n.of()` schema, its `toPlain()` is faster still.
  *
- * @throws TypeError when the value refers to itself, which `JSON.stringify()` refuses too.
+ * @typeParam Value - The type of the value to copy.
+ * @param value - The value to copy, such as a response body.
+ * @returns A copy that holds plain values in place of the instances.
+ * @throws {@link TypeError} when the value refers to itself, which `JSON.stringify()` refuses too.
  *
  * @example
  * ```ts
- * const order = { id: new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'), quantity: new PositiveInteger(2) };
+ * import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+ *
+ * const order = {
+ *   id: new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'),
+ *   quantity: new PositiveInteger(2),
+ * };
  *
  * n.plain(order); // { id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', quantity: 2 }
  * ```

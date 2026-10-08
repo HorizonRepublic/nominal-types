@@ -9,7 +9,9 @@ import { noPrimitive, temporalRule } from './temporal-rule.ts';
 const pattern = whole(fullDate);
 
 /**
- * Internal: whether a Temporal date has the ISO 8601 calendar and a year the text form can carry.
+ * Whether a Temporal date has the ISO 8601 calendar and a year the text form can carry.
+ *
+ * @internal
  */
 export const isIsoInRange = (value: Temporal.PlainDate | Temporal.PlainDateTime): boolean =>
   value.calendarId === 'iso8601' && value.year >= 0 && value.year <= 9999;
@@ -46,12 +48,18 @@ const PlainDateBase: NominalType<
  *
  * @example
  * ```ts
+ * import { PlainDate } from '@horizon-republic/nominal-types/temporal';
+ *
  * const due = new PlainDate('2024-02-29');
  * due.value.dayOfWeek; // 4
  * due.value.add({ days: 1 }).toString(); // '2024-03-01'
  * ```
  */
 export class PlainDate extends PlainDateBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof PlainDate>;
 
   /**
@@ -66,6 +74,9 @@ export class PlainDate extends PlainDateBase {
   /**
    * Whether the other value is the same date and belongs to this type, a type under it or the
    * type it is under.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return inOneLine(this, other) && other instanceof PlainDate && this.value.equals(other.value);
@@ -73,6 +84,8 @@ export class PlainDate extends PlainDateBase {
 
   /**
    * The date as `YYYY-MM-DD`.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -80,6 +93,8 @@ export class PlainDate extends PlainDateBase {
 
   /**
    * The date as `toJSON()` writes it.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -88,6 +103,10 @@ export class PlainDate extends PlainDateBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two dates would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

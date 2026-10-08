@@ -42,6 +42,19 @@ export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './object
  * @remarks
  * It is a `TypeSchema`, so `array()`, `optional()` and `nullable()` build on it, and a nominal type
  * takes it as its rule.
+ *
+ * @typeParam Input - What the schema accepts.
+ * @typeParam Output - What the schema gives back.
+ *
+ * @example
+ * ```ts
+ * import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+ *
+ * declare const body: unknown;
+ *
+ * const CreateOrder = n.object({ email: Email, quantity: PositiveInteger }).strict();
+ * const result = CreateOrder.parse(body);
+ * ```
  */
 export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   /**
@@ -55,9 +68,11 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   readonly #presence: Presence;
 
   /**
-   * Internal: built by `n.object()` and the methods below; `hidden` leaves the values out of the
+   * Built by `n.object()` and the methods below; `hidden` leaves the values out of the
    * messages, `presence` makes fields optional (`true`) or required (`false`); `deferred` builds
    * the checks at the first use, for the objects of built-in types.
+   *
+   * @internal
    */
   public constructor(
     source: ObjectFields,
@@ -103,6 +118,15 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
 
   /**
    * This schema, refusing keys it doesn't declare instead of dropping them.
+   *
+   * @returns A new schema that reports an undeclared key as `is not allowed`.
+   *
+   * @example
+   * ```ts
+   * import { Email, n } from '@horizon-republic/nominal-types';
+   *
+   * const Login = n.object({ email: Email }).strict();
+   * ```
    */
   public strict(): ObjectSchema<Input, Output> {
     return this.#with({ strict: true });
@@ -119,8 +143,12 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * whole `process.env` can be passed. Messages leave the values out, as those of a sensitive type
    * do, since configuration holds secrets: `must be a URL (was a string of 31 characters)`.
    *
+   * @returns A new schema that reads its fields from strings.
+   *
    * @example
    * ```ts
+   * import { AnyBoolean, n, Nominal, Port, Url } from '@horizon-republic/nominal-types';
+   *
    * export class Config extends Nominal(
    *   'app.Config',
    *   n.object({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv(),
@@ -142,10 +170,20 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * A field given as `undefined` counts as missing. A constraint that reads such a field runs only
    * when every one of those fields is present.
    *
-   * @throws TypeError for a name the object doesn't declare.
+   * @param keys - The fields to make optional; none means every field.
+   * @returns A new schema with those fields optional.
+   * @throws {@link TypeError} when a name is not a field the object declares.
    *
    * @example
    * ```ts
+   * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const CreateOrder = n.object({
+   *   customer: Uuid,
+   *   quantity: PositiveInteger,
+   *   note: n.of(Email).optional(),
+   * });
+   *
    * const UpdateOrder = CreateOrder.partial();
    * const UpdateNote = CreateOrder.partial('note', 'quantity');
    * ```
@@ -162,10 +200,20 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * This schema with every field, or the fields named, required, also those whose schema accepts
    * `undefined`: the reverse of `partial()`.
    *
-   * @throws TypeError for a name the object doesn't declare.
+   * @param keys - The fields to make required; none means every field.
+   * @returns A new schema with those fields required.
+   * @throws {@link TypeError} when a name is not a field the object declares.
    *
    * @example
    * ```ts
+   * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const CreateOrder = n.object({
+   *   customer: Uuid,
+   *   quantity: PositiveInteger,
+   *   note: n.of(Email).optional(),
+   * });
+   *
    * const CreateOrderWithNote = CreateOrder.required('note');
    * ```
    */
@@ -183,10 +231,21 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * @remarks
    * A constraint is kept when every field it reads is kept, and dropped otherwise.
    *
-   * @throws TypeError for no name, or a name the object doesn't declare.
+   * @typeParam Key - The names of the fields to keep.
+   * @param keys - The fields to keep, at least one.
+   * @returns A new schema with only those fields.
+   * @throws {@link TypeError} when no name is given, or a name is not a field the object declares.
    *
    * @example
    * ```ts
+   * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const CreateOrder = n.object({
+   *   customer: Uuid,
+   *   quantity: PositiveInteger,
+   *   note: n.of(Email).optional(),
+   * });
+   *
    * const OrderContact = CreateOrder.pick('customer', 'note');
    * ```
    */
@@ -202,10 +261,21 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * @remarks
    * A constraint is kept when every field it reads is kept, and dropped otherwise.
    *
-   * @throws TypeError for no name, or a name the object doesn't declare.
+   * @typeParam Key - The names of the fields to drop.
+   * @param keys - The fields to drop, at least one.
+   * @returns A new schema without those fields.
+   * @throws {@link TypeError} when no name is given, or a name is not a field the object declares.
    *
    * @example
    * ```ts
+   * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const CreateOrder = n.object({
+   *   customer: Uuid,
+   *   quantity: PositiveInteger,
+   *   note: n.of(Email).optional(),
+   * });
+   *
    * const OrderLine = CreateOrder.omit('customer');
    * ```
    */
@@ -225,10 +295,21 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * The constraints are kept; one that reads a replaced field checks it with its own field type,
    * as before. On a schema from `fromEnv()`, the new fields are read from strings too.
    *
-   * @throws TypeError for a field named `__proto__`.
+   * @typeParam Fields - The fields added.
+   * @param fields - The fields to add or replace, each key to its schema.
+   * @returns A new schema with the fields of both.
+   * @throws {@link TypeError} when a field is named `__proto__`.
    *
    * @example
    * ```ts
+   * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+   *
+   * const CreateOrder = n.object({
+   *   customer: Uuid,
+   *   quantity: PositiveInteger,
+   *   note: n.of(Email).optional(),
+   * });
+   *
    * const CreateGift = CreateOrder.extend({ recipient: Email });
    * ```
    */

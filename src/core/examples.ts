@@ -26,13 +26,15 @@ const collect = (
 };
 
 /**
- * Internal: a type's JSON Schema with the examples of all its rules moved to the top, keeping only
+ * A type's JSON Schema with the examples of all its rules moved to the top, keeping only
  * those the whole type accepts.
  *
  * @remarks
  * A subtype's `allOf` carries its parent's examples, which its own rule may reject. Checking each
  * example against the type itself means a schema never shows a value the type refuses. OpenAPI
  * 3.0 gets the first one as `example`.
+ *
+ * @internal
  */
 export const withValidExamples = (
   body: Record<string, unknown>,

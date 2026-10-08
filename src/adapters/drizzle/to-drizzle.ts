@@ -6,28 +6,61 @@ import { jsonTextOf, readerOf, writerOf } from '../orm/values.ts';
 
 /**
  * Options of `toDrizzle()`.
+ *
+ * @typeParam Instance - The instance the column holds.
+ *
+ * @see {@link toDrizzle}
  */
 export interface DrizzleOptions<Instance> extends StorageOptions<Instance> {
   /**
    * The SQL type of the column, in place of the one the type gives by default.
+   *
+   * @defaultValue The column the type gives, such as `varchar(254)` for `Email`.
    */
   readonly column?: string;
 }
 
 /**
  * The type argument of Drizzle's `customType` for a column holding a nominal type.
+ *
+ * @typeParam Target - The nominal type the column holds.
+ *
+ * @see {@link toDrizzle}
  */
 export interface DrizzleColumn<Target extends AnyNominalType> {
+  /**
+   * The value the column gives and takes in your code: an instance of the type.
+   */
   data: Target['prototype'];
+
+  /**
+   * The value the driver reads and writes.
+   */
   driverData: unknown;
 }
 
 /**
  * What `toDrizzle()` returns: the parameters of Drizzle's `customType` for any dialect.
+ *
+ * @typeParam Target - The nominal type the column holds.
+ *
+ * @see {@link toDrizzle}
  */
 export interface DrizzleParams<Target extends AnyNominalType> {
+  /**
+   * Gives the SQL type of the column.
+   */
   readonly dataType: () => string;
+
+  /**
+   * Turns an instance, or a plain value in a condition, into what is stored.
+   */
   readonly toDriver: (value: Target['prototype']) => unknown;
+
+  /**
+   * Turns a stored value into an instance, checked unless `trusted`. It throws a
+   * {@link NominalError} for a stored value the type doesn't accept.
+   */
   readonly fromDriver: (value: unknown) => Target['prototype'];
 }
 
@@ -69,9 +102,17 @@ const sqlTypeOf = (column: ColumnKind): string => {
  * plain values the type refuses, such as a `like` pattern, pass as they are. Stored values are
  * checked when read, unless `trusted`.
  *
+ * @typeParam Target - The nominal type the column holds.
+ * @param target - The nominal type of the column.
+ * @param options - The storage options and the SQL type of the column.
+ * @returns The parameters to pass to Drizzle's `customType`.
+ *
  * @example
  * ```ts
- * import { customType, sqliteTable, integer } from 'drizzle-orm/sqlite-core';
+ * import { Email } from '@horizon-republic/nominal-types';
+ * import { toDrizzle } from '@horizon-republic/nominal-types/adapters/drizzle';
+ * import type { DrizzleColumn } from '@horizon-republic/nominal-types/adapters/drizzle';
+ * import { customType, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
  *
  * const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));
  *

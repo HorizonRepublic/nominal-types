@@ -21,7 +21,19 @@ const NegativeIntegerBase: SubtypeOf<
  *
  * @remarks
  * Zero is not negative; reach for `NonPositiveInteger` where 0 is a valid value.
+ *
+ * @example
+ * ```ts
+ * import { NegativeInteger } from '@horizon-republic/nominal-types';
+ *
+ * new NegativeInteger(-1).value; // -1
+ * NegativeInteger.parse(0).ok; // false
+ * ```
  */
 export class NegativeInteger extends NegativeIntegerBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof NegativeInteger>;
 }

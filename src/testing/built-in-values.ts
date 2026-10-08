@@ -117,8 +117,10 @@ const money = (level: object): Arbitrary<unknown> | undefined => {
 };
 
 /**
- * Internal: generators for the built-in value types that read the type they generate for: the
+ * Generators for the built-in value types that read the type they generate for: the
  * prefix of a TypeID, the currencies of Money.
+ *
+ * @internal
  */
 export const valueArbitraries: Readonly<
   Record<string, (level: object, target: object) => Arbitrary<unknown> | undefined>

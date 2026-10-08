@@ -31,10 +31,15 @@ const firstOctet = (text: string): number => Number.parseInt(text.slice(0, 2), 1
  *
  * @example
  * ```ts
+ * import { MacAddress } from '@horizon-republic/nominal-types';
+ *
  * new MacAddress('00-00-5E-00-53-01').canonical().value; // '00:00:5e:00:53:01'
  * ```
  */
 export class MacAddress extends MacAddressBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof MacAddress>;
 
   /**
@@ -43,7 +48,9 @@ export class MacAddress extends MacAddressBase {
   public static readonly pattern: RegExp = pattern;
 
   /**
-   * The six bytes of the address.
+   * The six bytes of the address, for a binary column or a network API.
+   *
+   * @returns A new array of 6 bytes.
    */
   public toBytes(): Uint8Array {
     return Uint8Array.from({ length: 6 }, (_, index) =>
@@ -68,6 +75,8 @@ export class MacAddress extends MacAddressBase {
 
   /**
    * The address in lowercase with colons, as Linux and most APIs print it.
+   *
+   * @returns An address of the same class.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase().replaceAll('-', ':'));
@@ -76,6 +85,9 @@ export class MacAddress extends MacAddressBase {
   /**
    * Whether the other value has the same bytes, whatever the case and separator, and belongs to
    * this type, a type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same address.
    */
   public override equals(other: unknown): boolean {
     return (

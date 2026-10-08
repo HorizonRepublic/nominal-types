@@ -23,7 +23,19 @@ const Uint64Base: SubtypeOf<typeof AnyBigInt, 'nominal.Uint64', bigint, typeof N
  * @remarks
  * JSON Schema bounds the string's length rather than the value, so a string of the right length
  * beyond the range passes the schema and is refused when the type is built.
+ *
+ * @example
+ * ```ts
+ * import { Uint64 } from '@horizon-republic/nominal-types';
+ *
+ * new Uint64('18446744073709551615').value; // 18446744073709551615n
+ * Uint64.parse(-1n).ok; // false
+ * ```
  */
 export class Uint64 extends Uint64Base {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Uint64>;
 }

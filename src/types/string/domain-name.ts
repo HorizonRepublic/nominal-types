@@ -28,14 +28,21 @@ const DomainNameBase: SubtypeOf<typeof Hostname, 'nominal.DomainName'> = Hostnam
  *
  * @example
  * ```ts
+ * import { DomainName } from '@horizon-republic/nominal-types';
+ *
  * new DomainName('api.example.com').isSubdomainOf(new DomainName('example.com')); // true
  * ```
  */
 export class DomainName extends DomainNameBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof DomainName>;
 
   /**
    * The same name in lowercase, the form DNS compares names in.
+   *
+   * @returns A name of the same class.
    */
   public override canonical(): this {
     return sameType(this, this.value.toLowerCase());

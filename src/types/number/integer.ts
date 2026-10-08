@@ -20,7 +20,20 @@ const IntegerBase: SubtypeOf<typeof FiniteNumber, 'nominal.Integer'> = FiniteNum
  *
  * @remarks
  * Larger counts lose precision silently, so they are rejected rather than rounded.
+ *
+ * @example
+ * ```ts
+ * import { Integer } from '@horizon-republic/nominal-types';
+ *
+ * new Integer(42).value; // 42
+ * Integer.parse(1.5).ok; // false
+ * Integer.parse(2 ** 53).ok; // false
+ * ```
  */
 export class Integer extends IntegerBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Integer>;
 }

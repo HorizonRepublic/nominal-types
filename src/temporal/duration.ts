@@ -105,12 +105,18 @@ const DurationBase: NominalType<
  *
  * @example
  * ```ts
+ * import { Duration } from '@horizon-republic/nominal-types/temporal';
+ *
  * const timeout = new Duration('PT1M30S');
  * timeout.value.total('seconds'); // 90
  * new Duration('P1D').equals(new Duration('PT24H')); // false: the units differ
  * ```
  */
 export class Duration extends DurationBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Duration>;
 
   /**
@@ -125,6 +131,9 @@ export class Duration extends DurationBase {
   /**
    * Whether the other value has the same number in each unit and belongs to this type, a type
    * under it or the type it is under; `P1D` and `PT24H` differ, since a day is not always 24 hours.
+   *
+   * @param other - Any value.
+   * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
     return (
@@ -136,6 +145,8 @@ export class Duration extends DurationBase {
 
   /**
    * The duration as `P1DT12H`, the seconds with a fraction when there is one.
+   *
+   * @returns The text, the form JSON carries.
    */
   public override toJSON(): string {
     return this.value.toString();
@@ -143,6 +154,8 @@ export class Duration extends DurationBase {
 
   /**
    * The text `toJSON()` writes.
+   *
+   * @returns The text `toJSON()` writes.
    */
   public override toString(): string {
     return this.value.toString();
@@ -151,6 +164,10 @@ export class Duration extends DurationBase {
   /**
    * The text in a string; anywhere else a `TypeError`, since `<` on two values would otherwise
    * compare text.
+   *
+   * @param hint - The kind of primitive JavaScript asks for.
+   * @returns The text, when the hint is `'string'`.
+   * @throws {@link TypeError} when the hint is not `'string'`.
    */
   public override [Symbol.toPrimitive](hint: string): string {
     if (hint === 'string') {

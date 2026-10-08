@@ -39,12 +39,17 @@ const gtin14Of = (text: string): string => text.padStart(14, '0');
  *
  * @example
  * ```ts
+ * import { Gtin } from '@horizon-republic/nominal-types';
+ *
  * const gtin = new Gtin('036000291452');
  * gtin.format; // 12
  * gtin.canonical().value; // '00036000291452'
  * ```
  */
 export class Gtin extends GtinBase {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof Gtin>;
 
   /**
@@ -67,6 +72,8 @@ export class Gtin extends GtinBase {
 
   /**
    * The GTIN-14 form, with zeros in front, as GS1 asks a database to keep a GTIN.
+   *
+   * @returns A GTIN of the same class, 14 digits long.
    */
   public canonical(): this {
     return sameType(this, gtin14Of(this.value));
@@ -75,6 +82,9 @@ export class Gtin extends GtinBase {
   /**
    * Whether the other value is the same number, whatever its length, and belongs to this type, a
    * type under it or the type it is under, like `equals()` on every type.
+   *
+   * @param other - The value to compare with.
+   * @returns `true` when both are the same number.
    */
   public override equals(other: unknown): boolean {
     return (

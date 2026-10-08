@@ -178,9 +178,11 @@ const duration = (): Arbitrary<unknown> | undefined => {
 };
 
 /**
- * Internal: generators for the Temporal types whose values depend on the runtime's time zone data
+ * Generators for the Temporal types whose values depend on the runtime's time zone data
  * or whose grammar a pattern alone makes too narrow: zone names in any case, zoned date-times with
  * the offset each zone has then, near its changes of offset too, and durations in every form.
+ *
+ * @internal
  */
 export const temporalArbitraries: Readonly<Record<string, () => Arbitrary<unknown> | undefined>> = {
   'nominal.Duration': duration,

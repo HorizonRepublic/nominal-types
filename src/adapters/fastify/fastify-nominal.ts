@@ -10,12 +10,14 @@ import { standInMaker } from './stand-ins.ts';
 import type { FastifyJsonTarget } from './stand-ins.ts';
 
 /**
- * Options for `fastifyNominal`.
+ * Options for {@link fastifyNominal}.
  */
 export interface FastifyNominalOptions extends NominalValidatorOptions {
   /**
    * The JSON Schema dialect the routes show for nominal schemas, which `@fastify/swagger` reads.
-   * `'draft-07'` by default; `'openapi-3.0'` for a Swagger document of OpenAPI 3.0.
+   * Use `'openapi-3.0'` for a Swagger document of OpenAPI 3.0.
+   *
+   * @defaultValue `'draft-07'`
    */
   readonly jsonSchemaTarget?: FastifyJsonTarget;
 }
@@ -116,11 +118,29 @@ const register: FastifyPluginCallback<FastifyNominalOptions> = (instance, option
  *
  * @example
  * ```ts
+ * import Fastify from 'fastify';
+ * import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+ * import type { ValueOf } from '@horizon-republic/nominal-types';
+ * import { fastifyNominal } from '@horizon-republic/nominal-types/adapters/fastify';
+ * import type { NominalTypeProvider } from '@horizon-republic/nominal-types/adapters/fastify';
+ *
+ * const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
+ * const Order = n.object({ id: Uuid, customer: Email, quantity: PositiveInteger });
+ *
+ * declare const saveOrder: (order: ValueOf<typeof CreateOrder>) => Promise<ValueOf<typeof Order>>;
+ *
  * const app = Fastify().withTypeProvider<NominalTypeProvider>();
  *
  * await app.register(fastifyNominal);
- * app.post('/orders', { schema: { body: CreateOrder, response: { 201: Order } } }, handler);
+ *
+ * app.post(
+ *   '/orders',
+ *   { schema: { body: CreateOrder, response: { 201: Order } } },
+ *   async (request) => saveOrder(request.body),
+ * );
  * ```
+ *
+ * @see {@link NominalValidatorOptions}
  */
 export const fastifyNominal: FastifyPluginCallback<FastifyNominalOptions> = Object.assign(
   register,

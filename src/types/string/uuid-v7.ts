@@ -21,10 +21,15 @@ const UuidV7Base: SubtypeOf<typeof Uuid, 'nominal.UuidV7'> = Uuid.subtype(
  *
  * @example
  * ```ts
+ * import { UuidV7 } from '@horizon-republic/nominal-types';
+ *
  * new UuidV7('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f').timestamp; // 2024-07-27T01:15:56.618Z
  * ```
  */
 export class UuidV7 extends UuidV7Base {
+  /**
+   * The Standard Schema interface, typed with this class so validators see its own members.
+   */
   declare public static readonly '~standard': StandardOf<typeof UuidV7>;
 
   /**
@@ -44,6 +49,8 @@ export class UuidV7 extends UuidV7Base {
 
   /**
    * The same UUID in lowercase.
+   *
+   * @returns A UUID of the same class.
    */
   public override canonical(): this {
     return sameType(this, this.value.toLowerCase());

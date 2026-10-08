@@ -23,8 +23,21 @@ const AnyNumberBase: NominalType<'nominal.AnyNumber', NominalSchema<number, numb
  * JSON has no `NaN` or infinity, and `JSON.stringify` writes them as `null`; reach for
  * `FiniteNumber` where a value travels as JSON. `n.of(Type).fromString()` reads a number
  * written the way JSON writes one, such as `'2'`, `'-1.5'` or `'1e3'`.
+ *
+ * @example
+ * ```ts
+ * import { AnyNumber } from '@horizon-republic/nominal-types';
+ *
+ * export class Celsius extends AnyNumber.subtype('weather.Celsius') {}
+ *
+ * new Celsius(21.5).value; // 21.5
+ * ```
  */
 export class AnyNumber extends AnyNumberBase {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof AnyNumber>;
 }
 

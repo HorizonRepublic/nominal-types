@@ -12,7 +12,19 @@ const Int8Base: SubtypeOf<typeof Integer, 'nominal.Int8', number, typeof Int16> 
 
 /**
  * An integer from -128 to 127, the range of a signed 8-bit integer.
+ *
+ * @example
+ * ```ts
+ * import { Int8 } from '@horizon-republic/nominal-types';
+ *
+ * new Int8(-128).value; // -128
+ * Int8.parse(128).ok; // false
+ * ```
  */
 export class Int8 extends Int8Base {
+  /**
+   * The Standard Schema of the class, typed with its own instances, so a validator that reads
+   * Standard Schema takes the class itself.
+   */
   declare public static readonly '~standard': StandardOf<typeof Int8>;
 }

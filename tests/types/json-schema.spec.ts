@@ -9,6 +9,7 @@ import {
   Gtin,
   HexColor,
   Hostname,
+  HttpUrl,
   Ipv4Address,
   Ipv6Address,
   Isbn,
@@ -22,6 +23,7 @@ import {
   ObjectId,
   SemVer,
   Ulid,
+  Url,
   Uuid,
   UuidV4,
   UuidV7,
@@ -147,6 +149,25 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
     ['9780306406157', '0306406152', '080442957X', '9791090636071'],
     ['978-0-306-40615-7', '080442957x', '9790060115615', '97803064061570', '030640615'],
   ],
+  ...[Url, HttpUrl].map(
+    (type) =>
+      [
+        type,
+        ['https://example.com', 'https://example.com/!', 'https://example.com/a%20b'],
+        [
+          'https://example.com/a b',
+          'https://example.com/a\u007Fb',
+          ' https://example.com',
+          'https://example.com ',
+          'https://exa\nmple.com',
+          'https://example.com/a\tb',
+          'https://example.com\r\n',
+          '\u0000https://example.com',
+          'https://example.com/\u001F',
+          'https://example.com/a\u0001b',
+        ],
+      ] as const,
+  ),
   [Issn, ['0378-5955', '2434-561X'], ['03785955', '2434-561x', '0378 5955', '0378-59555']],
   [
     Gtin,

@@ -1,10 +1,29 @@
+const longestShown = 64;
+const shownCharacters = 32;
+
+// A cut through a surrogate pair would leave half a character, so the cut moves before it.
+const startOf = (text: string): string =>
+  text.slice(
+    0,
+    (text.codePointAt(shownCharacters - 1) ?? 0) > 0xff_ff ? shownCharacters - 1 : shownCharacters,
+  );
+
+const describeString = (text: string): string =>
+  text.length <= longestShown
+    ? JSON.stringify(text)
+    : `a string of ${String(text.length)} characters starting ${JSON.stringify(startOf(text))}…`;
+
 /**
  * How a rejected value appears in a message: a string quoted, a number, a bigint, a boolean or
  * `null` as written, an array as `array`, anything else by its kind.
+ *
+ * @remarks
+ * A string longer than 64 characters is told by its length and its first 32 characters, so a
+ * large input doesn't make a large message: `a string of 30000 characters starting "abc"…`.
  */
 export const describeValue = (value: unknown): string => {
   if (typeof value === 'string') {
-    return JSON.stringify(value);
+    return describeString(value);
   }
 
   if (typeof value === 'number') {

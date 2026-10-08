@@ -15,6 +15,12 @@ export const fullDate: string = `(?:\\d{4}-${monthDay}|${leapYear}-02-29)`;
 export const partialTime = '(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?';
 
 /**
+ * Internal: `partialTime` with the seconds optional, `hh:mm` as HTML `time` and `datetime-local`
+ * inputs send it.
+ */
+export const wallTime = '(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d{1,9})?)?';
+
+/**
  * Internal: RFC 3339 `time-offset`, `Z` or a numeric offset up to `±23:59`.
  */
 export const timeOffset = '(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)';
@@ -41,7 +47,7 @@ const fractionEnd = (text: string, start: number): number =>
 
 /**
  * Internal: the hour, minute, second, millisecond, microsecond and nanosecond of text holding a
- * `partial-time` from `start`.
+ * `partial-time` from `start`, its seconds possibly left out.
  */
 export const timeFields = (
   text: string,
@@ -55,7 +61,7 @@ export const timeFields = (
   return [
     digitsAt(text, start, start + 2),
     digitsAt(text, start + 3, start + 5),
-    digitsAt(text, start + 6, start + 8),
+    text.at(start + 5) === ':' ? digitsAt(text, start + 6, start + 8) : 0,
     digitsAt(fraction, 0, 3),
     digitsAt(fraction, 3, 6),
     digitsAt(fraction, 6, 9),

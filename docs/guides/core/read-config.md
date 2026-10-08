@@ -56,8 +56,22 @@ PORT=80a node main.ts
 ```
 
 ```
-NominalError: app.Config: PORT: must be a number (was "80a"); API_URL: must be a URL (was undefined)
+NominalError: app.Config: PORT: must be a number (was a string of 3 characters); API_URL: must be a URL (was undefined)
 ```
+
+## Keep secrets out of the error
+
+Variables often hold passwords and keys. So a `.fromEnv()` schema leaves every value out of its messages, as a [sensitive type](hide-values.md) does. A wrong value is shown by its length only:
+
+```sh
+PORT=3000 API_URL=postgres://admin:S3cr3t@db/x node main.ts
+```
+
+```
+NominalError: app.Config: API_URL: must be an http or https URL (was a string of 28 characters)
+```
+
+Don't print `process.env` itself next to the error. The values would reach the log that way.
 
 ## Make a variable optional
 
@@ -71,7 +85,7 @@ import { n, Port } from '@horizon-republic/nominal-types';
 const Wrong = n.object({ PORT: n.of(Port).optional() }).fromEnv();
 const Right = n.object({ PORT: n.of(Port).fromString().optional() }).fromEnv();
 
-Wrong.parse({ PORT: '3000' }); // { ok: false, issues: [{ message: 'must be a number (was "3000")', path: ['PORT'] }] }
+Wrong.parse({ PORT: '3000' }); // { ok: false, issues: [{ message: 'must be a number (was a string of 4 characters)', path: ['PORT'] }] }
 Right.parse({ PORT: '3000' }); // { ok: true, value: { PORT: Port { value: 3000 } } }
 Right.parse({}); // { ok: true, value: {} }
 ```

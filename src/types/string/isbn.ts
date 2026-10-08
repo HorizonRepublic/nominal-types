@@ -1,5 +1,4 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { satisfying } from '../../core/predicate-schema.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -9,6 +8,7 @@ import {
   hasMod11CheckCharacter,
   mod11CheckCharacter,
 } from './check-digits.ts';
+import { IsbnRule } from './isbn-rule.ts';
 
 // 979-0 belongs to the ISMN of printed music, so an ISBN-13 starts with 978 or 979-1 to 979-9.
 const pattern = /^(?:\d{9}[\dX]|97(?:8\d|9[1-9])\d{9})$/u;
@@ -21,7 +21,7 @@ const isIsbnText = (value: unknown): value is string =>
 const IsbnBase: SubtypeOf<typeof AnyString, 'nominal.Isbn'> = AnyString.subtype(
   'nominal.Isbn',
   stringOnly(
-    satisfying(isIsbnText, 'an ISBN with a valid check digit', {
+    new IsbnRule(isIsbnText, 'an ISBN with a valid check digit', {
       type: 'string',
       pattern: pattern.source,
       minLength: 10,

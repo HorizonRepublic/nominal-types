@@ -72,16 +72,34 @@ must be <description> (was <value>)
 
 The rejected value is written like this:
 
-| Value            | Written as        |
-| ---------------- | ----------------- |
-| a string         | quoted: `"nope"`  |
-| a number         | `42`, `-0`, `NaN` |
-| a bigint         | `42n`             |
-| a boolean        | `true`            |
-| `undefined`      | `undefined`       |
-| `null`           | `null`            |
-| an array         | `array`           |
-| any other object | `object`          |
+| Value                       | Written as                                                    |
+| --------------------------- | ------------------------------------------------------------- |
+| a string                    | quoted: `"nope"`                                              |
+| a string over 64 characters | `a string of 70 characters starting "<first 32 characters>"…` |
+| a number                    | `42`, `-0`, `NaN`                                             |
+| a bigint                    | `42n`                                                         |
+| a boolean                   | `true`                                                        |
+| `undefined`                 | `undefined`                                                   |
+| `null`                      | `null`                                                        |
+| an array                    | `array`                                                       |
+| any other object            | `object`                                                      |
+
+The value is the input as it was given. A bigint type given the string `'9223372036854775808'` writes `"9223372036854775808"`, not the bigint it was read as.
+
+A string of up to 64 characters is quoted whole. A longer one is cut, so a large input doesn't make a large response. The message gives the length and the first 32 characters, then `…`:
+
+```
+must be <description> (was a string of <length> characters starting "<first 32 characters>"…)
+```
+
+Example:
+
+```ts
+import { Url } from '@horizon-republic/nominal-types';
+
+Url.parse(`example.com/${'a'.repeat(29_988)}`);
+// { ok: false, issues: [{ message: 'must be a URL (was a string of 30000 characters starting "example.com/aaaaaaaaaaaaaaaaaaaa"…)' }] }
+```
 
 Other messages:
 
@@ -108,12 +126,15 @@ A type declared with `{ sensitive: true }` leaves the rejected value out of its 
 | a boolean     | `a boolean`                                              |
 | anything else | as before: `null`, `array`, `object`                     |
 
+A long string is hidden the same way: `a string of 30000 characters`.
+
 These facts hold for a sensitive type:
 
 - Every check hides the value: `new`, `parse()`, `validate`, a field of `n.object()`, an array item and the adapters.
 - For a type that holds an object, the values of all its fields are hidden.
 - Its subtypes and variants are sensitive too. `{ sensitive: false }` turns it off for one of them.
 - The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
+- A schema made with [`fromEnv()`](schemas.md#objectschema) hides the values of all its fields in the same way.
 
 Example:
 
@@ -145,10 +166,11 @@ Returns: the issues with the value at the end of each message written by its kin
 
 It reads a value at the end of a message in two forms:
 
-| Form           | Written by               |
-| -------------- | ------------------------ |
-| `(was "x")`    | this package and ArkType |
-| `received "x"` | Valibot                  |
+| Form                                            | Written by               |
+| ----------------------------------------------- | ------------------------ |
+| `(was "x")`                                     | this package and ArkType |
+| `(was a string of 70 characters starting "x"…)` | this package             |
+| `received "x"`                                  | Valibot                  |
 
 A message that names the value another way is left as it is.
 

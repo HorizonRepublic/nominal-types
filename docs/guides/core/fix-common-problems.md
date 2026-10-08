@@ -148,7 +148,7 @@ Cause: one of these:
 
 Fix: call `fromString()` first, as in `n.of(PositiveInteger).fromString().array()`. Declare a string, number or boolean type under a built-in type: `AnyString.subtype('shop.Code', /^\d{4}$/u)`, not `Nominal('shop.Code', /^\d{4}$/u)`.
 
-### must be a number (was "3000") for an environment variable
+### must be a number (was a string of 4 characters) for an environment variable
 
 Cause: the field is wrapped in `n.of()`, for example to make it optional. `fromEnv()` reads only plain type fields from text.
 
@@ -219,9 +219,9 @@ new Email(`jane@${domainToASCII('exämple.com')}`).value; // 'jane@xn--exmple-cu
 
 ### Url accepts javascript: links
 
-Cause: `Url` takes any absolute URL, with any scheme, such as `mailto:` and `javascript:`.
+Cause: `Url` takes any absolute URL, with any scheme, such as `javascript:`, `data:` and `file:`.
 
-Fix: use `HttpUrl` for web addresses:
+Fix: use `HttpUrl` for a link shown to users or opened by your server:
 
 ```ts
 import { HttpUrl, Url } from '@horizon-republic/nominal-types';

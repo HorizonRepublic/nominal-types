@@ -2,11 +2,11 @@ import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { inOneLine } from '../core/same-value.ts';
 import { asText, defineTextForm } from '../core/text-form.ts';
-import { dateFields, fullDate, partialTime, timeFields, whole } from './grammar.ts';
+import { dateFields, fullDate, timeFields, wallTime, whole } from './grammar.ts';
 import { isIsoInRange } from './plain-date.ts';
 import { noPrimitive, temporalRule } from './temporal-rule.ts';
 
-const pattern = whole(`${fullDate}T${partialTime}`);
+const pattern = whole(`${fullDate}T${wallTime}`);
 
 const PlainDateTimeBase: NominalType<
   'nominal.PlainDateTime',
@@ -17,7 +17,7 @@ const PlainDateTimeBase: NominalType<
     typeName: 'nominal.PlainDateTime',
     tag: 'Temporal.PlainDateTime',
     pattern,
-    description: 'a date and time as YYYY-MM-DDThh:mm:ss without an offset',
+    description: 'a date and time as YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss without an offset',
     json: { examples: ['2024-05-01T09:30:00'] },
     accepts: (temporal, value): value is Temporal.PlainDateTime =>
       value instanceof temporal.PlainDateTime && isIsoInRange(value),
@@ -33,7 +33,8 @@ const PlainDateTimeBase: NominalType<
  *
  * @remarks
  * Text is an RFC 3339 §5.6 `full-date`, `T` and `partial-time`, `2024-05-01T09:30:00`, with the
- * limits of `PlainDate` and `PlainTime`. An offset or `Z` is refused: text that names a moment
+ * limits of `PlainDate` and `PlainTime`; the seconds may be left out, `2024-05-01T09:30`, as an
+ * HTML `datetime-local` input sends it. An offset or `Z` is refused: text that names a moment
  * belongs in an `Instant`. A `Temporal.PlainDateTime` in the ISO 8601 calendar is taken as well.
  * The JSON Schema carries a `pattern` and no `format`, since `date-time` requires an offset.
  *

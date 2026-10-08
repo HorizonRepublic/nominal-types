@@ -1,5 +1,6 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
+import type * as library from '../../src/index.ts';
 import {
   AnyBoolean,
   AnyString,
@@ -11,7 +12,13 @@ import {
   Uint16,
   Url,
 } from '../../src/index.ts';
-import { issuesOf, valueOf } from '../support/results.ts';
+import { issuesOf, thrownBy, valueOf } from '../support/results.ts';
+
+const anotherCopy = (): Promise<typeof library> => {
+  vi.resetModules();
+
+  return import('../../src/index.ts');
+};
 
 class Port extends Uint16.subtype('envtest.Port') {}
 
@@ -54,15 +61,65 @@ describe('n.object().fromEnv()', () => {
     expect(settings.NAME?.value).toBe('app');
   });
 
-  it('reports every missing or bad variable', () => {
+  it('reports every missing or bad variable, leaving the values out', () => {
     expect(issuesOf(Settings.parse({ PORT: 'abc', DEBUG: 'yes', LIMIT: '1.5' }))).toStrictEqual([
-      { message: 'must be a number (was "abc")', path: ['PORT'] },
-      { message: 'must be a boolean (was "yes")', path: ['DEBUG'] },
+      { message: 'must be a number (was a string of 3 characters)', path: ['PORT'] },
+      { message: 'must be a boolean (was a string of 3 characters)', path: ['DEBUG'] },
       { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
       {
-        message: 'must be a bigint, an integer string or a safe integer (was "1.5")',
+        message:
+          'must be a bigint, an integer string or a safe integer (was a string of 3 characters)',
         path: ['LIMIT'],
       },
+    ]);
+  });
+
+  it('keeps a secret out of the messages and out of the error a class throws', () => {
+    const secret = 'postgres admin:S3cr3t@db/x';
+
+    class Config extends Nominal('envtest.SecretConfig', Settings) {}
+
+    expect(issuesOf(Settings.parse({ ...env, DATABASE_URL: secret }))).toStrictEqual([
+      { message: 'must be a URL (was a string of 26 characters)', path: ['DATABASE_URL'] },
+    ]);
+    expect(String(thrownBy(() => new Config({ ...env, DATABASE_URL: secret })))).not.toContain(
+      'S3cr3t',
+    );
+  });
+
+  it('shows the values of the object it was made from', () => {
+    expect(issuesOf(n.object({ DATABASE_URL: Url }).parse({ DATABASE_URL: 'nope' }))).toStrictEqual(
+      [{ message: 'must be a URL (was "nope")', path: ['DATABASE_URL'] }],
+    );
+  });
+
+  it('leaves the values out after strict(), in nested objects and arrays of it', () => {
+    const Nested = n.object({ DB: n.object({ URL: Url }) }).fromEnv();
+
+    expect(issuesOf(Settings.strict().parse({ PORT: 'abc', HOME: '/root' }))).toStrictEqual([
+      { message: 'must be a number (was a string of 3 characters)', path: ['PORT'] },
+      { message: 'must be a boolean (was undefined)', path: ['DEBUG'] },
+      { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
+      {
+        message: 'must be a bigint, an integer string or a safe integer (was undefined)',
+        path: ['LIMIT'],
+      },
+      { message: 'is not allowed', path: ['HOME'] },
+    ]);
+    expect(issuesOf(Nested.parse({ DB: { URL: 'nope' } }))).toStrictEqual([
+      { message: 'must be a URL (was a string of 4 characters)', path: ['DB', 'URL'] },
+    ]);
+    expect(issuesOf(Nested.array().parse([{ DB: { URL: 'nope' } }]))).toStrictEqual([
+      { message: 'must be a URL (was a string of 4 characters)', path: [0, 'DB', 'URL'] },
+    ]);
+  });
+
+  it('leaves the values out for types from another copy of the package', async () => {
+    const copy = await anotherCopy();
+    const Remote = n.object({ DATABASE_URL: copy.Url }).fromEnv();
+
+    expect(issuesOf(Remote.parse({ DATABASE_URL: 'nope' }))).toStrictEqual([
+      { message: 'must be a URL (was a string of 4 characters)', path: ['DATABASE_URL'] },
     ]);
   });
 

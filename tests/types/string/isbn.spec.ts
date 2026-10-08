@@ -21,6 +21,22 @@ const changedAt = (text: string, index: number, characters: readonly string[]): 
 
 describe('Isbn', () => {
   it.each([
+    ['0-306-40615-2', 'must be an ISBN without hyphens or spaces (was "0-306-40615-2")'],
+    ['978 0 306 40615 7', 'must be an ISBN without hyphens or spaces (was "978 0 306 40615 7")'],
+    [' 9780306406157', 'must be an ISBN without hyphens or spaces (was " 9780306406157")'],
+    ['9780306406158', 'must be an ISBN with a valid check digit (was "9780306406158")'],
+    ['978030640615', 'must be an ISBN with a valid check digit (was "978030640615")'],
+    ['9780306406157\t', 'must be an ISBN without hyphens or spaces (was "9780306406157\\t")'],
+    ['ISBN9780306406157', 'must be an ISBN with a valid check digit (was "ISBN9780306406157")'],
+    [
+      '0-306-40615-2'.repeat(10),
+      `must be an ISBN without hyphens or spaces (was a string of 130 characters starting "${'0-306-40615-2'.repeat(3).slice(0, 32)}"…)`,
+    ],
+  ])('says why it refuses %j', (text, message) => {
+    expect(Isbn.parse(text)).toStrictEqual({ ok: false, issues: [{ message }] });
+  });
+
+  it.each([
     '9780306406157',
     '0306406152',
     '080442957X',

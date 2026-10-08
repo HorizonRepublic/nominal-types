@@ -63,6 +63,21 @@ describe('PlainTime', () => {
     expect(new PlainTime(time).value).toBe(time);
   });
 
+  it('reads a time without seconds, as an HTML time input sends it', () => {
+    const opens = new PlainTime('09:30');
+
+    expect(opens.value.equals(Temporal.PlainTime.from('09:30:00'))).toBe(true);
+    expect(opens.equals(new PlainTime('09:30:00'))).toBe(true);
+    expect(opens.toJSON()).toBe('09:30:00');
+    expect(new PlainTime('23:59').value.second).toBe(0);
+  });
+
+  it('says what it expects', () => {
+    expect(issuesOf(PlainTime.parse('9:30'))).toStrictEqual([
+      { message: 'must be a time of day as hh:mm or hh:mm:ss (was "9:30")' },
+    ]);
+  });
+
   it('compares times', () => {
     expect(new PlainTime('09:30:00').equals(new PlainTime('09:30:00.000'))).toBe(true);
     expect(new PlainTime('09:30:00').equals(new PlainTime('09:30:01'))).toBe(false);
@@ -90,6 +105,23 @@ describe('PlainDateTime', () => {
     expect(PlainDateTime.parse(Temporal.PlainDateTime.from('+010000-01-01T00:00:00')).ok).toBe(
       false,
     );
+  });
+
+  it('reads a date-time without seconds, as an HTML datetime-local input sends it', () => {
+    const meeting = new PlainDateTime('2024-05-01T09:30');
+
+    expect(meeting.value.equals(Temporal.PlainDateTime.from('2024-05-01T09:30:00'))).toBe(true);
+    expect(meeting.equals(new PlainDateTime('2024-05-01T09:30:00'))).toBe(true);
+    expect(meeting.toJSON()).toBe('2024-05-01T09:30:00');
+  });
+
+  it('says what it expects', () => {
+    expect(issuesOf(PlainDateTime.parse('2024-05-01T09:30Z'))).toStrictEqual([
+      {
+        message:
+          'must be a date and time as YYYY-MM-DDThh:mm or YYYY-MM-DDThh:mm:ss without an offset (was "2024-05-01T09:30Z")',
+      },
+    ]);
   });
 
   it('compares date-times', () => {

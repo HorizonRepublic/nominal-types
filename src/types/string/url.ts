@@ -3,8 +3,13 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
+// A URL holds no spaces or control characters (RFC 3986). The WHATWG parser would drop some of
+// them and encode others, so text holding them would pass while the value differs from the URL.
+// oxlint-disable-next-line no-control-regex
+const parsedAsWritten = /^[^\u0000-\u0020\u007F]+$/u;
+
 const isAbsoluteUrl = (value: unknown): value is string =>
-  typeof value === 'string' && URL.canParse(value);
+  typeof value === 'string' && parsedAsWritten.test(value) && URL.canParse(value);
 
 const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
   'nominal.Url',
@@ -12,6 +17,7 @@ const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
     satisfying(isAbsoluteUrl, 'a URL', {
       type: 'string',
       format: 'uri',
+      pattern: parsedAsWritten.source,
       examples: ['https://example.com/docs'],
     }),
   ),
@@ -21,8 +27,10 @@ const UrlBase: SubtypeOf<typeof AnyString, 'nominal.Url'> = AnyString.subtype(
  * An absolute URL as the WHATWG URL standard parses it, with any scheme.
  *
  * @remarks
- * Any scheme passes, `mailto:` and `javascript:` among them; reach for `HttpUrl` where only web
- * addresses belong. The value keeps the text as given, while the accessors read the parsed form.
+ * Any scheme passes, `javascript:`, `data:`, `file:` and `mailto:` among them; reach for `HttpUrl`
+ * for a link shown to users or fetched by the server. The value keeps the text as given, while the
+ * accessors read the parsed form. Control characters, and a space at either end, are refused,
+ * since the parser would drop them and the value would differ from the URL it read.
  */
 export class Url extends UrlBase {
   /**

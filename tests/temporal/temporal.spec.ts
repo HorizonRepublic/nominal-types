@@ -50,7 +50,7 @@ describe('the Temporal types', () => {
   it('take subtypes with rules on the Temporal value', () => {
     expect(new BirthDate('1990-07-15').value.year).toBe(1990);
     expect(issuesOf(BirthDate.parse('1899-12-31'))).toStrictEqual([
-      { message: 'must be a date from 1900 on (was object)' },
+      { message: 'must be a date from 1900 on (was "1899-12-31")' },
     ]);
     expect(new BirthDate('1990-07-15').equals(new PlainDate('1990-07-15'))).toBe(true);
   });

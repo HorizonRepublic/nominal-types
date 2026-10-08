@@ -137,3 +137,55 @@ describe('a sensitive type', () => {
     ]);
   });
 });
+
+describe('a long value in a message', () => {
+  const ShortText = Nominal('hidden.ShortText', /^\d{0,3}$/u);
+  const messageFor = (text: string): string => issuesOf(ShortText.parse(text))[0]?.message ?? '';
+
+  it('is quoted whole up to 64 characters', () => {
+    expect(messageFor('x'.repeat(64))).toBe(
+      `must be matched by ^\\d{0,3}$ (was "${'x'.repeat(64)}")`,
+    );
+  });
+
+  it('is cut to its first 32 characters and its length from 65 characters', () => {
+    expect(messageFor(`${'a'.repeat(32)}${'b'.repeat(33)}`)).toBe(
+      `must be matched by ^\\d{0,3}$ (was a string of 65 characters starting "${'a'.repeat(32)}"…)`,
+    );
+  });
+
+  it('keeps a 30 000 character input out of the message', () => {
+    expect(messageFor('x'.repeat(30_000)).length).toBeLessThan(120);
+  });
+
+  it('is cut before a character that takes two code units, never through it', () => {
+    expect(messageFor(`${'a'.repeat(31)}😀${'b'.repeat(40)}`)).toBe(
+      `must be matched by ^\\d{0,3}$ (was a string of 73 characters starting "${'a'.repeat(31)}"…)`,
+    );
+  });
+
+  it('escapes what it shows', () => {
+    expect(messageFor(`"\n${'x'.repeat(70)}`)).toBe(
+      `must be matched by ^\\d{0,3}$ (was a string of 72 characters starting "\\"\\n${'x'.repeat(30)}"…)`,
+    );
+  });
+
+  it('is left out by n.hideValues and by sensitive types', () => {
+    const Secret = Nominal('hidden.LongSecret', /^\d{0,3}$/u, { sensitive: true });
+    const long = `" (was ${'x'.repeat(70)}`;
+
+    expect(hidden(messageFor(long))).toBe(
+      'must be matched by ^\\d{0,3}$ (was a string of 77 characters)',
+    );
+    expect(issuesOf(Secret.parse(long))).toStrictEqual([
+      { message: 'must be matched by ^\\d{0,3}$ (was a string of 77 characters)' },
+    ]);
+  });
+
+  it.each([
+    'must be one (was a string of 70 characters starting "broken…)',
+    'must be one (was a string of many characters starting "x"…)',
+  ])('leaves %j, which is not a cut value, as it is', (message) => {
+    expect(hidden(message)).toBe(message);
+  });
+});

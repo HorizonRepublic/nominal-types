@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type * as library from '../../../src/index.ts';
-import { AnyString, NominalError, Ulid, Uuid } from '../../../src/index.ts';
+import { AnyString, n, NominalError, Ulid, Uuid } from '../../../src/index.ts';
 import { satisfiesSchema } from '../../support/json-schema.ts';
 import { issuesOf, valueOf } from '../../support/results.ts';
 
@@ -67,6 +67,14 @@ describe('Ulid', () => {
     expect(lower.equals(new Ulid(sample))).toBe(true);
     expect(lower.equals(new Ulid(highest))).toBe(false);
     expect(lower.equals(sample)).toBe(false);
+  });
+
+  it('ignores case in equals both ways, and in unique arrays', () => {
+    const mixed = new Ulid('01arZ3NDEKTSV4RRFFQ69G5fav');
+
+    expect(new Ulid(sample).equals(mixed)).toBe(true);
+    expect(mixed.equals(new Ulid(sample))).toBe(true);
+    expect(n.of(Ulid).array({ unique: true }).parse([sample, sample.toLowerCase()]).ok).toBe(false);
   });
 
   it('stays apart from a string type with the same text', () => {

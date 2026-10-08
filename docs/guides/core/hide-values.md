@@ -2,7 +2,7 @@
 
 This guide shows how to stop rejected values, such as passwords and email addresses, from reaching API responses and logs.
 
-By default, a message quotes the value it rejected: `must be a UUID (was "secret-password-123")`.
+By default, a message quotes the value it rejected: `must be a UUID (was "secret-password-123")`. A string longer than 64 characters is cut to its first 32 characters and its length. A schema made with [`fromEnv()`](read-config.md) hides all its values.
 
 ## Hide the values of one type
 

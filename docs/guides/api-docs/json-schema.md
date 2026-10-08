@@ -53,7 +53,7 @@ CreateOrder['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 //   required: ['customer', 'sku', 'quantity'] }
 ```
 
-A type with several rules, such as `PositiveInteger`, gets an `allOf`: a list of schemas that must all match, one per rule.
+A type with several rules, such as `PositiveInteger`, gets one schema merged from all of them. Rules that don't fit together, such as two different patterns, stay apart in an `allOf`: a list of schemas that must all match.
 
 ## Describe what a response sends
 
@@ -66,7 +66,7 @@ Int64['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 // { title: 'nominal.Int64', allOf: [{ anyOf: [{ type: 'string', … }, { type: 'integer', … }], … }, …] }
 
 Int64['~standard'].jsonSchema.output({ target: 'openapi-3.0' });
-// { title: 'nominal.Int64', allOf: [{ type: 'string', … }, { type: 'string', format: 'int64', … }], … }
+// { title: 'nominal.Int64', type: 'string', format: 'int64', pattern: '^(?:0|-?[1-9]\\d*)$', maxLength: 20, … }
 
 JSON.stringify({ id: new Int64(12) }); // '{"id":"12"}'
 ```
@@ -106,7 +106,7 @@ class EvenNumber extends Integer.subtype(
 ) {}
 
 EvenNumber['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
-// { title: 'shop.EvenNumber', allOf: [{ type: 'number', … }, …, { type: 'integer', multipleOf: 2, description: 'an even number' }] }
+// { title: 'shop.EvenNumber', type: 'integer', multipleOf: 2, minimum: -9007199254740991, maximum: 9007199254740991, description: 'an even number' }
 ```
 
 A rule from another library describes itself if that library supports [Standard JSON Schema](../../reference/glossary.md), as Zod and ArkType do. ArkType has no OpenAPI 3.0 output, so for `openapi-3.0` an ArkType rule is described as `draft-07`.
@@ -130,7 +130,7 @@ JSON Schema can't express every rule. Then the schema is looser than the type, a
 
 ## See also
 
-- [JSON Schema reference](../../reference/json-schema.md): targets, input and output, examples, `allOf`.
+- [JSON Schema reference](../../reference/json-schema.md): targets, input and output, examples, several rules.
 - [How to document nominal types in Swagger](swagger.md)
 - [How to declare a type](../core/declare-a-type.md)
 

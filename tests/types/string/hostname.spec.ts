@@ -245,6 +245,21 @@ describe('Hostname and DomainName as JSON Schema', () => {
     `a${longest}`,
     `${label(63)}.com`,
     `${label(64)}.com`,
+    '1.2.3.4',
+    'a.123',
+    '123.a',
+    'a.1-2',
+    '9',
+    '12',
+    'xn',
+    'XN.com',
+    'xn-a.com',
+    'a--b.com',
+    'ab--c.com',
+    'Xm--c.com',
+    'yn--c.com',
+    '1n--c.com',
+    'a-b--c.com',
   ];
 
   it('agree with the types on every name without an xn-- label', () => {
@@ -262,8 +277,9 @@ describe('Hostname and DomainName as JSON Schema', () => {
     const pattern = new RegExp(String(Reflect.get(hostSchema, 'pattern')), 'u');
     const started = performance.now();
 
-    expect(pattern.test(`${'a.'.repeat(50_000)}com`)).toBe(false);
+    expect(satisfiesSchema(hostSchema, `${'a.'.repeat(50_000)}com`)).toBe(false);
     expect(pattern.test('a-'.repeat(50_000))).toBe(false);
+    expect(pattern.test(`${'ab--c.'.repeat(20_000)}com`)).toBe(false);
     expect(performance.now() - started).toBeLessThan(50);
   });
 });

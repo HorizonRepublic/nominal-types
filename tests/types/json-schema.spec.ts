@@ -29,7 +29,7 @@ import {
   UuidV7,
 } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
-import { satisfiesSchema } from '../support/json-schema.ts';
+import { allPatternsIn, backtrackingSyntax, satisfiesSchema } from '../support/json-schema.ts';
 
 const patternsIn = (schema: unknown): string[] => {
   if (typeof schema !== 'object' || schema === null) {
@@ -45,16 +45,15 @@ const patternsIn = (schema: unknown): string[] => {
   ];
 };
 
+// The whole schema, so length limits that stand beside a pattern count too.
 const patternOf = (nominal: AnyNominalType): { test: (text: string) => boolean } => {
-  const patterns = patternsIn(nominal['~standard'].jsonSchema.input({ target: 'draft-2020-12' }));
+  const schema = nominal['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
 
-  if (patterns.length === 0) {
+  if (patternsIn(schema).length === 0) {
     throw new TypeError(`${nominal.typeName} describes no pattern`);
   }
 
-  const compiled = patterns.map((pattern) => new RegExp(pattern, 'u'));
-
-  return { test: (text) => compiled.every((pattern) => pattern.test(text)) };
+  return { test: (text) => satisfiesSchema(schema, text) };
 };
 
 const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly string[]]> = [
@@ -236,6 +235,22 @@ describe('JSON Schema examples', () => {
       expect(type['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toMatchObject({
         title: name,
       });
+    },
+  );
+});
+
+describe('JSON Schema patterns for every engine', () => {
+  const targets = ['draft-2020-12', 'draft-07', 'openapi-3.0'] as const;
+
+  it.each(builtIns.map((type) => [type.typeName, type] as const))(
+    'hold no lookaround or backreference for %s',
+    (_, type) => {
+      const { jsonSchema } = type['~standard'];
+      const patterns = targets.flatMap((target) =>
+        allPatternsIn([jsonSchema.input({ target }), jsonSchema.output({ target })]),
+      );
+
+      expect(patterns.filter((pattern) => backtrackingSyntax.test(pattern))).toStrictEqual([]);
     },
   );
 });

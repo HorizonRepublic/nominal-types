@@ -196,7 +196,8 @@ config.PORT.value; // 3000 for PORT=3000
 ### JSON Schema
 
 - `Type['~standard'].jsonSchema.input({ target })` and `.output({ target })`. Targets: `'draft-2020-12'`, `'draft-07'`, `'openapi-3.0'`; any other throws `TypeError`.
-- `title` is the type name. A type with several rules gets `allOf`, one entry per rule. Only examples the whole type accepts are kept; OpenAPI 3.0 gets one `example`.
+- `title` is the type name. A type with several rules gets one schema merged from them (stricter bounds, `integer` over `number`, the narrower format); rules that don't fit together, such as two patterns, stay apart in `allOf`. Only examples the whole type accepts are kept; OpenAPI 3.0 gets one `example`, and an exclusive bound as `minimum: 0, exclusiveMinimum: true`.
+- Patterns in schemas hold no lookaheads or backreferences, so RE2-based tools read them. `Email` and `SemVer` move their length checks to `minLength`/`maxLength`; `Email` and `Hostname` add a `not: { pattern }`.
 - Big integer types: input is `anyOf` a decimal string and a safe integer; output is the string.
 - `n.object()` output adds `additionalProperties: false`.
 - A rule without JSON Schema throws `TypeError: <name>: the schema cannot describe itself as JSON Schema`.

@@ -1,7 +1,14 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { AnyString, n, Nominal } from '../../src/index.ts';
+import {
+  AnyNumber,
+  AnyString,
+  n,
+  NegativeNumber,
+  Nominal,
+  PositiveNumber,
+} from '../../src/index.ts';
 
 const openApi = { target: 'openapi-3.0' } as const;
 
@@ -56,5 +63,88 @@ describe('JSON Schema for OpenAPI 3.0', () => {
         new TypeError('openapi.Even: the schema cannot describe itself as JSON Schema'),
       );
     }
+  });
+});
+
+const isNumber = (value: unknown): value is number => typeof value === 'number';
+const isSmall = (value: unknown): value is number => isNumber(value) && value >= 1 && value <= 5;
+const isSign = (value: unknown): value is number => isNumber(value) && value !== 0;
+const isPositive = (value: unknown): value is number => isNumber(value) && value > 0;
+
+class Small extends Nominal(
+  'openapi.Small',
+  n.satisfying(isSmall, 'a small number', {
+    type: 'number',
+    minimum: 1,
+    exclusiveMinimum: 0,
+    maximum: 5,
+    exclusiveMaximum: 9,
+  }),
+) {}
+
+class Sign extends AnyNumber.subtype(
+  'openapi.Sign',
+  n.satisfying(isSign, 'not zero', { anyOf: [{ exclusiveMinimum: 0 }, { exclusiveMaximum: 0 }] }),
+) {}
+
+class Measure extends Nominal(
+  'openapi.Measure',
+  n.satisfying(isNumber, 'a number or nothing', { type: 'number', nullable: true }),
+) {}
+
+class Above extends Measure.subtype(
+  'openapi.Above',
+  n.satisfying(isPositive, 'a positive number', { anyOf: [{ exclusiveMinimum: 0 }] }),
+) {}
+
+describe('exclusive bounds for OpenAPI 3.0', () => {
+  const positive = { anyOf: [{ minimum: 0, exclusiveMinimum: true }] };
+
+  it('become an inclusive bound with a flag', () => {
+    expect(PositiveNumber['~standard'].jsonSchema.input(openApi)).toStrictEqual({
+      title: 'nominal.PositiveNumber',
+      type: 'number',
+      format: 'double',
+      minimum: 0,
+      exclusiveMinimum: true,
+      description: 'a positive number',
+    });
+    expect(NegativeNumber['~standard'].jsonSchema.input(openApi)).toMatchObject({
+      maximum: 0,
+      exclusiveMaximum: true,
+    });
+  });
+
+  it('stay numbers for JSON Schema', () => {
+    const schema = PositiveNumber['~standard'].jsonSchema.input({ target: 'draft-07' });
+
+    expect(schema).toMatchObject({ exclusiveMinimum: 0 });
+    expect(schema).not.toHaveProperty('minimum');
+  });
+
+  it('give way to a stricter inclusive bound in the same schema', () => {
+    expect(Small['~standard'].jsonSchema.input(openApi)).toStrictEqual({
+      title: 'openapi.Small',
+      type: 'number',
+      minimum: 1,
+      maximum: 5,
+      description: 'a small number',
+    });
+  });
+
+  it('are written that way inside anyOf, allOf and items too', () => {
+    expect(Sign['~standard'].jsonSchema.input(openApi)).toMatchObject({
+      type: 'number',
+      anyOf: [
+        { minimum: 0, exclusiveMinimum: true },
+        { maximum: 0, exclusiveMaximum: true },
+      ],
+    });
+    expect(Above['~standard'].jsonSchema.input(openApi)).toMatchObject({
+      allOf: [{ nullable: true }, positive],
+    });
+    expect(n.of(Above).array()['~standard'].jsonSchema.input(openApi)).toMatchObject({
+      items: { allOf: [{}, positive] },
+    });
   });
 });

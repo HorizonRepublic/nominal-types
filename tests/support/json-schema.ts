@@ -76,6 +76,12 @@ export const satisfiesSchema = (schema: unknown, value: unknown): boolean => {
     return false;
   }
 
+  const negated = keyword('not');
+
+  if (negated !== undefined && satisfiesSchema(negated, value)) {
+    return false;
+  }
+
   const choices = keyword('anyOf');
 
   if (
@@ -161,3 +167,26 @@ export const disagreementsOf = (type: AnyNominalType, texts: readonly string[]):
 
   return texts.filter((text) => satisfiesSchema(schema, text) !== type.parse(text).ok);
 };
+
+/**
+ * Every `pattern` in a JSON Schema, at any depth.
+ */
+export const allPatternsIn = (schema: unknown): string[] => {
+  if (Array.isArray(schema)) {
+    return schema.flatMap((item: unknown) => allPatternsIn(item));
+  }
+
+  if (typeof schema !== 'object' || schema === null) {
+    return [];
+  }
+
+  return Object.entries(schema).flatMap(([key, value]) =>
+    key === 'pattern' && typeof value === 'string' ? [value] : allPatternsIn(value),
+  );
+};
+
+/**
+ * Syntax that regular expression engines without backtracking, such as RE2, refuse: lookaheads,
+ * lookbehinds and backreferences.
+ */
+export const backtrackingSyntax = /\(\?<?[=!]|\\k<|\\[1-9]/u;

@@ -33,16 +33,17 @@ const safeNumber = numbersUpTo(Number.MAX_SAFE_INTEGER);
 const number = `(?:${safeNumber})`;
 const identifier = `(?:${safeNumber}|\\d*[A-Za-z-][\\dA-Za-z-]*)`;
 const buildIdentifier = '[\\dA-Za-z-]+';
-const pattern = new RegExp(
-  `^(?=.{5,256}$)${number}\\.${number}\\.${number}` +
-    `(?:-${identifier}(?:\\.${identifier})*)?` +
-    `(?:\\+${buildIdentifier}(?:\\.${buildIdentifier})*)?$`,
-  'u',
-);
+const grammar =
+  `${number}\\.${number}\\.${number}` +
+  `(?:-${identifier}(?:\\.${identifier})*)?` +
+  `(?:\\+${buildIdentifier}(?:\\.${buildIdentifier})*)?`;
+const pattern = new RegExp(`^(?=.{5,256}$)${grammar}$`, 'u');
 
 const SemVerBase: SubtypeOf<typeof AnyString, 'nominal.SemVer'> = AnyString.subtype(
   'nominal.SemVer',
+  // The length lookahead stays out of the JSON Schema, which RE2-based tools couldn't compile.
   matching(pattern, 'a semantic version', {
+    pattern: `^${grammar}$`,
     minLength: 5,
     maxLength: 256,
     examples: ['1.4.2', '2.0.0-rc.1+build.5'],

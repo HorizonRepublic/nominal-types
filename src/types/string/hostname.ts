@@ -3,7 +3,7 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
-import { hostnamePattern, isHostnameText, uLabelOf } from './dns-name.ts';
+import { digitsLastPattern, hostnamePattern, isHostnameText, uLabelOf } from './dns-name.ts';
 
 const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname'> = AnyString.subtype(
   'nominal.Hostname',
@@ -14,6 +14,7 @@ const HostnameBase: SubtypeOf<typeof AnyString, 'nominal.Hostname'> = AnyString.
       pattern: hostnamePattern.source,
       minLength: 1,
       maxLength: 253,
+      not: { pattern: digitsLastPattern.source },
       examples: ['api.example.com'],
     }),
   ),

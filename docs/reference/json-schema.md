@@ -55,15 +55,17 @@ For `openapi-3.0`, a rule from a library that doesn't write OpenAPI 3.0, such as
 
 OpenAPI 3.0 has no `contentEncoding`. For `openapi-3.0`, `contentEncoding: 'base64'` becomes `format: 'byte'`, and any other `contentEncoding` is left out.
 
+OpenAPI 3.0 writes an exclusive bound as a flag. For `openapi-3.0`, `exclusiveMinimum: 0` becomes `minimum: 0, exclusiveMinimum: true`, and the same goes for `exclusiveMaximum`.
+
 ## A type's schema
 
-| Part          | Rule                                                                                     |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| `title`       | The type name, such as `shop.Sku`, unless the rule sets its own `title`.                 |
-| one rule      | The rule's schema, at the top level.                                                     |
-| several rules | An `allOf`, one entry per rule, from the top of the line of types down.                  |
-| `description` | The description given to `n.matching()` or `n.satisfying()`, or the list of `n.oneOf()`. |
-| examples      | Gathered from all the rules. Only the examples the whole type accepts are kept.          |
+| Part          | Rule                                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `title`       | The type name, such as `shop.Sku`, unless the rule sets its own `title`.                        |
+| one rule      | The rule's schema, at the top level.                                                            |
+| several rules | One schema, merged from the rules where they fit together. See [Several rules](#several-rules). |
+| `description` | The description given to `n.matching()` or `n.satisfying()`, or the list of `n.oneOf()`.        |
+| examples      | Gathered from all the rules. Only the examples the whole type accepts are kept.                 |
 
 The string check of `AnyString` is left out when the next rule checks for a string itself. So a subtype of `AnyString` made from a pattern, or from `n.oneOf()` with strings only, has one rule.
 
@@ -78,7 +80,16 @@ OrderStatus['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 // { title: 'shop.OrderStatus', type: 'string', enum: ['draft', 'paid', 'shipped'], description: 'one of "draft", "paid", "shipped"' }
 ```
 
-Example of several rules:
+## Several rules
+
+A type with several rules gets one schema. The rules are merged from the top of the line of types down:
+
+- `number` and `integer` give `integer`.
+- Of two bounds on the same side, the stricter one is kept.
+- Of two number formats, the narrower one is kept: `float` before `double`, `int32` before `int64`. An `integer` keeps no `double`.
+- The description of the last rule is kept.
+
+Example:
 
 ```ts
 import { PositiveInteger } from '@horizon-republic/nominal-types';
@@ -87,14 +98,14 @@ PositiveInteger['~standard'].jsonSchema.input({ target: 'draft-07' });
 // {
 //   $schema: 'http://json-schema.org/draft-07/schema#',
 //   title: 'nominal.PositiveInteger',
-//   allOf: [
-//     { type: 'number', description: 'a number' },
-//     { type: 'number', format: 'double', description: 'a finite number' },
-//     { type: 'integer', minimum: -9007199254740991, maximum: 9007199254740991, description: 'a safe integer' },
-//     { type: 'integer', minimum: 1, description: 'a positive integer' },
-//   ],
+//   type: 'integer',
+//   minimum: 1,
+//   maximum: 9007199254740991,
+//   description: 'a positive integer',
 // }
 ```
+
+Rules that don't fit together stay apart, in an `allOf`: a list of schemas that must all match. That happens for two different patterns, two different formats, or a keyword such as `nullable` or `properties`.
 
 Example of examples: `ToySku` keeps only the example of `Sku` that it accepts:
 

@@ -16,6 +16,15 @@ new PositiveInteger(3).value; // 3
 new PositiveInteger(-0); // throws NominalError: nominal.PositiveInteger: must be a positive integer (was -0)
 ```
 
+A type's JSON Schema is its parent's, merged with what the type adds. The stricter bound wins:
+
+```ts
+import { PositiveInteger } from '@horizon-republic/nominal-types';
+
+PositiveInteger['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
+// { title: 'nominal.PositiveInteger', type: 'integer', minimum: 1, maximum: 9007199254740991, description: 'a positive integer' }
+```
+
 ## AnyNumber
 
 Root of the number types. Accepts any `number`, `NaN`, `Infinity` and `-Infinity` included.

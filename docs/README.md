@@ -44,6 +44,13 @@ Validators:
 Frameworks:
 
 - [How to use nominal types with NestJS](guides/frameworks/nestjs.md)
+- [How to use nominal types with Fastify](guides/frameworks/fastify.md)
+- [How to use nominal types with Hono](guides/frameworks/hono.md)
+- [How to use nominal types with Elysia](guides/frameworks/elysia.md)
+- [How to use nominal types with tRPC](guides/frameworks/trpc.md)
+- [How to use nominal types with Next.js](guides/frameworks/nextjs.md)
+- [How to use nominal types with React Hook Form](guides/frameworks/react-hook-form.md)
+- [How to use nominal types with TanStack Form](guides/frameworks/tanstack-form.md)
 - [How to use nominal types with GraphQL](guides/frameworks/graphql.md)
 - [How to send nominal types through superjson](guides/frameworks/superjson.md)
 

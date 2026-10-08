@@ -94,6 +94,10 @@
       "import": "./dist/adapters/superjson/index.js",
       "require": "./dist/adapters/superjson/index.cjs"
     },
+    "./adapters/fastify": {
+      "import": "./dist/adapters/fastify/index.js",
+      "require": "./dist/adapters/fastify/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -116,6 +120,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
+    "@fastify/swagger": "^9.9.1",
     "@mikro-orm/core": "^7.2.4",
     "@mikro-orm/sqlite": "^7.2.4",
     "@nestjs/common": "^12.1.2",
@@ -138,6 +143,7 @@
     "effect": "^4.0.1",
     "esbuild": "^0.28.2",
     "eslint-plugin-jsdoc": "^65.2.0",
+    "fastify": "^5.12.5",
     "graphql": "^17.0.2",
     "joi": "^18.2.9",
     "mitata": "^1.0.34",
@@ -168,6 +174,7 @@
     "arktype": "^2.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0 || ^0.15.0",
+    "fastify": "^5.0.0",
     "graphql": "^16.0.0 || ^17.0.0",
     "rxjs": "^7.2.0",
     "sequelize": "^6.0.0",
@@ -192,6 +199,9 @@
       "optional": true
     },
     "class-validator": {
+      "optional": true
+    },
+    "fastify": {
       "optional": true
     },
     "graphql": {

@@ -69,6 +69,7 @@ const config: UserConfig = {
     'adapters/sequelize/index': 'src/adapters/sequelize/index.ts',
     'adapters/graphql/index': 'src/adapters/graphql/index.ts',
     'adapters/superjson/index': 'src/adapters/superjson/index.ts',
+    'adapters/fastify/index': 'src/adapters/fastify/index.ts',
   },
   format: ['esm', 'cjs'],
   inputOptions: (options, format) =>

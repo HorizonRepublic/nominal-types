@@ -2,6 +2,8 @@
 
 The types the package ships, as a tree. Each type is a [subtype](../glossary.md) of the type above it. An instance fits wherever a type above it is expected, not the other way round. Every `Email` is an `AnyString`, but not every `AnyString` is an `Email`.
 
+A type marked `+` also [implies](../glossary.md) types in other branches: every value it accepts passes them, so its instances fit where they are expected. `PositiveInteger` fits where `PositiveNumber` is expected. [Numbers](number.md#implied-types) and [Big integers](bigint.md#implied-types) list the implied types.
+
 The built-in types are optional. Any type can be declared from scratch with [`Nominal()`](../declaring.md#nominal).
 
 ```text
@@ -40,31 +42,31 @@ AnyString                     any string
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
-    ├── PositiveNumber            > 0
-    ├── NegativeNumber            < 0
+    ├── PositiveNumber +          > 0
+    ├── NegativeNumber +          < 0
     ├── NonNegativeNumber         ≥ 0
     ├── NonPositiveNumber         ≤ 0
     ├── Float32                   exact as a 32-bit float
     ├── Latitude                  -90 to 90
     ├── Longitude                 -180 to 180
     └── Integer                   a safe integer
-        ├── PositiveInteger           ≥ 1
-        ├── NegativeInteger           ≤ -1
-        ├── NonNegativeInteger        ≥ 0
-        ├── NonPositiveInteger        ≤ 0
-        ├── Int8, Int16, Int32
-        ├── Uint8
-        ├── Uint16                    0 to 65,535
-        │   └── Port                      1 to 65,535
-        └── Uint32
+        ├── PositiveInteger +         ≥ 1
+        ├── NegativeInteger +         ≤ -1
+        ├── NonNegativeInteger +      ≥ 0
+        ├── NonPositiveInteger +      ≤ 0
+        ├── Int8 +, Int16 +, Int32
+        ├── Uint8 +
+        ├── Uint16 +                  0 to 65,535
+        │   └── Port +                    1 to 65,535
+        └── Uint32 +
 
 AnyBigInt                     any integer, as a bigint
-├── PositiveBigInt                ≥ 1
-├── NegativeBigInt                ≤ -1
+├── PositiveBigInt +              ≥ 1
+├── NegativeBigInt +              ≤ -1
 ├── NonNegativeBigInt             ≥ 0
 ├── NonPositiveBigInt             ≤ 0
 ├── Int64
-└── Uint64
+└── Uint64 +
 
 AnyBoolean                    true or false
 ```

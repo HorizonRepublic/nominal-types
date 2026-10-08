@@ -23,6 +23,7 @@ export type {
   Branded,
   BrandsOf,
   Immutable,
+  ImplyingType,
   InputOf,
   Narrowed,
   NominalInstance,

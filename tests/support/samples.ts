@@ -196,3 +196,44 @@ export const sampleTypes = [
   UuidV4,
   UuidV7,
 ] as const;
+
+/**
+ * Numbers and big integers at the ends of every built-in range, for tests that compare the ranges
+ * of two types.
+ */
+export const rangeSamples: readonly unknown[] = [
+  0.5,
+  -0.5,
+  -90,
+  90,
+  180,
+  -128,
+  -129,
+  32_767,
+  32_768,
+  -32_768,
+  -32_769,
+  65_535,
+  2 ** 24,
+  2 ** 24 + 1,
+  2_147_483_647,
+  2_147_483_648,
+  -2_147_483_648,
+  -2_147_483_649,
+  4_294_967_295,
+  4_294_967_296,
+  Number.MAX_SAFE_INTEGER,
+  Number.MIN_SAFE_INTEGER,
+  Number.MAX_VALUE,
+  Number.MIN_VALUE,
+  Number.NEGATIVE_INFINITY,
+  -1n,
+  0n,
+  1n,
+  2n ** 63n - 1n,
+  2n ** 63n,
+  -(2n ** 63n),
+  -(2n ** 63n) - 1n,
+  2n ** 64n - 1n,
+  2n ** 64n,
+];

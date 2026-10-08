@@ -35,29 +35,30 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 
 ## Type classes and instances
 
-| Type                                   | Description                                                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `NominalType<Name, Schema, Instance?>` | A class returned by `Nominal()`.                                                                                    |
-| `SubtypeOf<Parent, Name, Value?>`      | A class returned by `subtype()`. `Value` is the value its rule gives, such as `'draft' \| 'paid'` from `n.oneOf()`. |
-| `Narrowed<Instance, Value>`            | `Instance` with `value` of the narrower type `Value`, as a subtype with `n.oneOf()` has.                            |
-| `VariantOf<Source, Name>`              | A class returned by `variant()`.                                                                                    |
-| `VariantInstance<Source, Name>`        | An instance of a variant: the methods of `Source`, a brand of its own.                                              |
-| `AnyNominalType`                       | Any nominal type class, for code that takes types in general.                                                       |
-| `NominalInstance<Name, Value>`         | What every instance offers: `value`, `equals()`, `toJSON()`, `toString()`.                                          |
-| `ObjectInstance<Name, Input, Value>`   | An instance of a type built on `n.object()`: a getter per field and `copyWith()`.                                   |
-| `ObjectCopy<Input>`                    | The `copyWith()` method alone.                                                                                      |
-| `ObjectRule<Input, Value>`             | What `Nominal()` needs of an `n.object()` schema to add getters: `keys` and `strict()`.                             |
-| `NominalOptions`                       | The options of `Nominal()`, `subtype()` and `variant()`. See [`NominalOptions`](declaring.md#nominaloptions).       |
-| `Immutable<Value>`                     | `Value` with its plain objects and arrays read-only all the way down. The type of `value`.                          |
+| Type                                            | Description                                                                                                                                                                                               |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NominalType<Name, Schema, Instance?>`          | A class returned by `Nominal()`.                                                                                                                                                                          |
+| `ImplyingType<Name, Schema, Instance, Implied>` | A class returned by `Nominal()` with the `implies` option. `Implied` is the union of the listed classes.                                                                                                  |
+| `SubtypeOf<Parent, Name, Value?, Implied?>`     | A class returned by `subtype()`. `Value` is the value its rule gives, such as `'draft' \| 'paid'` from `n.oneOf()`. `Implied` is the union of the classes in `implies`, such as `typeof PositiveInteger`. |
+| `Narrowed<Instance, Value>`                     | `Instance` with `value` of the narrower type `Value`, as a subtype with `n.oneOf()` has.                                                                                                                  |
+| `VariantOf<Source, Name, Implied?>`             | A class returned by `variant()`.                                                                                                                                                                          |
+| `VariantInstance<Source, Name, Implied?>`       | An instance of a variant: the methods of `Source`, a brand of its own, without the brands the level of `Source` implies.                                                                                  |
+| `AnyNominalType`                                | Any nominal type class, for code that takes types in general.                                                                                                                                             |
+| `NominalInstance<Name, Value>`                  | What every instance offers: `value`, `equals()`, `toJSON()`, `toString()`.                                                                                                                                |
+| `ObjectInstance<Name, Input, Value>`            | An instance of a type built on `n.object()`: a getter per field and `copyWith()`.                                                                                                                         |
+| `ObjectCopy<Input>`                             | The `copyWith()` method alone.                                                                                                                                                                            |
+| `ObjectRule<Input, Value>`                      | What `Nominal()` needs of an `n.object()` schema to add getters: `keys` and `strict()`.                                                                                                                   |
+| `NominalOptions`                                | The options of `Nominal()`, `subtype()` and `variant()`. See [`NominalOptions`](declaring.md#nominaloptions).                                                                                             |
+| `Immutable<Value>`                              | `Value` with its plain objects and arrays read-only all the way down. The type of `value`.                                                                                                                |
 
 ## Brands
 
-| Type                  | Description                                                                                 |
-| --------------------- | ------------------------------------------------------------------------------------------- |
-| `Brand<Name>`         | The compile-time marker that keeps types apart. A subtype carries its own and its parent's. |
-| `Branded<Names>`      | The part of an instance that holds its brands.                                              |
-| `BrandsOf<Instance>`  | The brands an instance carries.                                                             |
-| `Unbranded<Instance>` | An instance type without its brand.                                                         |
+| Type                  | Description                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Brand<Name>`         | The compile-time marker that keeps types apart. A subtype carries its own, its parent's and those of the types it implies. |
+| `Branded<Names>`      | The part of an instance that holds its brands.                                                                             |
+| `BrandsOf<Instance>`  | The brands an instance carries.                                                                                            |
+| `Unbranded<Instance>` | An instance type without its brand.                                                                                        |
 
 `Branded`, `BrandsOf` and `Unbranded` let declaration files name the instance of a type declared without a class of its own, such as a variant.
 

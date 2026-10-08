@@ -30,7 +30,7 @@ Declares a type with no parent. It returns a class to extend.
 | --------- | ----------------------------------------- | ----------------------------------------------------- |
 | `name`    | `string`                                  | The [type name](#type-names), such as `booking.Stay`. |
 | `rule`    | `RegExp` or a synchronous Standard Schema | What a valid value looks like.                        |
-| `options` | [`NominalOptions`](#nominaloptions)       | Optional. `{ sensitive?: boolean }`.                  |
+| `options` | [`NominalOptions`](#nominaloptions)       | Optional. `{ sensitive?, implies? }`.                 |
 
 `rule` can be:
 
@@ -167,14 +167,16 @@ See also: [How to make a stricter type or a variant](../guides/core/build-on-a-t
 ```ts
 interface NominalOptions {
   readonly sensitive?: boolean;
+  readonly implies?: readonly AnyNominalType[];
 }
 ```
 
 The options of `Nominal()`, `subtype()` and `variant()`.
 
-| Option      | Type      | Default                                                                     | Description                                               |
-| ----------- | --------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `sensitive` | `boolean` | `false` for `Nominal()`; the parent's value for `subtype()` and `variant()` | `true` leaves rejected values out of the type's messages. |
+| Option      | Type              | Default                                                                     | Description                                                                         |
+| ----------- | ----------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `sensitive` | `boolean`         | `false` for `Nominal()`; the parent's value for `subtype()` and `variant()` | `true` leaves rejected values out of the type's messages.                           |
+| `implies`   | an array of types | `[]`                                                                        | Types that accept every value of the new type. Its instances pass for them as well. |
 
 A subtype or variant of a sensitive type is sensitive too. Pass `{ sensitive: false }` to turn it off for one of them.
 
@@ -194,6 +196,45 @@ Salary.parse(-5000); // { ok: false, issues: [{ message: 'must be a positive int
 ```
 
 See also: [Sensitive types](errors-and-messages.md#sensitive-types), [How to keep values out of error messages](../guides/core/hide-values.md).
+
+### implies
+
+Use `implies` when a type sits under one parent, but its values also pass a type in another branch. The new type then [implies](glossary.md) the listed types:
+
+- the compiler accepts its instances where a listed type is expected;
+- `instanceof` a listed type is `true`;
+- `equals()` compares its instances with those of a listed type by value;
+- it also implies the types each listed type implies.
+
+`parse()` of a listed type checks the value again and returns an instance of the listed type. A subtype keeps the implied types of its parent. A variant drops those of the type it replaces.
+
+```ts
+import { n, PositiveInteger, Uint8 } from '@horizon-republic/nominal-types';
+
+const oneToFive = n.satisfying(
+  (value: unknown): value is number => typeof value === 'number' && value >= 1 && value <= 5,
+  'a rating from 1 to 5',
+);
+
+class Stars extends Uint8.subtype('review.Stars', oneToFive, { implies: [PositiveInteger] }) {}
+
+const average = (values: readonly PositiveInteger[]): number =>
+  values.reduce((sum, value) => sum + value.value, 0) / values.length;
+
+average([new Stars(4), new Stars(5)]); // 4.5
+new Stars(4) instanceof PositiveInteger; // true
+PositiveInteger.parse(new Stars(4)); // { ok: true, value: PositiveInteger { value: 4 } }
+```
+
+> [!WARNING]
+> The package trusts the list and never checks it against values. List a type only when every value of the new type passes it. A wrong entry makes the compiler and `instanceof` accept values the listed type refuses. `parse()` of the listed type still refuses them.
+
+Throws:
+
+| Case                                                            | Error                                                                             |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| an entry is not a nominal type                                  | `TypeError: review.Stars: implies takes nominal types`                            |
+| a listed type has a member the new type lacks, such as a getter | `TypeError: review.Stars: cannot imply shop.Celsius, whose instances have kelvin` |
 
 ## n.matching()
 

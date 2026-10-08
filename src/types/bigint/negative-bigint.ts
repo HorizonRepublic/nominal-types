@@ -1,14 +1,21 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { AnyBigInt } from './any-bigint.ts';
 import { bigintRule } from './bigint-rule.ts';
+import { NonPositiveBigInt } from './non-positive-bigint.ts';
 
-const NegativeBigIntBase: SubtypeOf<typeof AnyBigInt, 'nominal.NegativeBigInt'> = AnyBigInt.subtype(
+const NegativeBigIntBase: SubtypeOf<
+  typeof AnyBigInt,
+  'nominal.NegativeBigInt',
+  bigint,
+  typeof NonPositiveBigInt
+> = AnyBigInt.subtype(
   'nominal.NegativeBigInt',
   bigintRule('a negative integer', (value) => value < 0n, {
     string: { type: 'string', pattern: '^-[1-9]\\d*$' },
     integer: { type: 'integer', maximum: -1 },
     examples: ['-9007199254740993'],
   }),
+  { implies: [NonPositiveBigInt] },
 );
 
 /**

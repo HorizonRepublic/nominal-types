@@ -15,15 +15,15 @@ Exact facts about everything the package exports, for looking things up. Terms a
 
 ## Built-in types
 
-| Page                                 | Types                                                |
-| ------------------------------------ | ---------------------------------------------------- |
-| [Built-in types](types/README.md)    | The type tree, and which type to pick                |
-| [Strings](types/string.md)           | `AnyString` and the 37 types under it                |
-| [Numbers](types/number.md)           | `AnyNumber` and the 20 types under it                |
-| [Big integers](types/bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
-| [Booleans](types/boolean.md)         | `AnyBoolean`                                         |
-| [Money](types/money.md)              | `Money`                                              |
-| [Dates and times](types/temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` |
+| Page                                 | Types                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| [Built-in types](types/README.md)    | The type tree, and which type to pick                                                           |
+| [Strings](types/string.md)           | `AnyString` and the 37 types under it                                                           |
+| [Numbers](types/number.md)           | `AnyNumber` and the 20 types under it                                                           |
+| [Big integers](types/bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                                  |
+| [Booleans](types/boolean.md)         | `AnyBoolean`                                                                                    |
+| [Money](types/money.md)              | `Money`                                                                                         |
+| [Dates and times](types/temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`, `ZonedDateTime`, `Duration`, `TimeZoneId` |
 
 ## Adapters
 

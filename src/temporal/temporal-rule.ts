@@ -41,8 +41,8 @@ export interface TemporalKind<Value extends object> {
   readonly json: Readonly<Record<string, unknown>>;
   /** Whether a value of the runtime's own Temporal class is one the type accepts. */
   readonly accepts: (temporal: TemporalApi, value: object) => value is Value;
-  /** The value of text the pattern matched. */
-  readonly build: (temporal: TemporalApi, text: string) => Value;
+  /** The value of text the pattern matched, or `undefined` for text it matches but the type refuses. */
+  readonly build: (temporal: TemporalApi, text: string) => Value | undefined;
 }
 
 const textOf = (value: object): string => {
@@ -68,12 +68,13 @@ export const temporalRule = <Value extends object>(
   const objectTag = `[object ${tag}]`;
   const rejected = (value: unknown): Rejection =>
     new Rejection([{ message: mustBe(description, value) }]);
-  const fromText = (text: string): Value | Rejection =>
-    pattern.test(text) ? kind.build(temporalFor(kind.typeName), text) : rejected(text);
+  const fromText = (text: string, input: unknown, temporal?: TemporalApi): Value | Rejection =>
+    (pattern.test(text) ? kind.build(temporal ?? temporalFor(kind.typeName), text) : undefined) ??
+    rejected(input);
 
   const run = (input: unknown): Value | Rejection => {
     if (typeof input === 'string') {
-      return fromText(input);
+      return fromText(input, input);
     }
 
     if (
@@ -90,9 +91,7 @@ export const temporalRule = <Value extends object>(
       return input;
     }
 
-    const text = textOf(input);
-
-    return pattern.test(text) ? kind.build(temporal, text) : rejected(input);
+    return fromText(textOf(input), input, temporal);
   };
 
   const json = { type: 'string', ...kind.json, pattern: pattern.source, description };

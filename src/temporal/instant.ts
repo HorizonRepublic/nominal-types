@@ -22,17 +22,27 @@ const pattern = whole(`${fullDate}T${partialTime}${timeOffset}`);
 const earliest = -62_167_219_200_000;
 const latest = 253_402_300_799_999;
 
-// Building from epoch nanoseconds skips a second parse of text the pattern has already checked.
-const build = (temporal: TemporalApi, text: string): Temporal.Instant => {
+/**
+ * Internal: whether a moment is one an `Instant` holds, its UTC text in the years 0000 to 9999.
+ */
+export const isInstantInRange = (value: { readonly epochMilliseconds: number }): boolean =>
+  value.epochMilliseconds >= earliest && value.epochMilliseconds <= latest;
+
+/**
+ * Internal: the epoch nanoseconds of a `date-time` with a numeric offset or `Z` that the pattern
+ * has checked, so that building the value skips a second parse of the text.
+ */
+export const epochNanosecondsOf = (text: string): bigint => {
   const [year, month, day] = dateFields(text);
   const [hour, minute, second, milli, micro, nano] = timeFields(text, 11);
   const seconds =
     epochDays(year, month, day) * 86_400 + hour * 3600 + minute * 60 + second - offsetSeconds(text);
 
-  return temporal.Instant.fromEpochNanoseconds(
-    BigInt(seconds * 1000 + milli) * 1_000_000n + BigInt(micro * 1000 + nano),
-  );
+  return BigInt(seconds * 1000 + milli) * 1_000_000n + BigInt(micro * 1000 + nano);
 };
+
+const build = (temporal: TemporalApi, text: string): Temporal.Instant =>
+  temporal.Instant.fromEpochNanoseconds(epochNanosecondsOf(text));
 
 const InstantBase: NominalType<
   'nominal.Instant',
@@ -46,9 +56,7 @@ const InstantBase: NominalType<
     description: 'an RFC 3339 date-time with Z or an offset',
     json: { format: 'date-time', examples: ['2024-05-01T09:30:00Z'] },
     accepts: (temporal, value): value is Temporal.Instant =>
-      value instanceof temporal.Instant &&
-      value.epochMilliseconds >= earliest &&
-      value.epochMilliseconds <= latest,
+      value instanceof temporal.Instant && isInstantInRange(value),
     build,
   }),
 );

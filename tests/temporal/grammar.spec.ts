@@ -3,10 +3,19 @@ import { describe, expect, it } from 'vitest';
 
 import { n } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
-import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
+import {
+  Duration,
+  Instant,
+  PlainDate,
+  PlainDateTime,
+  PlainTime,
+  TimeZoneId,
+  ZonedDateTime,
+} from '../../src/temporal/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 import { dates, dateTimes, instants, notStrings, times } from './samples.ts';
+import { durations, timeZoneIds, zonedDateTimes } from './zoned-samples.ts';
 
 const cases: ReadonlyArray<
   readonly [
@@ -18,6 +27,12 @@ const cases: ReadonlyArray<
   [PlainDate, { ...dates, huge: `2024-05-01${'0'.repeat(5_000_000)}` }],
   [PlainTime, { ...times, huge: `09:30:00.${'0'.repeat(5_000_000)}` }],
   [PlainDateTime, { ...dateTimes, huge: `2024-05-01T09:30:00.${'0'.repeat(5_000_000)}` }],
+  [
+    ZonedDateTime,
+    { ...zonedDateTimes, huge: `2024-05-01T09:30:00+02:00[${'Europe/'.repeat(1_000_000)}Paris]` },
+  ],
+  [Duration, { ...durations, huge: `P${'1D'.repeat(2_500_000)}` }],
+  [TimeZoneId, { ...timeZoneIds, huge: `Europe/Paris${'/Paris'.repeat(1_000_000)}` }],
 ];
 
 describe.each(cases)('%o', (type, { accepted, refused, huge }) => {

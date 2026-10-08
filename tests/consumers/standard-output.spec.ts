@@ -66,7 +66,15 @@ import type {
   UuidV4,
   UuidV7,
 } from '../../src/index.ts';
-import type { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
+import type {
+  Duration,
+  Instant,
+  PlainDate,
+  PlainDateTime,
+  PlainTime,
+  TimeZoneId,
+  ZonedDateTime,
+} from '../../src/temporal/index.ts';
 
 type Output<Schema extends StandardSchemaV1> = StandardSchemaV1.InferOutput<Schema>;
 
@@ -140,6 +148,9 @@ describe('the Standard Schema output of each built-in type', () => {
     expectTypeOf<Output<typeof PlainDate>>().toEqualTypeOf<PlainDate>();
     expectTypeOf<Output<typeof PlainDateTime>>().toEqualTypeOf<PlainDateTime>();
     expectTypeOf<Output<typeof PlainTime>>().toEqualTypeOf<PlainTime>();
+    expectTypeOf<Output<typeof ZonedDateTime>>().toEqualTypeOf<ZonedDateTime>();
+    expectTypeOf<Output<typeof Duration>>().toEqualTypeOf<Duration>();
+    expectTypeOf<Output<typeof TimeZoneId>>().toEqualTypeOf<TimeZoneId>();
   });
 });
 

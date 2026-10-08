@@ -136,7 +136,7 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 - Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64`.
 - Booleans: `AnyBoolean`.
 - Money: `Money`, an amount and a currency.
-- Dates and times, from `/temporal`: `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`.
+- Dates and times, from `/temporal`: `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`, `ZonedDateTime`, `Duration`, `TimeZoneId`.
 
 [Built-in types](docs/reference/types/README.md) describes each one.
 

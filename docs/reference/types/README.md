@@ -79,23 +79,28 @@ AnyBoolean                    true or false
 Money                         an amount and a currency, such as 12.34 EUR
 ```
 
-The date and time types come from `@horizon-republic/nominal-types/temporal`. Each is a root of its own:
+The date and time types come from `@horizon-republic/nominal-types/temporal`. `TimeZoneId` sits under `AnyString`; each of the others is a root of its own:
 
 ```text
 Instant                       a moment, written with an offset
 PlainDate                     a calendar date
 PlainTime                     a time of day
 PlainDateTime                 a date and time without an offset
+ZonedDateTime                 a date and time in a time zone
+Duration                      a length of time, such as P1DT12H
+
+AnyString
+└── TimeZoneId                a time zone name, such as Europe/Paris
 ```
 
-| Page                           | Types                                                |
-| ------------------------------ | ---------------------------------------------------- |
-| [Strings](string.md)           | `AnyString` and the 37 types under it                |
-| [Numbers](number.md)           | `AnyNumber` and the 20 types under it                |
-| [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
-| [Booleans](boolean.md)         | `AnyBoolean`                                         |
-| [Money](money.md)              | `Money`                                              |
-| [Dates and times](temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` |
+| Page                           | Types                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| [Strings](string.md)           | `AnyString` and the 37 types under it                                                           |
+| [Numbers](number.md)           | `AnyNumber` and the 20 types under it                                                           |
+| [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`                                                  |
+| [Booleans](boolean.md)         | `AnyBoolean`                                                                                    |
+| [Money](money.md)              | `Money`                                                                                         |
+| [Dates and times](temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`, `ZonedDateTime`, `Duration`, `TimeZoneId` |
 
 ## Which built-in type do I pick?
 
@@ -147,6 +152,9 @@ PlainDateTime                 a date and time without an offset
 | a birthday, a due date                      | `PlainDate`                                                     | a real calendar day, no time and no zone        |
 | an opening hour                             | `PlainTime`                                                     | a time of day, no zone                          |
 | a meeting in local time                     | `PlainDateTime`                                                 | a date and time, no zone                        |
+| a flight that leaves at local time          | `ZonedDateTime`                                                 | a date and time with its zone and offset        |
+| a timeout, a billing period                 | `Duration`                                                      | `P1DT12H`, compared unit by unit                |
+| a user's time zone                          | `TimeZoneId`                                                    | a zone name the runtime knows, not an offset    |
 
 Declare your own type under the one you pick, so it carries its own meaning: `class Quantity extends PositiveInteger.subtype('shop.Quantity') {}`.
 

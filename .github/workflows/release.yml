@@ -53,8 +53,10 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      - run: npm install --global npm@latest
+      # the npm that comes with Node builds native dependencies such as better-sqlite3;
+      # the latest npm is needed only for staging
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npm install --global npm@latest
       - run: npm stage publish --access public

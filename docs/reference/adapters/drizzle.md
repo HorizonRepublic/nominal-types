@@ -25,11 +25,11 @@ function toDrizzle<Target extends AnyNominalType>(
 
 Returns `{ dataType, toDriver, fromDriver }`. Pass it to `customType` from `drizzle-orm/sqlite-core`, `drizzle-orm/pg-core` or `drizzle-orm/mysql-core`, as `customType<DrizzleColumn<typeof Email>>(toDrizzle(Email))`.
 
-| Member       | Does                                                            |
-| ------------ | --------------------------------------------------------------- |
-| `dataType()` | returns the SQL type, such as `'varchar(254)'`                  |
-| `toDriver`   | turns a value into what is stored; booleans become `1` and `0`  |
-| `fromDriver` | turns a stored value into an instance, checked unless `trusted` |
+| Member       | Does                                                                              |
+| ------------ | --------------------------------------------------------------------------------- |
+| `dataType()` | returns the SQL type, such as `'varchar(254)'`                                    |
+| `toDriver`   | turns a value into what is stored; booleans become `1` and `0`, objects JSON text |
+| `fromDriver` | turns a stored value into an instance, checked unless `trusted`                   |
 
 ### Options
 

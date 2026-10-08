@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
 import { columnKindOf } from '../../../src/adapters/orm/column.ts';
-import { readerOf, writerOf } from '../../../src/adapters/orm/values.ts';
+import { jsonTextOf, readerOf, writerOf } from '../../../src/adapters/orm/values.ts';
 import {
   AnyBoolean,
+  DecimalString,
   Email,
   Int64,
+  Money,
+  n,
+  Nominal,
   NominalError,
   PositiveInteger,
   Uuid,
 } from '../../../src/index.ts';
+
+const Ledger = Nominal('values.Ledger', n.object({ owner: Email, balance: Int64 }));
+const manyDigits = '-12345678901234567890123456789.123456789012345678901234567890';
 
 const reader = (
   target: Parameters<typeof columnKindOf>[0],
@@ -79,5 +86,81 @@ describe('writing values', () => {
 
   it('passes a plain value the type refuses as it is, such as a pattern', () => {
     expect(write('%@example.com')).toBe('%@example.com');
+  });
+});
+
+describe('JSON columns', () => {
+  const read = reader(Money);
+  const write = writerOf(Money, undefined);
+
+  it('reads JSON text and values the driver already parsed', () => {
+    const money = new Money({ amount: '12.34', currency: 'EUR' });
+
+    expect(read('{"amount":"12.34","currency":"EUR"}')).toStrictEqual(money);
+    expect(read({ amount: '12.34', currency: 'EUR' })).toStrictEqual(money);
+    expect(read(null)).toBeNull();
+  });
+
+  it('throws a NominalError for text that is no JSON, and for JSON the type refuses', () => {
+    expect(() => read('{"amount":')).toThrow(NominalError);
+    expect(() => read('{"amount":"1.234","currency":"EUR"}')).toThrow(
+      'must have at most 2 digits after the point in EUR',
+    );
+  });
+
+  it('checks the fields even when trusted, since they are built from the JSON', () => {
+    expect(() => reader(Money, true)('{"amount":"x","currency":"EUR"}')).toThrow(NominalError);
+    expect(reader(Money, true)('{"amount":"1","currency":"EUR"}')).toBeInstanceOf(Money);
+  });
+
+  it('writes JSON text with every instance inside as its JSON, big integers as strings', () => {
+    expect(jsonTextOf(write(new Money({ amount: '12.34', currency: 'EUR' })))).toBe(
+      '{"amount":"12.34","currency":"EUR"}',
+    );
+    expect(jsonTextOf(writerOf(Ledger, undefined)({ owner: 'a@b.co', balance: 2n ** 60n }))).toBe(
+      '{"owner":"a@b.co","balance":"1152921504606846976"}',
+    );
+  });
+
+  it('writes what serialize gives as JSON too', () => {
+    const canonical = writerOf(Money, (money: Money) => money.canonical());
+
+    expect(jsonTextOf(canonical(new Money({ amount: '12.5', currency: 'EUR' })))).toBe(
+      '{"amount":"12.50","currency":"EUR"}',
+    );
+  });
+
+  it('passes a value the type refuses as it is, and text as text', () => {
+    expect(jsonTextOf(write('{"currency":"EUR"}'))).toBe('{"currency":"EUR"}');
+    expect(jsonTextOf(null)).toBeNull();
+  });
+});
+
+describe('decimal columns', () => {
+  const read = reader(DecimalString);
+
+  it('reads the text the driver returns as it is, every digit kept', () => {
+    expect(read(manyDigits)).toStrictEqual(new DecimalString(manyDigits));
+    expect(read('12.50')).toStrictEqual(new DecimalString('12.50'));
+    expect(read(12n)).toStrictEqual(new DecimalString('12'));
+  });
+
+  it('refuses a number, which may have lost digits, even when trusted', () => {
+    const lost = new NominalError('nominal.DecimalString', [
+      {
+        message:
+          'must come from the database as text, since a number may have lost digits (was 12.34)',
+      },
+    ]);
+
+    expect(() => read(12.34)).toThrow(lost);
+    expect(() => reader(DecimalString, true)(12.34)).toThrow(lost);
+    expect(() => read(1)).toThrow(NominalError);
+  });
+
+  it('writes the text', () => {
+    const write = writerOf(DecimalString, undefined);
+
+    expect(write(new DecimalString(manyDigits))).toBe(manyDigits);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { columnKindOf } from '../../../src/adapters/orm/column.ts';
 import {
@@ -38,6 +39,7 @@ import {
   Longitude,
   MacAddress,
   MediaType,
+  Money,
   n,
   NegativeBigInt,
   NegativeInteger,
@@ -83,13 +85,26 @@ const Flag = Nominal(
 );
 const Code = Nominal('columns.Code', /^[A-Z]{3}$/u);
 // Takes fractions, but none below 1.
-const Price = Nominal(
-  'columns.Price',
+const Fare = Nominal(
+  'columns.Fare',
   n.satisfying(
     (value: unknown): value is number => typeof value === 'number' && value >= 1,
     'a price',
   ),
 );
+
+const Address = Nominal('columns.Address', n.object({ city: NonEmptyString, zip: CountryCode }));
+const Shape = Nominal(
+  'columns.Shape',
+  n.union('kind', {
+    circle: n.object({ radius: PositiveNumber }),
+    square: n.object({ side: PositiveNumber }),
+  }),
+);
+const Tags = Nominal('columns.Tags', z.array(z.string().max(8)).max(3));
+const MaybeTags = Nominal('columns.MaybeTags', z.union([z.string().max(2), z.array(z.string())]));
+const Price = DecimalString.subtype('columns.Price', /^[^-]/u);
+const Size = Nominal('columns.Size', n.oneOf('small', 'large'));
 
 describe('columnKindOf', () => {
   it.each([
@@ -128,7 +143,8 @@ describe('columnKindOf', () => {
     [Issn, { kind: 'text', length: 9 }],
     [Gtin, { kind: 'text', length: 14 }],
     [Isin, { kind: 'text', length: 12 }],
-    [DecimalString, { kind: 'text', length: 100 }],
+    [DecimalString, { kind: 'numeric' }],
+    [Money, { kind: 'json' }],
     [TypeId, { kind: 'text', length: 90 }],
     [Int8, { kind: 'integer' }],
     [Int16, { kind: 'integer' }],
@@ -164,6 +180,18 @@ describe('columnKindOf', () => {
     expect(columnKindOf(Percent)).toStrictEqual({ kind: 'integer' });
     expect(columnKindOf(Flag)).toStrictEqual({ kind: 'boolean' });
     expect(columnKindOf(Code)).toStrictEqual({ kind: 'text' });
-    expect(columnKindOf(Price)).toStrictEqual({ kind: 'double' });
+    expect(columnKindOf(Fare)).toStrictEqual({ kind: 'double' });
+  });
+
+  it('stores a type whose values are objects or arrays in a JSON column, whatever lengths it holds', () => {
+    expect(columnKindOf(Address)).toStrictEqual({ kind: 'json' });
+    expect(columnKindOf(Shape)).toStrictEqual({ kind: 'json' });
+    expect(columnKindOf(Tags)).toStrictEqual({ kind: 'json' });
+    expect(columnKindOf(MaybeTags)).toStrictEqual({ kind: 'json' });
+  });
+
+  it('stores a type under DecimalString in numeric, and a choice of strings in text', () => {
+    expect(columnKindOf(Price)).toStrictEqual({ kind: 'numeric' });
+    expect(columnKindOf(Size)).toStrictEqual({ kind: 'text' });
   });
 });

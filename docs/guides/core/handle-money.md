@@ -108,7 +108,23 @@ The text depends on the locale and on the Node version. Show it, but never store
 
 ## Store an amount
 
-Store the amount and the currency in two columns, and build `Money` from the row:
+With a database adapter, a `Money` fits in one JSON column. It is stored as `{"amount":"12.50","currency":"EUR"}` and read back as `Money`:
+
+```ts
+import { customType, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { Money } from '@horizon-republic/nominal-types';
+import { toDrizzle } from '@horizon-republic/nominal-types/adapters/drizzle';
+import type { DrizzleColumn } from '@horizon-republic/nominal-types/adapters/drizzle';
+
+const money = customType<DrizzleColumn<typeof Money>>(toDrizzle(Money));
+
+export const orders = sqliteTable('orders', {
+  id: integer('id').primaryKey(),
+  price: money('price').notNull(),
+});
+```
+
+To sum or sort amounts in SQL, use two columns instead: a `DecimalString` column for the amount and a `CurrencyCode` column for the currency. `DecimalString` gets a `numeric` column; [Decimals](../../reference/adapters/database-columns.md#decimals) says what to choose on MySQL and SQLite. Build `Money` from the row:
 
 ```ts
 import { Money } from '@horizon-republic/nominal-types';
@@ -119,8 +135,6 @@ const price = new Money({ amount: row.price_amount, currency: row.price_currency
 
 price.minor; // 1250n
 ```
-
-With a database adapter, declare the two columns as `DecimalString` and `CurrencyCode`. `DecimalString` gets `varchar(100)` by default. To sum or sort amounts in SQL, choose a `numeric` column for it, which PostgreSQL drivers return as text. [Database columns](../../reference/adapters/database-columns.md) shows how to choose a column.
 
 ## Keep an amount without a currency
 

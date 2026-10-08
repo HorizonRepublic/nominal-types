@@ -66,6 +66,27 @@ The column comes from the type: `varchar(254)` for `Email`, `uuid` for `Uuid`, `
 
 To choose the column yourself, pass `column`, as in `toDrizzle(Email, { column: 'varchar(320)' })`.
 
+## Store an object
+
+`Money` and other types whose values are objects get one `json` column, which every dialect has:
+
+```ts
+// schema.ts
+import { customType, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { Money } from '@horizon-republic/nominal-types';
+import { toDrizzle } from '@horizon-republic/nominal-types/adapters/drizzle';
+import type { DrizzleColumn } from '@horizon-republic/nominal-types/adapters/drizzle';
+
+const money = customType<DrizzleColumn<typeof Money>>(toDrizzle(Money));
+
+export const orders = sqliteTable('orders', {
+  id: integer('id').primaryKey(),
+  price: money('price').notNull(),
+});
+```
+
+Inserting `new Money({ amount: '12.30', currency: 'EUR' })` stores `{"amount":"12.30","currency":"EUR"}`. Reading the row gives a `Money` back. On PostgreSQL, pass `{ column: 'jsonb' }` for its binary JSON column.
+
 ## Store a different form
 
 Pass `serialize` to store something other than `toJSON()`. This column stores emails in their canonical form, lowercase and without a `+tag`:
@@ -125,6 +146,8 @@ To build instances from stored values without checking them, pass `trusted: true
 
 ## Limits
 
+- A `DecimalString` gets `numeric`. On SQLite pass `{ column: 'text' }`, and on MySQL a size such as `{ column: 'decimal(19, 4)' }`. See [Decimals](../../reference/adapters/database-columns.md#decimals).
+- A condition on a whole object compares the stored JSON text, so `12.3 EUR` doesn't find `12.30 EUR`. To search by a field, keep it in its own column.
 - MySQL has no `uuid` column. Use `toDrizzle(Uuid, { column: 'char(36)' })`.
 - SQLite loses digits of large integers, and reading such a value throws a `NominalError`. See [Database columns](../../reference/adapters/database-columns.md) for the fixes.
 

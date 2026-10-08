@@ -70,6 +70,28 @@ The column comes from the type: `varchar(254)` for `Email`, `uuid` for `Uuid`, `
 
 `toTypeOrm()` also takes any TypeORM column option, such as `nullable`, `unique`, or `type` and `length` to choose the column yourself: `toTypeOrm(Email, { type: 'varchar', length: 320 })`.
 
+## Store an object
+
+`Money` and other types whose values are objects get one `simple-json` column, which holds JSON as text:
+
+```ts
+// order.entity.ts
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Money } from '@horizon-republic/nominal-types';
+import { toTypeOrm } from '@horizon-republic/nominal-types/adapters/typeorm';
+
+@Entity()
+export class Order {
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @Column(toTypeOrm(Money))
+  public price!: Money;
+}
+```
+
+Saving `new Money({ amount: '12.30', currency: 'EUR' })` stores `{"amount":"12.30","currency":"EUR"}`. Reading the row gives a `Money` back. On PostgreSQL, pass `{ type: 'jsonb' }` for its own JSON column.
+
 ## Store a different form
 
 Pass `serialize` to store something other than `toJSON()`. This entity stores emails in their canonical form, lowercase and without a `+tag`:
@@ -129,6 +151,8 @@ To build instances from stored values without checking them, pass `trusted: true
 ## Limits
 
 - SQLite loses digits of large integers. Reading such a value throws a `NominalError`. See [Database columns](../../reference/adapters/database-columns.md) for the fixes.
+- A `DecimalString` gets `numeric`. On SQLite pass `{ type: 'text' }`, and on MySQL a size such as `{ type: 'decimal', precision: 19, scale: 4 }`. See [Decimals](../../reference/adapters/database-columns.md#decimals).
+- A find condition can't hold a whole object for a `simple-json` column. To search by a field, keep it in its own column.
 - `toTypeOrm()` sets the column's `transformer`. Don't pass your own; use `serialize` instead.
 
 ## See also

@@ -1,10 +1,9 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
 import { generateFunction } from './compile.ts';
 import type { AnyConstraint } from './constraint-types.ts';
 import { mustBe } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import type { Shape } from './shapes.ts';
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * Internal: a field of an object schema: how its value runs, whether it may be missing, and how it

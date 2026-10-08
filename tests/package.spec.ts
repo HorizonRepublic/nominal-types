@@ -27,7 +27,7 @@ describe('package.json', () => {
     expect(manifest).toHaveProperty('files', ['dist', 'docs', 'llms.txt']);
   });
 
-  it('depends only on the Standard Schema types, which no built file imports', () => {
-    expect(Object.keys(recordAt('dependencies'))).toStrictEqual(['@standard-schema/spec']);
+  it('has no dependencies, since it carries the Standard Schema interfaces itself', () => {
+    expect(recordAt('dependencies')).toStrictEqual({});
   });
 });

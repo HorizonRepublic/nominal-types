@@ -1,9 +1,9 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import * as v from 'valibot';
 
 import type { AnyNominalType, InputOf } from '../../core/contracts.ts';
 import { issueText } from '../../core/issue-text.ts';
 import { Rejection } from '../../core/rejection.ts';
+import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import { instanceParserFor } from '../../core/type-functions.ts';
 
 /**

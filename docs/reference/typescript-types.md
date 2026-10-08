@@ -62,19 +62,20 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 
 ## Rules and schemas
 
-| Type                            | Description                                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `NominalSchema<Input, Value>`   | What `Nominal()`, `subtype()` and `variant()` take as a rule: a Standard Schema that answers synchronously.                    |
-| `PatternSchema`                 | The class `n.matching()` returns. See [`PatternSchema` and `PredicateSchema`](declaring.md#patternschema-and-predicateschema). |
-| `PredicateSchema<Value>`        | The class `n.satisfying()` returns.                                                                                            |
-| `OneOfSchema<Value>`            | The class `n.oneOf()` returns. See [`OneOfSchema`](declaring.md#oneofschema).                                                  |
-| `OneOfValue`                    | What `n.oneOf()` takes: `string \| number \| boolean \| null`.                                                                 |
-| `TypeSchema<Input, Output>`     | The class `n.of()` returns. See [`TypeSchema`](schemas.md#typeschema).                                                         |
-| `ArrayOptions`                  | The options of `array()`. See [`ArrayOptions`](schemas.md#arrayoptions).                                                       |
-| `NominalTarget`                 | A nominal type or an `n.of()` schema: what adapters take.                                                                      |
-| `TargetValue<Target>`           | What a `NominalTarget` gives: an instance, or what the schema gives.                                                           |
-| `StandardProps<Input, Output>`  | The shape of `['~standard']`: a Standard Schema with a synchronous `validate`, and a Standard JSON Schema.                     |
-| `StandardSchema<Input, Output>` | A plain object with `['~standard']`.                                                                                           |
+| Type                                                                     | Description                                                                                                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `NominalSchema<Input, Value>`                                            | What `Nominal()`, `subtype()` and `variant()` take as a rule: a Standard Schema that answers synchronously.                    |
+| `PatternSchema`                                                          | The class `n.matching()` returns. See [`PatternSchema` and `PredicateSchema`](declaring.md#patternschema-and-predicateschema). |
+| `PredicateSchema<Value>`                                                 | The class `n.satisfying()` returns.                                                                                            |
+| `OneOfSchema<Value>`                                                     | The class `n.oneOf()` returns. See [`OneOfSchema`](declaring.md#oneofschema).                                                  |
+| `OneOfValue`                                                             | What `n.oneOf()` takes: `string \| number \| boolean \| null`.                                                                 |
+| `TypeSchema<Input, Output>`                                              | The class `n.of()` returns. See [`TypeSchema`](schemas.md#typeschema).                                                         |
+| `ArrayOptions`                                                           | The options of `array()`. See [`ArrayOptions`](schemas.md#arrayoptions).                                                       |
+| `NominalTarget`                                                          | A nominal type or an `n.of()` schema: what adapters take.                                                                      |
+| `TargetValue<Target>`                                                    | What a `NominalTarget` gives: an instance, or what the schema gives.                                                           |
+| `StandardProps<Input, Output>`                                           | The shape of `['~standard']`: a Standard Schema with a synchronous `validate`, and a Standard JSON Schema.                     |
+| `StandardSchemaV1<Input, Output>`, `StandardJSONSchemaV1<Input, Output>` | The Standard Schema and Standard JSON Schema interfaces, with their namespaces such as `StandardSchemaV1.Issue`.               |
+| `StandardSchema<Input, Output>`                                          | A plain object with `['~standard']`.                                                                                           |
 
 ## Objects
 

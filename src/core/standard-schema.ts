@@ -1,4 +1,4 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
 /**
  * The `~standard` property every nominal type carries, which makes it a Standard Schema and a

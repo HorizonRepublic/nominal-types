@@ -1,9 +1,8 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
-
 import type { NominalSchema } from './contracts.ts';
 import { withOpenApiEncoding, withoutUri } from './json-target.ts';
 import { NativeSchema } from './native-schema.ts';
 import { NoJsonSchema } from './no-json-schema.ts';
+import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 
 // A rule of this package that has no JSON Schema throws without knowing the type it belongs to.
 const describedBy = (

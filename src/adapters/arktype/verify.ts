@@ -1,6 +1,5 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { AnyConstraint } from '../../core/constraint-types.ts';
+import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import type { JsonNode } from './json-node.ts';
 import { metaOf } from './json-node.ts';
 import { constraintsKey, registry } from './registry.ts';

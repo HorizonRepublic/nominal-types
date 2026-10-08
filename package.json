@@ -102,9 +102,6 @@
     "profile:cpu": "node bench/profile/cpu.ts",
     "profile:deopt": "node bench/profile/deopt.ts"
   },
-  "dependencies": {
-    "@standard-schema/spec": "^1.1.0"
-  },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
     "@mikro-orm/core": "^7.2.4",
@@ -116,6 +113,7 @@
     "@nestjs/platform-fastify": "^12.1.2",
     "@nestjs/swagger": "^12.0.2",
     "@nestjs/testing": "^12.1.2",
+    "@standard-schema/spec": "^1.1.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.19.1",

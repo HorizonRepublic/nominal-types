@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { type } from 'arktype';
 import type { Out, Type } from 'arktype';
 
@@ -7,6 +6,7 @@ import type { Parsed } from '../../core/contracts.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { standardProps } from '../../core/standard-props.ts';
 import type { StandardProps } from '../../core/standard-schema.ts';
+import type { StandardSchemaV1 } from '../../core/standard-spec.ts';
 import { isObjectNode } from './json-node.ts';
 import { describeArk } from './json.ts';
 import { planOf } from './plan.ts';

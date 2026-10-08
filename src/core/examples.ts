@@ -1,4 +1,4 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
+import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 
 const collect = (
   body: Record<string, unknown>,

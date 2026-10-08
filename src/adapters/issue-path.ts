@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from '../core/standard-spec.ts';
 
 /**
  * Internal: an issue path as plain keys, for libraries whose issues take keys only.

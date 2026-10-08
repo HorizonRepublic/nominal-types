@@ -1,7 +1,7 @@
-import type { StandardJSONSchemaV1 } from '@standard-schema/spec';
 import type { Type } from 'arktype';
 
 import { withoutUri } from '../../core/json-target.ts';
+import type { StandardJSONSchemaV1 } from '../../core/standard-spec.ts';
 import { constraintsKey, registry, typeKey } from './registry.ts';
 
 type Json = Record<string, unknown>;

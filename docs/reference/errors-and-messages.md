@@ -42,14 +42,16 @@ try {
 
 ## Issues
 
-An issue is one reason a value was rejected. Its type is `StandardSchemaV1.Issue` from `@standard-schema/spec`, which is installed with this package:
+An issue is one reason a value was rejected. Its type is `StandardSchemaV1.Issue`, exported by this package:
 
 ```ts
 interface Issue {
   readonly message: string;
-  readonly path?: readonly PropertyKey[];
+  readonly path?: ReadonlyArray<PropertyKey | { readonly key: PropertyKey }>;
 }
 ```
+
+The paths this package builds hold plain keys, such as `['items', 0, 'sku']`. A rule from another library may add `{ key }` objects.
 
 | Field     | Description                                                                                    |
 | --------- | ---------------------------------------------------------------------------------------------- |

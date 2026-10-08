@@ -17,8 +17,8 @@ Every Standard Schema has a property named [`~standard`](../../reference/glossar
 
 ```ts
 // check.ts
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+import type { StandardSchemaV1 } from '@horizon-republic/nominal-types';
 
 // What a library does with any schema you hand it:
 const check = (schema: StandardSchemaV1, value: unknown) => schema['~standard'].validate(value);

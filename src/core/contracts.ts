@@ -1,7 +1,6 @@
-import type { StandardJSONSchemaV1, StandardSchemaV1 } from '@standard-schema/spec';
-
 import type { AnyConstraint } from './constraint-types.ts';
 import type { StandardProps } from './standard-schema.ts';
+import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
 declare const brand: unique symbol;
 

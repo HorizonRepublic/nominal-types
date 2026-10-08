@@ -274,4 +274,19 @@ describe('n.object', () => {
     expect(n.isObject(copy.n.object({ a: copy.Email }))).toBe(true);
     expect(n.isObject(n.of(Email))).toBe(false);
   });
+
+  it('rejects a bad value in a field built by another copy of the package', async () => {
+    vi.resetModules();
+    const copy: typeof library = await import('../../src/index.ts');
+    const Mixed = n.object({
+      id: copy.n.of(copy.Email),
+      items: copy.n.object({ quantity: copy.PositiveInteger }).array(),
+    });
+
+    expect(issuesOf(Mixed.parse({ id: 'jane', items: [{ quantity: 0 }] }))).toStrictEqual([
+      { message: 'must be an email address (was a string of 4 characters)', path: ['id'] },
+      { message: 'must be a positive integer (was 0)', path: ['items', 0, 'quantity'] },
+    ]);
+    expect(valueOf(Mixed.parse({ id: 'jane@example.com', items: [] })).id).toBeInstanceOf(Email);
+  });
 });

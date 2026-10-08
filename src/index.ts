@@ -6,7 +6,7 @@ export { Nominal } from './core/nominal.ts';
  * @remarks
  * `n.object()` and `n.of()` build schemas, `n.constraint()` checks fields together,
  * `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`, `n.hideValues()`
- * masks values in issues, and `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a
+ * masks values in issues, `n.plain()` turns instances into plain values for a response, and `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a
  * value is.
  *
  * @example
@@ -60,6 +60,7 @@ export type {
 export { ObjectSchema } from './core/object-schema.ts';
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
 export { TypeSchema } from './core/type-schema.ts';
+export type { Plain } from './core/plain.ts';
 export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';
 export { AnyBigInt } from './types/bigint/any-bigint.ts';

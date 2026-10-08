@@ -6,6 +6,7 @@ import { isNominalType } from '../../src/core/nominal.ts';
 import { isObjectSchema, objectOf } from '../../src/core/object-schema.ts';
 import { oneOf } from '../../src/core/one-of.ts';
 import { matching } from '../../src/core/pattern-schema.ts';
+import { plain } from '../../src/core/plain.ts';
 import { satisfying } from '../../src/core/predicate-schema.ts';
 import { schemaOf } from '../../src/core/type-schema.ts';
 import * as library from '../../src/index.ts';
@@ -20,6 +21,7 @@ const members = {
   object: objectOf,
   of: schemaOf,
   oneOf,
+  plain,
   satisfying,
 };
 
@@ -41,6 +43,7 @@ describe('n', () => {
     'matching',
     'objectOf',
     'oneOf',
+    'plain',
     'satisfying',
     'schemaOf',
   ])('leaves %s out of the root exports', (name) => {

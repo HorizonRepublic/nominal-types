@@ -9,6 +9,10 @@
 export interface SharedState {
   readonly types: Map<string, { readonly type: object; readonly signature: string }>;
   readonly textForms: WeakMap<object, (text: string) => unknown>;
+  /**
+   * Read by earlier copies only: a copy keeps its runners to itself now, since another copy
+   * can't recognise the rejections they return.
+   */
   readonly runners: WeakMap<object, (input: unknown) => unknown>;
   readonly arraySchemas: WeakSet<object>;
 }

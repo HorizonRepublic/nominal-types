@@ -4,11 +4,12 @@ Every type the package exports, for code that names them. Import them with `impo
 
 ## Types for your own code
 
-| Type              | Description                                                                |
-| ----------------- | -------------------------------------------------------------------------- |
-| `ValueOf<Schema>` | What a schema gives, such as the value type of an `n.object()` schema.     |
-| `InputOf<Schema>` | What a schema accepts as input.                                            |
-| `Parsed<Value>`   | The result of `parse()`: `{ ok: true, value }` or `{ ok: false, issues }`. |
+| Type              | Description                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `ValueOf<Schema>` | What a schema gives, such as the value type of an `n.object()` schema.                      |
+| `InputOf<Schema>` | What a schema accepts as input.                                                             |
+| `Parsed<Value>`   | The result of `parse()`: `{ ok: true, value }` or `{ ok: false, issues }`.                  |
+| `Plain<Value>`    | `Value` with each instance replaced by its JSON form. See [`n.plain()`](schemas.md#nplain). |
 
 Example:
 

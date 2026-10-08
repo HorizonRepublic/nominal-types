@@ -353,6 +353,39 @@ ClassSerializerInterceptor     200 {"id":{"value":"0190f1c2-3b4a-7c5d-8e9f-0a1b2
 NominalSerializerInterceptor   200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","email":"jane@example.com"}
 ```
 
+## Send instances from a route with a Fastify response schema
+
+On Fastify, a route with a response schema, set with `@RouteSchema()`, is not written by `JSON.stringify()`. Fastify's own writer reads instances wrong:
+
+- an `AnyBoolean` that holds `false` is written as `true`;
+- a nullable field, such as `n.of(Email).nullable()`, fails with status 500;
+- a date or time type, such as `Instant`, fails with status 500.
+
+`NominalSerializerInterceptor` turns instances into plain values before Fastify writes them, so these routes work under it. Without the interceptor, return plain values from the handler with the schema's [`toPlain()`](../../reference/schemas.md#toplain):
+
+```ts
+// orders.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { RouteSchema } from '@nestjs/platform-fastify';
+import { AnyBoolean, n, Uuid } from '@horizon-republic/nominal-types';
+
+const Order = n.object({ id: Uuid, paid: AnyBoolean });
+const orderJson = Order['~standard'].jsonSchema.output({ target: 'draft-07' });
+
+@Controller('orders')
+export class OrdersController {
+  @Get('latest')
+  @RouteSchema({ response: { 200: orderJson } })
+  public latest() {
+    const order = Order.parse({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', paid: false });
+
+    return order.ok ? Order.toPlain(order.value) : undefined; // {"id":"0190f1c2-…","paid":false}
+  }
+}
+```
+
+Returning `order.value` itself writes `"paid":true`. For a value that doesn't come from one schema, use [`n.plain()`](../../reference/schemas.md#nplain).
+
 ## Errors
 
 A rejected value fails the request with status 400. The body has the same shape as the one from Nest's own validation. Each message starts with where the value was: the parameter name, the field, or the list index.

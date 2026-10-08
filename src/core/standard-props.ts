@@ -11,6 +11,12 @@ export type { StandardProps } from './standard-schema.ts';
 export const vendor = '@horizon-republic/nominal-types';
 
 /**
+ * Internal: whether a schema names this package as its vendor, also one from another copy.
+ */
+export const isOwnVendor = (schema: object): boolean =>
+  Reflect.get(Reflect.get(schema, '~standard') ?? {}, 'vendor') === vendor;
+
+/**
  * Internal: runs a schema, returning the accepted value itself or a `Rejection`.
  */
 export type Run<Output> = (input: unknown) => Output | Rejection;

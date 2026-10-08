@@ -1,3 +1,6 @@
+// The root class keeps every decision about its instances in this one file, since they read its
+// private field; that makes the file longer than the usual limit.
+/* oxlint-disable max-lines */
 import { brandCheck } from './compile.ts';
 import type {
   AnyNominalType,
@@ -31,7 +34,7 @@ import { equalityKeySlot, inOneLine, noKey, sameValue } from './same-value.ts';
 import type { EqualityKey } from './same-value.ts';
 import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-props.ts';
-import { describeType, rulesRunnerOf, runType } from './type-rules.ts';
+import { describeType, rulesAcceptsOf, rulesRunnerOf, runType } from './type-rules.ts';
 import { parserFor } from './value-parser.ts';
 
 const standardPropsOf = new WeakMap<object, StandardProps<unknown, NominalRoot>>();
@@ -89,6 +92,10 @@ class NominalRoot {
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
+  }
+
+  public static accepts(this: typeof NominalRoot, input: unknown): boolean {
+    return acceptsOwn(this, input);
   }
 
   public static subtype(
@@ -193,6 +200,23 @@ const constructFromObject = (target: Type, input: object): NominalRoot | Rejecti
   return descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)
     ? constructOwn(target, Reflect.get(input, 'value'))
     : valueParserOf(target)(input);
+};
+
+// The decisions of `constructOwn`, without building anything.
+const acceptsOwn = (target: Type, input: unknown): boolean => {
+  if (typeof input !== 'object' || input === null) {
+    return rulesAcceptsOf(NominalRoot, target)(input);
+  }
+
+  if (input instanceof target) {
+    return (
+      isTrusted(target, input) || rulesAcceptsOf(NominalRoot, target)(Reflect.get(input, 'value'))
+    );
+  }
+
+  return descendsFrom(NominalRoot, target, input) || isVariantPair(NominalRoot, target, input)
+    ? acceptsOwn(target, Reflect.get(input, 'value'))
+    : rulesAcceptsOf(NominalRoot, target)(input);
 };
 
 /**

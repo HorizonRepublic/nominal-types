@@ -21,6 +21,63 @@ One value at a time, after warm-up, Node.js 25.3:
 | `value instanceof Email`, `email.equals(other)` |  5 ns |
 | `n.of(Uuid).array().parse(ids)`, 1000 UUIDs     | 70 µs |
 
+## Checks without an instance, and rejected values
+
+`node bench/costs.ts`. Median time per call, Node.js 24.2, 8 Oct 2026. The order has a UUID, an email, a non-empty string, an integer from 0, a finite number, an optional string, a second UUID and 20 items, each a SKU and a positive integer.
+
+| Operation                               |    Time |
+| --------------------------------------- | ------: |
+| `Number.isInteger(42)` alone            |  0.2 ns |
+| `Integer.accepts(42)`                   |    7 ns |
+| `Integer.parse(42)`                     |   33 ns |
+| `Email.accepts(text)`                   |   61 ns |
+| `Email.parse(text)`                     |   87 ns |
+| `Order.accepts(order)`                  | 0.67 µs |
+| `Order.parse(order)`                    |  2.7 µs |
+| `Integer.accepts(4.2)`                  |    9 ns |
+| `Integer.parse(4.2)`                    |   32 ns |
+| `new Integer(4.2)`, error caught        |  5.1 µs |
+| `Email.parse(invalid text)`             | 0.23 µs |
+| `new Email(invalid text)`, error caught |  5.3 µs |
+| `Order.accepts(order)`, bad email       | 0.07 µs |
+| `Order.parse(order)`, bad email         |  3.2 µs |
+
+## Writing JSON
+
+`node bench/serialize.ts`. Median time per call, Node.js 24.2, 8 Oct 2026. The order from [Checks without an instance](#checks-without-an-instance-and-rejected-values), parsed with `Order.parse()`.
+
+| Operation                               | One order | 1000 orders |
+| --------------------------------------- | --------: | ----------: |
+| `JSON.stringify(plain values)`          |   1.04 µs |     1.09 ms |
+| `JSON.stringify(parsed)`                |   3.84 µs |     4.04 ms |
+| `JSON.stringify(n.plain(parsed))`       |   2.32 µs |     2.36 ms |
+| `JSON.stringify(Order.toPlain(parsed))` |   1.42 µs |     1.48 ms |
+| `n.plain(parsed)` alone                 |   1.20 µs |           — |
+| `Order.toPlain(parsed)` alone           |   0.33 µs |           — |
+
+## Memory
+
+`node --expose-gc bench/memory.ts`. Heap per order, from 10,000 orders, Node.js 24.2.
+
+| Form of the order                   |        Heap |
+| ----------------------------------- | ----------: |
+| plain values from `JSON.parse()`    | 1,319 bytes |
+| instances from `Order.parse()`      | 3,391 bytes |
+| `Order.toPlain()` of the parsed one | 1,522 bytes |
+
+## Without code generation
+
+`node bench/no-codegen.ts`, then `node --disallow-code-generation-from-strings bench/no-codegen.ts`. Median of seven runs, Node.js 24.2.
+
+| Operation              | Generated code | Without |
+| ---------------------- | -------------: | ------: |
+| `Integer.parse(42)`    |          31 ns |   42 ns |
+| `Email.parse(text)`    |          91 ns |   97 ns |
+| `Order.parse(order)`   |         2.5 µs |  4.1 µs |
+| `Order.accepts(order)` |        0.63 µs | 1.79 µs |
+| `Order.toPlain(value)` |        0.33 µs | 1.06 µs |
+| `n.plain(value)`       |        1.21 µs | 1.30 µs |
+
 ## Other libraries, one value
 
 `npm run bench`. Median time per call, Node.js 25.3. Each library gets unknown input and returns a value or the reasons it was rejected.

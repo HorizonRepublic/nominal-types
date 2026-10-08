@@ -1,5 +1,50 @@
 # Changelog
 
+## [3.1.0](https://github.com/HorizonRepublic/nominal-types/compare/v3.0.0...v3.1.0) (2026-10-08)
+
+
+### Features
+
+* **adapters:** Fastify plugin, and recipes for tRPC, Hono, Elysia, React Hook Form, TanStack Form and Next.js ([#112](https://github.com/HorizonRepublic/nominal-types/issues/112)) ([02f63e3](https://github.com/HorizonRepublic/nominal-types/commit/02f63e36c3fa6f65796eba4101c301c947565346))
+* **core:** n.configure for messages, values, trimming and code generation ([#119](https://github.com/HorizonRepublic/nominal-types/issues/119)) ([c72d25e](https://github.com/HorizonRepublic/nominal-types/commit/c72d25ebc5fe5c9ecbe197945bbd001f70323cf5))
+* **core:** n.record and n.tuple ([#124](https://github.com/HorizonRepublic/nominal-types/issues/124)) ([438459c](https://github.com/HorizonRepublic/nominal-types/commit/438459c924c2680be125781e6ab43e484bb61ba4))
+* **core:** n.rule and check() report any number of issues with their own codes ([#131](https://github.com/HorizonRepublic/nominal-types/issues/131)) ([53b00d6](https://github.com/HorizonRepublic/nominal-types/commit/53b00d6649b620eacf9165c61f3dae002ba0d036))
+* **core:** one namespace n for building schemas ([#94](https://github.com/HorizonRepublic/nominal-types/issues/94)) ([60ed5eb](https://github.com/HorizonRepublic/nominal-types/commit/60ed5ebfffbe872243fb7a3030ca607ccd418390))
+* **core:** partial, pick, omit and extend for objects, and n.union for tagged objects ([#107](https://github.com/HorizonRepublic/nominal-types/issues/107)) ([f758a11](https://github.com/HorizonRepublic/nominal-types/commit/f758a116f14089196d3d39027ad8433ed0550bb7))
+* **core:** send the package's warnings to your logger ([#130](https://github.com/HorizonRepublic/nominal-types/issues/130)) ([47cce62](https://github.com/HorizonRepublic/nominal-types/commit/47cce6275086583103476f34c0238df3ac0039cc))
+* **core:** types carry the brands of the types their values always satisfy ([#110](https://github.com/HorizonRepublic/nominal-types/issues/110)) ([445d61d](https://github.com/HorizonRepublic/nominal-types/commit/445d61d221025e5e19f757cc861b9d7107d55198))
+* **temporal:** ZonedDateTime, Duration and TimeZoneId ([#117](https://github.com/HorizonRepublic/nominal-types/issues/117)) ([126f614](https://github.com/HorizonRepublic/nominal-types/commit/126f614bec3658348c38cc277b4533523b3543f1))
+* **testing:** arbitraries and samples for every type and schema ([#115](https://github.com/HorizonRepublic/nominal-types/issues/115)) ([53f46b5](https://github.com/HorizonRepublic/nominal-types/commit/53f46b5c29a83a8c59c78537f0239e3af66cf842))
+* **types:** CountryCode takes XK for Kosovo ([#97](https://github.com/HorizonRepublic/nominal-types/issues/97)) ([e9f0c13](https://github.com/HorizonRepublic/nominal-types/commit/e9f0c139124e35c9d4a0450426d50e021dd1da0f))
+* **types:** DecimalString, Money and TypeId ([#111](https://github.com/HorizonRepublic/nominal-types/issues/111)) ([9e4f6c7](https://github.com/HorizonRepublic/nominal-types/commit/9e4f6c74e7ef455d0e960162a8a2ead6789500f3))
+* **types:** E164PhoneNumber, Iban, Bic and Jwt ([#116](https://github.com/HorizonRepublic/nominal-types/issues/116)) ([10c3ac9](https://github.com/HorizonRepublic/nominal-types/commit/10c3ac991b407b8e88c017a4e6cf12c512aefa6a))
+* **types:** string types carry the brands of the string types their values always satisfy ([#125](https://github.com/HorizonRepublic/nominal-types/issues/125)) ([3f146e9](https://github.com/HorizonRepublic/nominal-types/commit/3f146e96c25eed0ccf4120ecae8ea92998b9a69f))
+
+
+### Bug Fixes
+
+* **adapters:** object types get a JSON column, DecimalString a numeric one ([#113](https://github.com/HorizonRepublic/nominal-types/issues/113)) ([2b83188](https://github.com/HorizonRepublic/nominal-types/commit/2b831881b77c571b6ff28484821ebabba31feb84))
+* **arktype:** fromArk() issues serialise on ArkType 2.2.0 ([99c60be](https://github.com/HorizonRepublic/nominal-types/commit/99c60bea114b6b21387289edc59e67de6ccb0a7f))
+* **core:** merged patterns keep their groups, and JSON Schemas come out flat ([#101](https://github.com/HorizonRepublic/nominal-types/issues/101)) ([0d4534d](https://github.com/HorizonRepublic/nominal-types/commit/0d4534de601a8e6e9341203741a8434fb7624c8b))
+* **core:** parse re-checks instances it can't trust ([#102](https://github.com/HorizonRepublic/nominal-types/issues/102)) ([db76728](https://github.com/HorizonRepublic/nominal-types/commit/db767282fa7bf70042fc14518a82a1ce21bbd38d))
+* **core:** short messages that keep secrets out, and stricter URLs ([#98](https://github.com/HorizonRepublic/nominal-types/issues/98)) ([7ec8f14](https://github.com/HorizonRepublic/nominal-types/commit/7ec8f14ec1157ece867619953dcec079d9b6665d))
+* **core:** tRPC rejects bad input, and Standard Schema types name the class ([#114](https://github.com/HorizonRepublic/nominal-types/issues/114)) ([1cc6a01](https://github.com/HorizonRepublic/nominal-types/commit/1cc6a01db5bdd74f52f6f1d165f2f540dc6fb099))
+* **nest:** schemas from Bun and SWC metadata, a serializer for instances, and request bodies in Swagger ([#99](https://github.com/HorizonRepublic/nominal-types/issues/99)) ([24f1763](https://github.com/HorizonRepublic/nominal-types/commit/24f176342814153ca8a73c556e8f9d1fb0ea2aa2))
+* require class-transformer ^0.5.1 and typeorm ^0.3.13, the oldest releases the adapters work with ([99c60be](https://github.com/HorizonRepublic/nominal-types/commit/99c60bea114b6b21387289edc59e67de6ccb0a7f))
+* **types:** HexColor and MediaType equals() never throw ([#122](https://github.com/HorizonRepublic/nominal-types/issues/122)) ([4f22752](https://github.com/HorizonRepublic/nominal-types/commit/4f22752dc6f175e5d0c56c0a8d7605e2559f7414))
+
+
+### Performance
+
+* a faster Email check, and Swagger keeps types ([9000d8d](https://github.com/HorizonRepublic/nominal-types/commit/9000d8d1bf3ea459e28b62ed0b43db3686dbbaf7))
+* bundlers keep only the types and helpers an app imports ([#103](https://github.com/HorizonRepublic/nominal-types/issues/103)) ([9ee56e9](https://github.com/HorizonRepublic/nominal-types/commit/9ee56e9f991fbbb76cd801f2a04ddbf758bf8c4f))
+* cheaper hidden messages, a faster Uuid check, and fewer modules to load ([#109](https://github.com/HorizonRepublic/nominal-types/issues/109)) ([b902e34](https://github.com/HorizonRepublic/nominal-types/commit/b902e34a8bf86267a47807079772bf558e8b6918))
+* **core:** faster n.record parse and stringify ([#129](https://github.com/HorizonRepublic/nominal-types/issues/129)) ([919dcf7](https://github.com/HorizonRepublic/nominal-types/commit/919dcf7b1043df5f1136cce917642f778b68e1ee))
+* **core:** issue codes and messages code only in bundles that call n.configure ([#123](https://github.com/HorizonRepublic/nominal-types/issues/123)) ([230bc16](https://github.com/HorizonRepublic/nominal-types/commit/230bc1610d4e9679c45004591c84af492694c697))
+* **core:** plain values for responses, and a check that builds no instance ([#105](https://github.com/HorizonRepublic/nominal-types/issues/105)) ([cff1127](https://github.com/HorizonRepublic/nominal-types/commit/cff11276ad84e948cd8d9bd4b336c51cb732d8eb))
+* **core:** schema.stringify writes JSON straight from instances ([#108](https://github.com/HorizonRepublic/nominal-types/issues/108)) ([da406fb](https://github.com/HorizonRepublic/nominal-types/commit/da406fb6bbb6a5c3e6db1910fec552225398a129))
+* **package:** smaller core bundles, and a faster Node import ([#118](https://github.com/HorizonRepublic/nominal-types/issues/118)) ([bc879c1](https://github.com/HorizonRepublic/nominal-types/commit/bc879c1051b603374cb04d23eaca5c43861c6a5b))
+
 ## [3.0.0](https://github.com/HorizonRepublic/nominal-types/compare/v2.0.14...v3.0.0) (2026-10-08)
 
 

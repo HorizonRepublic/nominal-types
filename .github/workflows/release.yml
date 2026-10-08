@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     branches: [main]
+  # stages a release tag again, for a release whose staging failed
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to stage, such as v3.0.0
+        required: true
 
 concurrency:
   group: release
@@ -14,6 +20,7 @@ permissions:
 jobs:
   release-please:
     name: Release pull request
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -36,7 +43,9 @@ jobs:
   publish:
     name: Stage on npm
     needs: release-please
-    if: needs.release-please.outputs.created == 'true'
+    if: >-
+      !failure() && !cancelled() &&
+      (github.event_name == 'workflow_dispatch' || needs.release-please.outputs.created == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -45,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.release-please.outputs.tag }}
+          ref: ${{ inputs.tag || needs.release-please.outputs.tag }}
 
       - uses: actions/setup-node@v7
         with:

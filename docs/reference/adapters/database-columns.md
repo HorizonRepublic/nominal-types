@@ -111,6 +111,8 @@ A condition on a whole object compares the stored JSON text. `12.3 EUR` then mis
 | MySQL      | `json`   | `simple-json` | `json`  | `JSON`    |
 | SQLite     | `json`   | `simple-json` | `json`  | `JSON`    |
 
+The column comes from the type's JSON Schema. A type whose rule comes from a library that can't describe it as JSON Schema, such as Zod before 4.1, can't be seen as an object: pass the column yourself (`{ column: 'jsonb' }`, `{ type: 'simple-json' }`).
+
 TypeORM's `simple-json` is a text column. To use PostgreSQL's own, pass `{ type: 'jsonb' }` to TypeORM or `{ column: 'jsonb' }` to Drizzle. A text column works too, such as `{ type: DataTypes.TEXT }` on Sequelize, which has no `JSON` on Microsoft SQL Server.
 
 ```ts

@@ -183,12 +183,19 @@ describe('columnKindOf', () => {
     expect(columnKindOf(Fare)).toStrictEqual({ kind: 'double' });
   });
 
-  it('stores a type whose values are objects or arrays in a JSON column, whatever lengths it holds', () => {
+  it('stores a type whose values are objects in a JSON column, whatever lengths it holds', () => {
     expect(columnKindOf(Address)).toStrictEqual({ kind: 'json' });
     expect(columnKindOf(Shape)).toStrictEqual({ kind: 'json' });
-    expect(columnKindOf(Tags)).toStrictEqual({ kind: 'json' });
-    expect(columnKindOf(MaybeTags)).toStrictEqual({ kind: 'json' });
   });
+
+  // Zod describes its schemas as JSON Schema from 4.1; the oldest peer test runs 4.0.
+  it.runIf(Reflect.get(z.string()['~standard'], 'jsonSchema') !== undefined)(
+    'stores a type whose rule from another library holds arrays in a JSON column',
+    () => {
+      expect(columnKindOf(Tags)).toStrictEqual({ kind: 'json' });
+      expect(columnKindOf(MaybeTags)).toStrictEqual({ kind: 'json' });
+    },
+  );
 
   it('stores a type under DecimalString in numeric, and a choice of strings in text', () => {
     expect(columnKindOf(Price)).toStrictEqual({ kind: 'numeric' });

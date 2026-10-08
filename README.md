@@ -53,6 +53,8 @@ npm install @horizon-republic/nominal-types
 
 It has no dependencies, and works with both `import` and `require` on Node.js 22.12 or later.
 
+Coming from version 2? See [How to move from version 2](docs/guides/core/migrate-from-v2.md).
+
 ## Make your own type
 
 A type is a class with a rule. Start from a built-in type, and add getters for its behaviour:
@@ -95,7 +97,7 @@ API and transport:
 Databases (values read back are checked):
 
 - [MikroORM](https://mikro-orm.io) 7: `toMikroOrm()` from `adapters/mikro-orm`. [Guide](docs/guides/databases/mikro-orm.md)
-- [TypeORM](https://typeorm.io) 0.3 and 1: `toTypeOrm()` from `adapters/typeorm`. [Guide](docs/guides/databases/typeorm.md)
+- [TypeORM](https://typeorm.io) 0.3.13 or later, and 1: `toTypeOrm()` from `adapters/typeorm`. [Guide](docs/guides/databases/typeorm.md)
 - [Drizzle](https://orm.drizzle.team): `toDrizzle()` from `adapters/drizzle`. [Guide](docs/guides/databases/drizzle.md)
 - [Sequelize](https://sequelize.org) 6: `toSequelize()` from `adapters/sequelize`. [Guide](docs/guides/databases/sequelize.md)
 

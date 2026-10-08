@@ -8,7 +8,7 @@ New project? Check bodies with [n.object()](../core/check-an-object.md). Use thi
 
 - Install both libraries: `npm install class-validator class-transformer`.
 - The decorator comes from the [adapter](../../reference/glossary.md) `@horizon-republic/nominal-types/adapters/class-validator`. It is a separate [entry point](../../reference/glossary.md): you need the two libraries only if you import it.
-- It works with class-validator 0.14 and 0.15, and class-transformer 0.5.
+- It works with class-validator 0.14 and 0.15, and class-transformer 0.5.1 or later.
 - Turn on decorators in `tsconfig.json`: `"experimentalDecorators": true` and `"emitDecoratorMetadata": true`. A NestJS project has both already.
 
 ## Quick example

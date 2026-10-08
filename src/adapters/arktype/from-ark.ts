@@ -54,8 +54,9 @@ const problemOf = (error: type.errors[number]): string => {
     : error.problem;
 };
 
+// Array.from rather than map(): in ArkType 2.2.0, map() on the errors builds another ArkErrors.
 const issuesOf = (errors: type.errors): StandardSchemaV1.Issue[] =>
-  errors.map((error) =>
+  Array.from(errors, (error) =>
     error.path.length === 0
       ? { message: problemOf(error) }
       : { message: problemOf(error), path: [...error.path] },

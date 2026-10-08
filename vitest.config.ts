@@ -13,6 +13,7 @@ const config: ViteUserConfig = {
       include: ['src/**/*.ts'],
       reporter: ['text', 'json-summary', 'json'],
       reportOnFailure: true,
+      thresholds: { statements: 99, branches: 95, functions: 99, lines: 99 },
     },
   },
 };

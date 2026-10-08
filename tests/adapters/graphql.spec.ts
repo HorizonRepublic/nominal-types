@@ -100,10 +100,11 @@ describe('toGraphQL', () => {
     expect((await run('{ email(value: "nope") }')).errors?.[0]?.message).toBe(
       'Email: must be an email address (was a string of 4 characters)',
     );
+    // GraphQL 16 and 17 word the start of a variable error differently.
     expect(
       (await run('query ($e: Email) { email(value: $e) }', { e: 'nope' })).errors?.[0]?.message,
-    ).toBe(
-      'Variable "$e" has invalid value: Email: must be an email address (was a string of 4 characters)',
+    ).toMatch(
+      /^Variable "\$e" (?:has|got) invalid value.*Email: must be an email address \(was a string of 4 characters\)$/u,
     );
   });
 

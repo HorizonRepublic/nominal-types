@@ -35,17 +35,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
+      - run: npm run test:dist
 
       - name: Coverage report
         if: ${{ !cancelled() && github.event_name == 'pull_request' && hashFiles('coverage/coverage-summary.json') != '' }}
         uses: davelosert/vitest-coverage-report-action@v2.13.0
 
-  # The matrices run on pull requests only, and only for what `checks` doesn't cover: it already
-  # runs every test on the Node.js release in .node-version and every adapter on the Nest release
-  # in devDependencies. After a merge, `checks` alone runs on main.
+  # The matrices cover only what `checks` doesn't: it already runs every test on the Node.js
+  # release in .node-version and every adapter on the peer releases in devDependencies.
   runtimes:
     name: Tests on Node ${{ matrix.node }}
-    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -65,7 +64,6 @@ jobs:
 
   nest:
     name: Nest adapter on Nest ${{ matrix.nest }}
-    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -90,4 +88,48 @@ jobs:
           @nestjs/platform-express@${{ matrix.nest }}
           @nestjs/microservices@${{ matrix.nest }}
           @nestjs/swagger@${{ matrix.nest }}
+      - run: npx vitest run tests/adapters
+
+  oldest-peers:
+    name: Adapters on the oldest peer releases
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm ci
+
+      # The oldest release each range in peerDependencies allows, with the packages that ship in
+      # step with it. --legacy-peer-deps: @mikro-orm/sqlite 7.0.0 declares a peer on core ^6.
+      - name: Install the oldest peer releases
+        run: |
+          node --input-type=module -e '
+            import { execFileSync } from "node:child_process";
+            import { readFileSync } from "node:fs";
+
+            const { peerDependencies } = JSON.parse(readFileSync("package.json", "utf8"));
+            const companions = {
+              "@nestjs/common": ["@nestjs/core", "@nestjs/testing", "@nestjs/platform-express",
+                "@nestjs/platform-fastify", "@nestjs/microservices"],
+              "@mikro-orm/core": ["@mikro-orm/sqlite"],
+            };
+            const oldest = (name, range) => [JSON.parse(execFileSync("npm",
+              ["view", `${name}@${range}`, "version", "--json"], { encoding: "utf8" }))].flat()[0];
+
+            for (const [name, range] of Object.entries(peerDependencies)) {
+              const version = oldest(name, range);
+
+              for (const peer of [name, ...(companions[name] ?? [])]) console.log(`${peer}@${version}`);
+            }
+          ' > oldest-peers.txt
+          # --legacy-peer-deps skips peers, so vite, which vitest takes as a peer, is kept by name
+          node -p '"vite@" + require("./node_modules/vite/package.json").version' >> oldest-peers.txt
+          cat oldest-peers.txt
+          xargs npm install --no-save --no-audit --no-fund --legacy-peer-deps < oldest-peers.txt
+
       - run: npx vitest run tests/adapters

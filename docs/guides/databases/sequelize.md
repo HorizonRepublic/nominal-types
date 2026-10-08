@@ -117,7 +117,9 @@ A stored value the type refuses throws a `NominalError` when you read the attrib
 NominalError: nominal.Email: must be an email address (was a string of 4 characters)
 ```
 
-To build instances without checking stored values, pass `trusted: true`: `toSequelize(Email, { trusted: true })`. Use it only when every stored value is valid.
+A plain value the type refuses is written as it is. Raw SQL, a migration or another app can store such values too. Reading them throws the error above.
+
+To build instances from stored values without checking them, pass `trusted: true`: `toSequelize(Email, { trusted: true })`. A bad stored value then becomes a bad instance, and nothing checks it again. Use it only for a column that nothing else writes to.
 
 ## Limits
 

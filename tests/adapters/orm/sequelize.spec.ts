@@ -1,4 +1,4 @@
-import { DataTypes, Model, Op, Sequelize } from 'sequelize';
+import { DataTypes, Model, Op } from 'sequelize';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { toSequelize } from '../../../src/adapters/sequelize/index.ts';
@@ -14,6 +14,7 @@ import {
   Url,
   Uuid,
 } from '../../../src/index.ts';
+import { memorySequelize } from '../../support/node-sqlite.ts';
 
 class User extends Model {
   declare public email: Email;
@@ -28,7 +29,7 @@ class User extends Model {
   declare public level: Int16 | null;
 }
 
-const sequelize = new Sequelize({ dialect: 'sqlite', storage: ':memory:', logging: false });
+const sequelize = memorySequelize();
 
 User.init(
   {
@@ -68,7 +69,9 @@ afterAll(async () => {
 describe('toSequelize', () => {
   it('gives each attribute its column type, or the one given', () => {
     const types = Object.fromEntries(
-      Object.entries(User.getAttributes()).map(([key, attribute]) => [key, String(attribute.type)]),
+      // rawAttributes: Sequelize 6.1, the oldest release supported, has no getAttributes()
+      // oxlint-disable-next-line typescript/no-deprecated
+      Object.entries(User.rawAttributes).map(([key, attribute]) => [key, String(attribute.type)]),
     );
 
     expect(types).toMatchObject({

@@ -21,6 +21,7 @@ What to write depends on your Nest version. Run `npm ls @nestjs/common` to see i
 
 - The pipe comes from the adapter's entry point, `@horizon-republic/nominal-types/adapters/nest`. Nothing from Nest loads unless you import it.
 - It works with Nest 11 and 12, on Express and on Fastify.
+- Nest 12 ships as ES modules only. A CommonJS app loads it with `require()`, which Node.js supports for ES modules from version 22.12.
 - The global pipe needs `emitDecoratorMetadata` in `tsconfig.json`. A project made with the Nest CLI has it on.
 
 ## Quick example

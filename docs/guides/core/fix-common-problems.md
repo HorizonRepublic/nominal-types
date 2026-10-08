@@ -22,6 +22,8 @@ Fix: check the version with `npm ls @horizon-republic/nominal-types`. With `2.x`
 npm install @horizon-republic/nominal-types@3
 ```
 
+Then port the code with [How to move from version 2](migrate-from-v2.md).
+
 ### No error when one type is passed for another
 
 `node main.ts` runs this code and prints `shipping jane_doe`:
@@ -197,6 +199,73 @@ a.equals(b); // true
 
 In tests, use `toStrictEqual()`. See [How to test code that takes nominal types](write-tests.md).
 
+No lint rule finds `===` between two instances. Linters see the operator, not the types on each side.
+
+### includes(), Set and Map don't find an equal value
+
+Cause: `includes()`, `Set` and `Map` compare like `===`. They find the same object, not an equal one.
+
+Fix: search with `equals()`, or keep the plain values in a `Set` or as `Map` keys:
+
+```ts
+import { Email } from '@horizon-republic/nominal-types';
+
+const invited = [new Email('jane@example.com')];
+const email = new Email('jane@example.com');
+
+invited.includes(email); // false
+invited.some((item) => item.equals(email)); // true
+
+const seen = new Set(invited.map((item) => item.value));
+
+seen.has(email.value); // true
+```
+
+### sort() puts 10 before 9
+
+Cause: `sort()` without a compare function sorts by text. It compares `'10'` with `'9'`.
+
+Fix: give `sort()` a compare function that reads `.value`:
+
+```ts
+import { PositiveInteger } from '@horizon-republic/nominal-types';
+
+const counts = [new PositiveInteger(10), new PositiveInteger(9), new PositiveInteger(100)];
+
+counts.sort(); // 10, 100, 9
+counts.sort((a, b) => a.value - b.value); // 9, 10, 100
+```
+
+### A number becomes null in JSON
+
+Cause: `AnyNumber` accepts `NaN` and `Infinity`. JSON has no such numbers, so `JSON.stringify()` writes `null`.
+
+Fix: use `FiniteNumber`, or a type under it, for numbers you send:
+
+```ts
+import { AnyNumber, FiniteNumber } from '@horizon-republic/nominal-types';
+
+JSON.stringify({ rating: new AnyNumber(Number.NaN) }); // '{"rating":null}'
+FiniteNumber.parse(Number.NaN); // { ok: false, issues: [{ message: 'must be a finite number (was NaN)' }] }
+```
+
+### An instance comes back as a plain value
+
+An `Email` put in a cache or a queue comes back as a string, and `instanceof Email` is `false`.
+
+Cause: JSON and `structuredClone()` copy data, not classes. A cache or a queue stores the copy.
+
+Fix: check the value again where it comes back, with `parse()`:
+
+```ts
+import { Email } from '@horizon-republic/nominal-types';
+
+const message = JSON.stringify({ email: new Email('jane@example.com') }); // '{"email":"jane@example.com"}'
+const { email }: { email: unknown } = JSON.parse(message);
+
+Email.parse(email); // { ok: true, value: Email { value: 'jane@example.com' } }
+```
+
 ### An email address that looks valid is rejected
 
 `Email` rejects these addresses:
@@ -270,6 +339,14 @@ export class UsersController {
 ```
 
 `GET /users/find` now answers `400` with `{"statusCode":400,"error":"Bad Request","message":["email: must be a string (was undefined)"]}`. For a value that may be missing, declare the parameter `email?: Email` instead.
+
+### A NestJS request body holds strings instead of instances
+
+With the global `NominalPipe`, a handler declared as `create(@Body() order: CreateOrder)` gets the body as plain JSON. `order.customer` is a string, not an `Email`.
+
+Cause: `CreateOrder` is a type made with `ValueOf`, not a class. TypeScript records the parameter as `Object`, so the global pipe doesn't know what to check, and passes the body on.
+
+Fix: give `@Body()` the schema, as `@Body(new NominalPipe(CreateOrder))`. See [How to use nominal types with NestJS](../frameworks/nestjs.md#check-a-request-body).
 
 ### A Uuid[] parameter in NestJS reaches the handler unchecked
 

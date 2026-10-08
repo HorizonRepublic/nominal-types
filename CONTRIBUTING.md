@@ -12,7 +12,8 @@ A pull request that adds or changes public behaviour updates the README and the 
 | `npm run typecheck`                 | Runs the TypeScript compiler without emitting                                  |
 | `npm run lint`                      | Runs oxlint with type-aware rules                                              |
 | `npm run format`                    | Formats the tree with oxfmt; `format:check` only reports                       |
-| `npm test`                          | Runs the vitest suites; `test:coverage` adds a coverage report                 |
+| `npm test`                          | Runs the vitest suites; `test:coverage` adds a coverage report and its floor   |
+| `npm run test:dist`                 | Imports every entry of the built `dist` with `import` and `require`            |
 | `npm run bench`                     | Compares the speed of nominal-types with nine other libraries                  |
 | `npm run bench:document`            | Validates a 3 MB document with each library                                    |
 | `npm run bench:nest`                | Posts the same 3 MB document to a NestJS app, once per library                 |

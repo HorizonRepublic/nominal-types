@@ -19,7 +19,7 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 - Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 - Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `n.hideValues(issues)`.
 - Install the peer package of an adapter yourself (`npm install zod`). Every peer dependency is optional; nothing loads until the adapter's entry point is imported.
-- Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3.
+- Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3. To port such code, follow `docs/guides/core/migrate-from-v2.md`.
 
 ## Install and entry points
 
@@ -36,13 +36,13 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). No dependencies
 | `@horizon-republic/nominal-types/adapters/arktype` | `toArk`, `fromArk`, `constrainArk`, `ArkSchema`, types `ArkField`, `Built` | `arktype` ^2.2 |
 | `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
 | `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
-| `@horizon-republic/nominal-types/adapters/class-validator` | `NominalField`, types `NominalFieldOptions`, `NominalTarget`, `TargetValue` | `class-validator` ^0.14 or ^0.15, `class-transformer` ^0.5 |
+| `@horizon-republic/nominal-types/adapters/class-validator` | `NominalField`, types `NominalFieldOptions`, `NominalTarget`, `TargetValue` | `class-validator` ^0.14 or ^0.15, `class-transformer` ^0.5.1 |
 | `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, `NominalSerializerInterceptor`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory` | `@nestjs/common` ^11 or ^12 |
 | `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, `ApiNominalBody`, `ApiNominalQuery`, types `OpenApiDocument`, `ApiNominalBodyOptions`, `ApiNominalQueryOptions` | `@nestjs/swagger` ^11 or ^12 |
 | `@horizon-republic/nominal-types/adapters/graphql` | `toGraphQL`, type `GraphQLOptions` | `graphql` ^16 or ^17 |
 | `@horizon-republic/nominal-types/adapters/superjson` | `toSuperjson`, types `SuperjsonTransformer`, `SuperjsonValue` | `superjson` |
 | `@horizon-republic/nominal-types/adapters/mikro-orm` | `toMikroOrm`, types `MikroOrmOptions`, `MikroOrmType` | `@mikro-orm/core` ^7 |
-| `@horizon-republic/nominal-types/adapters/typeorm` | `toTypeOrm`, type `TypeOrmOptions` | `typeorm` ^0.3 or ^1 |
+| `@horizon-republic/nominal-types/adapters/typeorm` | `toTypeOrm`, type `TypeOrmOptions` | `typeorm` ^0.3.13 or ^1 |
 | `@horizon-republic/nominal-types/adapters/drizzle` | `toDrizzle`, types `DrizzleColumn`, `DrizzleOptions`, `DrizzleParams` | `drizzle-orm` |
 | `@horizon-republic/nominal-types/adapters/sequelize` | `toSequelize`, type `SequelizeOptions` | `sequelize` ^6 |
 
@@ -437,6 +437,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to keep values out of error messages](docs/guides/core/hide-values.md)
 - [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
 - [How to make a value object](docs/guides/core/make-a-value-object.md)
+- [How to move from version 2](docs/guides/core/migrate-from-v2.md)
 - [How to read configuration from environment variables](docs/guides/core/read-config.md)
 - [How to read numbers and booleans from text](docs/guides/core/read-text-values.md)
 - [How to use dates and times](docs/guides/core/use-dates-and-times.md)

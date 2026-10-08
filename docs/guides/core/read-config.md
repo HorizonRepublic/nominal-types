@@ -90,6 +90,54 @@ Right.parse({ PORT: '3000' }); // { ok: true, value: { PORT: Port { value: 3000 
 Right.parse({}); // { ok: true, value: {} }
 ```
 
+## Use it in NestJS
+
+Give `ConfigModule` the check, and provide `Config` to inject it with its types:
+
+```ts
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { Config } from './config.ts';
+
+@Module({
+  imports: [ConfigModule.forRoot({ validate: (env) => new Config(env) })],
+  providers: [{ provide: Config, useFactory: () => new Config(process.env) }],
+})
+export class AppModule {}
+```
+
+- A wrong variable stops the app at start, with the error shown in [See what is wrong](#see-what-is-wrong).
+- `ConfigService.get('PORT')` gives a `Port`.
+- A service that asks for `Config` in its constructor gets the checked values: `this.config.PORT.value`.
+
+## Read configuration that isn't text
+
+`.fromEnv()` is for values that arrive as text. Configuration that already has numbers and booleans needs a plain `n.object()`:
+
+| Where the configuration comes from                                  | What to use               |
+| ------------------------------------------------------------------- | ------------------------- |
+| `process.env` in Node.js                                            | `n.object(...).fromEnv()` |
+| `import.meta.env` in Vite                                           | `n.object(...).fromEnv()` |
+| a `config.json` the app loads at start, such as in Angular or React | `n.object(...)`           |
+| an object in code, such as Angular's `environment.ts`               | `n.object(...)`           |
+
+For example, a `config.json` loaded in the browser:
+
+```ts
+import { HttpUrl, n, Nominal, NonEmptyString } from '@horizon-republic/nominal-types';
+
+class AppConfig extends Nominal(
+  'app.AppConfig',
+  n.object({ apiUrl: HttpUrl, sentryDsn: n.of(NonEmptyString).optional() }),
+) {}
+
+const response = await fetch('/config.json');
+const result = AppConfig.parse(await response.json());
+// with { "apiUrl": "https://api.example.com", "sentryDsn": "" } in config.json:
+// { ok: false, issues: [{ message: 'must be a non-empty string (was "")', path: ['sentryDsn'] }] }
+```
+
 ## See also
 
 - [Schemas](../../reference/schemas.md): `fromEnv()` and `fromString()`.

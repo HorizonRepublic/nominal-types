@@ -11,10 +11,10 @@ const pairs = Array.from(letters).flatMap((first) =>
 );
 
 describe('CountryCode', () => {
-  it('knows the 249 officially assigned codes, sorted and frozen', () => {
-    expect(CountryCode.codes).toHaveLength(249);
+  it('knows the 249 officially assigned codes and XK, sorted and frozen', () => {
+    expect(CountryCode.codes).toHaveLength(250);
     expect(CountryCode.codes).toStrictEqual(CountryCode.codes.toSorted());
-    expect(new Set(CountryCode.codes).size).toBe(249);
+    expect(new Set(CountryCode.codes).size).toBe(250);
     expect(Object.isFrozen(CountryCode.codes)).toBe(true);
   });
 
@@ -22,14 +22,13 @@ describe('CountryCode', () => {
     expect(new CountryCode(code).value).toBe(code);
   });
 
-  it.each(['BQ', 'CW', 'SX', 'SS', 'AX', 'GB', 'UA', 'US'])('accepts %s', (code) => {
+  it.each(['BQ', 'CW', 'SX', 'SS', 'AX', 'GB', 'UA', 'US', 'XK'])('accepts %s', (code) => {
     expect(CountryCode.parse(code).ok).toBe(true);
   });
 
   it.each([
     ['UK', 'reserved for the United Kingdom, which is GB'],
     ['EU', 'reserved for the European Union'],
-    ['XK', 'user-assigned, used for Kosovo'],
     ['AN', 'deleted in 2010'],
     ['CS', 'deleted in 2006'],
     ['SU', 'transitionally reserved'],
@@ -101,7 +100,7 @@ describe('CountryCode', () => {
     const values = [...pairs, ...pairs.map((pair) => pair.toLowerCase()), '', 'USA', 'U', 42, null];
     const accepted = values.filter((value) => CountryCode.parse(value).ok);
 
-    expect(accepted).toHaveLength(249);
+    expect(accepted).toHaveLength(250);
     expect(values.filter((value) => satisfiesSchema(schema, value))).toStrictEqual(accepted);
   });
 

@@ -155,6 +155,7 @@ export const rulesAcceptsOf = (root: object, target: TypeClass): Accepts => {
  * @internal
  */
 export const runType = (root: object, target: TypeClass, input: unknown): unknown => {
+  // @throws {@link TypeError} the runner runs the rules from other libraries, which can fail
   const value = rulesRunnerOf(root, target)(input);
 
   return typeof value === 'object' && value !== null ? frozen(value) : value;
@@ -179,6 +180,13 @@ export const describeType = (
     side,
     options,
   );
+  /**
+   * Whether the type accepts an example.
+   *
+   * @throws {@link TypeError} when a rule fails to run, such as an asynchronous schema.
+   *
+   * @internal
+   */
   const accepts = (example: unknown): boolean =>
     !(runType(root, target, example) instanceof Rejection);
 

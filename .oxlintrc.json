@@ -89,6 +89,7 @@
           "packageDocumentation",
           "privateRemarks",
           "remarks",
+          "rethrows",
           "sealed",
           "typeParam",
           "virtual"
@@ -359,6 +360,35 @@
       }
     },
     {
+      "files": ["tools/**/*.ts"],
+      "rules": {
+        "import/no-nodejs-modules": "off"
+      }
+    },
+    {
+      "files": [
+        "tools/*/cli.ts",
+        "tools/*/src/*/**/*.ts",
+        "tools/*/src/bodies.ts",
+        "tools/*/src/compare.ts",
+        "tools/*/src/names.ts"
+      ],
+      "rules": {
+        "public-docs/require-jsdoc": "off",
+        "jsdoc/require-param": "off",
+        "jsdoc/require-returns": "off",
+        "public-docs/require-template": "off",
+        "public-docs/require-throws": "off"
+      }
+    },
+    {
+      "files": ["tools/**/tests/*.ts"],
+      "rules": {
+        "max-lines-per-function": "off",
+        "public-docs/require-jsdoc": "off"
+      }
+    },
+    {
       "files": ["bench/**/*.ts"],
       "rules": {
         "no-console": "off",
@@ -380,7 +410,7 @@
       }
     }
   ],
-  "ignorePatterns": ["node_modules", "dist", "coverage"],
+  "ignorePatterns": ["node_modules", "dist", "coverage", "tools/*/tests/fixtures"],
   "jsPlugins": [
     {
       "name": "public-docs",

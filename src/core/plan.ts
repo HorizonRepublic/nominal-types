@@ -89,6 +89,7 @@ const mergedStep = (
   }
 
   const patterns = [first, ...rest];
+  // @throws-ignore the sources come from patterns that compiled, joined as lookaheads
   const combined = new RegExp(
     `^${patterns.map((schema) => `(?=${schema.pattern.source})`).join('')}`,
     first.pattern.flags,

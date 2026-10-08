@@ -97,10 +97,22 @@ export const temporalRule = <Value extends object>(
   const objectTag = `[object ${tag}]`;
   const rejected = (value: unknown): Rejection =>
     new Rejection([rejectedIssue('invalid', description, value)]);
+  /**
+   * The value a text stands for, or the rejection of the input.
+   *
+   * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+   * @internal
+   */
   const fromText = (text: string, input: unknown, temporal?: TemporalApi): Value | Rejection =>
     (pattern.test(text) ? kind.build(temporal ?? temporalFor(kind.typeName), text) : undefined) ??
     rejected(input);
 
+  /**
+   * The value an input stands for, or its rejection.
+   *
+   * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+   * @internal
+   */
   const run = (input: unknown): Value | Rejection => {
     if (typeof input === 'string') {
       return fromText(input, input);

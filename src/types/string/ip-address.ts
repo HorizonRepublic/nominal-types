@@ -126,6 +126,7 @@ export class IpAddress extends IpAddressBase {
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`. IPv4 text is already canonical.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, textOf(bitsOf(this.value)));

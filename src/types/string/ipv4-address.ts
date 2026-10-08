@@ -46,6 +46,7 @@ export class Ipv4Address extends Ipv4AddressBase {
    * The same address; IPv4 text has one form only.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public override canonical(): this {
     return sameType(this, this.value);

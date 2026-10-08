@@ -80,6 +80,7 @@ export const trustedConstructorFor = (target: AnyNominalType): ((input: unknown)
     remember(target, input, trims ? trimmed(input) : input);
 
     try {
+      // @throws-ignore a checker of the type accepted the value already
       return new target(input);
     } finally {
       forget();

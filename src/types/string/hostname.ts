@@ -58,6 +58,7 @@ export class Hostname extends HostnameBase {
    * The same name in lowercase, the form DNS compares names in.
    *
    * @returns A name of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());

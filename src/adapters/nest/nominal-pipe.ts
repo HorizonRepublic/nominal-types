@@ -25,6 +25,13 @@ const isStandardSchema = (value: unknown): value is StandardSchemaV1 =>
 const isPipeTarget = (value: unknown): value is NominalPipeTarget =>
   isTarget(value) || isStandardSchema(value);
 
+/**
+ * The result of checking an input with a nominal target or another Standard Schema.
+ *
+ * @throws {@link TypeError} if a Standard Schema checks the value asynchronously.
+ *
+ * @internal
+ */
 const parseAny = (target: NominalPipeTarget, input: unknown): Parsed<unknown> => {
   if (isTarget(target)) {
     return parseTarget(target, input);
@@ -183,8 +190,8 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
    * @param value - The argument as the request gave it.
    * @param metadata - Which argument it is, and the type or schema it is declared with.
    * @returns The instance or value the target gives, or `value` untouched when there is no target.
-   * @throws {@link BadRequestException} when the target rejects the value, unless
-   * `exceptionFactory` builds another error.
+   * @throws {@link Error} when the target rejects the value: the error `exceptionFactory` builds,
+   * a `BadRequestException` by default.
    * @throws {@link TypeError} if a Standard Schema checks the value asynchronously.
    */
   public transform(value: unknown, metadata: ArgumentMetadata): unknown {

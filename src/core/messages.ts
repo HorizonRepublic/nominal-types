@@ -341,4 +341,5 @@ export const atPath = (issue: NominalIssue, key: PropertyKey): NominalIssue => {
  * @internal
  */
 export const jsonText = (value: unknown): string =>
+  // @throws-ignore the replacer writes bigints as text, and the values of instances have no cycles
   JSON.stringify(value, (_key, item: unknown) => (typeof item === 'bigint' ? String(item) : item));

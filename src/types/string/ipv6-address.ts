@@ -50,6 +50,7 @@ export class Ipv6Address extends Ipv6AddressBase {
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public override canonical(): this {
     return sameType(this, textOf(bitsOf(this.value)));
@@ -63,6 +64,7 @@ export class Ipv6Address extends Ipv6AddressBase {
   public toIpv4(): Ipv4Address | undefined {
     const bits = bitsOf(this.value);
 
+    // @throws-ignore the 32 bits of a mapped address always write a valid IPv4 address
     return isMapped(bits) ? new Ipv4Address(textOf(ipv4Inside(bits))) : undefined;
   }
 }

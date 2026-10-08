@@ -26,9 +26,6 @@ const ownIssue = (issue: NominalIssue): NominalIssue => {
  * How a rule from another library runs inside a type, chosen once: the runner of a
  * `n.of()` schema, or the rule's `validate`, whose messages then follow the `values` setting.
  *
- * @throws {@link TypeError} when the rule answers with a Promise, at the call of the runner; the
- * message names the type.
- *
  * @internal
  */
 export const foreignRunner = (
@@ -46,6 +43,13 @@ export const foreignRunner = (
   const { validate } = rule['~standard'];
   const copy = isOwnVendor(rule) ? ownIssue : plainIssue;
 
+  /**
+   * The value the rule gives, or the rejection of its issues.
+   *
+   * @throws {@link TypeError} when the rule answers with a Promise; the message names the type.
+   *
+   * @internal
+   */
   return (value) => {
     const result = validate(value);
 

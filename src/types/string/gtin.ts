@@ -74,6 +74,7 @@ export class Gtin extends GtinBase {
    * The GTIN-14 form, with zeros in front, as GS1 asks a database to keep a GTIN.
    *
    * @returns A GTIN of the same class, 14 digits long.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, gtin14Of(this.value));

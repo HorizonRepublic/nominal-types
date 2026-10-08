@@ -26,6 +26,8 @@ export interface ObjectField {
   readonly optional: boolean;
   /**
    * The JSON Schema of the field, without its `$schema`.
+   *
+   * @throws {@link TypeError} when a rule can't describe itself; the message names the type.
    */
   readonly describe: (
     side: 'input' | 'output',

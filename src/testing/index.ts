@@ -77,6 +77,13 @@ const newCaches = (): Caches => ({ types: new WeakMap(), schemas: new WeakMap() 
 
 const shared = newCaches();
 
+/**
+ * The arbitrary a cache holds for a key, made and stored on the first call.
+ *
+ * @rethrows make
+ *
+ * @internal
+ */
 const cached = (cache: Cache, key: object, make: () => Arbitrary<unknown>): Arbitrary<unknown> => {
   let arbitrary = cache.get(key);
 
@@ -94,12 +101,26 @@ const contextFor = (overrides: ReadonlyMap<object, Arbitrary<unknown>>): Generat
     overrides,
     ofType: (type) => cached(types, type, () => typeArbitrary(type, context)),
     ofSchema: (schema) => cached(schemas, schema, () => schemaArbitrary(schema, context)),
+    /**
+     * The generator of an object field's inputs.
+     *
+     * @throws {@link TypeError} when nothing can be generated for the field.
+     *
+     * @internal
+     */
     ofField: (field, key) => fieldArbitrary(field, key, context),
   };
 
   return context;
 };
 
+/**
+ * The target, once it is known to be a nominal type or a schema of this package.
+ *
+ * @throws {@link TypeError} when the target is not a nominal type or a schema of this package.
+ *
+ * @internal
+ */
 const checkedTarget = (method: string, target: unknown): NominalTarget => {
   if (!isTarget(target)) {
     throw new TypeError(
@@ -110,12 +131,27 @@ const checkedTarget = (method: string, target: unknown): NominalTarget => {
   return target;
 };
 
+/**
+ * Inputs of a target, with the generators the options pass.
+ *
+ * @throws {@link TypeError} when nothing can be generated for the target or one of its fields.
+ *
+ * @internal
+ */
 const inputsOf = (target: NominalTarget, options: ArbitraryOptions): Arbitrary<unknown> => {
   const context = contextFor(options.overrides ?? new Map());
 
   return isNominalType(target) ? context.ofType(target) : context.ofSchema(target);
 };
 
+/**
+ * Inputs or instances of a target, as the options ask.
+ *
+ * @throws {@link TypeError} when the target is not a nominal type or a schema of this package, or
+ * when nothing can be generated for it or one of its fields.
+ *
+ * @internal
+ */
 const valuesOf = (
   method: string,
   target: unknown,
@@ -293,5 +329,6 @@ export function sampleOf(
   const { seed } = options;
   const arbitrary = valuesOf('sampleOf', target, options);
 
+  // @throws {@link Error} fast-check draws through BoundedFilter.generate(), which gives up
   return fc.sample(arbitrary, { numRuns: count, ...(seed === undefined ? {} : { seed }) });
 }

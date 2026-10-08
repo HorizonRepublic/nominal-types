@@ -17,6 +17,13 @@ import { unionPlan } from './union-plan.ts';
 
 export type { Plan } from './plan-contract.ts';
 
+/**
+ * The plan for a `toArk()` node: build the instance of the type it names.
+ *
+ * @throws {@link TypeError} when the name was never given to `toArk()`.
+ *
+ * @internal
+ */
 const leafPlan = (name: string): Plan => {
   const target = registry.types.get(name);
 
@@ -27,6 +34,14 @@ const leafPlan = (name: string): Plan => {
   return { build: trustedConstructorFor(target), verify: undefined };
 };
 
+/**
+ * The plan for a morph whose last step is a `toArk()` node.
+ *
+ * @throws {@link TypeError} when the name was never given to `toArk()`.
+ * @throws {@link TypeError} when a `toArk()` node sits elsewhere in the morph.
+ *
+ * @internal
+ */
 const morphPlan = (node: JsonNode): Plan | undefined => {
   const name = nominalNameOf(listOf(node['morphs']).at(-1));
 

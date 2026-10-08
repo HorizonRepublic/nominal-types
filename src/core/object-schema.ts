@@ -72,6 +72,9 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * messages, `presence` makes fields optional (`true`) or required (`false`); `deferred` builds
    * the checks at the first use, for the objects of built-in types.
    *
+   * @throws {@link TypeError} when a field is named `__proto__`, or a constraint reads a field the
+   * object doesn't declare.
+   *
    * @internal
    */
   public constructor(
@@ -129,6 +132,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * ```
    */
   public strict(): ObjectSchema<Input, Output> {
+    // @throws-ignore the fields are the ones this schema already checked
     return this.#with({ strict: true });
   }
 
@@ -159,6 +163,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * ```
    */
   public fromEnv(): ObjectSchema<TextInput<Input>, Output> {
+    // @throws-ignore the fields are the ones this schema already checked
     return this.#with({ source: textFields(this.#source), hidden: true });
   }
 
@@ -324,6 +329,13 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     });
   }
 
+  /**
+   * This schema with the fields named, or every field, optional or required.
+   *
+   * @throws {@link TypeError} when a name is not a field the object declares.
+   *
+   * @internal
+   */
   #withPresence(
     method: string,
     keys: readonly string[],
@@ -332,10 +344,12 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     const named =
       keys.length === 0 ? new Set(this.keys) : checkedKeys(method, this.keys, keys, false);
 
+    // @throws-ignore the fields are the ones this schema already checked
     return this.#with({ presence: withPresence(this.#presence, named, optional) });
   }
 
   #keeping(keys: ReadonlySet<string>): ObjectSchema<never, never> {
+    // @throws-ignore the fields are the ones this schema already checked
     return this.#with({
       source: Object.fromEntries(Object.entries(this.#source).filter(([key]) => keys.has(key))),
       constraints: this.#constraints.filter((rule) =>
@@ -345,6 +359,14 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     });
   }
 
+  /**
+   * A new schema with some of the parts of this one changed.
+   *
+   * @throws {@link TypeError} when a field is named `__proto__`, or a constraint reads a field the
+   * object doesn't declare.
+   *
+   * @internal
+   */
   #with(changes: Partial<ObjectParts>): ObjectSchema<never, never> {
     const { source, constraints, strict, hidden, presence }: ObjectParts = {
       source: this.#source,

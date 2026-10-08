@@ -259,6 +259,7 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public stringify(value: Output): string {
+    // @throws {@link TypeError} the stringifier refuses a value JSON has no text for
     return (this.#stringify ??= stringifyFor(this.#settled().paths))(value);
   }
 

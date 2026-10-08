@@ -42,6 +42,13 @@ const declaredKeys = (node: JsonNode): ReadonlySet<string> =>
     ),
   );
 
+/**
+ * The plan for the values of an index signature.
+ *
+ * @throws {@link TypeError} when more than one index signature holds `toArk()` nodes.
+ *
+ * @internal
+ */
 const indexPlan = (node: JsonNode, planOf: PlanOf): Plan | undefined => {
   const plans = listOf(node['index']).map((entry) =>
     isJsonNode(entry) ? planOf(entry['value']) : undefined,

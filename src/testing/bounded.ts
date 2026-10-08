@@ -22,6 +22,13 @@ class BoundedFilter<Item> extends Arbitrary<Item> {
     this.#failure = failure;
   }
 
+  /**
+   * A value of the source the filter keeps.
+   *
+   * @throws {@link Error} when the source makes no value the filter keeps in a row of attempts.
+   *
+   * @internal
+   */
   public generate(random: Random, biasFactor: number | undefined): Value<Item> {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       const generated = this.#source.generate(random, biasFactor);

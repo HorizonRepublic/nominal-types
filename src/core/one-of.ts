@@ -40,6 +40,14 @@ const sharedType = (values: readonly OneOfValue[]): string | undefined => {
   return types.size === 1 && only !== 'null' ? only : undefined;
 };
 
+/**
+ * The values of `n.oneOf()`, once they are known to be listable and distinct.
+ *
+ * @throws {@link TypeError} when there are no values, a value is not a string, a finite number, a
+ * boolean or `null`, or a value is listed twice.
+ *
+ * @internal
+ */
 const checkedValues = <Value extends OneOfValue>(values: readonly Value[]): Set<Value> => {
   if (values.length === 0) {
     throw new TypeError('n.oneOf(): list at least one value');

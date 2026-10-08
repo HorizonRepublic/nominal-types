@@ -96,6 +96,13 @@ export const planOf = (field: unknown): Plan => {
 export const stringifyFor = ({ plan, write }: FastPaths): ((value: unknown) => string) => {
   const stringify = stringifierOf(plan, ownTypes, (value) => JSON.stringify(write(value)));
 
+  /**
+   * The JSON text of a value.
+   *
+   * @throws {@link TypeError} if JSON has no text for the value, such as `undefined`.
+   *
+   * @internal
+   */
   return (value) => textOf(stringify, value);
 };
 
@@ -114,6 +121,8 @@ export const typePaths = (type: AnyNominalType): FastPaths => ({
 /**
  * The paths of an array of `item`; with `unique`, the check builds the values, since
  * repeats are found among them.
+ *
+ * @throws {@link TypeError} when the options hold bounds that `boundsOf` refuses.
  *
  * @internal
  */

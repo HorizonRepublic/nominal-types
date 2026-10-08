@@ -55,6 +55,7 @@ export class ObjectId extends ObjectIdBase {
    * The same ObjectId in lowercase.
    *
    * @returns An ObjectId of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());

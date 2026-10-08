@@ -113,6 +113,7 @@ export class ZonedDateTime extends ZonedDateTimeBase {
    * The time zone, as the runtime writes its name.
    */
   public get timeZone(): TimeZoneId {
+    // @throws-ignore the runtime wrote the name, so it knows the zone
     return new TimeZoneId(this.value.timeZoneId);
   }
 
@@ -122,6 +123,7 @@ export class ZonedDateTime extends ZonedDateTimeBase {
    * @returns The moment as an `Instant`.
    */
   public toInstant(): Instant {
+    // @throws-ignore an Instant takes every Temporal.Instant
     return new Instant(this.value.toInstant());
   }
 

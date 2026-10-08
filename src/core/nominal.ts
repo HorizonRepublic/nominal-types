@@ -49,8 +49,14 @@ let checkedOf: (instance: object) => unknown;
 
 const unchecked = Symbol('unchecked');
 
-// A constraint given to `subtype()` or `variant()` of a type built on `n.object()` can read only
-// the fields the object declares.
+/**
+ * Refuses a constraint given to `subtype()` or `variant()` of a type built on `n.object()` that
+ * reads a field the object doesn't declare.
+ *
+ * @throws {@link TypeError} when the constraint reads a field the object doesn't declare.
+ *
+ * @internal
+ */
 const checkObjectRule = (owner: 'subtype' | 'variant', target: object, rule: unknown): void => {
   const objectRule = objectRuleAbove(target);
   const keys = objectKeysOf(objectRule);
@@ -66,6 +72,14 @@ class NominalRoot {
   public readonly value: unknown;
   readonly #checked: unknown;
 
+  /**
+   * Checks the input with the rules of the type.
+   *
+   * @throws {@link NominalError} when the rules refuse the input.
+   * @throws {@link TypeError} when a rule fails to run, such as an asynchronous schema.
+   *
+   * @internal
+   */
   public constructor(input: unknown) {
     const target = new.target;
     const pending = takePending(target, input);
@@ -122,6 +136,13 @@ class NominalRoot {
     return acceptsOwn(this, input);
   }
 
+  /**
+   * The JSON text of a value of the type.
+   *
+   * @throws {@link TypeError} when JSON has no text for the value, or it holds a bigint.
+   *
+   * @internal
+   */
   public static stringify(this: typeof NominalRoot, value: unknown): string {
     const write = objectWriterOf(this);
     const checked =
@@ -140,6 +161,14 @@ class NominalRoot {
     return text;
   }
 
+  /**
+   * A new type under this one, with its own rule.
+   *
+   * @throws {@link TypeError} when the name can't serve as a type name, the rule reads a field the
+   * object doesn't declare, or `implies` lists something that can't be implied.
+   *
+   * @internal
+   */
   public static subtype(
     this: typeof NominalRoot,
     name: string,
@@ -153,6 +182,14 @@ class NominalRoot {
     return derive(this, name, rule, this, options);
   }
 
+  /**
+   * A new type beside this one, under the same base, with its own rule.
+   *
+   * @throws {@link TypeError} when the name can't serve as a type name, the rule reads a field the
+   * object doesn't declare, or `implies` lists something that can't be implied.
+   *
+   * @internal
+   */
   public static variant(
     this: typeof NominalRoot,
     name: string,
@@ -186,6 +223,13 @@ class NominalRoot {
       : String(this.value);
   }
 
+  /**
+   * The value for `+`, comparisons and template strings.
+   *
+   * @throws {@link TypeError} when the value is an object and the hint is not `'string'`.
+   *
+   * @internal
+   */
   public [Symbol.toPrimitive](hint: string): unknown {
     if (hint === 'string') {
       return this.toString();
@@ -327,8 +371,18 @@ const missingMember = (prototype: object, implied: object): string | undefined =
   return missing;
 };
 
-// Brands a new type with the keys the listed types carry and it doesn't, counting the keys a
-// variant drops as not carried, and with `false` for the dropped keys it doesn't imply again.
+/**
+ * Brands a new type with the keys the listed types carry and it doesn't.
+ *
+ * @remarks
+ * The keys a variant drops count as not carried, with `false` for the dropped keys it doesn't
+ * imply again.
+ *
+ * @throws {@link TypeError} when `implies` lists something that is not a nominal type, or a type
+ * whose instance members the new type lacks.
+ *
+ * @internal
+ */
 const defineImplied = (
   derived: typeof NominalRoot,
   implies: readonly unknown[],
@@ -384,6 +438,14 @@ const defineBrandCheck = (derived: object, key: symbol): void => {
   Object.defineProperty(derived, Symbol.hasInstance, { value: settle, configurable: true });
 };
 
+/**
+ * A new type under `parent`, with its rule, name and implied types.
+ *
+ * @throws {@link TypeError} when the name can't serve as a type name, an `n.object()` field is
+ * named like an instance member, or `implies` lists something that can't be implied.
+ *
+ * @internal
+ */
 const derive = (
   parent: typeof NominalRoot,
   name: string,

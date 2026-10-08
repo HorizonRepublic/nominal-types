@@ -33,6 +33,13 @@ const nominalMatcher = (name: string): Matcher | undefined => {
   return (value) => !(check(value) instanceof Rejection);
 };
 
+/**
+ * Tells an object branch of a union from the others by its literal fields.
+ *
+ * @throws {@link TypeError} when objects of the union have no literal field to tell them apart.
+ *
+ * @internal
+ */
 const objectMatcher = (node: JsonNode, branches: readonly unknown[]): Matcher => {
   const units = unitsOf(node);
 
@@ -50,6 +57,13 @@ const objectMatcher = (node: JsonNode, branches: readonly unknown[]): Matcher =>
   return (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
+/**
+ * Tells a branch of a union from the others.
+ *
+ * @throws {@link TypeError} when the branch can't be told apart from the others at runtime.
+ *
+ * @internal
+ */
 const matcherOf = (node: unknown, branches: readonly unknown[]): Matcher => {
   const name =
     nominalNameOf(node) ??

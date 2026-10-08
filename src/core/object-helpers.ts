@@ -84,6 +84,13 @@ export const fieldsOf = (fields: ObjectFields, presence: Presence): ObjectField[
       key,
       run,
       optional: presence.get(key) ?? !(run() instanceof Rejection),
+      /**
+       * The JSON Schema of the field.
+       *
+       * @throws {@link TypeError} when the field can't describe itself; the message names the type.
+       *
+       * @internal
+       */
       describe: (side, options) => describeField(field, side, options, 'object'),
     };
   });
@@ -111,6 +118,7 @@ export const hidingValues = (shape: ObjectShape): ObjectShape => ({
  * @internal
  */
 export const textFields = (fields: ObjectFields): ObjectFields =>
+  // @throws-ignore only nominal types with a text form reach schemaOf() and fromString()
   Object.fromEntries(
     Object.entries(fields).map(([key, field]) => [
       key,

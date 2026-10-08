@@ -28,6 +28,13 @@ export type Plain<Value> =
       ? Value
       : { -readonly [Key in keyof Value]: Plain<Value[Key]> };
 
+/**
+ * Steps into an object on the way down, refusing one the path already holds.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const enter = (value: object, path: object[]): void => {
   if (path.includes(value)) {
     throw new TypeError('n.plain(): the value refers to itself, which JSON cannot write');
@@ -36,8 +43,17 @@ const enter = (value: object, path: object[]): void => {
   path.push(value);
 };
 
-// Copying first and replacing only the objects inside lets V8 clone the array or object in one
-// step, about twice as fast as building the copy key by key.
+/**
+ * A plain copy of an array, with the objects inside it made plain.
+ *
+ * @remarks
+ * Copying first and replacing only the objects inside lets V8 clone the array or object in one
+ * step, about twice as fast as building the copy key by key.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const plainArray = (value: readonly unknown[], path: object[]): unknown[] => {
   enter(value, path);
 
@@ -57,6 +73,13 @@ const plainArray = (value: readonly unknown[], path: object[]): unknown[] => {
   return copy;
 };
 
+/**
+ * A plain copy of a record, with the objects inside it made plain.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const plainRecord = (value: object, path: object[]): object => {
   enter(value, path);
 
@@ -75,6 +98,13 @@ const plainRecord = (value: object, path: object[]): object => {
   return copy;
 };
 
+/**
+ * The plain form of an object with `toJSON()`.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const plainInstance = (value: { toJSON(): unknown }, path: object[]): unknown => {
   const json = value.toJSON();
 
@@ -91,6 +121,13 @@ const plainInstance = (value: { toJSON(): unknown }, path: object[]): unknown =>
   return plain;
 };
 
+/**
+ * The plain form of an object, by its kind.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const plainOf = (value: object, path: object[]): unknown => {
   if (value instanceof ownTypes.root) {
     return plainInstance(value, path);
@@ -115,6 +152,8 @@ const plainOf = (value: object, path: object[]): unknown => {
 /**
  * `n.plain()` without its type, for the writers that know a schema's shape and fall
  * back to it for the parts they don't.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
  *
  * @internal
  */

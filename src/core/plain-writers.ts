@@ -30,7 +30,16 @@ const instanceSource = `function writeInstance(value) {
   return typeof json === 'object' && json !== null ? plain(json) : json;
 }`;
 
-// Without code generation every field shares one call site, so the walk of `n.plain()` is as fast.
+/**
+ * The writer for a field of a nominal type without code generation.
+ *
+ * @remarks
+ * Every field shares one call site then, so the walk of `n.plain()` is as fast.
+ *
+ * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+ *
+ * @internal
+ */
 const instanceLoop: Write = (value) =>
   typeof value === 'object' && value !== null ? plainValue(value) : value;
 
@@ -71,6 +80,13 @@ export const arrayWriter = (item: Write, generate?: boolean): Write => {
     return built;
   }
 
+  /**
+   * The array written item by item, without code generation.
+   *
+   * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+   *
+   * @internal
+   */
   return (value) =>
     Array.isArray(value) ? value.map((entry: unknown) => item(entry)) : plainValue(value);
 };
@@ -163,6 +179,13 @@ const objectSource = (fields: readonly WrittenField[]): string => {
 
 const objectLoop =
   (fields: readonly WrittenField[]): Write =>
+  /**
+   * The object written field by field, without code generation.
+   *
+   * @throws {@link TypeError} when the value refers to itself, which JSON cannot write.
+   *
+   * @internal
+   */
   (value) => {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return plainValue(value);

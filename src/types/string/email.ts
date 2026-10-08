@@ -118,6 +118,7 @@ export class Email extends EmailBase {
    * The same mailbox without any tag.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the address without a tag.
    */
   public withoutTag(): this {
     return sameType(this, `${this.mailbox}@${this.domain}`);
@@ -131,6 +132,7 @@ export class Email extends EmailBase {
    * Provider rules beyond that, such as Gmail ignoring dots, are left to the caller.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, `${this.mailbox}@${this.domain}`.toLowerCase());
@@ -141,6 +143,8 @@ export class Email extends EmailBase {
    *
    * @param other - The address to compare with.
    * @returns `true` when both reach the same mailbox.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form of either
+   * address.
    */
   public isSameMailbox(other: Email): boolean {
     return this.canonical().value === other.canonical().value;

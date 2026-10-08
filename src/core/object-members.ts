@@ -13,6 +13,14 @@ export const copyMethod = 'copyWith';
 const reserved = new Set(['value', 'equals', 'toJSON', 'toString', 'constructor', copyMethod]);
 
 const copyOf = (declared: ReadonlySet<string>) =>
+  /**
+   * A copy of the instance with some fields changed, checked by its type.
+   *
+   * @throws {@link NominalError} when a key is not a field of the type, or the changed value breaks
+   * a rule.
+   *
+   * @internal
+   */
   function copyWith(this: { readonly value: object }, changes: object): unknown {
     const Target: unknown = this.constructor;
     const unknown = Object.keys(changes).filter((key) => !declared.has(key));
@@ -24,13 +32,19 @@ const copyOf = (declared: ReadonlySet<string>) =>
       );
     }
 
+    // @throws {@link NominalError} the class checks the changed value in its constructor
     return typeof Target === 'function'
       ? Reflect.construct(Target, [{ ...this.value, ...changes }])
       : undefined;
   };
 
-// A getter for each field and the copy method; a field named like a member every instance has
-// throws a TypeError.
+/**
+ * A getter for each field and the copy method.
+ *
+ * @throws {@link TypeError} when a field is named like a member every instance has.
+ *
+ * @internal
+ */
 const defineObjectMembers = (prototype: object, keys: readonly string[]): void => {
   for (const key of keys) {
     if (reserved.has(key)) {

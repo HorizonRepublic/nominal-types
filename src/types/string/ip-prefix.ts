@@ -58,6 +58,7 @@ export class IpPrefix extends IpPrefixBase {
    * The first address of the network, as written before the `/`.
    */
   public get address(): IpAddress {
+    // @throws-ignore the part before the slash of a valid prefix is a valid address
     return new IpAddress(this.value.slice(0, this.value.indexOf('/')));
   }
 
@@ -93,6 +94,7 @@ export class IpPrefix extends IpPrefixBase {
    * The prefix with its address written as RFC 5952 recommends, such as `2001:db8::/32`.
    *
    * @returns A prefix of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, canonicalPrefix(this.value));

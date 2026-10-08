@@ -56,6 +56,7 @@ export class Url extends UrlBase {
    * @returns A new `URL` on each call, since `URL` is mutable.
    */
   public toURL(): URL {
+    // @throws-ignore the type accepts only what URL.canParse() accepts
     return new URL(this.value);
   }
 
@@ -105,6 +106,7 @@ export class Url extends UrlBase {
    * The URL serialised by the WHATWG parser: scheme and host lowered, default port dropped.
    *
    * @returns A URL of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.toURL().href);

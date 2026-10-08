@@ -86,6 +86,7 @@ export class Uuid extends UuidBase {
    * The same UUID in lowercase.
    *
    * @returns A UUID of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase());

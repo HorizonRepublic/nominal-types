@@ -22,8 +22,6 @@ node --version
 
 It prints `v22.18.0` or a higher number. Some versions also print an `ExperimentalWarning` about type stripping. Ignore it.
 
-Version 3 of the package, which these lessons use, is not on npm yet. Read the [version note in the README](../../README.md#installation) before you install.
-
 Make an empty folder and go into it:
 
 ```shell

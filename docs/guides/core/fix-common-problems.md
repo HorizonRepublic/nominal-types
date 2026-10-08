@@ -14,9 +14,13 @@ SyntaxError: Named export 'AnyString' not found. The requested module '@horizon-
 
 The compiler says `Module '"@horizon-republic/nominal-types"' has no exported member 'AnyString'.`
 
-Cause: `npm install` gave you version 2. These docs describe version 3, which is not on npm yet. Version 2 has a different API.
+Cause: the project has version 2 installed. These docs describe version 3, and version 2 has a different API.
 
-Fix: check the version with `npm ls @horizon-republic/nominal-types`. With `2.x`, follow the README that comes with version 2.
+Fix: check the version with `npm ls @horizon-republic/nominal-types`. With `2.x`, install version 3:
+
+```shell
+npm install @horizon-republic/nominal-types@3
+```
 
 ### No error when one type is passed for another
 

@@ -4,7 +4,7 @@ import type { AnyNominalType } from '../../core/contracts.ts';
 import type { ColumnKind } from '../orm/column.ts';
 import { columnKindOf } from '../orm/column.ts';
 import type { StorageOptions } from '../orm/values.ts';
-import { readerOf, writerOf } from '../orm/values.ts';
+import { jsonTextOf, readerOf, writerOf } from '../orm/values.ts';
 
 /**
  * Options of `toTypeOrm()`: the storage options and any TypeORM column option, such as `nullable`,
@@ -16,6 +16,8 @@ export type TypeOrmOptions<Instance> = StorageOptions<Instance> &
 const simpleColumns: Readonly<
   Record<Exclude<ColumnKind['kind'], 'text' | 'decimal'>, ColumnOptions>
 > = {
+  numeric: { type: 'numeric' },
+  json: { type: 'simple-json' },
   uuid: { type: 'uuid' },
   integer: { type: 'integer' },
   bigint: { type: 'bigint' },
@@ -26,6 +28,8 @@ const simpleColumns: Readonly<
   time: { type: 'time' },
   timestamp: { type: 'timestamp' },
 };
+
+const jsonColumns = new Set(['simple-json', 'json', 'jsonb']);
 
 const columnOptions = (column: ColumnKind): ColumnOptions => {
   if (column.kind === 'text') {
@@ -44,9 +48,10 @@ const columnOptions = (column: ColumnKind): ColumnOptions => {
  *
  * @remarks
  * The column comes from the type: `varchar(254)` for `Email`, `uuid` for `Uuid`, `integer` or
- * `bigint` by a number type's bounds, `boolean`; pass `type`, `length` or any other column option
- * to change it. What is stored is the instance's `toJSON()`, or `serialize` of it, also for values
- * in find conditions, where plain values are checked into instances first. Stored values are
+ * `bigint` by a number type's bounds, `boolean`, `numeric` for `DecimalString`, `simple-json` for
+ * `Money` and other types whose values are objects; pass `type`, `length` or any other column
+ * option to change it. What is stored is the instance's `toJSON()`, or `serialize` of it, also for
+ * values in find conditions, where plain values are checked into instances first. Stored values are
  * checked when read, unless `trusted`.
  *
  * @example
@@ -65,12 +70,15 @@ export const toTypeOrm = <Target extends AnyNominalType>(
 ): ColumnOptions => {
   const { serialize, trusted, ...column } = options;
   const kind = columnKindOf(target);
+  const chosen = { ...columnOptions(kind), ...column };
+  const write = writerOf(target, serialize);
+  // TypeORM writes JSON itself for its JSON columns; a text column chosen for one takes JSON text.
+  const asText = kind.kind === 'json' && !jsonColumns.has(String(chosen.type));
 
   return {
-    ...columnOptions(kind),
-    ...column,
+    ...chosen,
     transformer: {
-      to: writerOf(target, serialize),
+      to: asText ? (value: unknown) => jsonTextOf(write(value)) : write,
       from: readerOf(target, kind, trusted === true),
     },
   };

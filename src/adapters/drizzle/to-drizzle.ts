@@ -2,7 +2,7 @@ import type { AnyNominalType } from '../../core/contracts.ts';
 import type { ColumnKind } from '../orm/column.ts';
 import { columnKindOf } from '../orm/column.ts';
 import type { StorageOptions } from '../orm/values.ts';
-import { readerOf, writerOf } from '../orm/values.ts';
+import { jsonTextOf, readerOf, writerOf } from '../orm/values.ts';
 
 /**
  * Options of `toDrizzle()`.
@@ -32,6 +32,8 @@ export interface DrizzleParams<Target extends AnyNominalType> {
 }
 
 const sqlTypes: Readonly<Record<Exclude<ColumnKind['kind'], 'text' | 'decimal'>, string>> = {
+  numeric: 'numeric',
+  json: 'json',
   uuid: 'uuid',
   integer: 'integer',
   bigint: 'bigint',
@@ -60,11 +62,12 @@ const sqlTypeOf = (column: ColumnKind): string => {
  * @remarks
  * Pass them to the `customType` of your dialect, with `DrizzleColumn` as its type argument. The
  * column comes from the type: `varchar(254)` for `Email`, `uuid` for `Uuid`, `integer` or `bigint`
- * by a number type's bounds, `boolean`; pass `column` for another, such as `char(36)` for a UUID on
- * MySQL. Booleans are written as `1` and `0`, which every dialect takes. What is stored is the
- * instance's `toJSON()`, or `serialize` of it, also for values in conditions, where plain values
- * the type refuses, such as a `like` pattern, pass as they are. Stored values are checked when
- * read, unless `trusted`.
+ * by a number type's bounds, `boolean`, `numeric` for `DecimalString`, `json` for `Money` and other
+ * types whose values are objects; pass `column` for another, such as `char(36)` for a UUID on
+ * MySQL. Booleans are written as `1` and `0`, which every dialect takes, and JSON as text. What is
+ * stored is the instance's `toJSON()`, or `serialize` of it, also for values in conditions, where
+ * plain values the type refuses, such as a `like` pattern, pass as they are. Stored values are
+ * checked when read, unless `trusted`.
  *
  * @example
  * ```ts
@@ -91,6 +94,10 @@ export const toDrizzle = <Target extends AnyNominalType>(
     dataType: () => sql,
     toDriver: (value) => {
       const stored = write(value);
+
+      if (column.kind === 'json') {
+        return jsonTextOf(stored);
+      }
 
       return typeof stored === 'boolean' ? Number(stored) : stored;
     },

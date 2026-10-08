@@ -17,6 +17,8 @@ export type ColumnKind =
   | { readonly kind: 'integer' }
   | { readonly kind: 'bigint' }
   | { readonly kind: 'decimal'; readonly precision: number }
+  | { readonly kind: 'numeric' }
+  | { readonly kind: 'json' }
   | { readonly kind: 'double' }
   | { readonly kind: 'boolean' }
   | { readonly kind: 'timestamptz' }
@@ -29,6 +31,18 @@ export type ColumnKind =
  */
 export const isUnder = (root: object, target: AnyNominalType): boolean =>
   target === root || Object.prototype.isPrototypeOf.call(root, target);
+
+// Found by name, so the adapters don't load the class, and a copy of it from another copy of the
+// package is found too.
+const isDecimal = (target: AnyNominalType): boolean => {
+  for (let type: unknown = target; typeof type === 'function'; type = Object.getPrototypeOf(type)) {
+    if (Reflect.get(type, 'typeName') === 'nominal.DecimalString') {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 const accepts = (target: AnyNominalType, value: unknown): boolean => target.parse(value).ok;
 
@@ -58,9 +72,30 @@ const bigintKind = (target: AnyNominalType): ColumnKind => {
     : { kind: 'decimal', precision: 20 };
 };
 
-const textKind = (target: AnyNominalType): ColumnKind => {
-  const schema = typeJsonOf(target) ?? {};
-  const text = JSON.stringify(schema);
+const combinators = ['anyOf', 'oneOf', 'allOf'];
+
+// Whether a schema describes objects or arrays, alone or among the branches of a union.
+const isStructured = (schema: unknown): boolean => {
+  if (typeof schema !== 'object' || schema === null) {
+    return false;
+  }
+
+  const type: unknown = Reflect.get(schema, 'type');
+  const types: unknown[] = Array.isArray(type) ? type : [type];
+
+  if (types.includes('object') || types.includes('array')) {
+    return true;
+  }
+
+  return combinators.some((key) => {
+    const branches: unknown = Reflect.get(schema, key);
+
+    return Array.isArray(branches) && branches.some((branch) => isStructured(branch));
+  });
+};
+
+const textKind = (schema: Record<string, unknown> | undefined): ColumnKind => {
+  const text = JSON.stringify(schema ?? {});
 
   if (text.includes('"format":"uuid"')) {
     return { kind: 'uuid' };
@@ -84,12 +119,23 @@ const temporalKinds: ReadonlyArray<readonly [object, ColumnKind]> = [
  * when it refuses everything past 32 bits, `bigint` within 64 bits, `decimal(20)` for unsigned
  * 64-bit values, `double` for fractions; `uuid` for a UUID and text with the type's longest length.
  * The Temporal types take the SQL type of their kind: `timestamptz`, `date`, `time`, `timestamp`.
+ * `DecimalString` takes `numeric`, and a type whose values are objects or arrays a JSON column.
  */
 export const columnKindOf = (target: AnyNominalType): ColumnKind => {
   const temporal = temporalKinds.find(([root]) => isUnder(root, target));
 
   if (temporal !== undefined) {
     return temporal[1];
+  }
+
+  if (isDecimal(target)) {
+    return { kind: 'numeric' };
+  }
+
+  const schema = typeJsonOf(target);
+
+  if (isStructured(schema)) {
+    return { kind: 'json' };
   }
 
   if (isUnder(AnyBoolean, target) || accepts(target, true)) {
@@ -104,5 +150,5 @@ export const columnKindOf = (target: AnyNominalType): ColumnKind => {
     return integerKind(target);
   }
 
-  return textKind(target);
+  return textKind(schema);
 };

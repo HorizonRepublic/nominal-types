@@ -67,6 +67,27 @@ The column comes from the type: `STRING(254)` for `Email`, `UUID` for `Uuid`, `B
 
 `toSequelize()` also takes any Sequelize attribute option, such as `allowNull`, `unique`, `field` for the column name, or `type` to choose the column yourself: `toSequelize(Email, { type: DataTypes.STRING(320) })`.
 
+## Store an object
+
+`Money` and other types whose values are objects get one `JSON` column:
+
+```ts
+// order.ts
+import { Model, Sequelize } from 'sequelize';
+import { Money } from '@horizon-republic/nominal-types';
+import { toSequelize } from '@horizon-republic/nominal-types/adapters/sequelize';
+
+const sequelize = new Sequelize({ dialect: 'sqlite', storage: 'app.db' });
+
+export class Order extends Model {
+  declare public price: Money;
+}
+
+Order.init({ price: toSequelize(Money) }, { sequelize });
+```
+
+Saving `new Money({ amount: '12.30', currency: 'EUR' })` stores `{"amount":"12.30","currency":"EUR"}`. Reading `order.price` gives a `Money` back. Microsoft SQL Server has no `JSON`: pass `{ type: DataTypes.TEXT }` there.
+
 ## Store a different form
 
 Pass `serialize` to store something other than `toJSON()`. This model stores emails in their canonical form, lowercase and without a `+tag`:
@@ -124,6 +145,7 @@ To build instances from stored values without checking them, pass `trusted: true
 ## Limits
 
 - An instance in `where` throws `Error: Invalid value Email { value: 'jane@example.com' }`. Pass the stored form, as in [Query by a value](#query-by-a-value).
+- A `DecimalString` gets `DECIMAL`. On SQLite pass `{ type: DataTypes.TEXT }`, and on MySQL a size such as `{ type: DataTypes.DECIMAL(19, 4) }`. See [Decimals](../../reference/adapters/database-columns.md#decimals).
 - `user.toJSON()` returns instances. To send a row, use `JSON.stringify(user)`, which gives plain values.
 - SQLite loses digits of large integers, and reading such a value throws a `NominalError`. See [Database columns](../../reference/adapters/database-columns.md) for the fixes.
 

@@ -6,30 +6,30 @@ The four database adapters, [mikro-orm](mikro-orm.md), [typeorm](typeorm.md), [d
 
 The column comes from the type. Each adapter has an option to choose your own.
 
-| Type                                                                                                                                                                                                                                                                                                                | MikroORM, TypeORM, Drizzle                           | Sequelize         |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
-| `Email`                                                                                                                                                                                                                                                                                                             | `varchar(254)`                                       | `STRING(254)`     |
-| `HexColor`                                                                                                                                                                                                                                                                                                          | `varchar(9)`                                         | `STRING(9)`       |
-| `CountryCode`                                                                                                                                                                                                                                                                                                       | `varchar(2)`                                         | `STRING(2)`       |
-| `CurrencyCode`                                                                                                                                                                                                                                                                                                      | `varchar(3)`                                         | `STRING(3)`       |
-| `Uuid`, `UuidV4`, `UuidV7`                                                                                                                                                                                                                                                                                          | `uuid`                                               | `UUID`            |
-| another string type with a length limit: `Ulid` 26, `TypeId` 90, `DecimalString` 100, `ObjectId` 24, `SemVer` 256, `Hostname` and `DomainName` 253, `IpAddress` and `Ipv6Address` 45, `Ipv4Address` 15, `IpPrefix` and `Ipv6Prefix` 49, `Ipv4Prefix` 18, `MacAddress` 17, `Isbn` 13, `Issn` 9, `Gtin` 14, `Isin` 12 | `varchar(<limit>)`                                   | `STRING(<limit>)` |
-| `AnyString`, `NonEmptyString`, `NonBlankString`, `Url`, `HttpUrl`, `LanguageTag`, `MediaType`, `Base64`, `Base64Url`, a string type without a limit                                                                                                                                                                 | `text`                                               | `TEXT`            |
-| `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Port`                                                                                                                                                                                                                                                                 | `integer`                                            | `INTEGER`         |
-| `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Uint32`                                                                                                                                                                                                               | `bigint`                                             | `BIGINT`          |
-| `AnyNumber`, `FiniteNumber`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Latitude`, `Longitude`                                                                                                                                                                       | `double precision` (MikroORM: the platform's double) | `DOUBLE`          |
-| `Int64`                                                                                                                                                                                                                                                                                                             | `bigint`                                             | `BIGINT`          |
-| `Uint64`                                                                                                                                                                                                                                                                                                            | `decimal(20, 0)`                                     | `DECIMAL(20)`     |
-| `AnyBigInt` and the other big integer types                                                                                                                                                                                                                                                                         | `varchar(1000)`                                      | `STRING(1000)`    |
-| `AnyBoolean`                                                                                                                                                                                                                                                                                                        | `boolean`                                            | `BOOLEAN`         |
-| `Instant`                                                                                                                                                                                                                                                                                                           | `timestamptz` (MikroORM: the platform's date-time)   | `DATE`            |
-| `PlainDate`                                                                                                                                                                                                                                                                                                         | `date`                                               | `DATEONLY`        |
-| `PlainTime`                                                                                                                                                                                                                                                                                                         | `time` (MikroORM: `time(6)`)                         | `TIME`            |
-| `PlainDateTime`                                                                                                                                                                                                                                                                                                     | `timestamp` (MikroORM: the date-time without a zone) | `TIMESTAMP`       |
+| Type                                                                                                                                                                                                                                                                                           | MikroORM, TypeORM, Drizzle                           | Sequelize         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
+| `Email`                                                                                                                                                                                                                                                                                        | `varchar(254)`                                       | `STRING(254)`     |
+| `HexColor`                                                                                                                                                                                                                                                                                     | `varchar(9)`                                         | `STRING(9)`       |
+| `CountryCode`                                                                                                                                                                                                                                                                                  | `varchar(2)`                                         | `STRING(2)`       |
+| `CurrencyCode`                                                                                                                                                                                                                                                                                 | `varchar(3)`                                         | `STRING(3)`       |
+| `Uuid`, `UuidV4`, `UuidV7`                                                                                                                                                                                                                                                                     | `uuid`                                               | `UUID`            |
+| another string type with a length limit: `Ulid` 26, `TypeId` 90, `ObjectId` 24, `SemVer` 256, `Hostname` and `DomainName` 253, `IpAddress` and `Ipv6Address` 45, `Ipv4Address` 15, `IpPrefix` and `Ipv6Prefix` 49, `Ipv4Prefix` 18, `MacAddress` 17, `Isbn` 13, `Issn` 9, `Gtin` 14, `Isin` 12 | `varchar(<limit>)`                                   | `STRING(<limit>)` |
+| `AnyString`, `NonEmptyString`, `NonBlankString`, `Url`, `HttpUrl`, `LanguageTag`, `MediaType`, `Base64`, `Base64Url`, a string type without a limit                                                                                                                                            | `text`                                               | `TEXT`            |
+| `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Port`                                                                                                                                                                                                                                            | `integer`                                            | `INTEGER`         |
+| `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Uint32`                                                                                                                                                                                          | `bigint`                                             | `BIGINT`          |
+| `AnyNumber`, `FiniteNumber`, `Float32`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Latitude`, `Longitude`                                                                                                                                                  | `double precision` (MikroORM: the platform's double) | `DOUBLE`          |
+| `Int64`                                                                                                                                                                                                                                                                                        | `bigint`                                             | `BIGINT`          |
+| `Uint64`                                                                                                                                                                                                                                                                                       | `decimal(20, 0)`                                     | `DECIMAL(20)`     |
+| `AnyBigInt` and the other big integer types                                                                                                                                                                                                                                                    | `varchar(1000)`                                      | `STRING(1000)`    |
+| `AnyBoolean`                                                                                                                                                                                                                                                                                   | `boolean`                                            | `BOOLEAN`         |
+| `Instant`                                                                                                                                                                                                                                                                                      | `timestamptz` (MikroORM: the platform's date-time)   | `DATE`            |
+| `PlainDate`                                                                                                                                                                                                                                                                                    | `date`                                               | `DATEONLY`        |
+| `PlainTime`                                                                                                                                                                                                                                                                                    | `time` (MikroORM: `time(6)`)                         | `TIME`            |
+| `PlainDateTime`                                                                                                                                                                                                                                                                                | `timestamp` (MikroORM: the date-time without a zone) | `TIMESTAMP`       |
+| `DecimalString`                                                                                                                                                                                                                                                                                | `numeric`                                            | `DECIMAL`         |
+| `Money`, a type built on `n.object()` or `n.union()`, a type whose values are arrays                                                                                                                                                                                                           | a JSON column, see [Objects](#objects)               | `JSON`            |
 
-Your own types get a column the same way, by what they accept. A number type that takes fractions, such as a price from 1 up, gets `double precision`. A type declared with `Nominal()` gets a column by what it accepts: `boolean` for `true`, a number column for `1`, else `text`.
-
-`Money` holds two fields, so it doesn't fit in one column. Store its `amount` as a `DecimalString` column and its `currency` as a `CurrencyCode` column. [How to handle money](../../guides/core/handle-money.md#store-an-amount) shows how.
+Your own types get a column the same way, by what they accept. A number type that takes fractions, such as a price from 1 up, gets `double precision`. A type declared with `Nominal()` gets a column by what it accepts: a JSON column for objects and arrays, `boolean` for `true`, a number column for `1`, else `text`.
 
 PostgreSQL has columns made for addresses. To use one, choose it yourself:
 
@@ -46,6 +46,7 @@ A database without a kind of column uses its own. On SQLite, for example, MikroO
 ## Writes
 
 - An instance is stored as its `toJSON()`: the text of an `Email`, the digits of an `Int64` as a string.
+- An object is stored as JSON, with every instance inside replaced by its `toJSON()`, as [`n.plain()`](../schemas.md#nplain) does: `{"amount":"12.30","currency":"EUR"}`.
 - With `serialize`, it is stored as what `serialize` returns, such as `email.canonical().value`.
 - A plain value the type accepts is stored as its instance would be.
 - A plain value the type rejects is written as it is. Query conditions go through the same step, which keeps patterns such as `'%@example.com'` working.
@@ -58,8 +59,10 @@ So the database can hold values the type refuses. They come from a plain value c
 
 - A stored value becomes an instance, checked by the type.
 - Numbers and booleans are read from text and from integers, as drivers return them: `'42'` gives `42`; `1`, `'t'` and `'true'` give `true`.
+- JSON is read from text and from the object some drivers already parsed.
 - A value the type rejects throws a `NominalError`, for example a row written before a rule changed.
 - `trusted: true` builds instances without the check. A bad stored value then becomes a bad instance: its getters give wrong answers, and nothing checks it again. Use it only for a column that nothing else writes to.
+- Object types are checked even with `trusted: true`, since their fields are built from the JSON.
 - `null` stays `null`.
 
 The error names the type: `NominalError: nominal.Email: must be an email address (was a string of 3 characters)`.
@@ -95,6 +98,53 @@ MikroORM, TypeORM and Drizzle convert condition values the way they convert writ
 So with `serialize: (email) => email.canonical().value`, a lookup by `new Email('JANE.DOE@example.com')` finds `jane.doe@example.com`.
 
 Sequelize doesn't run attribute setters on `where` values, and it refuses instances: `Error: Invalid value Email { value: 'jane.doe@example.com' }`. Compare with what is stored, such as `email.value`.
+
+A condition on a whole object compares the stored JSON text. `12.3 EUR` then misses a row holding `12.30 EUR`, and TypeORM can't send an object condition for a `simple-json` column at all. To search by a field, such as a currency, keep it in its own column too.
+
+## Objects
+
+`Money` and your own object types fit in one column, as JSON:
+
+| Database   | MikroORM | TypeORM       | Drizzle | Sequelize |
+| ---------- | -------- | ------------- | ------- | --------- |
+| PostgreSQL | `jsonb`  | `simple-json` | `json`  | `JSON`    |
+| MySQL      | `json`   | `simple-json` | `json`  | `JSON`    |
+| SQLite     | `json`   | `simple-json` | `json`  | `JSON`    |
+
+The column comes from the type's JSON Schema. A type whose rule comes from a library that can't describe it as JSON Schema, such as Zod before 4.1, can't be seen as an object: pass the column yourself (`{ column: 'jsonb' }`, `{ type: 'simple-json' }`).
+
+TypeORM's `simple-json` is a text column. To use PostgreSQL's own, pass `{ type: 'jsonb' }` to TypeORM or `{ column: 'jsonb' }` to Drizzle. A text column works too, such as `{ type: DataTypes.TEXT }` on Sequelize, which has no `JSON` on Microsoft SQL Server.
+
+```ts
+import { Money } from '@horizon-republic/nominal-types';
+import { toDrizzle } from '@horizon-republic/nominal-types/adapters/drizzle';
+
+const price = toDrizzle(Money);
+
+price.dataType(); // 'json'
+price.toDriver(new Money({ amount: '12.30', currency: 'EUR' })); // '{"amount":"12.30","currency":"EUR"}'
+price.fromDriver('{"amount":"12.30","currency":"EUR"}').amount.value; // '12.30'
+```
+
+## Decimals
+
+A `DecimalString` gets a `numeric` column, `DECIMAL` in Sequelize. Each database treats it its own way:
+
+| Database   | What happens                                                           | What to do                              |
+| ---------- | ---------------------------------------------------------------------- | --------------------------------------- |
+| PostgreSQL | the column keeps every digit, and drivers return it as text            | nothing                                 |
+| MySQL      | the column is `decimal(10, 0)`, which drops the digits after the point | choose a size, such as `decimal(19, 4)` |
+| SQLite     | the column turns the text into a floating-point number                 | choose `text`                           |
+
+Choose the column with `column` in MikroORM and Drizzle, and with `type` in TypeORM and Sequelize: `toTypeOrm(DecimalString, { type: 'text' })`.
+
+A number read for a `DecimalString` may have lost digits, so reading one throws, even with `trusted: true`:
+
+```text
+NominalError: nominal.DecimalString: must come from the database as text, since a number may have lost digits (was 12.34)
+```
+
+A text column keeps every digit, but SQL compares its values as text, so `ORDER BY` puts `'10'` before `'9'`.
 
 ## Dates and times
 

@@ -37,7 +37,28 @@ const booleanFrom = (raw: unknown): unknown => {
 // without time zone it stands for local midnight or local time, which the process zone can shift.
 const isMoment = (raw: unknown): raw is Date => raw instanceof Date && !Number.isNaN(raw.getTime());
 
+// Drivers give a JSON column as text, or already parsed.
+const jsonFrom = (raw: unknown): unknown => {
+  if (typeof raw !== 'string') {
+    return raw;
+  }
+
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return raw;
+  }
+};
+
 const plainFrom = (raw: unknown, column: ColumnKind, target: AnyNominalType): unknown => {
+  if (column.kind === 'json') {
+    return jsonFrom(raw);
+  }
+
+  if (column.kind === 'numeric' && typeof raw === 'bigint') {
+    return String(raw);
+  }
+
   if (column.kind === 'boolean') {
     return booleanFrom(raw);
   }
@@ -46,7 +67,12 @@ const plainFrom = (raw: unknown, column: ColumnKind, target: AnyNominalType): un
     return raw.toISOString();
   }
 
-  if (typeof raw === 'string' && column.kind !== 'text' && column.kind !== 'uuid') {
+  if (
+    typeof raw === 'string' &&
+    column.kind !== 'text' &&
+    column.kind !== 'uuid' &&
+    column.kind !== 'numeric'
+  ) {
     const form = textFormOf(target);
 
     return form === undefined ? raw : form(raw);
@@ -62,11 +88,20 @@ const storedOf = (instance: unknown): unknown => {
   return typeof toJson === 'function' ? Reflect.apply(toJson, instance, []) : instance;
 };
 
+// A number from the driver for a decimal column has been through a binary float, which may have
+// changed its digits with no sign of it, so it is refused rather than read.
+const lostDigits = (target: AnyNominalType, raw: number): NominalError =>
+  new NominalError(target.typeName, [
+    {
+      message: `must come from the database as text, since a number may have lost digits (was ${String(raw)})`,
+    },
+  ]);
+
 /**
  * Internal: turns a stored value into an instance: `null` and `undefined` as they are, numbers and
  * booleans read from the text or integers some drivers return, a driver's `Date` as an instant,
- * then checked unless `trusted`. A
- * driver's number beyond 2^53 - 1 is refused by big integer types, since it has lost digits.
+ * JSON text parsed, then checked unless `trusted`. A driver's number beyond 2^53 - 1 is refused by
+ * big integer types, and any number by a decimal column, since it may have lost digits.
  *
  * @throws NominalError naming the type for a stored value it doesn't accept.
  */
@@ -82,6 +117,10 @@ export const readerOf = (
       return raw;
     }
 
+    if (column.kind === 'numeric' && typeof raw === 'number') {
+      throw lostDigits(target, raw);
+    }
+
     const value = build(plainFrom(raw, column, target));
 
     if (value instanceof Rejection) {
@@ -95,7 +134,8 @@ export const readerOf = (
 /**
  * Internal: turns a value into what is stored: `null` and `undefined` as they are; an instance, or
  * a plain value the type accepts, through `serialize` or its `toJSON()`; any other plain value as
- * it is.
+ * it is. For a JSON column, the instances left inside are written by `JSON.stringify()`, which
+ * calls their `toJSON()` too.
  *
  * @remarks
  * ORMs run the same conversion for values written and for values in query conditions, where a
@@ -124,3 +164,10 @@ export const writerOf = (
     return serialize === undefined ? storedOf(instance) : serialize(instance as never);
   };
 };
+
+/**
+ * Internal: a stored value for a JSON column as JSON text, for drivers and columns that take text;
+ * text, such as a condition value written as JSON, stays as it is.
+ */
+export const jsonTextOf = (stored: unknown): unknown =>
+  typeof stored === 'object' && stored !== null ? JSON.stringify(stored) : stored;

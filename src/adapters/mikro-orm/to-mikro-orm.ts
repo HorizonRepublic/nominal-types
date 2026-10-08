@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import type { EntityProperty, Platform } from '@mikro-orm/core';
+import type { EntityProperty, Platform, TransformContext } from '@mikro-orm/core';
 
 import type { AnyNominalType } from '../../core/contracts.ts';
 import type { ColumnKind } from '../orm/column.ts';
@@ -39,6 +39,8 @@ const columnSql = (column: ColumnKind, prop: EntityProperty, platform: Platform)
   }
 
   const simple: Readonly<Record<Exclude<ColumnKind['kind'], 'text' | 'decimal'>, () => string>> = {
+    numeric: () => 'numeric',
+    json: () => platform.getJsonDeclarationSQL(),
     uuid: () => platform.getUuidTypeDeclarationSQL(prop),
     integer: () => platform.getIntegerTypeDeclarationSQL(prop),
     bigint: () => platform.getBigIntTypeDeclarationSQL(prop),
@@ -68,9 +70,11 @@ const comparedAs = (column: ColumnKind): string => {
  *
  * @remarks
  * The column comes from the type: `varchar(254)` for `Email`, `uuid` for `Uuid`, `integer` or
- * `bigint` by a number type's bounds, `boolean`; pass `column` for another. What is stored is the
- * instance's `toJSON()`, or `serialize` of it, also for values in query conditions, where plain
- * values are checked into instances first. Stored values are checked when read, unless `trusted`.
+ * `bigint` by a number type's bounds, `boolean`, `numeric` for `DecimalString`, the platform's JSON
+ * column for `Money` and other types whose values are objects; pass `column` for another. What is
+ * stored is the instance's `toJSON()`, or `serialize` of it, also for values in query conditions,
+ * where plain values are checked into instances first. Stored values are checked when read, unless
+ * `trusted`.
  *
  * @example
  * ```ts
@@ -92,8 +96,16 @@ export const toMikroOrm = <Target extends AnyNominalType>(
   const write = writerOf(target, options.serialize);
 
   class NominalType extends Type<Target['prototype'] | null | undefined, unknown> {
-    public override convertToDatabaseValue(value: unknown): unknown {
-      return write(value);
+    public override convertToDatabaseValue(
+      value: unknown,
+      platform: Platform,
+      context?: TransformContext,
+    ): unknown {
+      const stored = write(value);
+
+      return column.kind === 'json' && typeof stored === 'object' && stored !== null
+        ? platform.convertJsonToDatabaseValue(stored, context)
+        : stored;
     }
 
     public override convertToJSValue(value: unknown): Target['prototype'] | null | undefined {

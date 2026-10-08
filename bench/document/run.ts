@@ -1,66 +1,44 @@
-import { cpus } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
-import { buildDocument, withManyErrors, withOneError } from './data.ts';
+import { environment, inOwnProcess } from '../environment.ts';
+import { buildDocument } from './data.ts';
 import { documentLibraries } from './libraries.ts';
 
-const valid = buildDocument();
-const scenarios: ReadonlyArray<readonly [string, unknown, boolean]> = [
-  ['valid document', valid, true],
-  ['one error deep inside', withOneError(valid), false],
-  ['every hundredth email broken', withManyErrors(valid), false],
-];
+const child = fileURLToPath(new URL('one.ts', import.meta.url));
+const size = (JSON.stringify(buildDocument()).length / 1024 / 1024).toFixed(1);
 
-const size = (JSON.stringify(valid).length / 1024 / 1024).toFixed(1);
+const isTimes = (value: unknown): value is Readonly<Record<string, number>> =>
+  typeof value === 'object' && value !== null && typeof Reflect.get(value, 'valid') === 'number';
 
-let wrong = 0;
-
-for (const library of documentLibraries) {
-  for (const [title, document, expected] of scenarios) {
-    if (library.accepted(library.validate(document)) !== expected) {
-      wrong += 1;
-      console.log(`${library.name} answers wrongly on "${title}"`);
-    }
-  }
-}
-
-if (wrong > 0) {
-  process.exitCode = 1;
-
-  throw new Error(`${wrong} answers were wrong; nothing was timed`);
-}
-
-const median = (run: () => unknown): number => {
-  run();
-  run();
-
-  const times: number[] = [];
-
-  for (let index = 0; index < 5; index += 1) {
-    const started = performance.now();
-
-    run();
-    times.push(performance.now() - started);
+const milliseconds = (value: number | undefined): string => {
+  if (value === undefined) {
+    return '?';
   }
 
-  times.sort((left, right) => left - right);
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)} s`;
+  }
 
-  return times[2] ?? Number.NaN;
+  return value >= 10 ? `${value.toFixed(0)} ms` : `${value.toFixed(1)} ms`;
 };
 
-const milliseconds = (value: number): string =>
-  value >= 1000 ? `${(value / 1000).toFixed(1)} s` : `${value.toFixed(1)} ms`;
-
 const rows = documentLibraries.map((library) => {
-  const cells = scenarios.map(([, document]) =>
-    milliseconds(median(() => library.validate(document))),
-  );
+  process.stderr.write(`timing ${library.name}\n`);
+
+  const times = inOwnProcess(child, library.name);
+
+  if (!isTimes(times)) {
+    throw new Error(`${library.name} printed no times`);
+  }
+
+  const cells = ['valid', 'oneError', 'manyErrors'].map((key) => milliseconds(times[key]));
 
   return `| ${library.name} | ${cells.join(' | ')} |`;
 });
 
 console.log(
-  `\nA ${size} MB document. Median of five runs. ${cpus()[0]?.model ?? 'unknown CPU'}, Node.js ${process.version}, ${new Date().toISOString().slice(0, 10)}.\n`,
+  `\nA ${size} MB document, each library in a process of its own. Median of nine runs after three warm-ups. ${environment()}.\n`,
 );
-console.log(`| Library | ${scenarios.map(([title]) => title).join(' | ')} |`);
-console.log(`| --- | ${scenarios.map(() => '---:').join(' | ')} |`);
+console.log('| Library | Valid document | One error deep inside | Every hundredth email broken |');
+console.log('| --- | ---: | ---: | ---: |');
 console.log(rows.join('\n'));

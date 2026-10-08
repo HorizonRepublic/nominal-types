@@ -79,7 +79,7 @@ This matters when you keep many parsed values, such as a cache or a large list i
 | ArkType with `toArk()` and `fromArk()` | about as fast as `n.object()`                                         |
 | Zod or Valibot with its adapter        | slower than the library alone, in the same range                      |
 | `n.of()` inside another library        | many times slower than an adapter                                     |
-| class-validator with `@NominalField()` | a few percent over class-validator, which is far slower than the rest |
+| class-validator with `@NominalField()` | about a tenth over class-validator, which is far slower than the rest |
 
 Inside a library that has an adapter, use the adapter, not `n.of()`. The library runs an `n.of()` field on its slow path.
 

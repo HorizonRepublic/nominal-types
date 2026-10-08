@@ -5,7 +5,8 @@
     "./document/*.ts",
     "./nest/run.ts",
     "./profile/*.ts",
-    "./profile/targets/*.ts"
+    "./profile/targets/*.ts",
+    "./suites/*.ts"
   ],
   "compilerOptions": {
     "types": ["node"]

@@ -1,5 +1,13 @@
 import { type } from 'arktype';
-import { IsInt, IsPositive, IsUUID, Matches, validateSync } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsInt,
+  IsPositive,
+  IsUUID,
+  Matches,
+  validateSync,
+} from 'class-validator';
 import { Schema } from 'effect';
 import Joi from 'joi';
 import * as S from 'sury';
@@ -120,12 +128,12 @@ export const libraries: readonly Library[] = [
   },
   {
     name: 'typia',
-    accepted: (result) => result !== undefined && field(result, 'success') !== false,
+    accepted: (result) => field(result, 'success') === true,
     sku: typia.validateSku,
-    uuid: (input) => (typia.isUuid(input) ? input : undefined),
-    email: (input) => (typia.isEmail(input) ? input : undefined),
-    positiveInteger: (input) => (typia.isPositiveInteger(input) ? input : undefined),
-    uuidList: (input) => (typia.isUuidList(input) ? input : undefined),
+    uuid: typia.validateUuid,
+    email: typia.validateEmail,
+    positiveInteger: typia.validatePositiveInteger,
+    uuidList: typia.validateUuidList,
   },
   {
     name: 'arktype',
@@ -194,6 +202,8 @@ export const libraries: readonly Library[] = [
     accepted: (result) => Array.isArray(result) && result.length === 0,
     sku: classValidatorOf(Matches(sku)),
     uuid: classValidatorOf(IsUUID('all')),
+    email: classValidatorOf(IsEmail()),
     positiveInteger: classValidatorOf(IsInt(), IsPositive()),
+    uuidList: classValidatorOf(IsArray(), IsUUID('all', { each: true })),
   },
 ];

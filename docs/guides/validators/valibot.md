@@ -147,7 +147,7 @@ Each issue is a Valibot issue with the type's `message`. Read its path with `v.g
 
 - A constraint must read only fields the object declares. Otherwise `constrainValibot()` throws when you build the schema: `TypeError: constrainValibot: a constraint reads capacity, which the object does not declare`.
 - A type that holds an object, such as one built on `n.object()`, reports a nested problem in one issue. The path stops at the field, and the rest goes into the message: `start: must be a positive integer (was 0)`.
-- Building instances takes time. On a 3 MB document, Valibot alone takes 7.1 ms and Valibot with the adapter 12 ms: see [Benchmarks](../../reference/benchmarks.md#a-large-document).
+- Building instances takes time. On a 3 MB document, Valibot alone takes 11 ms and Valibot with the adapter 15 ms: see [Benchmarks](../../reference/benchmarks.md#a-large-document).
 - A `toValibot()` field carries no JSON Schema. To describe a body as JSON Schema, use [n.object()](../core/check-an-object.md) or another adapter.
 
 ## See also

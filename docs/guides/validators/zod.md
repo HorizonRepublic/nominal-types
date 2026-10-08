@@ -151,7 +151,7 @@ Each issue is a Zod issue with `code: 'custom'`, the type's `message` and a `pat
 ## Limits
 
 - A constraint must read only fields the object declares. Otherwise `constrainZod()` throws when you build the schema: `TypeError: constrainZod: a constraint reads capacity, which the object does not declare`.
-- Building instances takes time. On a 3 MB document, Zod alone takes 6.8 ms and Zod with the adapter 9.1 ms: see [Benchmarks](../../reference/benchmarks.md#a-large-document).
+- Building instances takes time. On a 3 MB document, Zod alone takes 7.7 ms and Zod with the adapter 14 ms: see [Benchmarks](../../reference/benchmarks.md#a-large-document).
 - `z.toJSONSchema()` without `{ io: 'input' }` describes the output side. The output holds instances, which JSON Schema can't describe, so Zod throws `Error: Transforms cannot be represented in JSON Schema`.
 
 ## See also

@@ -145,6 +145,14 @@ export const validatorCompilerWith = (
   options: NominalValidatorOptions,
   fallback: Fallback<NominalValidatorCompiler>,
 ): NominalValidatorCompiler => {
+  /**
+   * The validator of a route's schema.
+   *
+   * @throws {@link TypeError} when the route's schema is not nominal and there is no
+   * fallback.
+   *
+   * @internal
+   */
   return (route) => {
     const target = targetOf(route.schema);
 
@@ -170,6 +178,14 @@ export const validatorCompilerWith = (
 export const serializerCompilerWith = (
   fallback: Fallback<NominalSerializerCompiler>,
 ): NominalSerializerCompiler => {
+  /**
+   * The serializer of a route's schema.
+   *
+   * @throws {@link TypeError} when the route's schema is not nominal and there is no
+   * fallback.
+   *
+   * @internal
+   */
   return (route) => {
     const target = targetOf(route.schema);
 

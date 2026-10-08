@@ -42,6 +42,7 @@ export const epochNanosecondsOf = (text: string): bigint => {
   const seconds =
     epochDays(year, month, day) * 86_400 + hour * 3600 + minute * 60 + second - offsetSeconds(text);
 
+  // @throws-ignore the fields are whole numbers read from digits, far below 2^53
   return BigInt(seconds * 1000 + milli) * 1_000_000n + BigInt(micro * 1000 + nano);
 };
 

@@ -123,6 +123,8 @@ export const matching = (
  * A rule as `Nominal()`, `subtype()` and `variant()` take it, with a bare pattern turned
  * into a `PatternSchema`.
  *
+ * @throws {@link TypeError} when the pattern has a flag other than `u`.
+ *
  * @internal
  */
 export const asRule = (rule: NominalSchema | RegExp): NominalSchema =>

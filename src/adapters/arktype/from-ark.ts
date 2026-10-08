@@ -119,6 +119,9 @@ export class ArkSchema<Input, Output> {
   /**
    * Built by `fromArk()`.
    *
+   * @throws {@link TypeError} when a `toArk()` node sits in a place whose branch can't be told at
+   * runtime, or names a type `toArk()` was never given.
+   *
    * @internal
    */
   public constructor(ark: Type) {

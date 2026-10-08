@@ -45,6 +45,7 @@ export class Ipv6Prefix extends Ipv6PrefixBase {
    * The first address of the network.
    */
   public override get address(): Ipv6Address {
+    // @throws-ignore the part before the slash of a valid prefix is a valid address
     return new Ipv6Address(this.value.slice(0, this.value.indexOf('/')));
   }
 
@@ -52,6 +53,7 @@ export class Ipv6Prefix extends Ipv6PrefixBase {
    * The prefix with its address written as RFC 5952 recommends.
    *
    * @returns A prefix of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public override canonical(): this {
     return sameType(this, canonicalPrefix(this.value));

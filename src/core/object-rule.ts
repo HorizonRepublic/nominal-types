@@ -27,11 +27,15 @@ export const objectMembersSlot: symbol = Symbol.for(
 export interface ObjectMembers {
   /**
    * Adds a getter for each field and `copyWith()` to the prototype of a type's instances.
+   *
+   * @throws {@link TypeError} when a field is named like a member every instance has.
    */
   readonly define: (prototype: object, keys: readonly string[]) => void;
   /**
-   * Throws when a constraint given to `subtype()` or `variant()` reads a field the object
+   * Refuses a constraint given to `subtype()` or `variant()` that reads a field the object
    * doesn't declare.
+   *
+   * @throws {@link TypeError} when the constraint reads a field the object doesn't declare.
    */
   readonly check: (owner: 'subtype' | 'variant', keys: readonly string[], rule: unknown) => void;
 }

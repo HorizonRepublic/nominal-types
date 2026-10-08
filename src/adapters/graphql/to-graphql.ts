@@ -69,6 +69,13 @@ const instanceMaker = <Target extends AnyNominalType>(
 ): ((value: unknown) => Target['prototype']) => {
   const parse = instanceParserFor(target);
 
+  /**
+   * The instance a value stands for.
+   *
+   * @throws {@link GraphQLError} when the type refuses the value; the message lists the problems.
+   *
+   * @internal
+   */
   return (value) => {
     const result = parse(value);
 
@@ -87,6 +94,7 @@ const instanceMaker = <Target extends AnyNominalType>(
 const literalReader =
   (bigints: boolean) =>
   (node: ValueNode, variables?: Readonly<Record<string, unknown>> | null): unknown =>
+    // @throws-ignore the text of an INT literal is an integer, which BigInt() reads
     bigints && node.kind === Kind.INT ? BigInt(node.value) : valueFromASTUntyped(node, variables);
 
 /**

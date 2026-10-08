@@ -83,6 +83,7 @@ export const uLabelOf = (aLabel: string): string | undefined => {
     return undefined;
   }
 
+  // @throws-ignore decodePunycode returns only code points up to U+10FFFF outside the surrogates
   const label = String.fromCodePoint(...points);
 
   return encodePunycode(points) === encoded && isULabel(label) ? label : undefined;

@@ -102,6 +102,13 @@ const snapshot = (): FullConfiguration =>
     codegen: settings.codegen,
   });
 
+/**
+ * Refuses the options of `n.configure()` with a message.
+ *
+ * @throws {@link TypeError} when called: it always throws, naming `n.configure()`.
+ *
+ * @internal
+ */
 const fail = (message: string): never => {
   throw new TypeError(`n.configure(): ${message}`);
 };
@@ -116,11 +123,19 @@ const options: Readonly<Record<keyof Configuration, true>> = {
 };
 
 const listed = (items: readonly unknown[]): string => {
+  // @throws-ignore the items are option names and the literal choices of an option
   const texts = items.map((item) => JSON.stringify(item));
 
   return `${texts.slice(0, -1).join(', ')} or ${String(texts.at(-1))}`;
 };
 
+/**
+ * Refuses a value outside the choices of an option.
+ *
+ * @throws {@link TypeError} when the value is not one of the allowed choices.
+ *
+ * @internal
+ */
 const choice = <Choice>(
   name: string,
   value: Choice | undefined,
@@ -131,6 +146,13 @@ const choice = <Choice>(
   }
 };
 
+/**
+ * The `trimStrings` setting `normalize` gives.
+ *
+ * @throws {@link TypeError} when `normalize` is not an object of known options with allowed values.
+ *
+ * @internal
+ */
 const trimStringsOf = (normalize: unknown): boolean | undefined => {
   if (normalize === undefined) {
     return undefined;
@@ -156,6 +178,14 @@ const trimStringsOf = (normalize: unknown): boolean | undefined => {
 const frozen = (messages: Messages | undefined): Messages | undefined =>
   typeof messages === 'object' ? Object.freeze({ ...messages }) : messages;
 
+/**
+ * Refuses a `messages` option of the wrong shape.
+ *
+ * @throws {@link TypeError} when the messages are neither a function nor a map of known issue codes
+ * to strings or functions.
+ *
+ * @internal
+ */
 const checkMessages = (messages: unknown): void => {
   if (messages === undefined || typeof messages === 'function') {
     return;
@@ -178,6 +208,13 @@ const checkMessages = (messages: unknown): void => {
   }
 };
 
+/**
+ * The settings the options change.
+ *
+ * @throws {@link TypeError} when an option doesn't exist or has a value it doesn't take.
+ *
+ * @internal
+ */
 const changesOf = (given: Configuration): Partial<Settings> => {
   const unknown = Object.keys(given).find((name) => !Object.hasOwn(options, name));
 

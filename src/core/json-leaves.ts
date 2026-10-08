@@ -170,6 +170,8 @@ export const number = (value: number): string => (Number.isFinite(value) ? `${va
 /**
  * A value as `JSON.stringify()` writes it, for the generated writers to call.
  *
+ * @throws {@link TypeError} when the value holds a bigint or refers to itself.
+ *
  * @internal
  */
 export const json = (value: unknown): string | undefined => JSON.stringify(value);

@@ -122,6 +122,7 @@ export class Money extends MoneyBase {
       throw new TypeError(`minor: ${this.currency.value} has no minor units`);
     }
 
+    // @throws-ignore the type's rule keeps the amount within the currency's minor units
     return this.amount.toMinorUnits(minorUnits);
   }
 
@@ -145,6 +146,8 @@ export class Money extends MoneyBase {
    * @param other - The money to add, in the same currency.
    * @returns A new value of this type.
    * @throws {@link TypeError} when the currencies differ.
+   * @throws {@link NominalError} when the sum breaks a rule of the type, such as a subtype that
+   * takes only positive amounts.
    */
   public add(other: Money): this {
     return this.#combine('add', other, 1n);
@@ -156,6 +159,8 @@ export class Money extends MoneyBase {
    * @param other - The money to take away, in the same currency.
    * @returns A new value of this type.
    * @throws {@link TypeError} when the currencies differ.
+   * @throws {@link NominalError} when the difference breaks a rule of the type, such as a subtype
+   * that takes only positive amounts.
    */
   public subtract(other: Money): this {
     return this.#combine('subtract', other, -1n);
@@ -167,6 +172,8 @@ export class Money extends MoneyBase {
    * @param factor - A bigint, or a number that is a safe integer.
    * @returns A new value of this type.
    * @throws {@link RangeError} when the factor is a number that is not a safe integer.
+   * @throws {@link NominalError} when the product breaks a rule of the type, such as a subtype that
+   * takes only positive amounts.
    */
   public multiply(factor: bigint | number): this {
     if (typeof factor === 'number' && !Number.isSafeInteger(factor)) {
@@ -175,9 +182,10 @@ export class Money extends MoneyBase {
 
     const scale = scaleOf(this.currency, this.amount);
 
-    return this.copyWith({
-      amount: decimalText(this.amount.toMinorUnits(scale) * BigInt(factor), scale),
-    });
+    // @throws-ignore the type's rule keeps the amount within the currency's minor units
+    const minor = this.amount.toMinorUnits(scale);
+
+    return this.copyWith({ amount: decimalText(minor * BigInt(factor), scale) });
   }
 
   /**
@@ -199,15 +207,19 @@ export class Money extends MoneyBase {
    * shortest text of the amount.
    *
    * @returns A new value of this type.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     const { minorUnits } = this.currency;
-    const amount =
-      minorUnits === undefined
-        ? this.amount.canonical().value
-        : decimalText(this.amount.toMinorUnits(minorUnits), minorUnits);
 
-    return this.copyWith({ amount });
+    if (minorUnits === undefined) {
+      return this.copyWith({ amount: this.amount.canonical().value });
+    }
+
+    // @throws-ignore the type's rule keeps the amount within the currency's minor units
+    const minor = this.amount.toMinorUnits(minorUnits);
+
+    return this.copyWith({ amount: decimalText(minor, minorUnits) });
   }
 
   /**
@@ -218,6 +230,7 @@ export class Money extends MoneyBase {
    * @param locales - The locale or locales to format for, such as `'en-US'`; the runtime's
    *   default when left out.
    * @returns The formatted text.
+   * @throws {@link RangeError} when a locale is not a well-formed language tag.
    */
   public format(locales?: string | readonly string[]): string {
     const digits = scaleOf(this.currency, this.amount);
@@ -249,6 +262,13 @@ export class Money extends MoneyBase {
     );
   }
 
+  /**
+   * Refuses money in another currency.
+   *
+   * @throws {@link TypeError} when the currencies differ.
+   *
+   * @internal
+   */
   #checkCurrency(method: string, other: Money): void {
     if (other.currency.value !== this.currency.value) {
       throw new TypeError(
@@ -257,10 +277,20 @@ export class Money extends MoneyBase {
     }
   }
 
+  /**
+   * The sum of this money and `direction` times the other, in the scale both fit.
+   *
+   * @throws {@link TypeError} when the currencies differ.
+   * @throws {@link NominalError} when the result breaks a rule of the type.
+   *
+   * @internal
+   */
   #combine(method: string, other: Money, direction: bigint): this {
     this.#checkCurrency(method, other);
 
     const scale = scaleOf(this.currency, this.amount, other.amount);
+
+    // @throws-ignore the scale holds every digit of both amounts
     const sum = this.amount.toMinorUnits(scale) + direction * other.amount.toMinorUnits(scale);
 
     return this.copyWith({ amount: decimalText(sum, scale) });
@@ -269,6 +299,13 @@ export class Money extends MoneyBase {
 
 const moneyEqualityKey: EqualityKey = {
   equals: Reflect.get(Money.prototype, 'equals'),
+  /**
+   * The canonical amount and the currency, the same for every two equal values.
+   *
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical amount.
+   *
+   * @internal
+   */
   key: (item) =>
     item instanceof Money ? `${item.amount.canonical().value} ${item.currency.value}` : noKey,
 };

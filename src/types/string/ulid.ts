@@ -63,6 +63,7 @@ export class Ulid extends UlidBase {
    * The same ULID in uppercase.
    *
    * @returns A ULID of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.value.toUpperCase());

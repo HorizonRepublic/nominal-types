@@ -99,6 +99,7 @@ const isStructured = (schema: unknown): boolean => {
 };
 
 const textKind = (schema: Record<string, unknown> | undefined): ColumnKind => {
+  // @throws-ignore a JSON Schema is JSON
   const text = JSON.stringify(schema ?? {});
 
   if (text.includes('"format":"uuid"')) {

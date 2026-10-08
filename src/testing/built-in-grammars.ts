@@ -3,11 +3,25 @@ import type { Arbitrary } from 'fast-check';
 
 import { alphabets, characters } from './characters.ts';
 
+/**
+ * Strings that match a pattern from its source.
+ *
+ * @throws {@link SyntaxError} when the source is not a valid pattern.
+ *
+ * @internal
+ */
 const matching = (source: string): Arbitrary<string> =>
   fc.stringMatching(new RegExp(`^${source}$`, 'u'));
 
 const alphanumeric = '[A-Za-z0-9]';
 
+/**
+ * One to `maxLength` subtags that match a pattern, each after a hyphen.
+ *
+ * @throws {@link SyntaxError} when the source is not a valid pattern.
+ *
+ * @internal
+ */
 const subtags = (source: string, maxLength: number): Arbitrary<string> =>
   fc
     .array(matching(source), { minLength: 1, maxLength })

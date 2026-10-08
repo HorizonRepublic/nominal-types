@@ -53,6 +53,8 @@ export const timeZoneName = '[A-Za-z._][\\w.+-]{0,13}(?:/[A-Za-z._][\\w.+-]{0,13
 /**
  * A whole-string pattern from fragments.
  *
+ * @throws {@link SyntaxError} when the fragments do not make a valid pattern.
+ *
  * @internal
  */
 export const whole = (source: string): RegExp => new RegExp(`^${source}$`, 'u');

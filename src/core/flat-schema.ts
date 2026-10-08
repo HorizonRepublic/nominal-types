@@ -5,6 +5,7 @@ const conflict = Symbol('conflict');
 type Combine = (left: unknown, right: unknown) => unknown;
 
 const same: Combine = (left, right) =>
+  // @throws-ignore the values are keywords of a JSON Schema, which is JSON
   JSON.stringify(left) === JSON.stringify(right) ? left : conflict;
 
 const larger: Combine = (left, right) =>

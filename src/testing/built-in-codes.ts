@@ -50,7 +50,9 @@ const bic = fc
 
 const encoder = new TextEncoder();
 
-const jsonPart = (value: unknown): string => base64UrlOf(encoder.encode(JSON.stringify(value)));
+const jsonPart = (value: unknown): string =>
+  // @throws-ignore the header and the claims hold only strings, numbers and booleans
+  base64UrlOf(encoder.encode(JSON.stringify(value)));
 
 const numericDate = fc.oneof(
   fc.integer({ min: 0, max: 4_102_444_800 }),

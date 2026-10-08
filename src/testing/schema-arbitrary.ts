@@ -55,7 +55,13 @@ const textOf = (value: unknown): string | undefined =>
     ? String(value)
     : undefined;
 
-// The fields of an object, the tag of a union variant set first under its key.
+/**
+ * The fields of an object, the tag of a union variant set first under its key.
+ *
+ * @throws {@link TypeError} when nothing can be generated for one of the fields.
+ *
+ * @internal
+ */
 const objectArbitrary = (
   schema: object,
   parts: ObjectParts,
@@ -84,6 +90,13 @@ const objectArbitrary = (
   return bounded(shaped, acceptsOf(schema), refusedBy(describeSchema(schema)));
 };
 
+/**
+ * Inputs of a union: inputs of one of its object variants, with the variant's tag.
+ *
+ * @throws {@link TypeError} when a variant is not an `n.object()` schema.
+ *
+ * @internal
+ */
 const unionArbitrary = (
   schema: object,
   parts: Extract<SchemaParts, { readonly kind: 'union' }>,
@@ -105,10 +118,21 @@ const unionArbitrary = (
 const plainBigInt = (_key: string, value: unknown): unknown =>
   typeof value === 'bigint' ? `${value}n` : value;
 
-const keyOf = (value: unknown): string => JSON.stringify(value, plainBigInt) ?? 'undefined';
+const keyOf = (value: unknown): string =>
+  // @throws-ignore the replacer writes bigints as text, and generated values have no cycles
+  JSON.stringify(value, plainBigInt) ?? 'undefined';
 
-// fast-check keeps trying forever to fill an array of distinct items from too few values, so a
-// sample tells first whether the items come in enough kinds.
+/**
+ * A list of distinct items.
+ *
+ * @remarks
+ * fast-check keeps trying forever to fill an array of distinct items from too few values, so a
+ * sample tells first whether the items come in enough kinds.
+ *
+ * @throws {@link TypeError} when the items come in fewer kinds than the list needs.
+ *
+ * @internal
+ */
 const uniqueList = (
   item: Arbitrary<unknown>,
   counts: { readonly minLength: number; readonly maxLength?: number },
@@ -125,6 +149,13 @@ const uniqueList = (
   return fc.uniqueArray(item, { ...counts, selector: (value) => keyOf(value) });
 };
 
+/**
+ * Values of a schema from the parts its builder recorded.
+ *
+ * @throws {@link TypeError} when nothing can be generated for the schema or one of its fields.
+ *
+ * @internal
+ */
 const fromParts = (
   schema: object,
   parts: SchemaParts,

@@ -107,6 +107,7 @@ export abstract class NativeSchema<Value> {
    *
    * @param side - Whether the body describes the input or the output.
    * @returns The JSON Schema keywords of the rule.
+   * @throws {@link NoJsonSchema} when the rule was declared without a JSON Schema.
    */
   protected abstract jsonBody(side: 'input' | 'output'): Record<string, unknown>;
 }

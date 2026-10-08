@@ -80,11 +80,13 @@ const taggedVariant = (
   const field = tagField(tag);
 
   if (parts === undefined) {
+    // @throws-ignore the key passed checkedVariants(), and the other fields passed their own schema
     return variant.extend({ [key]: field });
   }
 
   const { [key]: _replaced, ...rest } = parts.source;
 
+  // @throws-ignore the key passed checkedVariants(), and the other fields passed their own schema
   return new ObjectSchema(
     { [key]: field, ...rest },
     parts.constraints,
@@ -94,6 +96,14 @@ const taggedVariant = (
   );
 };
 
+/**
+ * The key and the variants of `n.union()`, once they are known to be usable.
+ *
+ * @throws {@link TypeError} when the key is not a string other than `__proto__`, there are no
+ * variants, or a variant is not an `n.object()` schema.
+ *
+ * @internal
+ */
 const checkedVariants = (
   key: unknown,
   variants: unknown,
@@ -163,6 +173,9 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
 
   /**
    * Built by `n.union()`.
+   *
+   * @throws {@link TypeError} when the key is not a string other than `__proto__`, there are no
+   * variants, or a variant is not an `n.object()` schema.
    *
    * @internal
    */

@@ -101,6 +101,7 @@ export class Bic extends BicBase {
    * The 11-character form, with `XXX` for the primary office, so one office has one text.
    *
    * @returns A BIC of the same class, 11 characters long.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, elevenOf(this.value));

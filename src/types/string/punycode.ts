@@ -39,6 +39,7 @@ const digitOf = (code: number): number => {
 };
 
 const characterOf = (digit: number): string =>
+  // @throws-ignore a digit from 0 to 35 is a letter or a digit in ASCII
   String.fromCodePoint(digit < 26 ? digit + 97 : digit + 22);
 
 // One variable-length integer from `position`, as [value, position after it], or `undefined` when
@@ -146,6 +147,7 @@ const smallestFrom = (points: readonly number[], lowest: number): number =>
  */
 export const encodePunycode = (points: readonly number[]): string => {
   const basic = points.filter((point) => point < initialN);
+  // @throws-ignore basic code points are below 128
   let output = basic.length > 0 ? `${String.fromCodePoint(...basic)}-` : '';
   let handled = basic.length;
   let n = initialN;

@@ -52,6 +52,7 @@ const jsonOf = (instance: { readonly value: unknown }): SuperjsonValue => {
     return value;
   }
 
+  // @throws-ignore jsonText writes plain JSON text
   const parsed: unknown = JSON.parse(jsonText(instance));
 
   // jsonText writes plain JSON text, and JSON.parse gives back a JSON value.

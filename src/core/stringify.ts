@@ -241,8 +241,18 @@ const generated = (
 
 const instanceWriters = new WeakMap<object, Stringify>();
 
-// An instance of another type than the field declares, such as a subtype: written by its own
-// type's writer, which falls back to JSON.stringify() rather than coming back here.
+/**
+ * The JSON text of a value a writer doesn't know, such as an instance of a subtype of the type
+ * the field declares.
+ *
+ * @remarks
+ * Such an instance is written by its own type's writer, which falls back to `JSON.stringify()`
+ * rather than coming back here.
+ *
+ * @throws {@link TypeError} when the value holds a bigint or refers to itself.
+ *
+ * @internal
+ */
 const otherInstance = (value: unknown, instances: Instances): string | undefined => {
   if (typeof value !== 'object' || value === null) {
     return JSON.stringify(value);

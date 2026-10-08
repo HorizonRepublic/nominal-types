@@ -22,8 +22,14 @@ const canonicalIds = new Map<string, string>();
 const zoneIn = (temporal: TemporalApi, id: string): Temporal.ZonedDateTime =>
   new temporal.ZonedDateTime(0n, id);
 
-// The name as the runtime writes it, `Europe/Paris` for `europe/paris`, or `undefined` when the
-// runtime knows no such zone.
+/**
+ * The name as the runtime writes it, `Europe/Paris` for `europe/paris`, or `undefined` when the
+ * runtime knows no such zone.
+ *
+ * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+ *
+ * @internal
+ */
 const knownTimeZone = (text: string): string | undefined => {
   const key = text.toLowerCase();
   const known = knownIds.get(key);
@@ -49,6 +55,13 @@ const knownTimeZone = (text: string): string | undefined => {
   }
 };
 
+/**
+ * Whether a value is the name of a zone the runtime knows.
+ *
+ * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+ *
+ * @internal
+ */
 const isTimeZoneId = (value: unknown): value is string =>
   typeof value === 'string' && pattern.test(value) && knownTimeZone(value) !== undefined;
 
@@ -63,12 +76,20 @@ const primaryOf = (temporal: TemporalApi, id: string): string => {
   }
 
   const zone = zoneIn(temporal, id);
+  // @throws-ignore the id comes from Temporal, so Intl knows the zone
   const resolved = new Intl.DateTimeFormat('en-US', { timeZone: id }).resolvedOptions().timeZone;
   const candidates = primaries.includes(resolved) ? [resolved, ...primaries] : primaries;
 
   return candidates.find((candidate) => zone.equals(zoneIn(temporal, candidate))) ?? id;
 };
 
+/**
+ * The primary name of a zone, cached by its name in lowercase.
+ *
+ * @throws {@link TypeError} when the runtime has no Temporal; the message names the polyfill.
+ *
+ * @internal
+ */
 const canonicalOf = (text: string): string => {
   const key = text.toLowerCase();
   const cached = canonicalIds.get(key);
@@ -145,9 +166,13 @@ export class TimeZoneId extends TimeZoneIdBase {
    * `Europe/Kiev` for `Europe/Kyiv`, so store the name as it came and use this to compare.
    *
    * @returns A new value of this type that holds the primary name.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
-    return sameType(this, canonicalOf(this.value));
+    // @throws-ignore an instance exists only once Temporal has checked its name
+    const primary = canonicalOf(this.value);
+
+    return sameType(this, primary);
   }
 
   /**
@@ -158,6 +183,7 @@ export class TimeZoneId extends TimeZoneIdBase {
    * @returns Whether the two are equal.
    */
   public override equals(other: unknown): boolean {
+    // @throws-ignore an instance exists only once Temporal has checked its name
     return (
       inOneLine(this, other) &&
       other instanceof TimeZoneId &&

@@ -74,4 +74,5 @@ export const deferredObjectOf = <const Fields extends ObjectFields>(
   fields: Fields,
   ...constraints: AnyConstraint[]
 ): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>> =>
+  // @throws-ignore the fields and constraints of built-in types are valid
   new ObjectSchema(fields, constraints, false, false, noPresence, true);

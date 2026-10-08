@@ -15,14 +15,20 @@ export interface GeneratorContext {
   readonly overrides: ReadonlyMap<object, Arbitrary<unknown>>;
   /**
    * The generator of a nominal type's inputs, made once per walk.
+   *
+   * @throws {@link TypeError} when nothing can be generated for the type or one of its fields.
    */
   readonly ofType: (type: AnyNominalType) => Arbitrary<unknown>;
   /**
    * The generator of a schema's inputs, made once per walk.
+   *
+   * @throws {@link TypeError} when nothing can be generated for the schema or one of its fields.
    */
   readonly ofSchema: (schema: object) => Arbitrary<unknown>;
   /**
    * The generator of an object field's inputs; `key` names the field in error messages.
+   *
+   * @throws {@link TypeError} when nothing can be generated for the field.
    */
   readonly ofField: (field: unknown, key: string) => Arbitrary<unknown>;
 }

@@ -50,6 +50,7 @@ export const nominalNameOf = (node: unknown): string | undefined => {
  * @internal
  */
 export const holdsNominal = (node: unknown): boolean =>
+  // @throws-ignore the node is a part of ArkType's `.json`, which is JSON already
   JSON.stringify(node).includes(`"${typeKey}"`);
 
 const isObjectDomain = (domain: unknown): boolean =>

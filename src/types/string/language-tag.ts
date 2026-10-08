@@ -154,6 +154,7 @@ export class LanguageTag extends LanguageTagBase {
    * The aliases come from the runtime's Unicode data, so a newer runtime may replace more of them.
    *
    * @returns A tag of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     const [canonical = this.value] = Intl.getCanonicalLocales(this.value);

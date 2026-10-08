@@ -86,6 +86,13 @@ const bytesOf = (uuid: string): Uint8Array => {
 
 const prefixes = new WeakMap<object, string>();
 
+/**
+ * Refuses a prefix outside the grammar of the specification.
+ *
+ * @throws {@link TypeError} when the prefix breaks the grammar of the specification.
+ *
+ * @internal
+ */
 const checkPrefix = (method: string, prefix: string): void => {
   if (typeof prefix !== 'string' || !prefixPattern.test(prefix)) {
     throw new TypeError(

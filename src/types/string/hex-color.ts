@@ -80,6 +80,7 @@ export class HexColor extends HexColorBase {
    * The same color as `#` and six lowercase digits, or eight when it is not fully opaque.
    *
    * @returns A color of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     const hex = (index: number): string => this.channel(index).toString(16).padStart(2, '0');
@@ -96,6 +97,7 @@ export class HexColor extends HexColorBase {
    * @returns `true` when both are the same color.
    */
   public override equals(other: unknown): boolean {
+    // @throws-ignore only a subtype that refuses its own canonical form throws here
     return (
       inOneLine(this, other) &&
       other instanceof HexColor &&

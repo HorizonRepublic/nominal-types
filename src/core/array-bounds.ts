@@ -91,6 +91,7 @@ const countMessage = (options: ArrayOptions, count: number): string => {
  * @internal
  */
 export const countIssue = (options: ArrayOptions, count: number): NominalIssue => {
+  // @throws-ignore the options passed boundsOf() when the schema was built
   const { min, max } = boundsOf(options);
 
   return issueOf(count < min ? 'too_few_items' : 'too_many_items', countMessage(options, count), {

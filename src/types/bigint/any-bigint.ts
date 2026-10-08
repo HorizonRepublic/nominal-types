@@ -17,10 +17,12 @@ const toBigInt = (value: unknown): bigint | Rejection => {
   }
 
   if (typeof value === 'string' && value.length <= longestText && integerText.test(value)) {
+    // @throws-ignore the text is an integer, checked just above
     return BigInt(value);
   }
 
   if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    // @throws-ignore the number is a safe integer, checked just above
     return BigInt(value);
   }
 

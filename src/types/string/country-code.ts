@@ -98,6 +98,7 @@ export class CountryCode extends CountryCodeBase {
    * The flag emoji, written as the two regional indicator symbols for the code.
    */
   public get flag(): string {
+    // @throws-ignore the letters of a code map to the 26 regional indicator symbols
     return String.fromCodePoint(
       ...Array.from(this.value, (letter) => regionalIndicatorA + alphabet.indexOf(letter)),
     );

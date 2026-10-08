@@ -77,6 +77,7 @@ export class MacAddress extends MacAddressBase {
    * The address in lowercase with colons, as Linux and most APIs print it.
    *
    * @returns An address of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, this.value.toLowerCase().replaceAll('-', ':'));

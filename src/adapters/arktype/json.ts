@@ -11,6 +11,13 @@ const isJson = (value: unknown): value is Json =>
 
 const isNull = (value: unknown): boolean => isJson(value) && value['type'] === 'null';
 
+/**
+ * The JSON Schema of a type given to `toArk()`, by its name.
+ *
+ * @throws {@link TypeError} when the name was never given to `toArk()`.
+ *
+ * @internal
+ */
 const typeSchema = (
   name: string,
   side: 'input' | 'output',
@@ -48,6 +55,13 @@ const toOpenApi = (schema: Json): Json => {
 
 type Side = 'input' | 'output';
 
+/**
+ * An object node with every `toArk()` node replaced by the schema of its type.
+ *
+ * @throws {@link TypeError} when a `toArk()` node names a type `toArk()` was never given.
+ *
+ * @internal
+ */
 const replaceObject = (node: Json, side: Side, options: StandardJSONSchemaV1.Options): Json => {
   const name = node[typeKey];
 
@@ -66,6 +80,13 @@ const replaceObject = (node: Json, side: Side, options: StandardJSONSchemaV1.Opt
   return options.target === 'openapi-3.0' ? toOpenApi(replaced) : replaced;
 };
 
+/**
+ * A node with every `toArk()` node below it replaced by the schema of its type.
+ *
+ * @throws {@link TypeError} when a `toArk()` node names a type `toArk()` was never given.
+ *
+ * @internal
+ */
 const replaceNodes = (
   node: unknown,
   side: Side,
@@ -83,6 +104,7 @@ const replaceNodes = (
  * schema and the input side of every morph.
  *
  * @throws {@link TypeError} when the target is not `draft-2020-12`, `draft-07` or `openapi-3.0`.
+ * @throws {@link Error} when ArkType cannot write a part of the schema as JSON Schema.
  *
  * @internal
  */

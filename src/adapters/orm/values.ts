@@ -116,9 +116,6 @@ const lostDigits = (target: AnyNominalType, raw: number): NominalError =>
  * JSON text parsed, then checked unless `trusted`. A driver's number beyond 2^53 - 1 is refused by
  * big integer types, and any number by a decimal column, since it may have lost digits.
  *
- * @throws {@link NominalError} when the type doesn't accept a stored value, or a decimal column
- * gives a number.
- *
  * @internal
  */
 export const readerOf = (
@@ -128,6 +125,14 @@ export const readerOf = (
 ): ((raw: unknown) => unknown) => {
   const build = trusted ? trustedConstructorFor(target) : instanceParserFor(target);
 
+  /**
+   * A stored value as an instance.
+   *
+   * @throws {@link NominalError} when the type doesn't accept the value, or a decimal column
+   * gives a number.
+   *
+   * @internal
+   */
   return (raw) => {
     if (isNullish(raw)) {
       return raw;
@@ -190,4 +195,5 @@ export const writerOf = (
  * @internal
  */
 export const jsonTextOf = (stored: unknown): unknown =>
+  // @throws-ignore a stored object is the JSON form of an instance
   typeof stored === 'object' && stored !== null ? JSON.stringify(stored) : stored;

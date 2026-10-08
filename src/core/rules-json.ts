@@ -5,7 +5,14 @@ import { NativeSchema } from './native-schema.ts';
 import { NoJsonSchema } from './no-json-schema.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
 
-// A rule of this package that has no JSON Schema throws without knowing the type it belongs to.
+/**
+ * What `describe` gives, with the error of a rule of this package that has no JSON Schema named
+ * after the type, which the rule doesn't know.
+ *
+ * @throws {@link TypeError} when the rule has no JSON Schema; the message names the type.
+ *
+ * @internal
+ */
 const describedBy = (
   typeName: string,
   describe: () => Record<string, unknown>,
@@ -21,9 +28,18 @@ const describedBy = (
   }
 };
 
-// Rules of this package keep all their examples here, so the type picks its one OpenAPI example
-// from those it accepts; a rule that knows no OpenAPI 3.0 is described as draft-07, which OpenAPI
-// 3.0 schemas are built on.
+/**
+ * The OpenAPI 3.0 schema of a rule, with all its examples.
+ *
+ * @remarks
+ * Rules of this package keep all their examples here, so the type picks its one OpenAPI example
+ * from those it accepts; a rule that knows no OpenAPI 3.0 is described as draft-07, which OpenAPI
+ * 3.0 schemas are built on.
+ *
+ * @throws {@link TypeError} when the rule has no JSON Schema; the message names the type.
+ *
+ * @internal
+ */
 const describeForOpenApi = (
   typeName: string,
   rule: NominalSchema,

@@ -44,6 +44,7 @@ export class Ipv4Prefix extends Ipv4PrefixBase {
    * The first address of the network.
    */
   public override get address(): Ipv4Address {
+    // @throws-ignore the part before the slash of a valid prefix is a valid address
     return new Ipv4Address(this.value.slice(0, this.value.indexOf('/')));
   }
 
@@ -51,6 +52,7 @@ export class Ipv4Prefix extends Ipv4PrefixBase {
    * The same prefix; IPv4 text has one form only.
    *
    * @returns A prefix of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public override canonical(): this {
     return sameType(this, this.value);

@@ -86,6 +86,7 @@ export class Isbn extends IsbnBase {
    * The ISBN-13 form, the one ISO 2108 assigns since 2007; an ISBN-13 stays as it is.
    *
    * @returns An ISBN of the same class, 13 digits long.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, isbn13Of(this.value));
@@ -99,6 +100,7 @@ export class Isbn extends IsbnBase {
    */
   public toIsbn10(): Isbn | undefined {
     if (this.value.length === 10) {
+      // @throws-ignore the value is a valid ISBN already
       return new Isbn(this.value);
     }
 
@@ -108,6 +110,7 @@ export class Isbn extends IsbnBase {
 
     const body = this.value.slice(3, 12);
 
+    // @throws-ignore nine digits of a valid ISBN-13 and their check character make a valid ISBN-10
     return new Isbn(body + mod11CheckCharacter(body));
   }
 

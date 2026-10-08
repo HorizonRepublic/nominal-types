@@ -40,6 +40,7 @@ const partsOf = (text: string): Parts => {
 
 // The digits of the number as an integer, after moving the point `scale` places to the right.
 const scaled = ({ negative, integer, fraction }: Parts, scale: number): bigint => {
+  // @throws-ignore the parts come from text the type's pattern accepted, so they are digits
   const digits = BigInt(integer + fraction.padEnd(scale, '0'));
 
   return negative ? -digits : digits;
@@ -51,6 +52,13 @@ const canonicalText = (text: string): string => {
   return shorter === '-0' ? '0' : shorter;
 };
 
+/**
+ * Refuses a scale that is not a whole number from 0 up.
+ *
+ * @throws {@link RangeError} when the scale is not a whole number from 0 up.
+ *
+ * @internal
+ */
 const checkScale = (method: string, scale: number): void => {
   if (!Number.isSafeInteger(scale) || scale < 0) {
     throw new RangeError(`${method}: the scale must be a whole number from 0 up (was ${scale})`);
@@ -201,6 +209,7 @@ export class DecimalString extends DecimalStringBase {
    * when nothing follows it, and `-0` written `0`.
    *
    * @returns A number of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     return sameType(this, canonicalText(this.value));

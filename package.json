@@ -173,8 +173,8 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
-    "lint": "oxlint --ignore-pattern 'bench/**'",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests && tsc --noEmit -p tools/throws-check",
+    "lint": "oxlint --ignore-pattern 'bench/**' && npm run -s check:throws",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "vitest run",
@@ -187,7 +187,8 @@
     "bench:document": "npm run bench:check && node bench/document/run.ts",
     "bench:nest": "npm run bench:check && node bench/nest/run.ts",
     "profile:cpu": "node bench/profile/cpu.ts",
-    "profile:deopt": "node bench/profile/deopt.ts"
+    "profile:deopt": "node bench/profile/deopt.ts",
+    "check:throws": "node --experimental-strip-types --disable-warning=ExperimentalWarning tools/throws-check/cli.ts --project tsconfig.json"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
@@ -207,6 +208,7 @@
     "@trpc/server": "^11.19.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.19.1",
+    "@typescript/typescript6": "^6.0.2",
     "@vitest/coverage-v8": "^5.0.3",
     "arktype": "^2.2.7",
     "better-sqlite3": "^12.11.1",

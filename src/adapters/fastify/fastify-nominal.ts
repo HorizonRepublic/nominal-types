@@ -38,8 +38,18 @@ const isController = (value: unknown): value is SchemaController =>
   typeof Reflect.get(value, 'getValidatorBuilder') === 'function' &&
   typeof Reflect.get(value, 'getSerializerBuilder') === 'function';
 
-// Fastify keeps the compilers it builds by default only on its schema controller, under a symbol
-// it doesn't export; they are the ones a schema that is not nominal goes to.
+/**
+ * The schema controller of a Fastify instance, with the compilers Fastify builds by default.
+ *
+ * @remarks
+ * Fastify keeps them only on its schema controller, under a symbol it doesn't export; they are the
+ * ones a schema that is not nominal goes to.
+ *
+ * @throws {@link TypeError} when the Fastify version keeps no schema controller where Fastify 5
+ * does.
+ *
+ * @internal
+ */
 const controllerOf = (instance: FastifyInstance): SchemaController => {
   for (let owner: object | null = instance; owner !== null; owner = Reflect.getPrototypeOf(owner)) {
     const key = Object.getOwnPropertySymbols(owner).find(
@@ -61,6 +71,14 @@ const once = <Value>(make: () => Value): (() => Value) => {
   return () => (made ??= { value: make() }).value;
 };
 
+/**
+ * Sets up the nominal compilers next to the ones Fastify builds by default.
+ *
+ * @throws {@link TypeError} when the Fastify version keeps no schema controller where Fastify 5
+ * does.
+ *
+ * @internal
+ */
 const register: FastifyPluginCallback<FastifyNominalOptions> = (instance, options, done) => {
   const controller = controllerOf(instance);
   const buildValidator = controller.getValidatorBuilder();

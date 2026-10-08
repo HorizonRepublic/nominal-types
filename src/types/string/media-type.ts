@@ -237,6 +237,7 @@ export class MediaType extends MediaTypeBase {
    * quoted only where a token cannot carry them.
    *
    * @returns A media type of the same class.
+   * @throws {@link NominalError} when a subtype's own rule refuses the canonical form.
    */
   public canonical(): this {
     let text = this.essence;
@@ -259,6 +260,7 @@ export class MediaType extends MediaTypeBase {
    * @returns `true` when both are the same media type.
    */
   public override equals(other: unknown): boolean {
+    // @throws-ignore only a subtype that refuses its own canonical form throws here
     return (
       inOneLine(this, other) &&
       other instanceof MediaType &&

@@ -4,7 +4,6 @@
  *
  * @throws {@link NominalError} when the class refuses the value, such as a subtype whose rule the
  * new value breaks.
- * @throws {@link TypeError} if the instance has no class to build a copy with.
  *
  * @internal
  */
@@ -12,10 +11,12 @@ export const sameType = <Instance extends object>(instance: Instance, value: unk
   const type: unknown = instance.constructor;
 
   if (typeof type !== 'function') {
+    // @throws-ignore every caller passes an instance of a nominal class, whose constructor is that class
     throw new TypeError('the instance has no class to build a copy with');
   }
 
   // A class built from a nominal type makes instances of itself.
+  // @throws {@link NominalError} the class checks the value in its constructor
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return Reflect.construct(type, [value]) as Instance;
 };

@@ -22,6 +22,8 @@ export interface Shape<Output> {
 
   /**
    * The JSON Schema of the schema for one side and target, without its `$schema`.
+   *
+   * @throws {@link TypeError} when a rule can't describe itself; the message names the type.
    */
   readonly describe: Describe;
 

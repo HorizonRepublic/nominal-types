@@ -5,7 +5,7 @@ const config: ViteUserConfig = {
     decorator: { legacy: true, emitDecoratorMetadata: true },
   },
   test: {
-    include: ['tests/**/*.spec.ts'],
+    include: ['tests/**/*.spec.ts', 'tools/**/tests/*.spec.ts'],
     isolate: false,
     passWithNoTests: true,
     coverage: {

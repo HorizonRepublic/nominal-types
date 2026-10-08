@@ -198,6 +198,13 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
     return issue === undefined ? values : new Rejection([issue]);
   }
 
+  /**
+   * The JSON Schema of the fields the constraint reads.
+   *
+   * @throws {@link TypeError} when the field can't describe itself; the message names the type.
+   *
+   * @internal
+   */
   #describe(
     side: 'input' | 'output',
     target: StandardJSONSchemaV1.Options,

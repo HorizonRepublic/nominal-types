@@ -4,6 +4,7 @@ import * as library from '../../src/index.ts';
 import {
   Base64,
   Base64Url,
+  DecimalString,
   DomainName,
   Email,
   Gtin,
@@ -22,6 +23,7 @@ import {
   NonBlankString,
   ObjectId,
   SemVer,
+  TypeId,
   Ulid,
   Url,
   Uuid,
@@ -99,6 +101,26 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
     Ulid,
     ['01ARZ3NDEKTSV4RRFFQ69G5FAV', '01arz3ndektsv4rrffq69g5fav', `7${'Z'.repeat(25)}`],
     [`8${'0'.repeat(25)}`, '01ARZ3NDEKTSV4RRFFQ69G5FAI', '01ARZ3NDEKTSV4RRFFQ69G5FA'],
+  ],
+  [
+    DecimalString,
+    ['0', '-0', '12.34', '-0.001', '9'.repeat(100)],
+    ['', '+1', '.5', '5.', '01', '1e3', ' 1', '9'.repeat(101)],
+  ],
+  [
+    TypeId,
+    [
+      '00000000000000000000000000',
+      'user_01h455vb4pex5vsknk084sn02q',
+      `a${'_'.repeat(61)}z_${'0'.repeat(26)}`,
+    ],
+    [
+      '_00000000000000000000000000',
+      'user__01h455vb4pex5vsknk084sn02q',
+      `${'a'.repeat(64)}_${'0'.repeat(26)}`,
+      'user_8zzzzzzzzzzzzzzzzzzzzzzzzz',
+      'user_01H455VB4PEX5VSKNK084SN02Q',
+    ],
   ],
   [
     ObjectId,

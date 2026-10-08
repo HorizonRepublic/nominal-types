@@ -26,6 +26,7 @@ Core:
 - [How to make a value object](guides/core/make-a-value-object.md)
 - [How to read numbers and booleans from text](guides/core/read-text-values.md)
 - [How to use dates and times](guides/core/use-dates-and-times.md)
+- [How to handle money](guides/core/handle-money.md)
 - [How to read configuration from environment variables](guides/core/read-config.md)
 - [How to keep values out of error messages](guides/core/hide-values.md)
 - [How to test code that takes nominal types](guides/core/write-tests.md)

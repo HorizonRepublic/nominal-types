@@ -213,6 +213,68 @@ id.canonical().value; // '01ARZ3NDEKTSV4RRFFQ69G5FAV'
 | -------------- | ---------------------- |
 | `Ulid.pattern` | the ULID as a `RegExp` |
 
+## TypeId
+
+`AnyString` › `TypeId`
+
+An id with its kind in front, like `user_01h455vb4pex5vsknk084sn02q`, as the [TypeID specification](https://github.com/jetify-com/typeid/tree/main/spec) 0.3.0 writes it. A [TypeID](../glossary.md) is a prefix, `_`, and a UUID written in 26 characters.
+
+- The prefix is up to 63 lowercase letters and `_`. It starts and ends with a letter: `my_type` passes, `_user` and `user_` don't.
+- The prefix may be left out together with its `_`: `01h455vb4pex5vsknk084sn02q` passes.
+- The suffix is 26 characters of `0123456789abcdefghjkmnpqrstvwxyz`, lowercase only. Its first character is `0` to `7`.
+- Any UUID passes, not only version 7. `generate()` always makes a version 7 UUID.
+
+| Property    | Value                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern: TypeId.pattern.source, minLength: 26, maxLength: 90 }`, with an example |
+| Message     | `must be a TypeID (was "User_01h455vb4pex5vsknk084sn02q")`                                          |
+
+```ts
+import { TypeId } from '@horizon-republic/nominal-types';
+
+const id = new TypeId('user_01h455vb4pex5vsknk084sn02q');
+
+id.prefix; // 'user'
+id.toUuid(); // Uuid { value: '01890a5d-ac96-774b-bcce-b302099a8057' }
+TypeId.fromUuid('01890a5d-ac96-774b-bcce-b302099a8057', 'user').value; // 'user_01h455vb4pex5vsknk084sn02q'
+```
+
+Members, with results for this `id`:
+
+| Member      | Returns                                                                         | Example                                                  |
+| ----------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `prefix`    | the text in front of the last `_`; `''` without a prefix                        | `'user'`                                                 |
+| `suffix`    | the last 26 characters                                                          | `'01h455vb4pex5vsknk084sn02q'`                           |
+| `timestamp` | the time it was made, as a `Date`, for a version 7 UUID; `undefined` for others | `2023-06-30T03:34:18.518Z`                               |
+| `toUuid()`  | the UUID inside, in lowercase, as a [`Uuid`](#uuid)                             | `Uuid { value: '01890a5d-ac96-774b-bcce-b302099a8057' }` |
+
+`toUuid()` throws `NominalError` when the 128 bits are not a UUID that `Uuid` accepts, such as `00000000000000000000000001`.
+
+### One kind of id
+
+Give `TypeId.withPrefix()` to `subtype()`. The type takes only ids with that prefix:
+
+```ts
+import { TypeId } from '@horizon-republic/nominal-types';
+
+class UserId extends TypeId.subtype('shop.UserId', TypeId.withPrefix('user')) {}
+
+const id = UserId.generate(); // UserId { value: 'user_01m4…' }, new each time
+
+UserId.parse('order_01h455vb4pex5vsknk084sn02q'); // { ok: false, issues: [{ message: 'must be a TypeID with the prefix user (was "order_01h455vb4pex5vsknk084sn02q")' }] }
+```
+
+`TypeId.withPrefix('')` makes a type of ids without a prefix. A prefix that breaks the prefix rules of the specification throws a `TypeError`.
+
+| Static member                  | Does                                                                                                           |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `TypeId.withPrefix(prefix)`    | a rule for `subtype()` that takes only ids with this prefix                                                    |
+| `Type.generate(prefix?)`       | a new id around a new version 7 UUID. The prefix is the one the type fixes, or the one given, or none.         |
+| `Type.fromUuid(uuid, prefix?)` | the id of a UUID you already have, as a `Uuid` or as text in either case. The prefix works as in `generate()`. |
+| `TypeId.pattern`               | the TypeID as a `RegExp`                                                                                       |
+
+`generate()` and `fromUuid()` build the type they are called on: `UserId.generate()` is a `UserId`. Ids made by one process sort by the time they were made, also within one millisecond.
+
 ## ObjectId
 
 `AnyString` › `ObjectId`
@@ -424,6 +486,57 @@ new CurrencyCode('HRK'); // throws NominalError: nominal.CurrencyCode: must be a
 | Static field         | Holds                                      |
 | -------------------- | ------------------------------------------ |
 | `CurrencyCode.codes` | every accepted code, in alphabetical order |
+
+## DecimalString
+
+`AnyString` › `DecimalString`
+
+An exact decimal number written as text, like `'12.34'`. Use it for amounts of money and other numbers where a [floating-point number](../glossary.md) would lose digits. [How to handle money](../../guides/core/handle-money.md) shows it at work.
+
+- An optional `-`, then digits, then an optional `.` with at least one digit.
+- No leading zeros: `01` is refused, `0.5` passes.
+- Refused: `+1`, `.5`, `5.`, `1e3`, spaces, and a number instead of a string.
+- Up to 100 characters.
+- The text is kept as written: `'1.50'` keeps its zero, and `'-0'` passes.
+
+| Property    | Value                                                                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern, minLength: 1, maxLength: 100 }`, with examples. `pattern` is `DecimalString.pattern` without its lookahead; `maxLength` keeps the limit. |
+| Message     | `must be a decimal number as text (was "1e3")`                                                                                                                       |
+
+```ts
+import { DecimalString } from '@horizon-republic/nominal-types';
+
+const price = new DecimalString('12.50');
+
+price.toMinorUnits(2); // 1250n
+price.canonical().value; // '12.5'
+price.equals(new DecimalString('12.5')); // true
+DecimalString.fromMinorUnits(1250n, 2).value; // '12.50'
+```
+
+Members, with results for `new DecimalString('-0.50')`:
+
+| Member                | Returns                                                                        | Example        |
+| --------------------- | ------------------------------------------------------------------------------ | -------------- |
+| `sign`                | `-1`, `0` or `1`; `0` for `-0` too                                             | `-1`           |
+| `integerDigits`       | how many digits stand before the point                                         | `1`            |
+| `fractionDigits`      | how many digits stand after the point, as written                              | `2`            |
+| `toMinorUnits(scale)` | the number times 10 to the power of `scale`, as a `bigint`                     | `-50n` for `2` |
+| `compare(other)`      | `-1` if this number is smaller, `1` if larger, `0` if equal; exact             |                |
+| `canonical()`         | the shortest text of the same number: trailing zeros dropped, `-0` written `0` | `'-0.5'`       |
+| `equals(other)`       | whether the numbers are equal: `'1.5'` equals `'1.50'`                         |                |
+
+`>` and `<` compare the text, not the number: `'10' > '9'` is `false`. Use `compare()`.
+
+`toMinorUnits()` throws a `RangeError` when a digit other than zero would be lost: `toMinorUnits(): 12.345 has more than 2 digits after the point`.
+
+| Static member                                 | Does                                                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `DecimalString.fromMinorUnits(amount, scale)` | the text of `amount` divided by 10 to the power of `scale`, with exactly `scale` digits after the point |
+| `DecimalString.pattern`                       | the number as a `RegExp`, with the length limit                                                         |
+
+Both `toMinorUnits()` and `fromMinorUnits()` throw a `RangeError` for a `scale` that isn't a whole number from 0 up.
 
 ## LanguageTag
 

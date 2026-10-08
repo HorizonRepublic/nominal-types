@@ -15,6 +15,8 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 - Name types with the part of the system in front and a dot: `'billing.InvoiceNumber'`. Each part holds letters, digits, `_` and `-`. A `/`, a space or an empty part throws `TypeError`. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on. Name the class like the last part.
 - Compare instances with `a.equals(b)`, never `===`. Read the plain value with `.value`. Arithmetic needs `.value` (`quantity.value * 2`); `>`, `<`, `Number(x)` and template strings work on the instance itself. The date and time types are the exception: `>` and `<` throw, so compare with `Temporal.Instant.compare(a.value, b.value)`.
 - For dates and times use `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` from `@horizon-republic/nominal-types/temporal`, never `Date` or a string type. On Node.js 22 and 24, `import 'temporal-polyfill/global'` first in the program; without `Temporal`, building a value throws `TypeError`.
+- For money use `Money` (`{ amount: '12.34', currency: 'EUR' }`), and `DecimalString` for other exact decimals; never a `number`. Compute with `add()`, `subtract()`, `multiply()`, compare with `compare()`: `>` and `<` on a `DecimalString` compare text.
+- For ids that name their kind, declare `class UserId extends TypeId.subtype('shop.UserId', TypeId.withPrefix('user')) {}` and make new ones with `UserId.generate()`.
 - `n.matching()` takes a regular expression with no flag or only `u`. Other flags throw `TypeError`.
 - Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 - Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `n.hideValues(issues)`.
@@ -230,12 +232,14 @@ config.PORT.value; // 3000 for PORT=3000
 | `Uuid` | `nominal.Uuid` | a UUID in any case; `version`, `timestamp`, `isNil`, `isMax`, `canonical()`; `equals` ignores case | yes |
 | `UuidV4`, `UuidV7` | `nominal.…` | under `Uuid`: RFC 9562 version 4 or 7, nil and max refused; `UuidV7#timestamp` is always a `Date`; `canonical()` keeps the type | yes |
 | `Ulid` | `nominal.Ulid` | 26 Crockford base32 characters, first `0`–`7`, `I`/`L`/`O`/`U` refused, any case; `timestamp`, `canonical()` (uppercase); `equals` ignores case | yes |
+| `TypeId` | `nominal.TypeId` | a TypeID (spec v0.3.0): `prefix_suffix`, prefix up to 63 of `a-z` and `_` (letter first and last) or none (then no `_`), suffix 26 lowercase base32 characters, first `0`–`7`, any 128 bits; `prefix`, `suffix`, `timestamp` (`undefined` unless version 7), `toUuid()` (throws `NominalError` for bits `Uuid` refuses), static `withPrefix(prefix)` (a rule: `class UserId extends TypeId.subtype('shop.UserId', TypeId.withPrefix('user')) {}`), static `generate(prefix?)` (new UUIDv7, ordered within a process; a subtype uses its fixed prefix), static `fromUuid(uuid, prefix?)` | yes |
 | `ObjectId` | `nominal.ObjectId` | a MongoDB ObjectId, 24 hex digits in any case; `timestamp` (seconds), `canonical()` (lowercase); `equals` ignores case | yes |
 | `SemVer` | `nominal.SemVer` | Semantic Versioning 2.0.0, no `v` prefix, up to 256 characters, numbers up to `Number.MAX_SAFE_INTEGER`; `major`, `minor`, `patch`, `prerelease`, `build`, `isPrerelease`, `compare(other)` (precedence, build ignored), `isNewerThan(other)`; `equals` compares the text | yes |
 | `Url` | `nominal.Url` | an absolute URL with any scheme (`javascript:`, `data:`, `file:` too; use `HttpUrl` for links), no spaces or control characters; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
 | `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code or `XK` (Kosovo), upper case (`UK`, `EU` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
 | `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |
+| `DecimalString` | `nominal.DecimalString` | an exact decimal as text: optional `-`, digits without leading zeros, optional `.` and digits, up to 100 characters, kept as written (`'1.50'`, `'-0'` pass; `+`, `.5`, `5.`, `1e3`, spaces refused); `sign`, `integerDigits`, `fractionDigits`, `toMinorUnits(scale)` (bigint; `RangeError` if a non-zero digit would be lost), static `fromMinorUnits(amount, scale)`, `compare(other)` (exact), `canonical()` (trailing zeros dropped, `-0` → `0`); `equals` compares the number | yes |
 | `LanguageTag` | `nominal.LanguageTag` | a well-formed BCP 47 tag in any case that `Intl` also takes (`en_US`, `french`, `zh-yue`, `i-klingon` refused); `language`, `script`, `region`, `canonical()` via `Intl.getCanonicalLocales`; `equals` ignores case | yes |
 | `MediaType` | `nominal.MediaType` | an RFC 6838 type/subtype with RFC 9110 parameters, no wildcards, no repeated parameter name; `type`, `subtype`, `suffix`, `essence`, `parameters`, `charset`, `isJson`, `canonical()`; `equals` ignores case of names, spaces and quoting | yes |
 | `HexColor` | `nominal.HexColor` | `#` and 3, 4, 6 or 8 hex digits; `red`, `green`, `blue`, `alpha` (0–1), `canonical()` (lowercase 6 or 8 digits); `equals` compares channels | yes |
@@ -266,6 +270,7 @@ config.PORT.value; // 3000 for PORT=3000
 | `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt` | `nominal.…` | a big integer `≥ 1`, `≤ -1`, `≥ 0`, `≤ 0` | yes |
 | `Int64`, `Uint64` | `nominal.…` | signed and unsigned 64-bit integers | yes |
 | `AnyBoolean` | `nominal.AnyBoolean` | `true` or `false`; from text only `'true'` and `'false'` | yes |
+| `Money` | `nominal.Money` | a root built on `n.object({ amount: DecimalString, currency: CurrencyCode })`: JSON `{ "amount": "12.34", "currency": "EUR" }`, at most `minorUnits` digits after the point (any for `XAU`, `XXX`; not in the JSON Schema); getters `amount`, `currency`, `copyWith()`; `minor` (bigint; `TypeError` without minor units), static `fromMinor(minor, currency)`, `add`, `subtract`, `compare` (`TypeError` across currencies), `multiply(integer)`, `isZero`, `isNegative`, `canonical()` (currency digits), `format(locales?)` (`Intl.NumberFormat`, display only); `equals` ignores trailing zeros | no |
 
 Dates and times, from `@horizon-republic/nominal-types/temporal`. Each is a root; `value` is the Temporal object. Text is strict RFC 3339: upper-case `T` and `Z`, years 0000 to 9999, a real calendar day, seconds required, a fraction of 1 to 9 digits after a dot, no `:60`, no week or ordinal dates, no `[zone]`. Each also takes a Temporal object of its kind. `equals()` uses Temporal's `equals()`. JSON Schema carries `pattern` beside any `format`.
 
@@ -419,7 +424,7 @@ export class OrdersController {
 | Drizzle | `const email = customType<DrizzleColumn<typeof Email>>(toDrizzle(Email));` then `email('email')` in the table |
 | Sequelize 6 | `email: toSequelize(Email)` as a model attribute |
 
-- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `ObjectId` 24, `SemVer` 256, `Isbn` 13, `Issn` 9, `Gtin` 14, `Isin` 12, `Hostname` and `DomainName` 253, `IpAddress` and `Ipv6Address` 45, `Ipv4Address` 15, `IpPrefix` and `Ipv6Prefix` 49, `Ipv4Prefix` 18, `MacAddress` 17), other strings `text`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`, `Instant` `timestamptz`, `PlainDate` `date`, `PlainTime` `time`, `PlainDateTime` `timestamp`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`. On PostgreSQL, choose `inet` for the IP address types, `cidr` for the prefix types and `macaddr` for `MacAddress`.
+- The column type comes from the nominal type: `Email` `varchar(254)`, `Uuid`, `UuidV4`, `UuidV7` `uuid`, `CountryCode` `varchar(2)`, `CurrencyCode` `varchar(3)`, `HexColor` `varchar(9)`, other strings with a length limit `varchar(<limit>)` (`Ulid` 26, `TypeId` 90, `DecimalString` 100, `ObjectId` 24, `SemVer` 256, `Isbn` 13, `Issn` 9, `Gtin` 14, `Isin` 12, `Hostname` and `DomainName` 253, `IpAddress` and `Ipv6Address` 45, `Ipv4Address` 15, `IpPrefix` and `Ipv6Prefix` 49, `Ipv4Prefix` 18, `MacAddress` 17), other strings `text`, integers `integer` or `bigint`, fractions `double`, `Int64` `bigint`, `Uint64` `decimal(20)`, `AnyBigInt` `varchar(1000)`, `AnyBoolean` `boolean`, `Instant` `timestamptz`, `PlainDate` `date`, `PlainTime` `time`, `PlainDateTime` `timestamp`. Override with `column` (MikroORM, Drizzle) or `type` (Sequelize) or TypeORM's own `type`. On PostgreSQL, choose `inet` for the IP address types, `cidr` for the prefix types and `macaddr` for `MacAddress`.
 - Reads are checked; a stored value the type refuses throws `NominalError`. `trusted: true` skips the check.
 - Writes store `toJSON()`, or `serialize(instance)`. `serialize` also runs on query values, and a plain value the type refuses (such as a `LIKE` pattern) is passed through.
 - Sequelize `where` takes stored values, not instances.
@@ -452,6 +457,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to check untrusted input](docs/guides/core/check-input.md)
 - [How to declare a type](docs/guides/core/declare-a-type.md)
 - [How to fix common problems](docs/guides/core/fix-common-problems.md)
+- [How to handle money](docs/guides/core/handle-money.md)
 - [How to keep values out of error messages](docs/guides/core/hide-values.md)
 - [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
 - [How to make a value object](docs/guides/core/make-a-value-object.md)
@@ -501,6 +507,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [Built-in types](docs/reference/types/README.md)
 - [Big integers](docs/reference/types/bigint.md)
 - [Booleans](docs/reference/types/boolean.md)
+- [Money](docs/reference/types/money.md)
 - [Numbers](docs/reference/types/number.md)
 - [Strings](docs/reference/types/string.md)
 - [Dates and times](docs/reference/types/temporal.md)

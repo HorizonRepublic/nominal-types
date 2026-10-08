@@ -118,10 +118,11 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 
 ## Built-in types
 
-- Strings: `AnyString`, `NonEmptyString`, `NonBlankString`, `Email`, `Uuid`, `UuidV4`, `UuidV7`, `Ulid`, `ObjectId`, `SemVer`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url`, `Hostname`, `DomainName`, `IpAddress`, `Ipv4Address`, `Ipv6Address`, `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`, `MacAddress`, `Isbn`, `Issn`, `Gtin`, `Isin`.
+- Strings: `AnyString`, `NonEmptyString`, `NonBlankString`, `Email`, `Uuid`, `UuidV4`, `UuidV7`, `Ulid`, `TypeId`, `ObjectId`, `SemVer`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `DecimalString`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url`, `Hostname`, `DomainName`, `IpAddress`, `Ipv4Address`, `Ipv6Address`, `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`, `MacAddress`, `Isbn`, `Issn`, `Gtin`, `Isin`.
 - Numbers: `AnyNumber`, `FiniteNumber`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Float32`, `Latitude`, `Longitude`, `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`, `Port`.
 - Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64`.
 - Booleans: `AnyBoolean`.
+- Money: `Money`, an amount and a currency.
 - Dates and times, from `/temporal`: `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime`.
 
 [Built-in types](docs/reference/types/README.md) describes each one.

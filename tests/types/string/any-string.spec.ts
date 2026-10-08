@@ -5,6 +5,7 @@ import {
   AnyString,
   CountryCode,
   CurrencyCode,
+  DecimalString,
   DomainName,
   Email,
   Gtin,
@@ -27,6 +28,7 @@ import {
   NonEmptyString,
   ObjectId,
   SemVer,
+  TypeId,
   Ulid,
   Url,
   Uuid,
@@ -97,6 +99,8 @@ describe('types under AnyString', () => {
     [AnyString, Issn, '0378-5955'],
     [AnyString, Gtin, '4006381333931'],
     [AnyString, Isin, 'US0378331005'],
+    [AnyString, DecimalString, '12.34'],
+    [AnyString, TypeId, 'user_01h455vb4pex5vsknk084sn02q'],
   ];
 
   it.each(
@@ -148,6 +152,8 @@ describe('types under AnyString', () => {
     [Issn, 'must be an ISSN with a valid check digit (was 42)'],
     [Gtin, 'must be a GTIN with a valid check digit (was 42)'],
     [Isin, 'must be an ISIN with a valid check digit (was 42)'],
+    [DecimalString, 'must be a string (was 42)'],
+    [TypeId, 'must be a string (was 42)'],
   ] as const)('reports a non-string to %o once', (type, message) => {
     expect(issuesOf(type.parse(42))).toStrictEqual([{ message }]);
   });

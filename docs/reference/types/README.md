@@ -15,12 +15,14 @@ AnyString                     any string
 │   ├── UuidV4                    random
 │   └── UuidV7                    starts with the time
 ├── Ulid
+├── TypeId                    an id with its kind, such as user_01h455…
 ├── ObjectId                  a MongoDB id
 ├── SemVer                    a version such as 1.4.2
 ├── Url
 │   └── HttpUrl
 ├── CountryCode               ISO 3166-1, such as US
 ├── CurrencyCode              ISO 4217, such as EUR
+├── DecimalString             an exact number as text, such as 12.34
 ├── LanguageTag               BCP 47, such as en-US
 ├── MediaType                 text/html; charset=utf-8
 ├── HexColor                  #1e90ff
@@ -69,6 +71,8 @@ AnyBigInt                     any integer, as a bigint
 └── Uint64 +
 
 AnyBoolean                    true or false
+
+Money                         an amount and a currency, such as 12.34 EUR
 ```
 
 The date and time types come from `@horizon-republic/nominal-types/temporal`. Each is a root of its own:
@@ -82,10 +86,11 @@ PlainDateTime                 a date and time without an offset
 
 | Page                           | Types                                                |
 | ------------------------------ | ---------------------------------------------------- |
-| [Strings](string.md)           | `AnyString` and the 31 types under it                |
+| [Strings](string.md)           | `AnyString` and the 33 types under it                |
 | [Numbers](number.md)           | `AnyNumber` and the 20 types under it                |
 | [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
 | [Booleans](boolean.md)         | `AnyBoolean`                                         |
+| [Money](money.md)              | `Money`                                              |
 | [Dates and times](temporal.md) | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` |
 
 ## Which built-in type do I pick?
@@ -97,11 +102,14 @@ PlainDateTime                 a date and time without an offset
 | a UUID made by `crypto.randomUUID()`        | `UuidV4`                                                        | version 4 only                                  |
 | a UUID that sorts by time                   | `UuidV7`                                                        | version 7 only, with its `timestamp`            |
 | an id made as a ULID                        | `Ulid`                                                          | any case, with its `timestamp`                  |
+| an id that names its kind, such as `user_…` | `TypeId`, with `TypeId.withPrefix()` for one kind               | the TypeID format; `generate()` makes new ids   |
 | a MongoDB `_id`                             | `ObjectId`                                                      | 24 hex digits, any case                         |
 | a version of a package or an API            | `SemVer`                                                        | sorts with `compare()`                          |
 | a link to a web page                        | `HttpUrl`                                                       | `http` and `https` only; `Url` takes any scheme |
 | a country                                   | `CountryCode`                                                   | ISO codes such as `US`, upper case only         |
 | a currency                                  | `CurrencyCode`                                                  | ISO codes such as `EUR`, with `minorUnits`      |
+| an amount of money, such as a price         | `Money`                                                         | exact, with the currency's digits               |
+| an exact number that isn't money, a rate    | `DecimalString`                                                 | text, so no digit is lost                       |
 | a language or locale                        | `LanguageTag`                                                   | tags such as `en-US`, any case                  |
 | a `Content-Type`, the type of a file        | `MediaType`                                                     | `essence` and `parameters` read it for you      |
 | a color from a color picker                 | `HexColor`                                                      | `#` required; channels as numbers               |
@@ -125,7 +133,7 @@ PlainDateTime                 a date and time without an offset
 | a position on a map                         | `Latitude` and `Longitude`                                      | -90 to 90 and -180 to 180                       |
 | a database `integer` column                 | `Int32`                                                         | the range of a 32-bit integer                   |
 | a database `bigint` id                      | `Int64`                                                         | the range of a 64-bit integer, as a `bigint`    |
-| a price, a weight, a temperature            | `FiniteNumber`, or a sign type such as `PositiveNumber`         | any number JSON can carry                       |
+| a weight, a temperature                     | `FiniteNumber`, or a sign type such as `PositiveNumber`         | any number JSON can carry                       |
 | a flag                                      | `AnyBoolean`                                                    | `true` or `false`                               |
 | a moment, such as `paidAt`                  | `Instant`                                                       | an offset is required, so the moment is exact   |
 | a birthday, a due date                      | `PlainDate`                                                     | a real calendar day, no time and no zone        |

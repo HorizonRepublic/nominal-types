@@ -8,6 +8,7 @@ export { matching } from './pattern-schema.ts';
 export { plain } from './plain.ts';
 export { satisfying } from './predicate-schema.ts';
 export { record } from './record-schema.ts';
+export { rule } from './rule.ts';
 export { schemaOf as of } from './schema-of.ts';
 export { tuple } from './tuple-schema.ts';
 export { union } from './union-schema.ts';

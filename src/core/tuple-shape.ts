@@ -2,6 +2,7 @@ import type { Accepts } from './acceptor.ts';
 import { countIssue } from './array-bounds.ts';
 import type { ArrayOptions } from './array-bounds.ts';
 import { freshCopy, generateFunction } from './compile.ts';
+import { cappedIssues } from './issue-limit.ts';
 import { atPath, rejectedIssue } from './messages.ts';
 import type { Write } from './plain-writers.ts';
 import { plainValue } from './plain.ts';
@@ -50,6 +51,7 @@ export const tupleCounts = ({ items, rest, min }: TupleRules<unknown>): ArrayOpt
 // compiled outside this module.
 const helpers = {
   Rejection,
+  capped: cappedIssues,
   plain: plainValue,
   notArray: (input: unknown): Rejection =>
     new Rejection([rejectedIssue('not_an_array', 'an array', input)]),
@@ -96,7 +98,7 @@ const makeRun =
       }
     }
 
-    return issues === undefined ? value : new h.Rejection(issues);
+    return issues === undefined ? value : new h.Rejection(h.capped(issues));
   };
 
 const isFunction = (value: unknown): value is Run => typeof value === 'function';
@@ -125,7 +127,7 @@ const runSource = ({ items, rest, min }: TupleRules<Run>): string => {
   ${positions.join(' ')}
   const value = [${values.join(', ')}]; ${optional}
   ${restLoop}
-  return issues === undefined ? value : new h.Rejection(issues);
+  return issues === undefined ? value : new h.Rejection(h.capped(issues));
 }`;
 };
 

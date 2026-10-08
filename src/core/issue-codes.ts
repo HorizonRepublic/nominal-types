@@ -21,6 +21,7 @@ export const issueCodes = [
   'required',
   'not_allowed',
   'constraint',
+  'too_many_issues',
 ] as const;
 
 /**
@@ -34,15 +35,21 @@ export const issueCodes = [
 export type IssueCode = (typeof issueCodes)[number];
 
 /**
+ * A code of an issue: one of this package's, or one a rule of your own gives, such as
+ * `duplicate_sku`.
+ */
+export type AnyIssueCode = IssueCode | (string & Record<never, never>);
+
+/**
  * An issue as this package reports it: a Standard Schema issue, with its code when
- * `n.configure({ codes: true })` is set.
+ * `n.configure({ codes: true })` is set or a rule gave one.
  */
 export interface NominalIssue extends StandardSchemaV1.Issue {
   /**
    * What went wrong, such as `pattern` or `required`. Present when
-   * `n.configure({ codes: true })` is set.
+   * `n.configure({ codes: true })` is set, and always when a rule of your own gave the code.
    */
-  readonly code?: IssueCode;
+  readonly code?: AnyIssueCode;
 }
 
 /**
@@ -55,9 +62,9 @@ export interface NominalIssue extends StandardSchemaV1.Issue {
  */
 export interface IssueDetails {
   /**
-   * What went wrong, such as `pattern` or `required`.
+   * What went wrong, such as `pattern` or `required`, or the code a rule of your own gave.
    */
-  readonly code: IssueCode;
+  readonly code: AnyIssueCode;
   /**
    * The message in English, as the package writes it without a messages function.
    */
@@ -85,9 +92,14 @@ export interface IssueDetails {
    */
   readonly min?: number;
   /**
-   * The most items an array may have, or keys a record, when there is a limit.
+   * The most items an array may have, or keys a record, when there is a limit; for
+   * `too_many_issues`, the number of issues kept.
    */
   readonly max?: number;
+  /**
+   * What a rule of your own gave with the issue, such as the row a value repeats, as it gave it.
+   */
+  readonly params?: Readonly<Record<string, unknown>>;
 }
 
 /**
@@ -99,8 +111,13 @@ export type MessageFunction = (issue: IssueDetails) => string | undefined;
 /**
  * Messages by issue code, given to `n.configure()` for a language or wording of your own: a code
  * maps to its message, or to a function that writes it. A code left out keeps the English message.
+ *
+ * @remarks
+ * The codes of this package are listed for autocompletion; the codes your own rules give are
+ * accepted too.
  */
-export type MessageMap = Readonly<Partial<Record<IssueCode, string | MessageFunction>>>;
+export type MessageMap = Readonly<Partial<Record<IssueCode, string | MessageFunction>>> &
+  Readonly<Record<string, string | MessageFunction | undefined>>;
 
 /**
  * What the `messages` option of `n.configure()` takes: one function for every issue, or a map by

@@ -30,6 +30,7 @@ describe('n.configure()', () => {
       normalize: { trimStrings: false },
       codes: false,
       codegen: 'auto',
+      maxIssues: 100,
       logger: undefined,
     });
     expect(issuesOf(Uuid.parse('nope'))).toStrictEqual([
@@ -62,6 +63,7 @@ describe('n.configure()', () => {
       normalize: { trimStrings: true },
       codes: true,
       codegen: 'auto',
+      maxIssues: 100,
       logger: undefined,
     });
   });
@@ -97,9 +99,29 @@ describe('n.configure()', () => {
       'n.configure(): messages must be a function, a map by issue code or undefined',
     ],
     [
-      'a messages map with an unknown code',
-      { messages: { missing: 'fehlt' } },
-      'n.configure(): there is no issue code missing',
+      'a messages map with an object',
+      { messages: { duplicate_sku: {} } },
+      'n.configure(): messages.duplicate_sku must be a string or a function',
+    ],
+    [
+      'maxIssues of 0',
+      { maxIssues: 0 },
+      'n.configure(): maxIssues must be a whole number from 1 up, or Infinity',
+    ],
+    [
+      'maxIssues of 1.5',
+      { maxIssues: 1.5 },
+      'n.configure(): maxIssues must be a whole number from 1 up, or Infinity',
+    ],
+    [
+      'maxIssues as a string',
+      { maxIssues: '10' },
+      'n.configure(): maxIssues must be a whole number from 1 up, or Infinity',
+    ],
+    [
+      'maxIssues of NaN',
+      { maxIssues: Number.NaN },
+      'n.configure(): maxIssues must be a whole number from 1 up, or Infinity',
     ],
     [
       'a messages map with a number',

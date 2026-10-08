@@ -136,5 +136,6 @@ Basket.parse({ prices: [30, 80], budget: 100 }); // { ok: false, issues: [{ mess
 
 - [Schemas](../../reference/schemas.md): `n.constraint()` and its options.
 - [How to check a request body with n.object()](check-an-object.md)
+- [How to report problems by row and column](report-problems-by-row-and-column.md): a rule over a whole list, with any number of issues.
 
 [← Guides](../README.md)

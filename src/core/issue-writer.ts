@@ -1,4 +1,4 @@
-import type { IssueCode, IssueDetails, Messages, NominalIssue } from './issue-codes.ts';
+import type { AnyIssueCode, IssueDetails, Messages, NominalIssue } from './issue-codes.ts';
 import { describeHidden, shownValue } from './messages.ts';
 import { settings } from './settings.ts';
 import type { Draft, IssueWriter } from './settings.ts';
@@ -13,7 +13,7 @@ const keysOf = (path: NonNullable<Path>): PropertyKey[] =>
   path.map((segment) => (typeof segment === 'object' ? segment.key : segment));
 
 const detailsOf = (draft: Draft, path: Path): IssueDetails => {
-  const { description, value, typeName, min, max } = draft.wording;
+  const { description, value, typeName, min, max, params } = draft.wording;
 
   return {
     code: draft.code,
@@ -24,17 +24,29 @@ const detailsOf = (draft: Draft, path: Path): IssueDetails => {
     ...(path === undefined || path.length === 0 ? {} : { path: keysOf(path) }),
     ...(min === undefined ? {} : { min }),
     ...(max === undefined ? {} : { max }),
+    ...(params === undefined ? {} : { params }),
   };
 };
 
 const formatted = (format: Messages, details: IssueDetails): string | undefined => {
-  const write = typeof format === 'function' ? format : format[details.code];
+  // A map is read by its own keys only, so a code such as `toString` finds nothing inherited.
+  const write =
+    typeof format === 'function'
+      ? format
+      : Object.hasOwn(format, details.code)
+        ? format[details.code]
+        : undefined;
 
   return typeof write === 'string' ? write : write?.(details);
 };
 
-const issueWith = (code: IssueCode, message: string, path: Path): NominalIssue => {
-  if (!settings.codes) {
+const issueWith = (
+  code: AnyIssueCode,
+  message: string,
+  path: Path,
+  own: boolean | undefined,
+): NominalIssue => {
+  if (own !== true && !settings.codes) {
     return path === undefined ? { message } : { message, path };
   }
 
@@ -49,7 +61,7 @@ const written = (draft: Draft, path?: Path): NominalIssue => {
     format === undefined
       ? draft.english
       : (formatted(format, detailsOf(draft, path)) ?? draft.english);
-  const issue = issueWith(draft.code, message, path);
+  const issue = issueWith(draft.code, message, path, draft.own);
 
   if (format !== undefined) {
     drafts.set(issue, draft);

@@ -125,6 +125,7 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 
 - [Check a whole request body](docs/guides/core/check-an-object.md) with `n.object()`, with no other library.
 - [Check one field against another](docs/guides/core/check-fields-together.md) with `n.constraint()`.
+- [Report problems by row and column](docs/guides/core/report-problems-by-row-and-column.md), such as a SKU repeated in an import, with `n.rule()`.
 - [Make a value object](docs/guides/core/make-a-value-object.md) of several fields, with getters and `copyWith()`.
 - [Read configuration from environment variables](docs/guides/core/read-config.md) with `fromEnv()`.
 - [Keep values out of error messages](docs/guides/core/hide-values.md), such as passwords.

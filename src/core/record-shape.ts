@@ -1,6 +1,7 @@
 import type { Accepts } from './acceptor.ts';
 import { freshCopy } from './compile.ts';
 import { hideValues } from './hidden-values.ts';
+import { cappedIssues } from './issue-limit.ts';
 import { atPath, describeHidden, issueOf, rejectedIssue, shownValue } from './messages.ts';
 import type { Write } from './plain-writers.ts';
 import { plainValue } from './plain.ts';
@@ -110,6 +111,7 @@ const valueIssues = (
 // compiled outside this module.
 const helpers = {
   Rejection,
+  capped: cappedIssues,
   isRecord: (value: unknown): value is Readonly<Record<string, unknown>> =>
     typeof value === 'object' && value !== null && !Array.isArray(value),
   keyText,
@@ -212,7 +214,7 @@ const makeRun =
 
     issues = rules.optional ? issues : h.missingKeys(issues, input, rules.required);
 
-    return issues === undefined ? h.finished(value, large) : new h.Rejection(issues);
+    return issues === undefined ? h.finished(value, large) : new h.Rejection(h.capped(issues));
   };
 
 /**

@@ -18,6 +18,8 @@ The functions that build schemas from nominal types: lists, optional values, obj
 | [`TupleSchema`](#tupleschema)        | What `n.tuple()` returns                                                           |
 | [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                  |
 | [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                      |
+| [`n.rule()`](#nrule)                 | A rule that reads a whole value and reports any number of issues                   |
+| [`Rule`](#rule-class)                | What `n.rule()` returns                                                            |
 | [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                     |
 | [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                               |
 | [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response    |
@@ -40,6 +42,7 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | `n.record()`       | A schema for an object with any keys            | [`n.record()`](#nrecord)                               |
 | `n.tuple()`        | A schema for an array of fixed positions        | [`n.tuple()`](#ntuple)                                 |
 | `n.constraint()`   | A rule across fields of an object               | [`n.constraint()`](#nconstraint)                       |
+| `n.rule()`         | A rule that reports any number of issues        | [`n.rule()`](#nrule)                                   |
 | `n.matching()`     | A rule from a regular expression                | [`n.matching()`](declaring.md#nmatching)               |
 | `n.satisfying()`   | A rule from a type guard                        | [`n.satisfying()`](declaring.md#nsatisfying)           |
 | `n.oneOf()`        | A rule for a fixed set of values                | [`n.oneOf()`](declaring.md#noneof)                     |
@@ -95,6 +98,7 @@ The class `n.of()` returns. `ObjectSchema` extends it. Create it through `n.of()
 | [`fromString()`](#fromstring)          | The same schema, reading a number or boolean from text first.    |
 | [`optional()`](#optional-and-nullable) | A schema that also accepts `undefined`.                          |
 | [`nullable()`](#optional-and-nullable) | A schema that also accepts `null`.                               |
+| [`check(...rules)`](#check)            | The same schema, which also runs rules on the whole value.       |
 | `['~standard']`                        | The Standard Schema interface: `validate` and `jsonSchema`.      |
 
 The methods apply from left to right:
@@ -370,6 +374,40 @@ manager.parse(null); // { ok: true, value: null }
 note.parse(null); // { ok: false, issues: [{ message: 'must be a string (was null)' }] }
 ```
 
+### check
+
+```ts
+schema.check(...rules): TypeSchema<Input, Output>
+```
+
+| Parameter | Type                                                        | Description                                            |
+| --------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| `rules`   | [`Rule`](#rule-class)s, or functions `(value, report) => …` | Read the whole value and report what is wrong with it. |
+
+Returns: the same schema, which also runs the rules. On `n.object()` and `n.record()` it returns an `ObjectSchema` or a `RecordSchema`, with their methods.
+
+The rules run only when the value passed the schema, so they get instances. They run in the order given, each one. A second `check()` adds its rules after the first ones. A function given here works as a rule built by [`n.rule()`](#nrule) without options, and TypeScript knows the type of its value.
+
+The JSON Schema stays the same. `accepts()` runs the rules too.
+
+Throws: a `TypeError` for a rule that is neither built by `n.rule()` nor a function: `check(): pass a rule built by n.rule(), or a function`.
+
+Example:
+
+```ts
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Quantities = n
+  .of(PositiveInteger)
+  .array()
+  .check((counts) => counts.reduce((sum, count) => sum + count.value, 0) <= 100 || 'must add up to 100 at most');
+
+Quantities.parse([60, 50]); // { ok: false, issues: [{ message: 'must add up to 100 at most' }] }
+Quantities.parse([60, 0]); // { ok: false, issues: [{ message: 'must be a positive integer (was 0)', path: [1] }] }
+```
+
+See also: [How to report problems by row and column](../guides/core/report-problems-by-row-and-column.md).
+
 ## ArrayOptions
 
 ```ts
@@ -493,6 +531,7 @@ The class `n.object()` returns. It extends [`TypeSchema`](#typeschema), so `pars
 | `pick(...keys)`     | The same schema with only the fields named.                                                                                                |
 | `omit(...keys)`     | The same schema without the fields named.                                                                                                  |
 | `extend(fields)`    | The same schema with more fields. A field of the same name is replaced in place.                                                           |
+| `check(...rules)`   | The same schema, which also runs [rules](#nrule) on the whole object, after its constraints. See [`check()`](#check).                      |
 | `keys`              | The field names, in the order they were declared.                                                                                          |
 
 Each method returns a new schema. They keep `strict()`, `fromEnv()` and each other's changes, so they chain: `CreateOrder.omit('note').partial().strict()`.
@@ -504,6 +543,8 @@ Each method returns a new schema. They keep `strict()`, `fromEnv()` and each oth
 | `pick()`     | Only the fields named, in declared order.                                                                         | Kept when every field it reads is kept, dropped otherwise.             |
 | `omit()`     | All but the fields named.                                                                                         | Kept when every field it reads is kept, dropped otherwise.             |
 | `extend()`   | The new fields at the end. After `fromEnv()`, they are read from text too.                                        | Kept.                                                                  |
+
+Rules added with `check()` are kept by `strict()`, `fromEnv()`, `required()` and `extend()`. `partial()`, `pick()` and `omit()` drop them, since they were written for the whole object.
 
 The TypeScript types follow: `partial()` gives `Partial` of the value, `pick()` gives `Pick`, `omit()` gives `Omit`. The JSON Schema follows too: its `properties` and `required` list the fields the new schema has.
 
@@ -708,12 +749,13 @@ See also: [How to check a request body with n.object()](../guides/core/check-an-
 
 The class `n.record()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `stringify()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the record, frozen, in `value`. It adds:
 
-| Member       | Description                                                                             |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `keys`       | The listed keys for an `n.oneOf()` key schema, `undefined` otherwise.                   |
-| `min(count)` | A new schema that refuses fewer keys than `count`: `must have at least 1 key (was 0)`.  |
-| `max(count)` | A new schema that refuses more keys than `count`: `must have at most 50 keys (was 51)`. |
-| `partial()`  | A new schema whose listed keys may be missing.                                          |
+| Member            | Description                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
+| `keys`            | The listed keys for an `n.oneOf()` key schema, `undefined` otherwise.                           |
+| `min(count)`      | A new schema that refuses fewer keys than `count`: `must have at least 1 key (was 0)`.          |
+| `max(count)`      | A new schema that refuses more keys than `count`: `must have at most 50 keys (was 51)`.         |
+| `partial()`       | A new schema whose listed keys may be missing. It drops the rules of `check()`.                 |
+| `check(...rules)` | A new schema that also runs [rules](#nrule) on the whole record. `min()` and `max()` keep them. |
 
 `min()` and `max()` throw a `TypeError` for a count that is not a whole number from 0 up, and when the lower limit would be above the upper one.
 
@@ -895,6 +937,87 @@ A constraint can go to:
 - an adapter's `constrain…()` function, see [Adapters](adapters/README.md).
 
 Its JSON Schema is an object. The listed fields are in `properties`. The fields that can't be `undefined` are in `required`. `check` has no JSON Schema form.
+
+## n.rule()
+
+```ts
+n.rule(check, options?): Rule<Value>
+```
+
+A rule that reads a whole value, such as all the rows of an import, and reports any number of issues, each at its own path.
+
+| Parameter | Type                                           | Description                                                  |
+| --------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| `check`   | `(value, report) => boolean \| string \| void` | Gets the value, already checked by its schema, and `report`. |
+| `options` | `{ path?, code?, message? }`                   | Optional. The defaults of every issue the rule makes.        |
+
+Returns: a [`Rule`](#rule-class), to give to [`check()`](#check).
+
+`report(issue)` adds one issue. Call it once for each problem:
+
+| Field     | Type                      | Default                              | Description                                                                                         |
+| --------- | ------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `path`    | an array of keys          | `options.path`, or the value itself  | Where the problem is inside the value, such as `[3, 'sku']`. The schema puts its own path in front. |
+| `code`    | `string`                  | `options.code`, or none              | A code of your own, such as `'duplicate_sku'`. The issue always carries it.                         |
+| `message` | `string`                  | `options.message`, or `'is invalid'` | The message, unless [`messages`](configure.md#messages) has one for the code.                       |
+| `params`  | `Record<string, unknown>` | none                                 | Values a message function reads, such as a row number. They stay out of the issue.                  |
+
+What `check` returns:
+
+| Return            | Result                                                               |
+| ----------------- | -------------------------------------------------------------------- |
+| `true` or nothing | no further issue                                                     |
+| `false`           | one more issue, with the `path`, `code` and `message` of the options |
+| a string          | one more issue, with that string as its message                      |
+
+An issue without a code has the code `constraint`, which it carries only with [`codes: true`](configure.md#codes), as an issue of `n.constraint()` does.
+
+The check runs synchronously. An error it throws leaves through `parse()`. Once the issues reach [`maxIssues`](configure.md#maxissues), further reports are dropped and further rules don't run.
+
+Throws a `TypeError`:
+
+| Case                       | Message                                     |
+| -------------------------- | ------------------------------------------- |
+| `check` is not a function  | `n.rule(): the check must be a function`    |
+| `options.path` is no array | `n.rule(): path must be an array of keys`   |
+| `options.code` is empty    | `n.rule(): code must be a non-empty string` |
+
+Example:
+
+```ts
+import { n, Nominal, NonEmptyString, PositiveInteger } from '@horizon-republic/nominal-types';
+
+class Row extends Nominal('shop.Row', n.object({ sku: NonEmptyString, quantity: PositiveInteger })) {}
+
+const uniqueSku = n.rule((rows: readonly Row[], report) => {
+  const seen = new Set<string>();
+
+  rows.forEach((row, index) => {
+    if (seen.has(row.sku.value)) report({ path: [index, 'sku'], code: 'duplicate_sku' });
+    seen.add(row.sku.value);
+  });
+});
+
+const Sheet = n.of(Row).array({ max: 10_000 }).check(uniqueSku);
+
+Sheet.parse([
+  { sku: 'MUG-01', quantity: 2 },
+  { sku: 'MUG-01', quantity: 5 },
+]);
+// { ok: false, issues: [{ code: 'duplicate_sku', message: 'is invalid', path: [1, 'sku'] }] }
+```
+
+A rule written apart from `check()` needs the type of its value, such as `readonly Row[]`.
+
+See also: [How to report problems by row and column](../guides/core/report-problems-by-row-and-column.md).
+
+## Rule class
+
+The class `n.rule()` returns. Create it through `n.rule()`, not with `new`. It has no public members: give it to `check()`.
+
+A rule built by another copy of the package works too.
+
+`Rule<Value>` takes a rule of a wider value: a `Rule<unknown>` goes to any schema, a `Rule<readonly Email[]>` doesn't go to a list of UUIDs.
 
 ## n.isObject()
 

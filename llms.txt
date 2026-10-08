@@ -57,6 +57,7 @@ Node.js 22.12 or later, ESM and CommonJS, no dependencies. The Standard Schema i
 | only a yes or no | `Uuid.accepts(input)`, `schema.accepts(input)` |
 | a request body or a message | `n.object({ ... }).parse(body)` |
 | a rule across fields | `n.constraint()` passed to `n.object()` |
+| many issues across rows, such as a duplicate SKU | `n.rule()` passed to `.check()` |
 | a value object of several fields | `class Stay extends Nominal('booking.Stay', n.object({ ... })) {}` |
 | a PATCH body, or part of an object | `.partial()`, `.pick()`, `.omit()`, `.extend()` |
 | one of several shapes told apart by a field | `n.union('method', { card: n.object(...), invoice: n.object(...) })` |
@@ -146,6 +147,7 @@ Every schema has `.parse()`, `.parseAsync()`, `.accepts()`, `.toPlain(value)` (i
 - `n.record(Key, Value)` returns a `RecordSchema`. `Key` is a type or schema of strings; `n.oneOf()` keys are all required (`.partial()` frees them). `.min(n)`, `.max(n)` count keys.
 - `n.tuple([A, B], Rest?)` returns a `TupleSchema`; trailing optional positions may be left out.
 - `n.constraint(fields, check, options?)` returns a `Constraint`, a rule across fields like a SQL `CHECK`. `check` gets the checked values and returns `true`, `false` or a message; `ConstraintOptions`: `path`, `message`. It runs once every field is valid.
+- `n.rule(check, options?)` returns a `Rule` for `.check(...rules)`, which every schema has (`n.object()` and `n.record()` keep their class). `check(value, report)` gets the checked value (instances) once the schema passed and calls `report({ path?, code?, message?, params? })` (`RuleIssue`, `Report`) for each problem; it may also return `false` or a message (`RuleVerdict`; `RuleCheck`). `RuleOptions`: default `path`, `code`, `message` (`'is invalid'`). A code given is always on the issue; `params` reach the messages function only. Rules run in order, add nothing to JSON Schema; `.partial()`, `.pick()`, `.omit()` drop them. `.check()` also takes a function in place.
 - `n.plain(value)` copies any value with every instance replaced by its `toJSON()` (`Plain<Value>`). Use it before `JSON.stringify()` on large responses.
 - `n.isObject(value)`, `n.isConstraint(value)` tell schemas and constraints apart.
 
@@ -210,12 +212,13 @@ Details: [Errors and messages](docs/reference/errors-and-messages.md).
 
 `n.configure(options)` sets process-wide settings shared by every copy of the package. Call it once, in a module the entry point imports first. It returns the previous settings (`FullConfiguration`), and throws `TypeError` on an unknown option, changing nothing. `Configuration` options:
 
-- `messages`: a `MessageFunction`, which takes an `IssueDetails` and returns a string or `undefined`, or a `MessageMap` by `IssueCode`, to translate messages (`Messages` is either).
+- `messages`: a `MessageFunction`, which takes an `IssueDetails` and returns a string or `undefined`, or a `MessageMap` by `IssueCode` or a rule's own code (`AnyIssueCode`), to translate messages (`Messages` is either). `IssueDetails.params` holds a rule's params.
 - `values`: `'show'` (default), `'length'` or `'hide'` for the value in messages.
 - `inspect`: `'hide'` hides every value from `console.log()`.
 - `codes`: `true` adds `code: IssueCode` to every issue (`NominalIssue`).
 - `normalize: { trimStrings: true }`: types under `AnyString` trim input first.
 - `codegen`: `'off'` never calls `new Function`, for a CSP without `'unsafe-eval'`.
+- `maxIssues`: the most issues one check reports (default `100`, or `Infinity`); past it a last issue `stopped after 100 issues` (code `too_many_issues`).
 - `logger`: a `Logger`, `{ warn(message, details?), debug?(message, details?) }`, gets the package's warnings (a type name declared twice, `new Function` blocked) and, in `debug`, each value `NominalPipe`, Fastify or GraphQL rejects, with values hidden as in messages. `false` silences; default `console.warn`. `pinoLogger(pino)` adapts a pino or bunyan logger (type `ObjectFirstLogger`); `nestLogger(logger?)` from the Nest adapter writes to Nest's `Logger`.
 
 ```ts
@@ -475,6 +478,7 @@ Every page ships under `docs/` ([contents](docs/README.md)).
 - [How to check a request body with n.object()](docs/guides/core/check-an-object.md)
 - [How to accept one of several object shapes](docs/guides/core/accept-one-of-several-shapes.md)
 - [How to check one field against another](docs/guides/core/check-fields-together.md)
+- [How to report problems by row and column](docs/guides/core/report-problems-by-row-and-column.md)
 - [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
 - [How to read numbers and booleans from text](docs/guides/core/read-text-values.md)
 - [How to read configuration from environment variables](docs/guides/core/read-config.md)

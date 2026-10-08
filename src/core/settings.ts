@@ -1,4 +1,4 @@
-import type { IssueCode, Messages, NominalIssue } from './issue-codes.ts';
+import type { AnyIssueCode, Messages, NominalIssue } from './issue-codes.ts';
 import type { Logger } from './log.ts';
 import type { Wording } from './messages.ts';
 import type { NativeSchema } from './native-schema.ts';
@@ -15,7 +15,11 @@ export interface Draft {
   /**
    * The code of the issue.
    */
-  readonly code: IssueCode;
+  readonly code: AnyIssueCode;
+  /**
+   * Whether the issue carries its code without `codes`, as one a rule of your own gave does.
+   */
+  readonly own?: boolean;
   /**
    * The English message.
    */
@@ -97,6 +101,11 @@ export interface Settings {
    */
   codegen: 'auto' | 'off';
   /**
+   * The most issues one check reports before it stops. A copy of the package from before the
+   * option leaves it out, which reads as the default.
+   */
+  maxIssues?: number;
+  /**
    * Where warnings go: a logger, `false` for nowhere, or `undefined` for `console.warn`. A copy of
    * the package from before the option leaves it out, which reads as `undefined`.
    */
@@ -116,6 +125,13 @@ export interface Settings {
 
 const key = Symbol.for('@horizon-republic/nominal-types/settings/1');
 
+/**
+ * How many issues one check reports before it stops, unless `n.configure()` says otherwise.
+ *
+ * @internal
+ */
+export const defaultMaxIssues = 100;
+
 const created = (): Settings => {
   const fresh: Settings = {
     messages: undefined,
@@ -124,6 +140,7 @@ const created = (): Settings => {
     trimStrings: false,
     codes: false,
     codegen: 'auto',
+    maxIssues: defaultMaxIssues,
     logger: undefined,
     writer: undefined,
   };

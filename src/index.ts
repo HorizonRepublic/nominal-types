@@ -5,7 +5,8 @@ export { Nominal } from './core/nominal.ts';
  *
  * @remarks
  * `n.object()`, `n.of()`, `n.record()`, `n.tuple()` and `n.union()` build schemas, and
- * `n.constraint()` checks fields together. `n.oneOf()`, `n.matching()` and `n.satisfying()` make
+ * `n.constraint()` checks fields together, and `n.rule()` reports any number of issues found across a
+ * whole value. `n.oneOf()`, `n.matching()` and `n.satisfying()` make
  * rules for `Nominal()`. `n.hideValues()` masks values in issues, and `n.plain()` turns instances
  * into plain values for a response. `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a value is.
  * `n.configure()` sets messages, values, trimming and code generation for the process.
@@ -48,6 +49,7 @@ export type { Logger } from './core/log.ts';
 export { pinoLogger } from './core/pino-logger.ts';
 export type { ObjectFirstLogger } from './core/pino-logger.ts';
 export type {
+  AnyIssueCode,
   IssueCode,
   IssueDetails,
   MessageFunction,
@@ -72,6 +74,8 @@ export type {
   ConstraintValues,
   ConstraintVerdict,
 } from './core/constraint-types.ts';
+export { Rule } from './core/rule.ts';
+export type { Report, RuleCheck, RuleIssue, RuleOptions, RuleVerdict } from './core/rule.ts';
 export { ObjectSchema } from './core/object-schema.ts';
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
 export { RecordSchema } from './core/record-schema.ts';

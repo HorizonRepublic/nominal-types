@@ -98,22 +98,22 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    77.2,
-    25.4,
+    79.9,
+    26.1,
   ],
   [
     'only n.object',
     `import { n, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid }).parse({});`,
-    74.5,
-    24.4,
+    77.3,
+    25.1,
   ],
   [
     'only n.of',
     `import { n, Uuid } from '${name}'; globalThis.out = n.of(Uuid).parse('');`,
-    74.5,
-    24.4,
+    77.3,
+    25.1,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 122.4, 41.4],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 125.1, 42.4],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
@@ -145,9 +145,9 @@ const cases = [
   ],
   ['sequelize', adapter('sequelize', 'toSequelize'), 37.4, 13.2],
   ['superjson', adapter('superjson', 'toSuperjson'), 27.9, 9.9],
-  ['swagger', adapter('swagger', 'ApiNominalProperty'), 27.7, 9.8],
+  ['swagger', adapter('swagger', 'ApiNominalProperty'), 27.9, 9.8],
   ['typeorm', adapter('typeorm', 'toTypeOrm'), 37.3, 13.1],
-  ['valibot', adapter('valibot', 'toValibot'), 27.7, 9.8],
+  ['valibot', adapter('valibot', 'toValibot'), 27.9, 9.8],
   ['zod', adapter('zod', 'toZod'), 27.9, 10],
 ];
 
@@ -156,20 +156,20 @@ const rollupCases = [
   [
     'only n.object',
     `import { n, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid }).parse({});`,
-    54.7,
-    18.1,
+    57.2,
+    19,
   ],
   [
     'only n.of',
     `import { n, Uuid } from '${name}'; globalThis.out = n.of(Uuid).parse('');`,
-    44.8,
-    15.2,
+    47.1,
+    16.1,
   ],
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    57.2,
-    19.2,
+    59.7,
+    19.9,
   ],
 ];
 

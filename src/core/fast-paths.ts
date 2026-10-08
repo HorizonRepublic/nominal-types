@@ -164,6 +164,17 @@ export const optionalPaths = (item: FastPaths): FastPaths => emptyOrPaths(item);
 export const nullablePaths = (item: FastPaths): FastPaths => emptyOrPaths(item, null);
 
 /**
+ * The paths of a schema with rules added by `check()`: those of the schema, the check running
+ * the rules, which read the values.
+ *
+ * @internal
+ */
+export const checkedPaths = (item: FastPaths, run: (input: unknown) => unknown): FastPaths => ({
+  ...item,
+  accepts: acceptsByRunning(run),
+});
+
+/**
  * The paths of `item` reading a string through a text form first.
  *
  * @internal

@@ -1,5 +1,7 @@
-// A small seeded generator, so a failing case can be replayed.
-const generator = (seed: number): (() => number) => {
+/**
+ * A small seeded generator of numbers from 0 up to 1, so a failing case can be replayed.
+ */
+export const generator = (seed: number): (() => number) => {
   let state = seed >>> 0;
 
   return () => {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { n, NominalError } from '../../src/index.ts';
 import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
+import { allPatternsIn, backtrackingSyntax } from '../support/json-schema.ts';
 import { issuesOf, thrownBy, valueOf } from '../support/results.ts';
 
 const isModern = (value: unknown): value is Temporal.PlainDate =>
@@ -34,6 +35,17 @@ describe('the Temporal types', () => {
     expect(schema).toMatchObject({ type: 'string', pattern: type.pattern.source });
     expect(schema).not.toHaveProperty('format');
   });
+
+  it.each([Instant, PlainDate, PlainDateTime, PlainTime])(
+    'describe %o with patterns that hold no lookaround or backreference',
+    (type) => {
+      const patterns = allPatternsIn(
+        type['~standard'].jsonSchema.input({ target: 'draft-2020-12' }),
+      );
+
+      expect(patterns.filter((pattern) => backtrackingSyntax.test(pattern))).toStrictEqual([]);
+    },
+  );
 
   it('build values from instances of another copy of the package', async () => {
     vi.resetModules();

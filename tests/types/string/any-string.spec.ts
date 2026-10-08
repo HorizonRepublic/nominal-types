@@ -167,14 +167,15 @@ describe('types under AnyString', () => {
     expect(withoutImpliedString([stringRule])).toStrictEqual([stringRule]);
   });
 
-  it('describes a type with one rule left without allOf', () => {
+  it('describes a type with one rule left by the schema of that rule', () => {
     expect(Email['~standard'].jsonSchema.input({ target: 'openapi-3.0' })).toStrictEqual({
       title: 'nominal.Email',
       type: 'string',
-      pattern: Email.pattern.source,
+      pattern: Email.pattern.source.replace('(?=.{6,254}$)(?=[^@]{1,64}@)', ''),
       format: 'email',
       minLength: 6,
       maxLength: 254,
+      not: { pattern: '^[^@]{65}' },
       example: 'jane.doe@example.com',
       description: 'an email address',
     });

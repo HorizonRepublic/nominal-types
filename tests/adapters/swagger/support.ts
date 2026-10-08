@@ -37,10 +37,11 @@ export const uuidSchema = (title: string): Record<string, unknown> => ({
 export const emailSchema = {
   title: 'nominal.Email',
   type: 'string',
-  pattern: Email.pattern.source,
+  pattern: Email.pattern.source.replace('(?=.{6,254}$)(?=[^@]{1,64}@)', ''),
   format: 'email',
   minLength: 6,
   maxLength: 254,
+  not: { pattern: '^[^@]{65}' },
   example: 'jane.doe@example.com',
   description: 'an email address',
 };

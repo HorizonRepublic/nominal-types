@@ -51,10 +51,10 @@ White space is the 25 characters Unicode marks as `White_Space`: spaces, tabs, l
 | U+FEFF, byte order mark  | a character      | removed  |
 | U+200B, zero-width space | a character      | kept     |
 
-| Property    | Value                                                                                          |
-| ----------- | ---------------------------------------------------------------------------------------------- |
-| JSON Schema | `allOf` of `NonEmptyString`'s and `{ type: 'string', pattern: NonBlankString.pattern.source }` |
-| Message     | `must be a non-blank string (was "   ")`; `''` gets the message of `NonEmptyString`            |
+| Property    | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', minLength: 1, pattern: NonBlankString.pattern.source }`, with an example |
+| Message     | `must be a non-blank string (was "   ")`; `''` gets the message of `NonEmptyString`         |
 
 ```ts
 import { NonBlankString } from '@horizon-republic/nominal-types';
@@ -77,10 +77,10 @@ An email address like `jane.doe+news@example.com`.
 - A `+tag` before the `@` is understood, see the `tag` member.
 - Not accepted: quoted names (`"jane"@example.com`), IP addresses (`jane@[127.0.0.1]`) and non-Latin domains. Convert a non-Latin domain to punycode first (`xn--…`).
 
-| Property    | Value                                                                                                                                                       |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', pattern: Email.pattern.source, format: 'email', minLength: 6, maxLength: 254 }`, with an example                                         |
-| Message     | `must be an email address (was a string of 1 character)`. `Email` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden. |
+| Property    | Value                                                                                                                                                                                                                                                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern, format: 'email', minLength: 6, maxLength: 254, not: { pattern: '^[^@]{65}' } }`, with an example. `pattern` is `Email.pattern` without its lookaheads, so tools without lookahead support can read it. The length limits and `not` keep the same rules. |
+| Message     | `must be an email address (was a string of 1 character)`. `Email` is a [sensitive type](../errors-and-messages.md#sensitive-types), so the value is hidden.                                                                                                                         |
 
 ```ts
 import { Email } from '@horizon-republic/nominal-types';
@@ -256,10 +256,10 @@ A [semantic version](../glossary.md) like `2.0.0-rc.1+build.5`, as [Semantic Ver
 - No leading zeros in numbers: `01.0.0` and `1.0.0-01` are not accepted. Build parts may have them: `1.0.0+01`.
 - Up to 256 characters, and each number up to `Number.MAX_SAFE_INTEGER`.
 
-| Property    | Value                                                                                             |
-| ----------- | ------------------------------------------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', pattern: SemVer.pattern.source, minLength: 5, maxLength: 256 }`, with examples |
-| Message     | `must be a semantic version (was "v1.2.3")`                                                       |
+| Property    | Value                                                                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', pattern, minLength: 5, maxLength: 256 }`, with examples. `pattern` is `SemVer.pattern` without its lookahead, so tools without lookahead support can read it. The length limits keep the same rule. |
+| Message     | `must be a semantic version (was "v1.2.3")`                                                                                                                                                                            |
 
 ```ts
 import { SemVer } from '@horizon-republic/nominal-types';
@@ -339,10 +339,10 @@ Members, with results for this `url`:
 
 A `Url` whose scheme is `http` or `https`, in any case. It has the members of `Url`.
 
-| Property    | Value                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| JSON Schema | `allOf` of `Url`'s and `{ type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?:\\/\\/' }`, with an example |
-| Message     | `must be an http or https URL (was "mailto:jane@example.com")`                                         |
+| Property    | Value                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', format: 'uri', pattern: '^[Hh][Tt][Tt][Pp][Ss]?:\\/\\/' }`, with an example |
+| Message     | `must be an http or https URL (was "mailto:jane@example.com")`                                 |
 
 ```ts
 import { HttpUrl } from '@horizon-republic/nominal-types';
@@ -641,11 +641,11 @@ A [host name](../glossary.md) like `localhost` or `api.example.com`.
 - An `xn--` label must decode to lowercase letters and digits of any script, such as `bücher`. A label with `--` in places 3 and 4 is accepted only as an `xn--` label.
 - Upper and lower case are both accepted and kept as given.
 
-| Property    | Value                                                                                                                            |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| JSON Schema | `{ type: 'string', format: 'hostname', pattern, minLength: 1, maxLength: 253 }`, with an example                                 |
-| Message     | `must be a host name (was "a_b")`                                                                                                |
-| Limits      | the `pattern` can't decode `xn--` labels, so the schema accepts an `xn--` label that is not valid Punycode, such as `xn--zz.com` |
+| Property    | Value                                                                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', format: 'hostname', pattern, minLength: 1, maxLength: 253, not: { pattern: '(?:^\|\\.)[0-9]+$' } }`, with an example |
+| Message     | `must be a host name (was "a_b")`                                                                                                       |
+| Limits      | the `pattern` can't decode `xn--` labels, so the schema accepts an `xn--` label that is not valid Punycode, such as `xn--zz.com`        |
 
 ```ts
 import { Hostname } from '@horizon-republic/nominal-types';
@@ -744,10 +744,10 @@ An [IPv4-mapped address](../glossary.md), such as `::ffff:127.0.0.1`, answers th
 
 An IPv4 address, like `192.0.2.1`. It has the members of `IpAddress`.
 
-| Property    | Value                                                                                                                    |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| JSON Schema | `allOf` of `IpAddress`'s and `{ type: 'string', format: 'ipv4', pattern, minLength: 7, maxLength: 15 }`, with an example |
-| Message     | `must be an IPv4 address (was a string of 3 characters)`                                                                 |
+| Property    | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', format: 'ipv4', minLength: 7, maxLength: 15, pattern }`, with an example |
+| Message     | `must be an IPv4 address (was a string of 3 characters)`                                    |
 
 ```ts
 import { Ipv4Address } from '@horizon-republic/nominal-types';
@@ -762,10 +762,10 @@ new Ipv4Address('::1'); // throws NominalError: nominal.Ipv4Address: must be an 
 
 An IPv6 address, like `2001:db8::1`. It has the members of `IpAddress`, and one more.
 
-| Property    | Value                                                                                                                    |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| JSON Schema | `allOf` of `IpAddress`'s and `{ type: 'string', format: 'ipv6', pattern, minLength: 2, maxLength: 45 }`, with an example |
-| Message     | `must be an IPv6 address (was a string of 9 characters)`                                                                 |
+| Property    | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', format: 'ipv6', minLength: 2, maxLength: 45, pattern }`, with an example |
+| Message     | `must be an IPv6 address (was a string of 9 characters)`                                    |
 
 ```ts
 import { Ipv6Address } from '@horizon-republic/nominal-types';
@@ -821,10 +821,10 @@ Members, with results for this `network`:
 
 A prefix of one IP version, like `192.168.0.0/16` or `2001:db8::/48`. They have the members of `IpPrefix`, and `address` is an `Ipv4Address` or an `Ipv6Address`.
 
-| Property    | Value                                                                                |
-| ----------- | ------------------------------------------------------------------------------------ |
-| JSON Schema | `allOf` of `IpPrefix`'s and `{ type: 'string', pattern }`, with an example           |
-| Message     | `must be an IPv4 prefix whose host bits are zero (was "::/0")`, or the same for IPv6 |
+| Property    | Value                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON Schema | `{ type: 'string', minLength: 9, maxLength: 18, pattern }` for `Ipv4Prefix`, `minLength: 4, maxLength: 49` for `Ipv6Prefix`, with an example |
+| Message     | `must be an IPv4 prefix whose host bits are zero (was "::/0")`, or the same for IPv6                                                         |
 
 ```ts
 import { Ipv4Address, Ipv4Prefix, Ipv6Prefix } from '@horizon-republic/nominal-types';

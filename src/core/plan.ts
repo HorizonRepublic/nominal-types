@@ -17,10 +17,16 @@ const stepOf = (rule: NativeSchema<unknown>): Step => ({
   issues: (_value, input) => rule.issuesFor(input),
 });
 
+// Joined into one expression, a backreference would count the groups of the patterns before it,
+// and a group name used twice would not compile. Anything that looks like either keeps the
+// pattern apart; a false alarm only costs the folding.
+const groupReference = /\\(?:[1-9]|k<)|\(\?<(?![=!])/u;
+
 const mergeable = (rule: NominalSchema): rule is PatternSchema =>
   rule instanceof PatternSchema &&
   rule.pattern.source.startsWith('^') &&
-  !rule.pattern.source.includes('|');
+  !rule.pattern.source.includes('|') &&
+  !groupReference.test(rule.pattern.source);
 
 const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step => {
   if (rest.length === 0) {
@@ -44,9 +50,10 @@ const mergedStep = (first: PatternSchema, rest: readonly PatternSchema[]): Step 
  * Internal: patterns and type guards as a flat list of checks.
  *
  * @remarks
- * Neighbouring patterns that start with `^`, hold no `|` and share their flags are folded into one
- * expression of lookaheads, which tests the string once; such patterns match only from the start,
- * so testing them together there is the same as testing them apart.
+ * Neighbouring patterns that start with `^`, hold no `|`, no backreference and no named group, and
+ * share their flags are folded into one expression of lookaheads, which tests the string once; such
+ * patterns match only from the start, so testing them together there is the same as testing them
+ * apart.
  */
 export const planOf = (rules: ReadonlyArray<NativeSchema<unknown>>): readonly Step[] => {
   const steps: Step[] = [];

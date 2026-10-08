@@ -28,8 +28,81 @@ export const withOpenApiEncoding = (body: Record<string, unknown>): Record<strin
     : rest;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const nestedLists = new Set(['allOf', 'anyOf', 'oneOf']);
+const nestedSchemas = new Set(['items', 'not', 'additionalProperties']);
+
+// An exclusive bound as OpenAPI 3.0 writes it, unless the inclusive one beside it is stricter.
+const openApiBound = (
+  side: 'minimum' | 'maximum',
+  inclusive: unknown,
+  exclusive: number,
+): Array<[string, unknown]> => {
+  const flag = side === 'minimum' ? 'exclusiveMinimum' : 'exclusiveMaximum';
+  const stricter =
+    typeof inclusive === 'number' &&
+    (side === 'minimum' ? inclusive > exclusive : inclusive < exclusive);
+
+  return stricter
+    ? [[side, inclusive]]
+    : [
+        [side, exclusive],
+        [flag, true],
+      ];
+};
+
+/**
+ * Internal: a JSON Schema with its exclusive bounds written as OpenAPI 3.0 writes them, a
+ * `minimum` or `maximum` with `exclusiveMinimum: true` or `exclusiveMaximum: true`, all the way
+ * down.
+ */
+export const withOpenApiBounds = (body: Record<string, unknown>): Record<string, unknown> => {
+  const entries = Object.entries(body).flatMap(([key, value]): Array<[string, unknown]> => {
+    if (key === 'minimum' && typeof body['exclusiveMinimum'] === 'number') {
+      return [];
+    }
+
+    if (key === 'maximum' && typeof body['exclusiveMaximum'] === 'number') {
+      return [];
+    }
+
+    if (key === 'exclusiveMinimum' && typeof value === 'number') {
+      return openApiBound('minimum', body['minimum'], value);
+    }
+
+    if (key === 'exclusiveMaximum' && typeof value === 'number') {
+      return openApiBound('maximum', body['maximum'], value);
+    }
+
+    if (nestedLists.has(key) && Array.isArray(value)) {
+      return [
+        [key, value.map((item: unknown) => (isRecord(item) ? withOpenApiBounds(item) : item))],
+      ];
+    }
+
+    if (nestedSchemas.has(key) && isRecord(value)) {
+      return [[key, withOpenApiBounds(value)]];
+    }
+
+    if (key === 'properties' && isRecord(value)) {
+      const fields = Object.entries(value).map(([name, field]) => [
+        name,
+        isRecord(field) ? withOpenApiBounds(field) : field,
+      ]);
+
+      return [[key, Object.fromEntries(fields)]];
+    }
+
+    return [[key, value]];
+  });
+
+  return Object.fromEntries(entries);
+};
+
 const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
-  const { examples, ...rest } = withOpenApiEncoding(body);
+  const { examples, ...rest } = withOpenApiBounds(withOpenApiEncoding(body));
 
   return Array.isArray(examples) && examples.length > 0 ? { ...rest, example: examples[0] } : rest;
 };
@@ -38,8 +111,9 @@ const forOpenApi = (body: Record<string, unknown>): Record<string, unknown> => {
  * Puts the `$schema` of the requested target in front of a JSON Schema body.
  *
  * @remarks
- * OpenAPI 3.0 has no `examples` keyword on a schema, so the first one becomes its `example`, and
- * no `contentEncoding`, so base64 text becomes `format: 'byte'`.
+ * OpenAPI 3.0 has no `examples` keyword on a schema, so the first one becomes its `example`, no
+ * `contentEncoding`, so base64 text becomes `format: 'byte'`, and writes an exclusive bound as a
+ * `minimum` or `maximum` with `exclusiveMinimum: true` or `exclusiveMaximum: true`.
  *
  * @throws TypeError for a target other than `draft-2020-12`, `draft-07` or `openapi-3.0`.
  */

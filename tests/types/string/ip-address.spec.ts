@@ -220,15 +220,22 @@ describe('IpAddress', () => {
 });
 
 describe('IP addresses as JSON Schema', () => {
-  it('describes each family with its format', () => {
-    expect(Ipv4Address['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toMatchObject({
-      allOf: [{ anyOf: [{ format: 'ipv4' }, { format: 'ipv6' }] }, { format: 'ipv4' }],
+  it('describes each family with its format, without the choice of IpAddress', () => {
+    const ipv4 = Ipv4Address['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+    const ipv6 = Ipv6Address['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
+
+    expect(ipv4).toMatchObject({
+      type: 'string',
+      format: 'ipv4',
+      minLength: 7,
+      maxLength: 15,
+      description: 'an IPv4 address',
       examples: ['192.0.2.1'],
     });
-    expect(Ipv6Address['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toMatchObject({
-      allOf: [{}, { format: 'ipv6', maxLength: 45 }],
-      examples: ['2001:db8::1'],
-    });
+    expect(ipv6).toMatchObject({ format: 'ipv6', minLength: 2, maxLength: 45 });
+    expect(ipv4).not.toHaveProperty('anyOf');
+    expect(ipv4).not.toHaveProperty('allOf');
+    expect(ipv6).not.toHaveProperty('anyOf');
   });
 
   const texts = [

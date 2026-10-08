@@ -1,5 +1,6 @@
 import type { NominalSchema } from './contracts.ts';
-import { withOpenApiEncoding, withoutUri } from './json-target.ts';
+import { flattened } from './flat-schema.ts';
+import { withOpenApiBounds, withOpenApiEncoding, withoutUri } from './json-target.ts';
 import { NativeSchema } from './native-schema.ts';
 import { NoJsonSchema } from './no-json-schema.ts';
 import type { StandardJSONSchemaV1 } from './standard-spec.ts';
@@ -49,8 +50,9 @@ const describeForOpenApi = (
 };
 
 /**
- * Internal: the JSON Schema of a type's rules: the rule's own schema when there is one, an `allOf`
- * of all of them, from the root down, when there are several.
+ * Internal: the JSON Schema of a type's rules: the rule's own schema when there is one, the
+ * schemas of all of them, from the root down, merged as far as they fit together when there are
+ * several.
  *
  * @throws TypeError naming the type when a rule can't describe itself.
  */
@@ -74,15 +76,14 @@ export const describeRules = (
     return describeForOpenApi(typeName, rule, converter, side, options);
   });
   const [only] = parts;
-
-  if (parts.length === 1 && only !== undefined) {
-    return only;
-  }
-
   const uri = parts.find((part) => part['$schema'] !== undefined)?.['$schema'];
+  const body =
+    parts.length === 1 && only !== undefined
+      ? withoutUri(only)
+      : flattened(parts.map((part) => withoutUri(part)));
 
   return {
     ...(uri === undefined ? {} : { $schema: uri }),
-    allOf: parts.map((part) => withoutUri(part)),
+    ...(options.target === 'openapi-3.0' ? withOpenApiBounds(body) : body),
   };
 };

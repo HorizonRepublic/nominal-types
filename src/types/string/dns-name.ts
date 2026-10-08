@@ -6,17 +6,28 @@ import { decodePunycode, encodePunycode } from './punycode.ts';
  */
 export const labelFragment = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?';
 
+const end = '[A-Za-z0-9]';
+const inner = '[A-Za-z0-9-]';
+
 // A label with hyphens in its third and fourth places is reserved unless it starts with xn--.
-const hostLabel = `(?!(?![Xx][Nn])[A-Za-z0-9-]{2}--)${labelFragment}`;
+// Written without lookaheads for RE2-based JSON Schema tools: one or two characters, an xn- label,
+// or two other characters followed by anything that doesn't start with two hyphens.
+const hostLabel =
+  `(?:${end}{1,2}|[Xx][Nn]${inner}{0,60}${end}|` +
+  `(?:[A-WYZa-wyz0-9]${inner}|[Xx][A-MO-Za-mo-z0-9-])` +
+  `(?:${end}(?:${inner}{0,59}${end})?|-${end}(?:${inner}{0,58}${end})?))`;
 
 /**
- * Internal: a host name as a pattern, for JSON Schema; the runtime check also decodes `xn--`
- * labels, which a pattern cannot.
+ * Internal: a host name as a pattern, for JSON Schema, with the length limits left to `minLength`
+ * and `maxLength`; the runtime check also decodes `xn--` labels, which a pattern cannot.
  */
-export const hostnamePattern: RegExp = new RegExp(
-  `^(?=.{1,253}$)(?:${hostLabel}\\.)*(?![0-9]+$)${hostLabel}$`,
-  'u',
-);
+export const hostnamePattern: RegExp = new RegExp(`^(?:${hostLabel}\\.)*${hostLabel}$`, 'u');
+
+/**
+ * Internal: a host name whose last label is all digits, which a host name never is, as a pattern
+ * for the `not` of a JSON Schema.
+ */
+export const digitsLastPattern: RegExp = /(?:^|\.)[0-9]+$/u;
 
 /**
  * Internal: the top-level label `DomainName` requires, as a pattern searched from the last dot.

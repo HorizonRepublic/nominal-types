@@ -78,6 +78,7 @@ What `parse()` does with an instance of a nominal type:
 | -------------------------------------------------------------------- | --------------------------------------------- |
 | an instance of the same type, or of a type under it                  | returned as it is, without a check            |
 | an instance of a type above it                                       | its value is checked against the type's rules |
+| an instance of a type that [implies](glossary.md) it                 | its value is checked against the type's rules |
 | an instance of a variant, or of the type a variant was made from     | its value is checked against the type's rules |
 | an instance of a [sibling](glossary.md): a type with a common parent | its value is checked against the type's rules |
 | an instance of an unrelated type: no common parent                   | rejected like any other object                |
@@ -184,7 +185,7 @@ Uuid.stringify(stay.room); // '"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f"'
 value instanceof Type
 ```
 
-`true` if `value` is an instance of `Type` or of a type under it. A parent instance is not an instance of a subtype. A variant and its source are not instances of each other.
+`true` if `value` is an instance of `Type`, of a type under it or of a type that [implies](glossary.md) `Type`. A parent instance is not an instance of a subtype. A variant and its source are not instances of each other.
 
 It also works for an instance made by [another copy of the package](glossary.md), such as one loaded with `import` and one with `require`.
 
@@ -305,7 +306,7 @@ instance.equals(other: unknown): boolean
 
 Returns `true` when both:
 
-- `other` is in the same line of types: an instance of the same type, a type under it or a type above it;
+- `other` is in the same line of types: an instance of the same type, a type under it, a type above it, a type it implies or a type that implies it;
 - the values are the same.
 
 How values are compared:

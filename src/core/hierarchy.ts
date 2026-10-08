@@ -22,6 +22,18 @@ export const sensitiveSlot: unique symbol = Symbol('sensitive');
  */
 export const variantSourceSlot: unique symbol = Symbol('variantSource');
 
+/**
+ * Internal: on a class declared with the `implies` option, the brand keys its level adds besides
+ * its own, which a variant of the level drops with it.
+ */
+export const impliedSlot: unique symbol = Symbol('implied');
+
+const impliedOf = (type: object): readonly symbol[] => {
+  const implied: unknown = Object.hasOwn(type, impliedSlot) ? Reflect.get(type, impliedSlot) : [];
+
+  return Array.isArray(implied) ? implied.filter((key) => typeof key === 'symbol') : [];
+};
+
 const isSchema = (value: unknown): value is NominalSchema =>
   (typeof value === 'object' || typeof value === 'function') &&
   value !== null &&
@@ -53,13 +65,19 @@ export const rulesOf = (root: object, target: object): readonly NominalSchema[] 
 };
 
 /**
- * The level a class belongs to: the class its level builds on, and the brand keys the level adds.
+ * The level a class belongs to: the class its level builds on, the brand keys the level adds, and
+ * the brand keys it adds through `implies`.
  */
 export const levelOf = (
   root: object,
   target: object,
-): { readonly base: object | undefined; readonly keys: readonly symbol[] } => {
+): {
+  readonly base: object | undefined;
+  readonly keys: readonly symbol[];
+  readonly implied: readonly symbol[];
+} => {
   const keys: symbol[] = [];
+  const implied: symbol[] = [];
   let current: unknown = target;
 
   while (isLevel(root, current) && current !== root) {
@@ -71,16 +89,39 @@ export const levelOf = (
       keys.push(key);
     }
 
+    implied.push(...impliedOf(current));
+
     if (Object.hasOwn(current, levelSlot)) {
       const base: unknown = Reflect.get(current, levelSlot);
 
-      return { base: isLevel(root, base) ? base : undefined, keys };
+      return { base: isLevel(root, base) ? base : undefined, keys, implied };
     }
 
     current = Object.getPrototypeOf(current);
   }
 
-  return { base: undefined, keys };
+  return { base: undefined, keys, implied };
+};
+
+/**
+ * The brand keys the instances of a type carry: its own, those of the types above it and those it
+ * implies, read from the prototype so a type from another copy of the package answers too.
+ */
+export const brandsCarried = (prototype: object, prefix: string): readonly symbol[] => {
+  const found = new Set<symbol>();
+  let current: unknown = prototype;
+
+  while (typeof current === 'object' && current !== null) {
+    for (const key of Object.getOwnPropertySymbols(current)) {
+      if (Symbol.keyFor(key)?.startsWith(prefix) === true) {
+        found.add(key);
+      }
+    }
+
+    current = Object.getPrototypeOf(current);
+  }
+
+  return [...found].filter((key) => Reflect.get(prototype, key) === true);
 };
 
 /**

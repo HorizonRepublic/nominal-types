@@ -1,10 +1,18 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { Integer } from './integer.ts';
+import { NonNegativeInteger } from './non-negative-integer.ts';
 import { numberRule } from './number-rule.ts';
+import { PositiveNumber } from './positive-number.ts';
 
-const PositiveIntegerBase: SubtypeOf<typeof Integer, 'nominal.PositiveInteger'> = Integer.subtype(
+const PositiveIntegerBase: SubtypeOf<
+  typeof Integer,
+  'nominal.PositiveInteger',
+  number,
+  typeof PositiveNumber | typeof NonNegativeInteger
+> = Integer.subtype(
   'nominal.PositiveInteger',
   numberRule('a positive integer', (value) => value > 0, { type: 'integer', minimum: 1 }),
+  { implies: [PositiveNumber, NonNegativeInteger] },
 );
 
 /**

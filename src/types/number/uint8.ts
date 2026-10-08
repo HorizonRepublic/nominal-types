@@ -1,11 +1,13 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import { Int16 } from './int16.ts';
 import { Integer } from './integer.ts';
 import { integerBetween } from './number-rule.ts';
+import { Uint16 } from './uint16.ts';
 
-const Uint8Base: SubtypeOf<typeof Integer, 'nominal.Uint8'> = Integer.subtype(
-  'nominal.Uint8',
-  integerBetween(0, 255, 'an unsigned 8-bit integer'),
-);
+const Uint8Base: SubtypeOf<typeof Integer, 'nominal.Uint8', number, typeof Uint16 | typeof Int16> =
+  Integer.subtype('nominal.Uint8', integerBetween(0, 255, 'an unsigned 8-bit integer'), {
+    implies: [Uint16, Int16],
+  });
 
 /**
  * An integer from 0 to 255, the range of an unsigned 8-bit integer.

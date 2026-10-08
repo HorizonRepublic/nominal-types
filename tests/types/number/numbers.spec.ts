@@ -179,9 +179,9 @@ describe('the number hierarchy', () => {
     expect(valueOf(parent.parse(value))).not.toBeInstanceOf(child);
   });
 
-  it('keeps types with the same value apart', () => {
-    expect(new PositiveInteger(1)).not.toBeInstanceOf(PositiveNumber);
-    expect(new PositiveInteger(1)).not.toBeInstanceOf(NonNegativeInteger);
+  it('keeps types with the same value apart where neither implies the other', () => {
+    expect(new PositiveNumber(1)).not.toBeInstanceOf(PositiveInteger);
+    expect(new NonNegativeInteger(1)).not.toBeInstanceOf(PositiveInteger);
     expect(new Uint8(1)).not.toBeInstanceOf(Int8);
     expect(new Float32(1)).not.toBeInstanceOf(Integer);
   });

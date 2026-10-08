@@ -48,20 +48,6 @@ Fix: run `npx tsc --noEmit`, or let your editor run it. The first line of its ou
 main.ts(9,18): error TS2345: Argument of type 'Username' is not assignable to parameter of type 'Sku'.
 ```
 
-### A Uint8 is not accepted as a NonNegativeInteger
-
-The compiler says `Argument of type 'Uint8' is not assignable to parameter of type 'NonNegativeInteger'.`
-
-Cause: the sized types, such as `Uint8` and `Int32`, sit next to the sign types under `Integer`, not under them. See [Built-in number types](../../reference/types/number.md).
-
-Fix: move the value with `parse()`:
-
-```ts
-import { NonNegativeInteger, Uint8 } from '@horizon-republic/nominal-types';
-
-NonNegativeInteger.parse(new Uint8(3)); // { ok: true, value: NonNegativeInteger { value: 3 } }
-```
-
 ## Declare a type
 
 ### Warning: the type name is declared twice

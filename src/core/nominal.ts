@@ -4,18 +4,21 @@
 import { brandCheck } from './compile.ts';
 import type {
   AnyNominalType,
+  ImplyingType,
+  NominalInstance,
   ObjectInstance,
   ObjectRule,
   InputOf,
   NominalOptions,
   NominalSchema,
-  NominalType,
   Parsed,
   ValueOf,
 } from './contracts.ts';
 import {
   brandKeySlot,
+  brandsCarried,
   descendsFrom,
+  impliedSlot,
   isVariantPair,
   levelOf,
   levelSlot,
@@ -143,11 +146,10 @@ class NominalRoot {
     checkObjectRule('variant', this, rule);
 
     const level = levelOf(NominalRoot, this);
-    const derived = derive(this, name, asRule(rule), level.base, options);
-
-    for (const key of level.keys) {
-      Object.defineProperty(derived.prototype, key, { value: false });
-    }
+    const derived = derive(this, name, asRule(rule), level.base, options, [
+      ...level.keys,
+      ...level.implied,
+    ]);
 
     Object.defineProperty(derived, variantSourceSlot, { value: level.keys });
 
@@ -289,12 +291,74 @@ const objectWriterOf = (target: Type): ObjectWriter | undefined => {
   return write === false ? undefined : write;
 };
 
+const brandPrefix = `${vendor}/`;
+
+// A listed type can't have members the new type lacks, or `instanceof` would promise methods that
+// aren't there.
+const missingMember = (prototype: object, implied: object): string | undefined => {
+  let missing: string | undefined;
+
+  for (
+    let current: unknown = implied;
+    missing === undefined && typeof current === 'object' && current !== null;
+    current = Object.getPrototypeOf(current)
+  ) {
+    missing = Object.getOwnPropertyNames(current).find((member) => !(member in prototype));
+  }
+
+  return missing;
+};
+
+// Brands a new type with the keys the listed types carry and it doesn't, counting the keys a
+// variant drops as not carried, and with `false` for the dropped keys it doesn't imply again.
+const defineImplied = (
+  derived: typeof NominalRoot,
+  implies: readonly unknown[],
+  dropped: readonly symbol[],
+): readonly symbol[] => {
+  const { prototype, typeName } = derived;
+  const implied = new Set<symbol>();
+
+  for (const type of implies) {
+    if (!isNominalType(type)) {
+      throw new TypeError(`${typeName}: implies takes nominal types`);
+    }
+
+    const missing = missingMember(prototype, type.prototype);
+
+    if (missing !== undefined) {
+      throw new TypeError(
+        `${typeName}: cannot imply ${type.typeName}, whose instances have ${missing}`,
+      );
+    }
+
+    for (const key of brandsCarried(type.prototype, brandPrefix)) {
+      if (Reflect.get(prototype, key) !== true || dropped.includes(key)) {
+        implied.add(key);
+      }
+    }
+  }
+
+  for (const key of dropped) {
+    Object.defineProperty(prototype, key, { value: implied.has(key) });
+  }
+
+  for (const key of implied) {
+    Object.defineProperty(prototype, key, { value: true });
+  }
+
+  Object.defineProperty(derived, impliedSlot, { value: [...implied] });
+
+  return [...implied];
+};
+
 const derive = (
   parent: typeof NominalRoot,
   name: string,
   rule: NominalSchema | undefined,
   base: object | undefined,
   options: NominalOptions | undefined,
+  dropped: readonly symbol[] = [],
 ): typeof NominalRoot => {
   const derived = class extends parent {
     public static override readonly typeName: string = name;
@@ -321,7 +385,13 @@ const derive = (
     }
   }
 
-  registerType(name, derived, { parent: parent.typeName, base: base === parent, rule });
+  const implied = defineImplied(derived, options?.implies ?? [], dropped);
+
+  registerType(name, derived, {
+    parent: [parent.typeName, ...implied.map(String).toSorted()].join(),
+    base: base === parent,
+    rule,
+  });
 
   return derived;
 };
@@ -357,21 +427,35 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  * }
  * ```
  */
-export function Nominal<const Name extends string>(
+export function Nominal<const Name extends string, Implied extends AnyNominalType = never>(
   name: Name,
   pattern: RegExp,
-  options?: NominalOptions,
-): NominalType<Name, NominalSchema<string, string>>;
-export function Nominal<const Name extends string, Input, Value extends object>(
+  options?: NominalOptions<Implied>,
+): ImplyingType<Name, NominalSchema<string, string>, NominalInstance<Name, string>, Implied>;
+export function Nominal<
+  const Name extends string,
+  Input,
+  Value extends object,
+  Implied extends AnyNominalType = never,
+>(
   name: Name,
   schema: ObjectRule<Input, Value>,
-  options?: NominalOptions,
-): NominalType<Name, NominalSchema<Input, Value>, ObjectInstance<Name, Input, Value>>;
-export function Nominal<const Name extends string, Schema extends NominalSchema>(
+  options?: NominalOptions<Implied>,
+): ImplyingType<Name, NominalSchema<Input, Value>, ObjectInstance<Name, Input, Value>, Implied>;
+export function Nominal<
+  const Name extends string,
+  Schema extends NominalSchema,
+  Implied extends AnyNominalType = never,
+>(
   name: Name,
   schema: Schema,
-  options?: NominalOptions,
-): NominalType<Name, NominalSchema<InputOf<Schema>, ValueOf<Schema>>>;
+  options?: NominalOptions<Implied>,
+): ImplyingType<
+  Name,
+  NominalSchema<InputOf<Schema>, ValueOf<Schema>>,
+  NominalInstance<Name, ValueOf<Schema>>,
+  Implied
+>;
 export function Nominal(
   name: string,
   schema: NominalSchema | RegExp,

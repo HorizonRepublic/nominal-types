@@ -1,11 +1,14 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { integerBetween } from './number-rule.ts';
+import { PositiveInteger } from './positive-integer.ts';
 import { Uint16 } from './uint16.ts';
 
-const PortBase: SubtypeOf<typeof Uint16, 'nominal.Port'> = Uint16.subtype(
-  'nominal.Port',
-  integerBetween(1, 65535, 'a port from 1 to 65535', { examples: [8080] }),
-);
+const PortBase: SubtypeOf<typeof Uint16, 'nominal.Port', number, typeof PositiveInteger> =
+  Uint16.subtype(
+    'nominal.Port',
+    integerBetween(1, 65535, 'a port from 1 to 65535', { examples: [8080] }),
+    { implies: [PositiveInteger] },
+  );
 
 /**
  * A TCP or UDP port number from 1 to 65535, as RFC 6335 assigns them.

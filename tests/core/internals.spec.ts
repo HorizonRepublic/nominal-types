@@ -32,7 +32,7 @@ describe('hierarchy', () => {
   });
 
   it('finds no level on a class made without one', () => {
-    expect(levelOf(Root, Plain)).toStrictEqual({ base: undefined, keys: [] });
+    expect(levelOf(Root, Plain)).toStrictEqual({ base: undefined, keys: [], implied: [] });
   });
 });
 

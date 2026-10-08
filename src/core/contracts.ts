@@ -1,4 +1,5 @@
 import type { AnyConstraint } from './constraint-types.ts';
+import type { SubtypeOf, VariantOf } from './derived-types.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from './standard-spec.ts';
 
@@ -133,13 +134,31 @@ export interface ObjectCopy<Input> {
 /**
  * Options for `Nominal()`, `subtype()` and `variant()`.
  */
-export interface NominalOptions {
+export interface NominalOptions<Implied extends AnyNominalType = AnyNominalType> {
   /**
    * Leaves the rejected value out of the type's messages, for values such as passwords or personal
    * data: `must be an email address (was a string of 12 characters)`. Subtypes and variants
    * inherit it; `false` turns it off for one of them.
    */
   readonly sensitive?: boolean;
+  /**
+   * Types that accept every value this type accepts, so its instances pass for theirs as well:
+   * at compile time, and for `instanceof` and `equals()`.
+   *
+   * @remarks
+   * The declaration is trusted, never checked against values, so list a type only when each
+   * value of the new type passes it. `parse()` of an implied type still checks the value and
+   * returns an instance of its own. The new type also carries what the listed types imply. A type
+   * with members the new type lacks can't be listed.
+   *
+   * @example
+   * ```ts
+   * class Stars extends Uint8.subtype('review.Stars', oneToFive, { implies: [PositiveInteger] }) {}
+   *
+   * new Stars(4) instanceof PositiveInteger; // true
+   * ```
+   */
+  readonly implies?: readonly Implied[];
 }
 
 /**
@@ -209,6 +228,7 @@ export interface NominalType<
     Type extends AnyNominalType,
     const SubtypeName extends string,
     Value extends ValueOf<Type['rule']> = ValueOf<Type['rule']>,
+    Implied extends AnyNominalType = never,
   >(
     this: Type,
     name: SubtypeName,
@@ -216,17 +236,21 @@ export interface NominalType<
       | NominalSchema<ValueOf<Type['rule']>, Value>
       | (ValueOf<Type['rule']> extends string ? RegExp : never)
       | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
-    options?: NominalOptions,
-  ): SubtypeOf<Type, SubtypeName, Value>;
-  variant<Type extends AnyNominalType, const VariantName extends string>(
+    options?: NominalOptions<Implied>,
+  ): SubtypeOf<Type, SubtypeName, Value, Implied>;
+  variant<
+    Type extends AnyNominalType,
+    const VariantName extends string,
+    Implied extends AnyNominalType = never,
+  >(
     this: Type,
     name: VariantName,
     rule:
       | NominalSchema<ValueOf<Type['rule']>, ValueOf<Type['rule']>>
       | (ValueOf<Type['rule']> extends string ? RegExp : never)
       | (ValueOf<Type['rule']> extends object ? AnyConstraint & NominalSchema : never),
-    options?: NominalOptions,
-  ): VariantOf<Type, VariantName>;
+    options?: NominalOptions<Implied>,
+  ): VariantOf<Type, VariantName, Implied>;
 }
 
 /**
@@ -240,31 +264,6 @@ export type Narrowed<Instance extends NominalInstance<string, unknown>, Value> =
   : Instance & { readonly value: Immutable<Value> };
 
 /**
- * The class `subtype` returns: the parent's rules and behaviour, an optional rule of its own, and a
- * brand of its own on top of the parent's.
- *
- * @remarks
- * A rule that narrows the value, such as `n.oneOf()`, narrows `value` on the instance too.
- */
-export type SubtypeOf<
-  Parent extends AnyNominalType,
-  Name extends string,
-  Value = ValueOf<Parent['rule']>,
-> = Omit<Parent, 'prototype' | 'typeName'> & {
-  new (input: InputOf<Parent['rule']>): Narrowed<Parent['prototype'], Value> & Branded<Brand<Name>>;
-  readonly prototype: Narrowed<Parent['prototype'], Value> & Branded<Brand<Name>>;
-  readonly typeName: Name;
-};
-
-/**
- * An instance of a variant: the behaviour of the type it was made from, without that type's brand.
- */
-export type VariantInstance<Source extends AnyNominalType, Name extends string> = Unbranded<
-  Source['prototype']
-> &
-  Branded<Omit<BrandsOf<Source['prototype']>, Source['typeName']> & Brand<Name>>;
-
-/**
  * An instance without its brand, named so declaration files can spell out a variant.
  */
 export type Unbranded<Instance> = Omit<Instance, typeof brand>;
@@ -274,19 +273,4 @@ export type Unbranded<Instance> = Omit<Instance, typeof brand>;
  */
 export type BrandsOf<Instance extends Branded<unknown>> = Instance[typeof brand];
 
-/**
- * The class `variant` returns: the behaviour of its source, the rules above the source's level,
- * its own rule in place of the source's, and a brand of its own that is not the source's.
- *
- * @remarks
- * A variant sits next to its source rather than below it, so neither passes for the other; moving
- * a value between them goes through `parse`, which checks it against the target's rules.
- */
-export type VariantOf<Source extends AnyNominalType, Name extends string> = Omit<
-  Source,
-  'prototype' | 'typeName'
-> & {
-  new (input: InputOf<Source['rule']>): VariantInstance<Source, Name>;
-  readonly prototype: VariantInstance<Source, Name>;
-  readonly typeName: Name;
-};
+export type { ImplyingType, SubtypeOf, VariantInstance, VariantOf } from './derived-types.ts';

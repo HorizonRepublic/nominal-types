@@ -119,7 +119,7 @@ Accepts a whole number from `Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGE
 | `Uint16` | 0 to 65,535                     | `{ type: 'integer', minimum: 0, maximum: 65535 }`      |
 | `Uint32` | 0 to 4,294,967,295              | `{ type: 'integer', minimum: 0, maximum: 4294967295 }` |
 
-Messages end with `a signed 8-bit integer`, `an unsigned 16-bit integer` and so on. The sized types sit next to the sign types: a `Uint8` is not a `NonNegativeInteger`.
+Messages end with `a signed 8-bit integer`, `an unsigned 16-bit integer` and so on. The sized types sit next to the sign types, and most of them [imply](#implied-types) some: a `Uint8` is also a `NonNegativeInteger`.
 
 ## Port
 
@@ -138,6 +138,43 @@ import { n, Port } from '@horizon-republic/nominal-types';
 new Port(8080).value; // 8080
 n.of(Port).fromString().parse('443'); // { ok: true, value: Port { value: 443 } }
 n.of(Port).fromString().parse('+80'); // { ok: false, issues: [{ message: 'must be a number (was "+80")' }] }
+```
+
+## Implied types
+
+A type [implies](../glossary.md) another when every value it accepts is accepted by the other. Its instances then fit where the other type is expected:
+
+- the compiler accepts them;
+- `instanceof` is `true`;
+- `equals()` compares them by value.
+
+| Type                 | Also passes for                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PositiveNumber`     | `NonNegativeNumber`                                                                                          |
+| `NegativeNumber`     | `NonPositiveNumber`                                                                                          |
+| `PositiveInteger`    | `PositiveNumber`, `NonNegativeInteger`, `NonNegativeNumber`                                                  |
+| `NegativeInteger`    | `NegativeNumber`, `NonPositiveInteger`, `NonPositiveNumber`                                                  |
+| `NonNegativeInteger` | `NonNegativeNumber`                                                                                          |
+| `NonPositiveInteger` | `NonPositiveNumber`                                                                                          |
+| `Int8`               | `Int16`, `Int32`, `Float32`                                                                                  |
+| `Int16`              | `Int32`, `Float32`                                                                                           |
+| `Uint8`              | `Uint16`, `Uint32`, `Int16`, `Int32`, `Float32`, `NonNegativeInteger`, `NonNegativeNumber`                   |
+| `Uint16`             | `Uint32`, `Int32`, `Float32`, `NonNegativeInteger`, `NonNegativeNumber`                                      |
+| `Uint32`             | `NonNegativeInteger`, `NonNegativeNumber`                                                                    |
+| `Port`               | `PositiveInteger`, `PositiveNumber`, `NonNegativeInteger`, `NonNegativeNumber`, `Uint32`, `Int32`, `Float32` |
+
+The other number types imply nothing. `Latitude`, `Longitude` and `Port` are never implied: a value in their range is not a coordinate or a port because of that.
+
+`parse()` of an implied type checks the value again and returns an instance of that type:
+
+```ts
+import { NonNegativeInteger, Uint8 } from '@horizon-republic/nominal-types';
+
+const count = (value: NonNegativeInteger): number => value.value;
+
+count(new Uint8(3)); // 3
+NonNegativeInteger.parse(new Uint8(3)); // { ok: true, value: NonNegativeInteger { value: 3 } }
+new Uint8(3).equals(new NonNegativeInteger(3)); // true
 ```
 
 [← Built-in types](README.md)

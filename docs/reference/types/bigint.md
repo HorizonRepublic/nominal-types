@@ -60,4 +60,23 @@ Each sign type, and `Int64` and `Uint64`, adds an example its JSON Schema accept
 
 The JSON Schema limits the length of the string, not the value: `'9223372036854775808'` passes the schema of `Int64` and is rejected by the type. Messages show the value as it was given: `must be a signed 64-bit integer (was "9223372036854775808")` for the string, `(was 9223372036854775808n)` for the bigint.
 
+## Implied types
+
+A type [implies](../glossary.md) another when every value it accepts is accepted by the other. Its instances fit where the other type is expected, for the compiler, `instanceof` and `equals()`.
+
+| Type             | Also passes for     |
+| ---------------- | ------------------- |
+| `PositiveBigInt` | `NonNegativeBigInt` |
+| `NegativeBigInt` | `NonPositiveBigInt` |
+| `Uint64`         | `NonNegativeBigInt` |
+
+The other big integer types imply nothing. `parse()` of an implied type checks the value again and returns an instance of that type:
+
+```ts
+import { NonNegativeBigInt, Uint64 } from '@horizon-republic/nominal-types';
+
+NonNegativeBigInt.parse(new Uint64(42n)); // { ok: true, value: NonNegativeBigInt { value: 42n } }
+new Uint64(42n) instanceof NonNegativeBigInt; // true
+```
+
 [← Built-in types](README.md)

@@ -2,19 +2,21 @@
 
 The functions that build schemas from nominal types: lists, optional values, objects and rules across fields. Terms are explained in the [glossary](glossary.md).
 
-| Entry                                | What it does                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule         |
-| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                           |
-| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `accepts()`, `toPlain()`, `array()` and more  |
-| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                   |
-| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas            |
-| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `fromEnv()`, `keys`                      |
-| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                               |
-| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                   |
-| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                  |
-| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                            |
-| [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response |
+| Entry                                | What it does                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule           |
+| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                             |
+| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `accepts()`, `toPlain()`, `array()` and more    |
+| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                     |
+| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas              |
+| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `partial()`, `pick()`, `extend()` and more |
+| [`n.union()`](#nunion)               | A schema for an object of one of several shapes, told apart by a field            |
+| [`UnionSchema`](#unionschema)        | What `n.union()` returns: `key`, `tags`                                           |
+| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                 |
+| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                     |
+| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                    |
+| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                              |
+| [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response   |
 
 Every schema here is a [Standard Schema](glossary.md) and a [Standard JSON Schema](glossary.md). Each method returns a new schema and leaves the old one as it is.
 
@@ -30,6 +32,7 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | ------------------ | ----------------------------------------------- | ------------------------------------------------------ |
 | `n.of()`           | A type as a plain schema object                 | [`n.of()`](#nof)                                       |
 | `n.object()`       | A schema for an object                          | [`n.object()`](#nobject)                               |
+| `n.union()`        | A schema for an object of one of several shapes | [`n.union()`](#nunion)                                 |
 | `n.constraint()`   | A rule across fields of an object               | [`n.constraint()`](#nconstraint)                       |
 | `n.matching()`     | A rule from a regular expression                | [`n.matching()`](declaring.md#nmatching)               |
 | `n.satisfying()`   | A rule from a type guard                        | [`n.satisfying()`](declaring.md#nsatisfying)           |
@@ -40,7 +43,7 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | `n.isObject()`     | Tells an `n.object()` schema from other values  | [`n.isObject()`](#nisobject)                           |
 | `n.isConstraint()` | Tells a constraint from other values            | [`n.isConstraint()`](#nisconstraint)                   |
 
-`Nominal`, the built-in types, the classes such as `TypeSchema` and `ObjectSchema`, and every TypeScript type are imported by their own names.
+`Nominal`, the built-in types, the classes such as `TypeSchema`, `ObjectSchema` and `UnionSchema`, and every TypeScript type are imported by their own names.
 
 ## n.of()
 
@@ -409,11 +412,36 @@ See also: [How to check a request body with n.object()](../guides/core/check-an-
 
 The class `n.object()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It adds:
 
-| Member      | Description                                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `strict()`  | The same schema, refusing undeclared keys instead of dropping them. Each one gives the issue `is not allowed`, with the key as its `path`. |
-| `fromEnv()` | The same schema, reading text for each field that is a nominal type with a [text form](glossary.md).                                       |
-| `keys`      | The field names, in the order they were declared.                                                                                          |
+| Member              | Description                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `strict()`          | The same schema, refusing undeclared keys instead of dropping them. Each one gives the issue `is not allowed`, with the key as its `path`. |
+| `fromEnv()`         | The same schema, reading text for each field that is a nominal type with a [text form](glossary.md).                                       |
+| `partial(...keys)`  | The same schema with every field, or the fields named, allowed to be missing.                                                              |
+| `required(...keys)` | The same schema with every field, or the fields named, required.                                                                           |
+| `pick(...keys)`     | The same schema with only the fields named.                                                                                                |
+| `omit(...keys)`     | The same schema without the fields named.                                                                                                  |
+| `extend(fields)`    | The same schema with more fields. A field of the same name is replaced in place.                                                           |
+| `keys`              | The field names, in the order they were declared.                                                                                          |
+
+Each method returns a new schema. They keep `strict()`, `fromEnv()` and each other's changes, so they chain: `CreateOrder.omit('note').partial().strict()`.
+
+| Method       | Fields                                                                                                            | Constraints                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `partial()`  | May be missing. A field that holds `undefined` counts as missing.                                                 | One that reads such a field runs only when all its fields are present. |
+| `required()` | Must be present, also those whose schema accepts `undefined`. A field that holds `undefined` gives `is required`. | Kept.                                                                  |
+| `pick()`     | Only the fields named, in declared order.                                                                         | Kept when every field it reads is kept, dropped otherwise.             |
+| `omit()`     | All but the fields named.                                                                                         | Kept when every field it reads is kept, dropped otherwise.             |
+| `extend()`   | The new fields at the end. After `fromEnv()`, they are read from text too.                                        | Kept.                                                                  |
+
+The TypeScript types follow: `partial()` gives `Partial` of the value, `pick()` gives `Pick`, `omit()` gives `Omit`. The JSON Schema follows too: its `properties` and `required` list the fields the new schema has.
+
+Throws a `TypeError`:
+
+| Case                                      | Message                                         |
+| ----------------------------------------- | ----------------------------------------------- |
+| a name the object doesn't declare         | `pick(): the object has no field named coupon`  |
+| `pick()` or `omit()` with no name         | `pick(): name at least one field`               |
+| `extend()` with a field named `__proto__` | `n.object(): a field cannot be named __proto__` |
 
 `fromEnv()` is for `process.env` and other records of strings, such as query parameters:
 
@@ -454,7 +482,92 @@ Config.parse({ PORT: 'abc', DEBUG: 'yes' });
 // ] }
 ```
 
-See also: [How to read configuration from environment variables](../guides/core/read-config.md).
+Example with `partial()`, `pick()` and `extend()`:
+
+```ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Invite = n.object({ email: Email, seats: PositiveInteger });
+
+Invite.partial().parse({ seats: 3 }); // { ok: true, value: { seats: PositiveInteger } }
+Invite.pick('email').keys; // ['email']
+Invite.extend({ owner: Email }).keys; // ['email', 'seats', 'owner']
+```
+
+See also: [How to read configuration from environment variables](../guides/core/read-config.md), [How to check a request body with n.object()](../guides/core/check-an-object.md#check-a-patch-body).
+
+## n.union()
+
+```ts
+n.union(key, variants): UnionSchema<UnionInput<Key, Variants>, UnionValue<Key, Variants>>
+```
+
+| Parameter  | Type                           | Description                                                        |
+| ---------- | ------------------------------ | ------------------------------------------------------------------ |
+| `key`      | `string`                       | The field that holds the tag.                                      |
+| `variants` | `Record<string, ObjectSchema>` | Maps each tag to the [`n.object()`](#nobject) schema of its shape. |
+
+Returns: a [`UnionSchema`](#unionschema).
+
+What it does with an input:
+
+1. It refuses anything that isn't an object, arrays included: `must be an object (was "x")`.
+2. It reads the tag from the input's own `key`. A missing tag, or one no variant has, gives one issue under the key: `must be one of "card", "invoice" (was "cash")`. With one variant, the message is `must be "card" (was …)`.
+3. It checks the input with the variant of that tag, and only that one. Issues have paths from the top of the input.
+4. It returns the variant's value with the tag under `key`, as its first field. A variant need not declare `key`; a field it declares under `key` is replaced by the tag.
+
+Tags are strings, compared with `===`: `'Card'` is not `'card'`, and `1` is not `'1'`. A variant keeps its `strict()`, `partial()` and constraints.
+
+The type of the value is a union of one object per variant, each with its tag under `key`. Checking `value[key]` narrows it to one variant.
+
+Throws a `TypeError`:
+
+| Case                                         | Message                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| no variants                                  | `n.union(): list at least one variant`                                    |
+| a variant that is not an `n.object()` schema | `n.union(): the variant "card" must be an n.object() schema (was object)` |
+| a key that is not a string, or `__proto__`   | `n.union(): the key must be a string other than __proto__ (was 1)`        |
+
+Example:
+
+```ts
+import { Email, n, NonBlankString } from '@horizon-republic/nominal-types';
+
+const Payment = n.union('method', {
+  card: n.object({ token: NonBlankString }),
+  invoice: n.object({ email: Email }),
+});
+
+Payment.parse({ method: 'card', token: 'tok_1' });
+// { ok: true, value: { method: 'card', token: NonBlankString } }
+Payment.parse({ method: 'cash' });
+// { ok: false, issues: [{ message: 'must be one of "card", "invoice" (was "cash")', path: ['method'] }] }
+```
+
+Its JSON Schema is a `oneOf` of the variants. In each, `properties[key]` is `{ const: tag }` and `key` is required. For OpenAPI 3.0, which has no `const`, it is `{ type: 'string', enum: [tag] }`, and the schema adds `discriminator: { propertyName: key }`.
+
+See also: [How to accept one of several object shapes](../guides/core/accept-one-of-several-shapes.md).
+
+## UnionSchema
+
+The class `n.union()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the union in `value`. It adds:
+
+| Member | Description                                      |
+| ------ | ------------------------------------------------ |
+| `key`  | The field that holds the tag.                    |
+| `tags` | The tags, in the order the variants were listed. |
+
+```ts
+import { Email, n, NonBlankString } from '@horizon-republic/nominal-types';
+
+const Payment = n.union('method', {
+  card: n.object({ token: NonBlankString }),
+  invoice: n.object({ email: Email }),
+});
+
+Payment.key; // 'method'
+Payment.tags; // ['card', 'invoice']
+```
 
 ## n.constraint()
 

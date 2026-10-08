@@ -62,10 +62,10 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    44,
-    15,
+    47,
+    16,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 78, 28],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 79, 28],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,

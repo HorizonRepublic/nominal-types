@@ -1,95 +1,37 @@
 import { checkConstraintFields } from './constraint-fields.ts';
-import type {
-  AnyConstraint,
-  ConstraintField,
-  ConstraintInput,
-  ConstraintValue,
-} from './constraint-types.ts';
+import type { AnyConstraint } from './constraint-types.ts';
 import { objectPaths } from './fast-paths.ts';
-import { describeField } from './field-json.ts';
-import { foreignRunner } from './foreign-runner.ts';
-import { hideValues } from './hidden-values.ts';
-import { isNominalType } from './nominal.ts';
+import {
+  checkedKeys,
+  constraintKeys,
+  fieldsOf,
+  gatedConstraints,
+  hidingValues,
+  keptPresence,
+  noPresence,
+  objectParts,
+  textFields,
+  withPresence,
+} from './object-helpers.ts';
+import type { ObjectParts, Presence } from './object-helpers.ts';
 import { objectMark } from './object-members.ts';
 import { objectShape } from './object-shape.ts';
-import type { ObjectField } from './object-shape.ts';
-import { Rejection } from './rejection.ts';
-import { textFormOf } from './text-form.ts';
-import { instanceParserFor } from './type-functions.ts';
-import { schemaOf, TypeSchema } from './type-schema.ts';
+import type {
+  Extended,
+  FieldKey,
+  Loosened,
+  LoosenedValue,
+  ObjectFields,
+  ObjectInput,
+  ObjectValue,
+  Omitted,
+  Picked,
+  TextInput,
+  Tightened,
+} from './object-types.ts';
+import { TypeSchema } from './type-schema.ts';
 
-/**
- * The fields of an object schema: each key to a nominal type, a `n.of()` or `n.object()`
- * schema, or any synchronous Standard Schema.
- */
-export type ObjectFields = Readonly<Record<string, ConstraintField>>;
-
-/**
- * What an object schema read from strings accepts: each field's input, or a string, any of them
- * possibly missing, as in `process.env`; the schema reports the ones it needs.
- */
-export type TextInput<Input> = {
-  readonly [Key in keyof Input]?: Input[Key] | string | undefined;
-};
-
-type Simplify<Shape> = { [Key in keyof Shape]: Shape[Key] };
-
-type OptionalKeys<Fields extends ObjectFields> = {
-  [Key in keyof Fields]: undefined extends ConstraintInput<Fields[Key]> ? Key : never;
-}[keyof Fields];
-
-/**
- * What an object schema gives: the value of each field, the ones that may be missing optional.
- */
-export type ObjectValue<Fields extends ObjectFields> = Simplify<
-  {
-    readonly [Key in Exclude<keyof Fields, OptionalKeys<Fields>>]: ConstraintValue<Fields[Key]>;
-  } & {
-    readonly [Key in OptionalKeys<Fields>]?: Exclude<ConstraintValue<Fields[Key]>, undefined>;
-  }
->;
-
-/**
- * What an object schema accepts: the input of each field, the ones that may be missing optional.
- */
-export type ObjectInput<Fields extends ObjectFields> = Simplify<
-  {
-    readonly [Key in Exclude<keyof Fields, OptionalKeys<Fields>>]: ConstraintInput<Fields[Key]>;
-  } & {
-    readonly [Key in OptionalKeys<Fields>]?: ConstraintInput<Fields[Key]>;
-  }
->;
-
-const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
-  isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, 'n.object()');
-
-const fieldsOf = (fields: ObjectFields): ObjectField[] =>
-  Object.entries(fields).map(([key, field]) => {
-    if (key === '__proto__') {
-      throw new TypeError('n.object(): a field cannot be named __proto__');
-    }
-
-    const run = runnerOf(field);
-
-    return {
-      key,
-      run,
-      optional: !(run() instanceof Rejection),
-      describe: (side, options) => describeField(field, side, options, 'object'),
-    };
-  });
-
-type ObjectShape = ReturnType<typeof objectShape>;
-
-const hidingValues = (shape: ObjectShape): ObjectShape => ({
-  run: (input) => {
-    const result = shape.run(input);
-
-    return result instanceof Rejection ? new Rejection(hideValues(result.issues)) : result;
-  },
-  describe: shape.describe,
-  sensitive: true,
-});
+export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './object-types.ts';
 
 /**
  * An object made of fields, each checked by its own schema: what `n.object()` returns.
@@ -107,18 +49,20 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   readonly #constraints: readonly AnyConstraint[];
   readonly #strict: boolean;
   readonly #hidden: boolean;
+  readonly #presence: Presence;
 
   /**
-   * Internal: built by `n.object()`, `strict()` and `fromEnv()`; `hidden` leaves the values out of
-   * the messages.
+   * Internal: built by `n.object()` and the methods below; `hidden` leaves the values out of the
+   * messages, `presence` makes fields optional (`true`) or required (`false`).
    */
   public constructor(
     source: ObjectFields,
     constraints: readonly AnyConstraint[],
     strict: boolean,
     hidden: boolean = false,
+    presence: Presence = noPresence,
   ) {
-    const fields = fieldsOf(source);
+    const fields = fieldsOf(source, presence);
 
     checkConstraintFields(
       'n.object',
@@ -126,9 +70,14 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
       constraints,
     );
 
-    const shape = objectShape(fields, constraints, strict);
+    const effective = gatedConstraints(constraints, presence);
+    const shape = objectShape(fields, effective, strict);
     const ownShape = hidden ? hidingValues(shape) : shape;
-    const paths = objectPaths(fields, source, { strict, constraints, run: ownShape.run });
+    const paths = objectPaths(fields, source, {
+      strict,
+      constraints: effective,
+      run: ownShape.run,
+    });
 
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
@@ -138,6 +87,8 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     this.#constraints = constraints;
     this.#strict = strict;
     this.#hidden = hidden;
+    this.#presence = presence;
+    objectParts.set(this, { source, constraints, strict, hidden, presence });
     Object.defineProperty(this, objectMark, { value: true });
   }
 
@@ -145,7 +96,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * This schema, refusing keys it doesn't declare instead of dropping them.
    */
   public strict(): ObjectSchema<Input, Output> {
-    return new ObjectSchema(this.#source, this.#constraints, true, this.#hidden);
+    return this.#with({ strict: true });
   }
 
   /**
@@ -171,54 +122,149 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * ```
    */
   public fromEnv(): ObjectSchema<TextInput<Input>, Output> {
-    const fields = Object.fromEntries(
-      Object.entries(this.#source).map(([key, field]) => [
-        key,
-        isNominalType(field) && textFormOf(field) !== undefined
-          ? schemaOf(field).fromString()
-          : field,
-      ]),
-    );
+    return this.#with({ source: textFields(this.#source), hidden: true });
+  }
 
-    return new ObjectSchema(fields, this.#constraints, this.#strict, true);
+  /**
+   * This schema with every field, or the fields named, allowed to be missing: for a PATCH body
+   * that changes only the fields it sends.
+   *
+   * @remarks
+   * A field given as `undefined` counts as missing. A constraint that reads such a field runs only
+   * when every one of those fields is present.
+   *
+   * @throws TypeError for a name the object doesn't declare.
+   *
+   * @example
+   * ```ts
+   * const UpdateOrder = CreateOrder.partial();
+   * const UpdateNote = CreateOrder.partial('note', 'quantity');
+   * ```
+   */
+  public partial(): ObjectSchema<Loosened<Input>, LoosenedValue<Output>>;
+  public partial<const Key extends FieldKey<Output>>(
+    ...keys: readonly [Key, ...Key[]]
+  ): ObjectSchema<Loosened<Input, Key>, LoosenedValue<Output, Key>>;
+  public partial(...keys: readonly string[]): ObjectSchema<unknown, unknown> {
+    return this.#withPresence('partial', keys, true);
+  }
+
+  /**
+   * This schema with every field, or the fields named, required, also those whose schema accepts
+   * `undefined`: the reverse of `partial()`.
+   *
+   * @throws TypeError for a name the object doesn't declare.
+   *
+   * @example
+   * ```ts
+   * const CreateOrderWithNote = CreateOrder.required('note');
+   * ```
+   */
+  public required(): ObjectSchema<Tightened<Input>, Tightened<Output>>;
+  public required<const Key extends FieldKey<Output>>(
+    ...keys: readonly [Key, ...Key[]]
+  ): ObjectSchema<Tightened<Input, Key>, Tightened<Output, Key>>;
+  public required(...keys: readonly string[]): ObjectSchema<unknown, unknown> {
+    return this.#withPresence('required', keys, false);
+  }
+
+  /**
+   * This schema with only the fields named, for a request that sends part of an object.
+   *
+   * @remarks
+   * A constraint is kept when every field it reads is kept, and dropped otherwise.
+   *
+   * @throws TypeError for no name, or a name the object doesn't declare.
+   *
+   * @example
+   * ```ts
+   * const OrderContact = CreateOrder.pick('customer', 'note');
+   * ```
+   */
+  public pick<const Key extends FieldKey<Output>>(
+    ...keys: readonly [Key, ...Key[]]
+  ): ObjectSchema<Picked<Input, Key>, Picked<Output, Key>> {
+    return this.#keeping(checkedKeys('pick', this.keys, keys, true));
+  }
+
+  /**
+   * This schema without the fields named, such as a field the server fills in itself.
+   *
+   * @remarks
+   * A constraint is kept when every field it reads is kept, and dropped otherwise.
+   *
+   * @throws TypeError for no name, or a name the object doesn't declare.
+   *
+   * @example
+   * ```ts
+   * const OrderLine = CreateOrder.omit('customer');
+   * ```
+   */
+  public omit<const Key extends FieldKey<Output>>(
+    ...keys: readonly [Key, ...Key[]]
+  ): ObjectSchema<Omitted<Input, Key>, Omitted<Output, Key>> {
+    const left = checkedKeys('omit', this.keys, keys, true);
+
+    return this.#keeping(new Set(this.keys.filter((key) => !left.has(key))));
+  }
+
+  /**
+   * This schema with more fields, a field of the same name replaced, for an object that builds on
+   * another.
+   *
+   * @remarks
+   * The constraints are kept; one that reads a replaced field checks it with its own field type,
+   * as before. On a schema from `fromEnv()`, the new fields are read from strings too.
+   *
+   * @throws TypeError for a field named `__proto__`.
+   *
+   * @example
+   * ```ts
+   * const CreateGift = CreateOrder.extend({ recipient: Email });
+   * ```
+   */
+  public extend<const Fields extends ObjectFields>(
+    fields: Fields,
+  ): ObjectSchema<Extended<Input, ObjectInput<Fields>>, Extended<Output, ObjectValue<Fields>>> {
+    const kept = new Set(this.keys.filter((key) => !Object.hasOwn(fields, key)));
+
+    return this.#with({
+      source: { ...this.#source, ...(this.#hidden ? textFields(fields) : fields) },
+      presence: keptPresence(this.#presence, kept),
+    });
+  }
+
+  #withPresence(
+    method: string,
+    keys: readonly string[],
+    optional: boolean,
+  ): ObjectSchema<never, never> {
+    const named =
+      keys.length === 0 ? new Set(this.keys) : checkedKeys(method, this.keys, keys, false);
+
+    return this.#with({ presence: withPresence(this.#presence, named, optional) });
+  }
+
+  #keeping(keys: ReadonlySet<string>): ObjectSchema<never, never> {
+    return this.#with({
+      source: Object.fromEntries(Object.entries(this.#source).filter(([key]) => keys.has(key))),
+      constraints: this.#constraints.filter((rule) =>
+        constraintKeys(rule).every((key) => keys.has(key)),
+      ),
+      presence: keptPresence(this.#presence, keys),
+    });
+  }
+
+  #with(changes: Partial<ObjectParts>): ObjectSchema<never, never> {
+    const { source, constraints, strict, hidden, presence }: ObjectParts = {
+      source: this.#source,
+      constraints: this.#constraints,
+      strict: this.#strict,
+      hidden: this.#hidden,
+      presence: this.#presence,
+      ...changes,
+    };
+
+    return new ObjectSchema(source, constraints, strict, hidden, presence);
   }
 }
-
-/**
- * Whether a value is a schema built by `n.object()`, also by another copy of this package.
- */
-export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, unknown> =>
-  typeof value === 'object' && value !== null && Reflect.get(value, objectMark) === true;
-
-/**
- * Builds a schema for an object whose fields are nominal types, for a request body, a message or
- * a value object made of several fields.
- *
- * @remarks
- * Every field is checked and every issue collected, with the field's key in its path. Keys the
- * schema doesn't declare are dropped; call `strict()` to refuse them. A field whose schema accepts
- * `undefined`, such as `n.of(Type).optional()`, may be missing; any other missing field is
- * reported as `is required`. Only the input's own keys are read. The constraints run once every
- * field is valid. The result is a new object, read-only by type; given to `Nominal()`, it is
- * frozen.
- *
- * Given to `Nominal()`, it makes a class with a getter for each field and `copyWith()`.
- *
- * @throws TypeError for a field named `__proto__`.
- *
- * @example
- * ```ts
- * export const CreateOrder = n.object({
- *   email: Email,
- *   quantity: PositiveInteger,
- *   note: n.of(AnyString).optional(),
- * });
- *
- * CreateOrder.parse(body); // { ok: true, value: { email: Email, quantity: PositiveInteger } }
- * ```
- */
-export const objectOf = <const Fields extends ObjectFields>(
-  fields: Fields,
-  ...constraints: AnyConstraint[]
-): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>> =>
-  new ObjectSchema(fields, constraints, false);

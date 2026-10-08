@@ -126,19 +126,21 @@ ToySku['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
 
 ## Schemas built from types
 
-| Schema                         | JSON Schema                                                                                                                                                      |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `n.of(T)`                      | the same as `T`                                                                                                                                                  |
-| `.array(options)`              | `{ type: 'array', items, minItems, maxItems, uniqueItems }`; `minItems` only above 0, `maxItems` only with a limit, `uniqueItems: true` only with `unique: true` |
-| `.optional()`                  | the same as the inner schema; an `n.object()` leaves the field out of `required`                                                                                 |
-| `.nullable()`                  | `{ anyOf: [inner, { type: 'null' }] }`; for `openapi-3.0`, the inner schema with `nullable: true`                                                                |
-| `.fromString()`                | the same as the inner schema: it describes the value, not the text                                                                                               |
-| `n.object(fields)`             | `{ type: 'object', properties, required }`, each field by its own schema                                                                                         |
-| `.strict()`                    | adds `additionalProperties: false` on the input side too                                                                                                         |
-| a nominal type on `n.object()` | the object schema with the type name as `title`                                                                                                                  |
-| `n.constraint(fields, check)`  | `{ type: 'object', properties, required }` of the listed fields; `check` is not described                                                                        |
+| Schema                                                         | JSON Schema                                                                                                                                                                                        |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `n.of(T)`                                                      | the same as `T`                                                                                                                                                                                    |
+| `.array(options)`                                              | `{ type: 'array', items, minItems, maxItems, uniqueItems }`; `minItems` only above 0, `maxItems` only with a limit, `uniqueItems: true` only with `unique: true`                                   |
+| `.optional()`                                                  | the same as the inner schema; an `n.object()` leaves the field out of `required`                                                                                                                   |
+| `.nullable()`                                                  | `{ anyOf: [inner, { type: 'null' }] }`; for `openapi-3.0`, the inner schema with `nullable: true`                                                                                                  |
+| `.fromString()`                                                | the same as the inner schema: it describes the value, not the text                                                                                                                                 |
+| `n.object(fields)`                                             | `{ type: 'object', properties, required }`, each field by its own schema                                                                                                                           |
+| `.strict()`                                                    | adds `additionalProperties: false` on the input side too                                                                                                                                           |
+| a nominal type on `n.object()`                                 | the object schema with the type name as `title`                                                                                                                                                    |
+| `.partial()`, `.required()`, `.pick()`, `.omit()`, `.extend()` | the object schema of the fields the new schema has, with `required` as changed                                                                                                                     |
+| `n.union(key, variants)`                                       | `{ oneOf }` of the variants, each with `properties[key] = { const: tag }` and `key` in `required`; for `openapi-3.0`, `{ type: 'string', enum: [tag] }` and `discriminator: { propertyName: key }` |
+| `n.constraint(fields, check)`                                  | `{ type: 'object', properties, required }` of the listed fields; `check` is not described                                                                                                          |
 
-`required` lists the fields whose schema doesn't accept `undefined`.
+`required` lists the fields whose schema doesn't accept `undefined`, unless `partial()` or `required()` changed them.
 
 Example:
 

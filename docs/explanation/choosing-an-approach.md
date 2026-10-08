@@ -40,7 +40,9 @@ Why it is the default:
 - Every field comes out as an instance, and the speed matches libraries that give plain values.
 - It is a [Standard Schema](../reference/glossary.md), so NestJS, tRPC and other libraries take it as it is.
 
-It has limits. It has no unions of different object shapes, no recursive schemas, no transforms and no asynchronous checks. A project that needs those uses ArkType with its adapter.
+Objects of several shapes, told apart by a field, use `n.union()`.
+
+It has limits. It has no recursive schemas, no transforms and no asynchronous checks. A project that needs those uses ArkType with its adapter.
 
 ## A validator you already use
 

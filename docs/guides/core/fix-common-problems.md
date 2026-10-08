@@ -320,22 +320,46 @@ Fix: register it as `new ValidationPipe({ transform: true })`. See [How to use n
 
 The response is `{"email":{"value":"jane@example.com"}}` instead of `{"email":"jane@example.com"}`.
 
-Cause: `ClassSerializerInterceptor` turns the response DTO into a plain object without calling `toJSON()` on its instances.
+Cause: `ClassSerializerInterceptor` turns the response into a plain object with class-transformer, which doesn't call `toJSON()` on instances.
 
-Fix: decorate each such property with `@NominalField()`:
+Fix: register `NominalSerializerInterceptor` in its place. It takes the same arguments:
 
 ```ts
-// account.dto.ts
-import { Email } from '@horizon-republic/nominal-types';
-import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
+// main.ts
+import { NestFactory, Reflector } from '@nestjs/core';
+import { NominalSerializerInterceptor } from '@horizon-republic/nominal-types/adapters/nest';
 
-export class AccountDto {
-  @NominalField(Email)
-  email!: Email;
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)));
+  await app.listen(3000);
 }
+
+void bootstrap();
 ```
 
-See [How to use nominal types with class-validator](../validators/class-validator.md).
+A DTO property with `@NominalField()` from the [class-validator adapter](../validators/class-validator.md) is written as its value under either interceptor. See [Send instances in responses](../frameworks/nestjs.md#send-instances-in-responses).
+
+### Swagger shows $ref "#/components/schemas/" under Bun or SWC
+
+The request body in Swagger is `{ "$ref": "#/components/schemas/" }`. A global `ValidationPipe` answers `500` for the same route.
+
+Cause: the schema and its type share one name, as in `const CreateOrder = n.object(…)` and `type CreateOrder = ValueOf<typeof CreateOrder>`. Bun and SWC then record the schema itself as the parameter's type, where `tsc` records `Object`.
+
+Fix: give the type its own name:
+
+```ts
+// create-order.ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+import type { ValueOf } from '@horizon-republic/nominal-types';
+
+export const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
+export type CreateOrderBody = ValueOf<typeof CreateOrder>;
+```
+
+Declare the parameter as `order: CreateOrderBody`. To show the body in Swagger, see [Document a request body](../api-docs/swagger.md#document-a-request-body).
 
 ### Property 'ok' does not exist after Zod's parse()
 

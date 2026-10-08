@@ -1,9 +1,10 @@
 import 'reflect-metadata';
 import { BadRequestException } from '@nestjs/common';
+import type { ArgumentMetadata } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
-import { AnyBoolean, n, PositiveInteger, Uuid } from '../../../src/index.ts';
+import { AnyBoolean, Email, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { argument, first } from './support.ts';
 
 describe('NominalPipe as a unit', () => {
@@ -83,5 +84,74 @@ describe('NominalPipe as a unit', () => {
     };
 
     expect(new NominalPipe().transform('raw', argument('query', { schema: foreign }))).toBe('raw');
+  });
+});
+
+// Bun and SWC record the schema itself as the parameter type when a type alias shares its name.
+const recorded = (
+  type: ArgumentMetadata['type'],
+  schema: unknown,
+  data = 'value',
+): ArgumentMetadata => Object.assign(argument(type, { data }), { metatype: schema });
+
+describe('NominalPipe with a schema recorded as the parameter type', () => {
+  const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
+  const pipe = new NominalPipe();
+
+  it('checks a body against an n.object() schema', () => {
+    const order: unknown = pipe.transform(
+      { customer: 'jane@example.com', quantity: 2 },
+      recorded('body', CreateOrder),
+    );
+
+    expect(order).toStrictEqual({
+      customer: new Email('jane@example.com'),
+      quantity: new PositiveInteger(2),
+    });
+  });
+
+  it('rejects a bad body with the field in the message', () => {
+    expect(() =>
+      pipe.transform({ customer: 'jane', quantity: 2 }, recorded('body', CreateOrder)),
+    ).toThrow(BadRequestException);
+    expect(() => pipe.transform(undefined, recorded('body', CreateOrder))).toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('accepts a body it already checked, as a pipe on the parameter gives it again', () => {
+    const order = pipe.transform(
+      { customer: 'jane@example.com', quantity: 2 },
+      recorded('body', CreateOrder),
+    );
+
+    expect(new NominalPipe(CreateOrder).transform(order, argument('body'))).toStrictEqual(order);
+  });
+
+  it('lets the schema decide whether a value may be missing', () => {
+    expect(pipe.transform(undefined, recorded('query', n.of(Email).optional()))).toBeUndefined();
+    expect(() => pipe.transform(undefined, recorded('query', n.of(Email)))).toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('wraps a lone query value for an array schema', () => {
+    expect(pipe.transform(first, recorded('query', n.of(Uuid).array()))).toStrictEqual([
+      new Uuid(first),
+    ]);
+  });
+
+  it('leaves a schema from another library to its own pipe', () => {
+    const foreign = {
+      '~standard': { version: 1 as const, vendor: 'other', validate: () => ({ value: 'x' }) },
+    };
+
+    expect(pipe.transform('raw', recorded('body', foreign))).toBe('raw');
+  });
+
+  it('prefers the Nest 12 schema option over the recorded type', () => {
+    const metadata = { ...recorded('query', n.of(Email)), schema: n.of(Email).optional() };
+
+    expect(pipe.transform(undefined, metadata)).toBeUndefined();
   });
 });

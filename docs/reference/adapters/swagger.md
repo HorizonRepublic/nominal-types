@@ -2,11 +2,15 @@
 
 Entry point: `@horizon-republic/nominal-types/adapters/swagger`. Needs `@nestjs/swagger` 11 or 12. It doesn't need class-validator or class-transformer.
 
-| Export                 | Kind      | Use it for                                                  |
-| ---------------------- | --------- | ----------------------------------------------------------- |
-| `applyNominalTypes()`  | function  | filling the schemas `@nestjs/swagger` leaves empty          |
-| `ApiNominalProperty()` | decorator | a DTO property documented with its type's whole schema      |
-| `OpenApiDocument`      | type      | the part of an OpenAPI document `applyNominalTypes()` reads |
+| Export                   | Kind      | Use it for                                                  |
+| ------------------------ | --------- | ----------------------------------------------------------- |
+| `applyNominalTypes()`    | function  | filling the schemas `@nestjs/swagger` leaves empty          |
+| `ApiNominalProperty()`   | decorator | a DTO property documented with its type's whole schema      |
+| `ApiNominalBody()`       | decorator | the request body of a route checked by `NominalPipe`        |
+| `ApiNominalQuery()`      | decorator | a query value documented with its type's whole schema       |
+| `OpenApiDocument`        | type      | the part of an OpenAPI document `applyNominalTypes()` reads |
+| `ApiNominalBodyOptions`  | type      | the options of `ApiNominalBody()`                           |
+| `ApiNominalQueryOptions` | type      | the options of `ApiNominalQuery()`                          |
 
 ## applyNominalTypes()
 
@@ -32,6 +36,8 @@ How a schema finds its type:
 
 Name the class like the type or like its last part. Otherwise, give the type's name with `@ApiSchema({ name: 'billing.Email' })` from `@nestjs/swagger`. A type with such a full-name schema leaves its last part to the others: `nominal.Email` is still found as `Email`.
 
+Schema names come from class names. A minified server build needs class names kept: `keepNames: true` in esbuild and tsup, `keep_classnames: true` in terser.
+
 ## ApiNominalProperty()
 
 ```ts
@@ -48,6 +54,48 @@ Writes the whole OpenAPI 3.0 schema into the property. A list gets `items`, `min
 Throws `TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema` when `target` is neither.
 
 To validate the same property, put `@NominalField()` from the [class-validator adapter](class-validator.md) next to it.
+
+## ApiNominalBody()
+
+```ts
+function ApiNominalBody(target: NominalTarget, options?: ApiNominalBodyOptions): MethodDecorator;
+```
+
+| Parameter | Type                                          | Default | Description           |
+| --------- | --------------------------------------------- | ------- | --------------------- |
+| `target`  | nominal type, `n.of()` or `n.object()` schema | —       | what the body holds   |
+| `options` | `ApiNominalBodyOptions`                       | `{}`    | see the options below |
+
+| Option        | Type      | Default                                                    | Description                                                                  |
+| ------------- | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `name`        | `string`  | none                                                       | lists an object schema under `components.schemas` and refers to it by `$ref` |
+| `required`    | `boolean` | `true`, or `false` when the schema accepts a missing value | whether the body is required                                                 |
+| `description` | `string`  | none                                                       | the body's description                                                       |
+
+Goes on the route. Writes the target's OpenAPI 3.0 schema as the request body, which `@nestjs/swagger` can't read through `@Body(new NominalPipe(target))`. Without `name`, or for a schema that is not an object, the schema is written into the body. It replaces the body `@nestjs/swagger` reads from the parameter.
+
+Throws `TypeError: ApiNominalBody() takes a nominal type or an n.of() schema` when `target` is neither.
+
+## ApiNominalQuery()
+
+```ts
+function ApiNominalQuery(name: string, target: NominalTarget, options?: ApiNominalQueryOptions): MethodDecorator;
+```
+
+| Parameter | Type                            | Default | Description                            |
+| --------- | ------------------------------- | ------- | -------------------------------------- |
+| `name`    | `string`                        | —       | the query parameter's name             |
+| `target`  | nominal type or `n.of()` schema | —       | what the value holds                   |
+| `options` | `ApiNominalQueryOptions`        | `{}`    | `required` and `description`; they win |
+
+Goes on the route. Writes the target's OpenAPI 3.0 schema into the query parameter, in place of what `@nestjs/swagger` reads from the declared type. A list keeps `items`, `minItems` and `maxItems`. The value is required unless the schema accepts a missing value, as `n.of(PositiveInteger).optional()` does.
+
+| Parameter                                                        | Without it                                     | With `@ApiNominalQuery()`                                        |
+| ---------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
+| `@Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 })))` | `{ type: 'array', items: { type: 'string' } }` | `{ type: 'array', maxItems: 100, items: { format: 'uuid', … } }` |
+| `@Query('page') page?: PositiveInteger`                          | required                                       | not required, with `{ required: false }`                         |
+
+Throws `TypeError: ApiNominalQuery() takes a nominal type or an n.of() schema` when `target` is neither.
 
 ## Example
 
@@ -103,6 +151,38 @@ export class CreateOrderDto {
 
 ApiNominalProperty(String as never);
 // throws TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema
+```
+
+Document a body and query values:
+
+```ts
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+import type { ValueOf } from '@horizon-republic/nominal-types';
+import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
+import { ApiNominalBody, ApiNominalQuery } from '@horizon-republic/nominal-types/adapters/swagger';
+
+const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
+type CreateOrderBody = ValueOf<typeof CreateOrder>;
+
+@Controller('orders')
+export class OrdersController {
+  @Post()
+  @ApiNominalBody(CreateOrder, { name: 'CreateOrder' }) // { $ref: '#/components/schemas/CreateOrder' }
+  create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody) {
+    return order.customer.domain;
+  }
+
+  @Get()
+  @ApiNominalQuery('ids', n.of(Uuid).array({ max: 100 })) // { type: 'array', maxItems: 100, items: { format: 'uuid', … } }
+  @ApiNominalQuery('page', PositiveInteger, { required: false }) // required: false
+  list(
+    @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
+    @Query('page') page?: PositiveInteger,
+  ) {
+    return { count: ids.length, page: page?.value ?? 1 };
+  }
+}
 ```
 
 ## See also

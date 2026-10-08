@@ -39,7 +39,7 @@ CreateOrder.parse({ customer: 'jane', sku: 'TEA-0042', quantity: 2 });
 
 `parse()` never throws. It returns `{ ok: true, value }` or `{ ok: false, issues }`.
 
-Give the schema and the type of its value one name, as ArkType itself suggests. Function signatures then read like a class:
+Name the type of its value with `ValueOf`. Give it a name of its own, such as `CreateOrderBody`: in NestJS, a type named like the schema breaks Swagger and pipes under Bun and SWC. See [Limits in the NestJS guide](../frameworks/nestjs.md#limits).
 
 ```ts
 // orders.ts
@@ -53,7 +53,7 @@ class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 export const CreateOrder = fromArk(
   type({ customer: toArk(Email), sku: toArk(Sku), quantity: toArk(PositiveInteger) }),
 );
-export type CreateOrder = ValueOf<typeof CreateOrder>;
+export type CreateOrderBody = ValueOf<typeof CreateOrder>;
 
 export const placeOrder = (body: unknown): string => {
   const result = CreateOrder.parse(body);
@@ -62,7 +62,7 @@ export const placeOrder = (body: unknown): string => {
     return `rejected: ${result.issues.map((issue) => issue.message).join('; ')}`;
   }
 
-  const order: CreateOrder = result.value;
+  const order: CreateOrderBody = result.value;
 
   return `order for ${order.customer.domain}`;
 };
@@ -183,12 +183,12 @@ Give the schema to `NominalPipe` on the body. This works on Nest 11 and 12:
 // orders.controller.ts
 import { Body, Controller, Post } from '@nestjs/common';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
-import { CreateOrder } from './orders';
+import { CreateOrder, type CreateOrderBody } from './orders';
 
 @Controller('orders')
 export class OrdersController {
   @Post()
-  create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder): string {
+  create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody): string {
     return order.customer.domain; // order.customer is an Email
   }
 }

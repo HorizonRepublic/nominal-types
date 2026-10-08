@@ -27,7 +27,7 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 npm install @horizon-republic/nominal-types
 ```
 
-Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). No dependencies: the Standard Schema interfaces are part of the package, exported as the types `StandardSchemaV1` and `StandardJSONSchemaV1`.
+Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep only the types and functions an app imports, when it loads the package with `import`. No dependencies: the Standard Schema interfaces are part of the package, exported as the types `StandardSchemaV1` and `StandardJSONSchemaV1`.
 
 | Entry point | Exports | Peer package |
 | --- | --- | --- |

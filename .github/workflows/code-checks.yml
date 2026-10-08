@@ -36,6 +36,7 @@ jobs:
       - run: npm run test:coverage
       - run: npm run build
       - run: npm run test:dist
+      - run: npm run test:size
 
       - name: Coverage report
         if: ${{ !cancelled() && github.event_name == 'pull_request' && hashFiles('coverage/coverage-summary.json') != '' }}

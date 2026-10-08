@@ -210,7 +210,7 @@
       }
     },
     {
-      "files": ["tests/built-package.mjs"],
+      "files": ["tests/built-package.mjs", "tests/bundle-size.mjs"],
       "rules": {
         "import/no-nodejs-modules": "off",
         "typescript/no-unsafe-argument": "off",

@@ -1,0 +1,102 @@
+import { ok } from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
+
+import { build } from 'esbuild';
+
+const root = new URL('../', import.meta.url);
+const { name, exports } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
+
+const fileOf = (specifier) => {
+  const entry = specifier === name ? '.' : `.${specifier.slice(name.length)}`;
+
+  return fileURLToPath(new URL(exports[entry].import, root));
+};
+
+// esbuild runs filters as Go regular expressions, which take no flags.
+// oxlint-disable require-unicode-regexp
+const ownSpecifier = new RegExp(`^${name}(?:/|$)`);
+const bareSpecifier = /^[^./]/;
+// oxlint-enable require-unicode-regexp
+
+const bundle = async (code) => {
+  const result = await build({
+    stdin: { contents: code, loader: 'js', resolveDir: fileURLToPath(root) },
+    bundle: true,
+    minify: true,
+    format: 'esm',
+    platform: 'neutral',
+    write: false,
+    logLevel: 'silent',
+    plugins: [
+      {
+        name: 'package',
+        setup: (setup) => {
+          setup.onResolve({ filter: ownSpecifier }, ({ path }) => ({ path: fileOf(path) }));
+          setup.onResolve({ filter: bareSpecifier }, ({ path }) => ({ path, external: true }));
+        },
+      },
+    ],
+  });
+
+  return result.outputFiles[0].contents;
+};
+
+const adapter = (entry, use) =>
+  `import { Uuid } from '${name}'; import { ${use} } from '${name}/adapters/${entry}'; globalThis.out = ${use}(Uuid);`;
+
+// Upper bounds in KiB, a little above the sizes measured when they were set, so a change that
+// pulls unused types or helpers into an app's bundle fails here.
+const cases = [
+  ['only Uuid', `import { Uuid } from '${name}'; globalThis.out = Uuid.parse('');`, 23, 8.5],
+  ['only Email', `import { Email } from '${name}'; globalThis.out = Email.parse('');`, 23, 8.5],
+  ['only Integer', `import { Integer } from '${name}'; globalThis.out = Integer.parse(1);`, 22, 8],
+  [
+    'n.object and three types',
+    `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
+    38,
+    13.5,
+  ],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 72, 26],
+  [
+    'temporal PlainDate',
+    `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
+    24,
+    8.5,
+  ],
+  ['arktype', adapter('arktype', 'toArk'), 24, 9],
+  ['class-validator', adapter('class-validator', 'NominalField'), 24, 9],
+  ['drizzle', adapter('drizzle', 'toDrizzle'), 32, 11.5],
+  ['graphql', adapter('graphql', 'toGraphQL'), 25, 9.5],
+  ['mikro-orm', adapter('mikro-orm', 'toMikroOrm'), 32.5, 11.5],
+  [
+    'nest',
+    `import { Uuid } from '${name}'; import { NominalPipe } from '${name}/adapters/nest'; globalThis.out = new NominalPipe(Uuid);`,
+    24.5,
+    9,
+  ],
+  ['sequelize', adapter('sequelize', 'toSequelize'), 32, 11.5],
+  ['superjson', adapter('superjson', 'toSuperjson'), 24, 9],
+  ['swagger', adapter('swagger', 'ApiNominalProperty'), 24, 9],
+  ['typeorm', adapter('typeorm', 'toTypeOrm'), 32, 11.5],
+  ['valibot', adapter('valibot', 'toValibot'), 24, 9],
+  ['zod', adapter('zod', 'toZod'), 24, 9],
+];
+
+const kib = (bytes) => Math.round((bytes / 1024) * 10) / 10;
+
+const rows = [];
+
+for (const [label, code, minified, gzipped] of cases) {
+  const output = await bundle(code);
+  const size = { label, minified: kib(output.length), gzipped: kib(gzipSync(output).length) };
+
+  rows.push(size);
+  ok(size.minified <= minified, `${label}: ${size.minified} KiB minified, over ${minified} KiB`);
+  ok(size.gzipped <= gzipped, `${label}: ${size.gzipped} KiB gzipped, over ${gzipped} KiB`);
+}
+
+// The table is the report this script exists for.
+// oxlint-disable-next-line no-console
+console.table(rows);

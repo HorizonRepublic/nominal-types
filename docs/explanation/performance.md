@@ -1,6 +1,6 @@
 # Performance
 
-Is a class per value fast enough for a server? This page says what a check costs and which choices make it faster. The numbers are in [Benchmarks](../reference/benchmarks.md).
+Is a class per value fast enough for a server? This page says what a check costs, which choices make it faster and how much the package adds to a bundle. The numbers are in [Benchmarks](../reference/benchmarks.md).
 
 ## Do you need to care?
 
@@ -37,6 +37,25 @@ class-validator also gets slower as the app registers more DTO classes, whatever
 ## Without code generation
 
 The package generates its checks with `new Function`. Cloudflare Workers and pages with a strict Content-Security-Policy forbid that. There, the checks run without generated code: the results are the same, only slower. Nothing needs to be configured.
+
+## Bundle size
+
+A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps only the types and functions your code imports. These are the sizes of bundles minified by esbuild. Gzipped is the size sent over the network when the server compresses it.
+
+| Your code imports                                       | Minified | Gzipped |
+| ------------------------------------------------------- | -------- | ------- |
+| `Uuid`                                                  | 21 KB    | 7.7 KB  |
+| `Email`                                                 | 21 KB    | 7.9 KB  |
+| `Integer`                                               | 21 KB    | 7.4 KB  |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 35 KB    | 12 KB   |
+| `PlainDate` from `/temporal`                            | 22 KB    | 8 KB    |
+| `Uuid` and the adapter for a validator or a framework   | 22–23 KB | 8–9 KB  |
+| `Uuid` and the adapter for a database                   | 30 KB    | 11 KB   |
+| everything                                              | 67 KB    | 24 KB   |
+
+About 20 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB.
+
+The bundler leaves parts out only when your code loads the package with `import`. With `require()`, the bundle holds the whole package.
 
 ## See also
 

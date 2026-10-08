@@ -9,6 +9,7 @@ What every nominal type class and every instance offers. A type of your own and 
 | [`new Type(input)`](#new)              | Checks `input` and makes an instance. Throws if `input` is invalid. |
 | [`Type.parse(input)`](#parse)          | Checks `input`. Returns a result object and doesn't throw.          |
 | [`Type.accepts(input)`](#accepts)      | Tells whether `parse()` would accept `input`. Makes no instance.    |
+| [`Type.stringify(value)`](#stringify)  | The JSON text of an instance.                                       |
 | [`value instanceof Type`](#instanceof) | Tells whether a value is an instance of the type.                   |
 | [`Type.typeName`](#typename)           | The [type name](declaring.md#type-names).                           |
 | [`Type.rule`](#rule)                   | The rule the type's own level adds.                                 |
@@ -144,6 +145,37 @@ Email.accepts(new Email('jane@example.com')); // true
 const inputs: unknown[] = ['jane@example.com', 'jane', 42];
 
 inputs.filter((input) => Email.accepts(input)); // ['jane@example.com']
+```
+
+### stringify
+
+```ts
+Type.stringify(value: Instance): string
+```
+
+| Parameter | Type                    | Description                    |
+| --------- | ----------------------- | ------------------------------ |
+| `value`   | an instance of the type | The instance to write as JSON. |
+
+Returns: the text `JSON.stringify(value)` gives.
+
+Throws: a `TypeError` if JSON has no text for `value`, such as `undefined`: `stringify(): JSON has no text for undefined`.
+
+For a type built on [`n.object()`](schemas.md#nobject), it writes the instance with the object schema's [`stringify()`](schemas.md#stringify), which is several times faster than `JSON.stringify()`. The fields come in the order they were declared. For any other type, it calls `JSON.stringify()`.
+
+An instance whose `value` you reassigned is written from its new value, as `JSON.stringify()` writes it.
+
+Example:
+
+```ts
+import { n, Nominal, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+
+class Stay extends Nominal('booking.Stay', n.object({ guests: PositiveInteger, room: Uuid })) {}
+
+const stay = new Stay({ room: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', guests: 2 });
+
+Stay.stringify(stay); // '{"guests":2,"room":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f"}'
+Uuid.stringify(stay.room); // '"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f"'
 ```
 
 ### instanceof
@@ -329,7 +361,7 @@ JSON.stringify({ email, quantity, id }); // '{"email":"jane@example.com","quanti
 email.toString(); // 'jane@example.com'
 ```
 
-`JSON.stringify()` calls `toJSON()` on each instance, which makes it several times slower than on plain values. For a large response, convert it first with [`n.plain()`](schemas.md#nplain) or a schema's [`toPlain()`](schemas.md#toplain).
+`JSON.stringify()` calls `toJSON()` on each instance, which makes it several times slower than on plain values. For a large response, write it with a schema's [`stringify()`](schemas.md#stringify), or convert it first with [`n.plain()`](schemas.md#nplain).
 
 ### Primitive values
 

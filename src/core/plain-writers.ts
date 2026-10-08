@@ -109,23 +109,24 @@ export interface WrittenField {
   readonly optional: boolean;
 }
 
+// The fields before the first optional one go in an object literal, which V8 builds fastest; the
+// rest are stored in order, so the copy keeps the declared order with optional fields missing.
 const objectSource = (fields: readonly WrittenField[]): string => {
   const reads = fields.map(
     ({ key }, index) => `const v${String(index)} = value[${JSON.stringify(key)}];`,
   );
-  const required = fields
-    .map((field, index) => ({ field, index: String(index) }))
-    .filter(({ field }) => !field.optional);
-  const optional = fields
-    .map((field, index) => ({ field, index: String(index) }))
-    .filter(({ field }) => field.optional);
-  const literal = required
-    .map(({ field, index }) => `${JSON.stringify(field.key)}: write${index}(v${index})`)
+  const firstOptional = fields.findIndex(({ optional }) => optional);
+  const literalCount = firstOptional === -1 ? fields.length : firstOptional;
+  const literal = fields
+    .slice(0, literalCount)
+    .map(({ key }, index) => `${JSON.stringify(key)}: write${String(index)}(v${String(index)})`)
     .join(', ');
-  const stores = optional.map(
-    ({ field, index }) =>
-      `if (v${index} !== undefined) copy[${JSON.stringify(field.key)}] = write${index}(v${index});`,
-  );
+  const stores = fields.slice(literalCount).map(({ key, optional }, offset) => {
+    const index = String(literalCount + offset);
+    const store = `copy[${JSON.stringify(key)}] = write${index}(v${index});`;
+
+    return optional ? `if (v${index} !== undefined) ${store}` : store;
+  });
 
   return `function writeObject(value) {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) return plain(value);

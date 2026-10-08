@@ -2,21 +2,21 @@
 
 The functions that build schemas from nominal types: lists, optional values, objects and rules across fields. Terms are explained in the [glossary](glossary.md).
 
-| Entry                                | What it does                                                                      |
-| ------------------------------------ | --------------------------------------------------------------------------------- |
-| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule           |
-| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                             |
-| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `accepts()`, `toPlain()`, `array()` and more    |
-| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                     |
-| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas              |
-| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `partial()`, `pick()`, `extend()` and more |
-| [`n.union()`](#nunion)               | A schema for an object of one of several shapes, told apart by a field            |
-| [`UnionSchema`](#unionschema)        | What `n.union()` returns: `key`, `tags`                                           |
-| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                 |
-| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                     |
-| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                    |
-| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                              |
-| [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response   |
+| Entry                                | What it does                                                                       |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule            |
+| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                              |
+| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `accepts()`, `toPlain()`, `stringify()` and more |
+| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                      |
+| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas               |
+| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `partial()`, `pick()`, `extend()` and more  |
+| [`n.union()`](#nunion)               | A schema for an object of one of several shapes, told apart by a field             |
+| [`UnionSchema`](#unionschema)        | What `n.union()` returns: `key`, `tags`                                            |
+| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                  |
+| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                      |
+| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                     |
+| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                               |
+| [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response    |
 
 Every schema here is a [Standard Schema](glossary.md) and a [Standard JSON Schema](glossary.md). Each method returns a new schema and leaves the old one as it is.
 
@@ -83,6 +83,7 @@ The class `n.of()` returns. `ObjectSchema` extends it. Create it through `n.of()
 | [`parse(input)`](#parse)               | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw. |
 | [`accepts(input)`](#accepts)           | `true` if `parse()` would accept `input`. Builds no value.       |
 | [`toPlain(value)`](#toplain)           | A copy of a value the schema gave, with plain values only.       |
+| [`stringify(value)`](#stringify)       | The JSON text of a value the schema gave.                        |
 | [`array(options?)`](#array)            | A schema for an array of values this schema accepts.             |
 | [`fromString()`](#fromstring)          | The same schema, reading a number or boolean from text first.    |
 | [`optional()`](#optional-and-nullable) | A schema that also accepts `undefined`.                          |
@@ -162,7 +163,7 @@ Returns: a new copy of `value`. Each instance in it is replaced by what its [`to
 
 Throws: nothing.
 
-Use it before you write a response as JSON. `JSON.stringify()` calls `toJSON()` on each instance, which is slow. On a copy from `toPlain()`, it runs at the speed of plain values. See [Benchmarks](benchmarks.md#writing-json).
+Use it when a framework writes the response for you. `JSON.stringify()` calls `toJSON()` on each instance, which is slow. On a copy from `toPlain()`, it runs at the speed of plain values. To write the text yourself, [`stringify()`](#stringify) is faster still. See [Benchmarks](benchmarks.md#writing-json).
 
 What it does with each part:
 
@@ -171,6 +172,7 @@ What it does with each part:
 | an instance                                             | what its `toJSON()` returns              |
 | a field the object doesn't declare                      | left out, as `parse()` leaves it out     |
 | a missing optional field                                | left out                                 |
+| the fields of an object                                 | in the order the schema declares them    |
 | `undefined` or `null` from `optional()` or `nullable()` | kept                                     |
 | a field from another library, such as a Zod schema      | converted as [`n.plain()`](#nplain) does |
 
@@ -185,6 +187,49 @@ const result = Invite.parse({ email: 'jane@example.com', seats: 2 });
 if (result.ok) {
   Invite.toPlain(result.value); // { email: 'jane@example.com', seats: 2 }
   JSON.stringify(Invite.toPlain(result.value)); // '{"email":"jane@example.com","seats":2}'
+}
+```
+
+### stringify
+
+```ts
+schema.stringify(value: Output): string
+```
+
+| Parameter | Type                              | Description                 |
+| --------- | --------------------------------- | --------------------------- |
+| `value`   | what the schema's `parse()` gives | The value to write as JSON. |
+
+Returns: the JSON text of `value`. It is the text `JSON.stringify(n.plain(value))` gives, with the fields of an object in the order the schema declares them.
+
+Throws: a `TypeError` if JSON has no text for `value`, such as `undefined` from `optional()`: `stringify(): JSON has no text for undefined`.
+
+Use it to write a response body. It writes each instance's value straight to text. It calls no `toJSON()` and makes no plain copy, so it is faster than `JSON.stringify()` even on plain values. See [Benchmarks](benchmarks.md#writing-json).
+
+What it does with each part:
+
+| Part of the value                                           | Result                                                  |
+| ----------------------------------------------------------- | ------------------------------------------------------- |
+| an instance the schema gave                                 | its value                                               |
+| a field the object doesn't declare                          | left out, as `toPlain()` leaves it out                  |
+| a missing optional field                                    | left out                                                |
+| `NaN` or an infinity                                        | `null`, as `JSON.stringify()` writes it                 |
+| an instance whose `value` you reassigned                    | its new value, escaped as `JSON.stringify()` escapes it |
+| an instance from [another copy of the package](glossary.md) | written by `JSON.stringify()`                           |
+| a plain value, or a field from another library              | written by `JSON.stringify()`                           |
+
+The first call builds a writer for the schema. Where code generation is forbidden, it writes `JSON.stringify(schema.toPlain(value))` instead, with the same text.
+
+Example:
+
+```ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Invite = n.object({ email: Email, seats: PositiveInteger });
+const result = Invite.parse({ seats: 2, email: 'jane@example.com' });
+
+if (result.ok) {
+  Invite.stringify(result.value); // '{"email":"jane@example.com","seats":2}'
 }
 ```
 
@@ -367,7 +412,7 @@ What it does with an input:
 3. A field whose schema accepts `undefined` may be missing. A missing one is left out of the result. Any other field that is missing or `undefined` gets the issue `is required`.
 4. It drops keys it doesn't declare. With [`strict()`](#objectschema), each one is an issue instead.
 5. It runs the constraints, once every field passed.
-6. It returns a new object of the checked values, read-only by type. The input stays as it was.
+6. It returns a new object of the checked values, in the order the fields were declared, read-only by type. The input stays as it was.
 
 The returned object is not frozen. A nominal type built on the schema freezes it.
 
@@ -550,7 +595,7 @@ See also: [How to accept one of several object shapes](../guides/core/accept-one
 
 ## UnionSchema
 
-The class `n.union()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the union in `value`. It adds:
+The class `n.union()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `stringify()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. `stringify()` writes the tag first, then the fields of its variant; an object whose tag no variant has is written by `JSON.stringify()`. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the union in `value`. It adds:
 
 | Member | Description                                      |
 | ------ | ------------------------------------------------ |
@@ -733,7 +778,7 @@ Returns: a new copy of `value` with plain values only:
 
 Throws: a `TypeError` if `value` refers to itself, which JSON can't write either: `n.plain(): the value refers to itself, which JSON cannot write`.
 
-Use it for a response that doesn't come from one schema. For a value from a schema's `parse()`, [`toPlain()`](#toplain) is faster, since it knows where the instances are.
+Use it for a response that doesn't come from one schema. For a value from a schema's `parse()`, [`toPlain()`](#toplain) and [`stringify()`](#stringify) are faster, since they know where the instances are.
 
 Example:
 

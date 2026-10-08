@@ -167,6 +167,23 @@ export interface AnyNominalType {
    * ```
    */
   accepts(input: unknown): boolean;
+  /**
+   * The JSON text of an instance, what `JSON.stringify()` writes for it, for a response that is one
+   * value of this type.
+   *
+   * @remarks
+   * A type built on `n.object()` writes its fields straight to text with the object schema's
+   * `stringify()`, in the order they were declared, several times faster. Any other type, an
+   * instance whose `value` was changed and a value of another type go through `JSON.stringify()`.
+   *
+   * @throws TypeError for a value JSON has no text for, such as `undefined`.
+   *
+   * @example
+   * ```ts
+   * Uuid.stringify(new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f')); // '"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f"'
+   * ```
+   */
+  stringify<Type extends AnyNominalType>(this: Type, value: Type['prototype']): string;
 }
 
 /**

@@ -45,6 +45,12 @@ export const registerType = (
 };
 
 /**
+ * Internal: whether two types with different rules were declared under the name, which leaves
+ * neither of them trusted for what the name promises.
+ */
+export const isClashed = (name: string): boolean => warned.has(name);
+
+/**
  * Internal: the type declared with a name, if any.
  */
 export const typeNamed = (name: string): object | undefined => shared.types.get(name)?.type;

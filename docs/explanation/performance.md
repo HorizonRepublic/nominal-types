@@ -48,22 +48,49 @@ An object stops at the first field that fails, so a bad value is cheap. See [`Ty
 
 ## Writing responses as JSON
 
-`JSON.stringify()` calls `toJSON()` on every instance. That makes an object full of instances about 3.7 times slower to write than the same plain values.
+`JSON.stringify()` calls `toJSON()` on every instance. That makes an object full of instances about 3.5 times slower to write than the same plain values.
 
-Convert the response to plain values first:
+A schema writes the values it gave faster. Its [`stringify()`](../reference/schemas.md#stringify) writes each instance's value straight to text, with no `toJSON()` call and no plain copy:
 
 | How an order with 20 items is written         |    Time |
 | --------------------------------------------- | ------: |
-| `JSON.stringify(plain values)`, for reference | 1.04 µs |
-| `JSON.stringify(parsed)`                      | 3.84 µs |
-| `JSON.stringify(n.plain(parsed))`             | 2.32 µs |
-| `JSON.stringify(Order.toPlain(parsed))`       | 1.42 µs |
+| `JSON.stringify(plain values)`, for reference | 1.22 µs |
+| `JSON.stringify(parsed)`                      | 4.22 µs |
+| `JSON.stringify(n.plain(parsed))`             | 2.62 µs |
+| `JSON.stringify(Order.toPlain(parsed))`       | 1.54 µs |
+| `Order.stringify(parsed)`                     | 0.58 µs |
 
-- For a value from a schema, call the schema's [`toPlain()`](../reference/schemas.md#toplain). It knows where the instances are, so it comes close to plain values.
-- For any other value, call [`n.plain()`](../reference/schemas.md#nplain).
-- In NestJS, [`NominalSerializerInterceptor`](../guides/frameworks/nestjs.md#send-instances-in-responses) converts the response before class-transformer runs.
+`stringify()` beats `JSON.stringify()` even on plain values: about twice as fast for one order, and a little faster for a 3 MB document. See [Benchmarks](../reference/benchmarks.md#writing-json-with-stringify).
 
-A Fastify route with a response schema doesn't use `JSON.stringify()`. It writes some instances wrong, so convert the response there too. See [Send instances from a route with a Fastify response schema](../guides/frameworks/nestjs.md#send-instances-from-a-route-with-a-fastify-response-schema).
+- To write a value from a schema yourself, call the schema's `stringify()`.
+- When a framework writes the response for you, give it the schema's [`toPlain()`](../reference/schemas.md#toplain).
+- For a value that doesn't come from one schema, call [`n.plain()`](../reference/schemas.md#nplain).
+- In NestJS, put [`@NominalResponse(schema)`](../guides/frameworks/nestjs.md#send-responses-fast) on the route. For routes without a schema, [`NominalSerializerInterceptor`](../guides/frameworks/nestjs.md#send-instances-in-responses) converts the response before class-transformer runs.
+
+A Fastify route with a response schema doesn't use `JSON.stringify()`. It writes some instances wrong. Let the schema write such a route instead: give the route a `serializerCompiler` that calls `stringify()`. The JSON Schema stays in `schema.response`, so `@fastify/swagger` still documents the route:
+
+```ts
+// server.ts
+import Fastify from 'fastify';
+import { AnyBoolean, n, Uuid } from '@horizon-republic/nominal-types';
+import type { ValueOf } from '@horizon-republic/nominal-types';
+
+const Order = n.object({ id: Uuid, paid: AnyBoolean });
+type OrderValue = ValueOf<typeof Order>;
+
+const app = Fastify();
+const order = Order.parse({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', paid: false });
+
+app.get(
+  '/orders/latest',
+  {
+    schema: { response: { 200: Order['~standard'].jsonSchema.output({ target: 'draft-07' }) } },
+    serializerCompiler: () => (data: OrderValue) => Order.stringify(data),
+  },
+  () => (order.ok ? order.value : null),
+);
+// GET /orders/latest  200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","paid":false}
+```
 
 ## Memory
 
@@ -89,7 +116,7 @@ class-validator also gets slower as the app registers more DTO classes, whatever
 
 The package generates its checks with `new Function`. Cloudflare Workers and pages with a strict Content-Security-Policy forbid that. There, the checks run without generated code. The results are the same, and nothing needs to be configured.
 
-The checks are slower there. Parsing an order with 20 items takes 4.1 µs instead of 2.5 µs, about 1.7 times as long. A single value loses a few nanoseconds: an email takes 97 ns instead of 91 ns.
+The checks are slower there. Parsing an order with 20 items takes 4.1 µs instead of 2.5 µs, about 1.7 times as long. A single value loses a few nanoseconds: an email takes 97 ns instead of 91 ns. A schema's `stringify()` writes `JSON.stringify(schema.toPlain(value))` there: 2.4 µs for the order instead of 0.58 µs, still faster than `JSON.stringify()` of the instances.
 
 ## Bundle size
 
@@ -97,16 +124,16 @@ A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps o
 
 | Your code imports                                       | Minified | Gzipped |
 | ------------------------------------------------------- | -------- | ------- |
-| `Uuid`                                                  | 21 KB    | 7.7 KB  |
-| `Email`                                                 | 21 KB    | 7.9 KB  |
-| `Integer`                                               | 21 KB    | 7.4 KB  |
-| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 42 KB    | 14 KB   |
-| `PlainDate` from `/temporal`                            | 22 KB    | 8 KB    |
-| `Uuid` and the adapter for a validator or a framework   | 22–23 KB | 8–9 KB  |
-| `Uuid` and the adapter for a database                   | 30 KB    | 11 KB   |
-| everything                                              | 74 KB    | 26 KB   |
+| `Uuid`                                                  | 23 KB    | 8.2 KB  |
+| `Email`                                                 | 24 KB    | 8.4 KB  |
+| `Integer`                                               | 22 KB    | 7.9 KB  |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 54 KB    | 18 KB   |
+| `PlainDate` from `/temporal`                            | 24 KB    | 8.4 KB  |
+| `Uuid` and the adapter for a validator or a framework   | 24–25 KB | 8–9 KB  |
+| `Uuid` and the adapter for a database                   | 32 KB    | 11 KB   |
+| everything                                              | 86 KB    | 30 KB   |
 
-About 20 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB.
+About 21 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
 
 The bundler leaves parts out only when your code loads the package with `import`. With `require()`, the bundle holds the whole package.
 

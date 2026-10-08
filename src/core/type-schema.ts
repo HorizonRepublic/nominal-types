@@ -5,6 +5,7 @@ import {
   nullablePaths,
   optionalPaths,
   registerPaths,
+  stringifyFor,
   textPaths,
   typePaths,
 } from './fast-paths.ts';
@@ -58,6 +59,7 @@ export class TypeSchema<Input, Output> {
   readonly #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
   readonly #paths: FastPaths;
+  #stringify: ((value: unknown) => string) | undefined;
 
   /**
    * Internal: built by `n.of()` and the methods below; `paths` know the shape.
@@ -120,28 +122,49 @@ export class TypeSchema<Input, Output> {
 
   /**
    * A copy of a value this schema gave, with every instance replaced by its JSON form, for a
-   * response: `JSON.stringify()` then writes it at the speed of plain values.
+   * framework that writes the response itself; `stringify()` writes the text faster still.
    *
    * @remarks
    * It does what `n.plain()` does, only faster, since it knows where the instances are. An object
-   * keeps only the fields the schema declares, as `parse()` keeps them. Parts the schema doesn't
-   * describe, such as a field from another library, go through `n.plain()`. The value is not
-   * changed.
+   * keeps only the declared fields, in declared order, as `parse()` keeps them. Parts the schema
+   * doesn't describe, such as a field from another library, go through `n.plain()`. The value is
+   * not changed.
    *
    * @example
    * ```ts
    * const Order = n.object({ id: Uuid, quantity: PositiveInteger });
    * const order = Order.parse(body);
    *
-   * if (order.ok) {
-   *   JSON.stringify(Order.toPlain(order.value)); // '{"id":"0190f1c2-…","quantity":2}'
-   * }
+   * if (order.ok) Order.toPlain(order.value); // { id: '0190f1c2-…', quantity: 2 }
    * ```
    */
   public toPlain(value: Output): Plain<Output> {
     // The writer builds exactly the shape `Plain` describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return this.#paths.write(value) as Plain<Output>;
+  }
+
+  /**
+   * The JSON text of a value this schema gave, written straight from its instances: what
+   * `JSON.stringify(n.plain(value))` writes, several times faster, for a response body.
+   *
+   * @remarks
+   * An object keeps only the declared fields, in declared order, as `toPlain()` does. Parts the
+   * schema doesn't describe, such as a field from another library or an instance whose `value` was
+   * changed, go through `JSON.stringify()`, so the text is the same.
+   *
+   * @throws TypeError for a value JSON has no text for, such as `undefined`.
+   *
+   * @example
+   * ```ts
+   * const Order = n.object({ id: Uuid, quantity: PositiveInteger });
+   * const order = Order.parse(body);
+   *
+   * if (order.ok) Order.stringify(order.value); // '{"id":"0190f1c2-…","quantity":2}'
+   * ```
+   */
+  public stringify(value: Output): string {
+    return (this.#stringify ??= stringifyFor(this.#paths))(value);
   }
 
   /**

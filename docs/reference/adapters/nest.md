@@ -2,13 +2,16 @@
 
 Entry point: `@horizon-republic/nominal-types/adapters/nest`. Needs `@nestjs/common` 11 or 12.
 
-| Export                         | Kind  | Use it for                                                     |
-| ------------------------------ | ----- | -------------------------------------------------------------- |
-| `NominalPipe`                  | class | a Nest pipe that turns route arguments into instances          |
-| `NominalSerializerInterceptor` | class | a `ClassSerializerInterceptor` that writes instances as values |
-| `NominalPipeOptions`           | type  | the options of `NominalPipe`                                   |
-| `NominalPipeTarget`            | type  | what `NominalPipe` checks against                              |
-| `NominalExceptionFactory`      | type  | a function that builds the error for rejected input            |
+| Export                         | Kind      | Use it for                                                     |
+| ------------------------------ | --------- | -------------------------------------------------------------- |
+| `NominalPipe`                  | class     | a Nest pipe that turns route arguments into instances          |
+| `NominalSerializerInterceptor` | class     | a `ClassSerializerInterceptor` that writes instances as values |
+| `NominalResponse`              | decorator | a route's response written by a schema's `stringify()`         |
+| `NominalResponseInterceptor`   | class     | the interceptor behind `NominalResponse`                       |
+| `NominalPipeOptions`           | type      | the options of `NominalPipe`                                   |
+| `NominalPipeTarget`            | type      | what `NominalPipe` checks against                              |
+| `NominalExceptionFactory`      | type      | a function that builds the error for rejected input            |
+| `NominalResponseSchema`        | type      | what `NominalResponse` writes with                             |
 
 ## NominalPipe
 
@@ -152,6 +155,60 @@ const app = await NestFactory.create(AppModule);
 app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)));
 await app.listen(3000);
 ```
+
+## NominalResponse
+
+```ts
+NominalResponse(schema: NominalResponseSchema<Value>): MethodDecorator & ClassDecorator;
+```
+
+| Parameter | Type                                                  | Description                     |
+| --------- | ----------------------------------------------------- | ------------------------------- |
+| `schema`  | an `n.of()` or `n.object()` schema, or a nominal type | what to write the response with |
+
+It writes what the route returns with [`schema.stringify()`](../schemas.md#stringify), or [`Type.stringify()`](../type-members.md#stringify) for a nominal type. It sends the text with the header `content-type: application/json; charset=utf-8`. It works on Express and on Fastify.
+
+| Route                                     | Answer                                                     |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| returns a value, or a promise of one      | the JSON text of the value                                 |
+| throws, such as a `NotFoundException`     | the error, as Nest writes it                               |
+| on a Fastify route with a response schema | the JSON text of the value; Fastify doesn't write it again |
+| in a microservice                         | the value as it is                                         |
+
+The route must return a value of the schema's shape. An object keeps only the fields the schema declares.
+
+A global `NominalSerializerInterceptor` leaves the text alone, so the two work together.
+
+On a whole controller, use the interceptor: `@UseInterceptors(new NominalResponseInterceptor(schema))`. It takes the same `schema`.
+
+`NominalResponseSchema<Value>` is any object with `stringify(value: Value): string`.
+
+```ts
+// orders.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { AnyBoolean, n, Uuid } from '@horizon-republic/nominal-types';
+import type { ValueOf } from '@horizon-republic/nominal-types';
+import { NominalResponse } from '@horizon-republic/nominal-types/adapters/nest';
+
+const Order = n.object({ id: Uuid, paid: AnyBoolean });
+
+@Controller('orders')
+export class OrdersController {
+  @Get('latest')
+  @NominalResponse(Order)
+  public latest(): ValueOf<typeof Order> {
+    const order = Order.parse({ id: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', paid: false });
+
+    if (!order.ok) {
+      throw new Error('bad order');
+    }
+
+    return order.value; // {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","paid":false}
+  }
+}
+```
+
+It needs `rxjs`, which every Nest app has.
 
 ## See also
 

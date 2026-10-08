@@ -67,10 +67,10 @@ const cases = [
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    64.8,
-    21.5,
+    75.7,
+    24.7,
   ],
-  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 109.4, 37.8],
+  ['everything', `import * as all from '${name}'; globalThis.out = all;`, 120.3, 41],
   [
     'temporal PlainDate',
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
@@ -80,8 +80,8 @@ const cases = [
   [
     'testing',
     `import { Email } from '${name}'; import { arbitraryOf } from '${name}/testing'; globalThis.out = arbitraryOf(Email);`,
-    57.3,
-    21.3,
+    58.1,
+    21.6,
   ],
   ['arktype', adapter('arktype', 'toArk'), 28, 9.9],
   ['class-validator', adapter('class-validator', 'NominalField'), 28, 9.9],

@@ -51,7 +51,7 @@ Writes the messages of this package in place of the English ones. It takes one o
 
 A function that returns `undefined` keeps the English message. The map is copied when `n.configure()` is called, so changing it afterwards changes nothing.
 
-It writes the messages of types, `n.object()`, `n.of()`, `n.union()`, `array()` and `n.constraint()`. Messages from a rule of another library, such as a Zod schema, are left as that library writes them.
+It writes the messages of types, `n.object()`, `n.of()`, `n.union()`, `n.record()`, `n.tuple()`, `array()` and `n.constraint()`. Messages from a rule of another library, such as a Zod schema, are left as that library writes them.
 
 `n.hideValues()`, `fromEnv()` and the `hideValues` option of the adapters ask the function again, with the value hidden. A message it wrote never shows more than the English one would.
 
@@ -120,7 +120,7 @@ What a `messages` function gets for each issue.
 | `value`       | The value as the English message writes it, such as `'"nope"'`, `'42'` or `'a string of 4 characters'`. Missing with `values: 'hide'` and where a message names no value. |
 | `typeName`    | The type whose own rule refused the value, such as `'nominal.Uuid'`.                                                                                                      |
 | `path`        | Where the value sits in the input, such as `['address', 'city']`. Missing for an issue of the whole value.                                                                |
-| `min`, `max`  | The fewest and the most items an array may have, for `too_few_items` and `too_many_items`. `max` is missing when there is no limit.                                       |
+| `min`, `max`  | The fewest and the most items of an array, or keys of a record, for the `too_few_…` and `too_many_…` codes. `max` is missing when there is no limit.                      |
 
 ## Messages, MessageMap, MessageFunction
 

@@ -14,6 +14,9 @@ export const issueCodes = [
   'not_an_array',
   'too_few_items',
   'too_many_items',
+  'too_few_keys',
+  'too_many_keys',
+  'invalid_key',
   'not_unique',
   'required',
   'not_allowed',
@@ -77,11 +80,12 @@ export interface IssueDetails {
    */
   readonly path?: readonly PropertyKey[];
   /**
-   * The fewest items an array may have, for `too_few_items` and `too_many_items`.
+   * The fewest items an array may have, or keys a record, for `too_few_items`, `too_many_items`,
+   * `too_few_keys` and `too_many_keys`.
    */
   readonly min?: number;
   /**
-   * The most items an array may have, when it has a limit.
+   * The most items an array may have, or keys a record, when there is a limit.
    */
   readonly max?: number;
 }

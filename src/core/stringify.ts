@@ -1,9 +1,8 @@
 import { generateFunction } from './compile.ts';
 import { json, leafOf, number, text } from './json-leaves.ts';
 import type { Instances, Plan, PlanField, Stringify } from './json-leaves.ts';
-
-// A piece of JSON text a generated statement appends: literal text, or an expression.
-type Piece = string | { readonly code: string };
+import { addedEmitters } from './plan-emitters.ts';
+import type { EmitTools, Piece } from './plan-emitters.ts';
 
 const append = (...pieces: readonly Piece[]): string => {
   const parts: string[] = [];
@@ -206,6 +205,21 @@ const emit = (source: Source, plan: Plan, expr: string, prefix: Piece, none: str
 
   if (plan.kind === 'object') {
     return emitObject(source, plan, expr, prefix, none);
+  }
+
+  const added = addedEmitters.get(plan.kind);
+
+  if (added !== undefined) {
+    const tools: EmitTools = {
+      fresh: (name) => source.fresh(name),
+      ref: (value) => source.ref(value),
+      emit: (inner, innerExpr, innerPrefix, innerNone) =>
+        emit(source, inner, innerExpr, innerPrefix, innerNone),
+      append,
+      appendText,
+    };
+
+    return added(tools, plan, expr, prefix, none);
   }
 
   const e = source.fresh('e');

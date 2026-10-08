@@ -124,7 +124,7 @@ const contextFor = (overrides: ReadonlyMap<object, Arbitrary<unknown>>): Generat
 const checkedTarget = (method: string, target: unknown): NominalTarget => {
   if (!isTarget(target)) {
     throw new TypeError(
-      `${method}() takes a nominal type or a schema built by n.of(), n.object() or n.union() (was ${describeValue(target)})`,
+      `${method}() takes a nominal type or a schema built by n.of(), n.object(), n.record(), n.tuple() or n.union() (was ${describeValue(target)})`,
     );
   }
 

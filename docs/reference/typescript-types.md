@@ -111,6 +111,17 @@ const result: Parsed<CreateOrderValue> = CreateOrder.parse(input);
 | `ObjectValue<Fields>`         | What an `n.object()` schema gives. Fields that accept `undefined` are optional.          |
 | `TextInput<Input>`            | What a `fromEnv()` schema accepts: each field's input or a string, every field optional. |
 
+## Records and tuples
+
+| Type                            | Description                                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `RecordSchema<Input, Output>`   | The class `n.record()` returns. See [`RecordSchema`](schemas.md#recordschema).                                                          |
+| `RecordKey<Key>`                | The keys of a record: the listed strings of `n.oneOf()`, or `string`.                                                                   |
+| `RecordInput<Key, Value>`       | What an `n.record()` schema accepts.                                                                                                    |
+| `RecordValue<Key, Value>`       | What an `n.record()` schema gives: `Readonly<Record<RecordKey<Key>, Value>>`, every key optional when `Value` accepts `undefined`.      |
+| `TupleSchema<Input, Output>`    | The class `n.tuple()` returns. See [`TupleSchema`](schemas.md#tupleschema).                                                             |
+| `TupleValue<Items, Rest, Side>` | What an `n.tuple()` schema gives, or with `Side` `'input'` accepts: a read-only tuple, trailing items that accept `undefined` optional. |
+
 ## Constraints
 
 | Type                       | Description                                                                                |

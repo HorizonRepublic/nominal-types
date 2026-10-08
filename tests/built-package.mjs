@@ -107,3 +107,27 @@ for (const [{ Email, n, Uuid }, { sampleOf }] of [
   ok(sampleOf(Email, 20, { seed: 1 }).every((text) => Email.parse(text).ok));
   ok(sampleOf(Order, 20, { seed: 1 }).every((body) => Order.parse(body).ok));
 }
+
+// Records compile copies of their functions from their own source, which must survive an app
+// bundler that minifies the package.
+const minified = await build({
+  stdin: {
+    contents: `import { Latitude, Longitude, n, NonEmptyString, PositiveInteger } from '${name}';
+const stock = n.record(NonEmptyString, PositiveInteger);
+const point = n.tuple([Latitude, Longitude]);
+const parsed = stock.parse({ a: 1 });
+export const results = [parsed.ok, stock.accepts({ a: 0 }), stock.toPlain(parsed.value), stock.stringify(parsed.value), point.parse([1, 2]).ok, point.accepts([1])];`,
+    resolveDir: fileURLToPath(root),
+  },
+  bundle: true,
+  minify: true,
+  write: false,
+  format: 'esm',
+  platform: 'node',
+  logLevel: 'silent',
+});
+const { results } = await import(
+  `data:text/javascript,${encodeURIComponent(minified.outputFiles[0].text)}`
+);
+
+deepStrictEqual(results, [true, false, { a: 1 }, '{"a":1}', true, false]);

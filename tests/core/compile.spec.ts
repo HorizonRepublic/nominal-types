@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { brandCheck, compileRun } from '../../src/core/compile.ts';
+import { brandCheck, compileRun, freshCopy } from '../../src/core/compile.ts';
 import type { ConvertStep, Step } from '../../src/core/plan.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 
@@ -19,6 +19,11 @@ const steps = [
   trim,
   check('not empty', (value) => value !== ''),
 ];
+
+const make =
+  (offset: number) =>
+  (value: number): number =>
+    value + offset;
 
 const outcome = (result: unknown): unknown =>
   result instanceof Rejection ? result.issues : result;
@@ -76,5 +81,18 @@ describe.each([
     ['text', false],
   ])('answers %o with %s', (value, expected) => {
     expect(isBranded(value)).toBe(expected);
+  });
+});
+
+describe('freshCopy()', () => {
+  it('compiles the function again, so its copy is another function that does the same', () => {
+    const copy = freshCopy(make, true);
+
+    expect(copy).not.toBe(make);
+    expect(copy(2)(3)).toBe(5);
+  });
+
+  it('gives the function itself without code generation', () => {
+    expect(freshCopy(make, false)).toBe(make);
   });
 });

@@ -48,7 +48,7 @@ describe('arguments the generators refuse', () => {
 
   it('refuses a schema whose parts no copy of the package recorded', () => {
     expect(() => arbitraryOf(Object.create(n.of(Uuid)))).toThrow(
-      'arbitraryOf(): the schema was not built by n.of(), n.object() or n.union() of this package',
+      'arbitraryOf(): the schema was not built by n.of(), n.object(), n.record(), n.tuple() or n.union() of this package',
     );
   });
 

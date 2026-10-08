@@ -3,10 +3,10 @@ import { satisfying } from '../../core/predicate-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
-// The WHATWG parser drops control characters and spaces at the ends and tabs and line breaks
-// anywhere, so text holding them would pass while the value differs from what was parsed.
+// A URL holds no spaces or control characters (RFC 3986). The WHATWG parser would drop some of
+// them and encode others, so text holding them would pass while the value differs from the URL.
 // oxlint-disable-next-line no-control-regex
-const parsedAsWritten = /^[^\u0000-\u0020](?:[^\u0000-\u001F]*[^\u0000-\u0020])?$/u;
+const parsedAsWritten = /^[^\u0000-\u0020\u007F]+$/u;
 
 const isAbsoluteUrl = (value: unknown): value is string =>
   typeof value === 'string' && parsedAsWritten.test(value) && URL.canParse(value);

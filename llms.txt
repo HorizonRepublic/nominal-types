@@ -216,7 +216,7 @@ config.PORT.value; // 3000 for PORT=3000
 | `Ulid` | `nominal.Ulid` | 26 Crockford base32 characters, first `0`–`7`, `I`/`L`/`O`/`U` refused, any case; `timestamp`, `canonical()` (uppercase); `equals` ignores case | yes |
 | `ObjectId` | `nominal.ObjectId` | a MongoDB ObjectId, 24 hex digits in any case; `timestamp` (seconds), `canonical()` (lowercase); `equals` ignores case | yes |
 | `SemVer` | `nominal.SemVer` | Semantic Versioning 2.0.0, no `v` prefix, up to 256 characters, numbers up to `Number.MAX_SAFE_INTEGER`; `major`, `minor`, `patch`, `prerelease`, `build`, `isPrerelease`, `compare(other)` (precedence, build ignored), `isNewerThan(other)`; `equals` compares the text | yes |
-| `Url` | `nominal.Url` | an absolute URL with any scheme (`javascript:`, `data:`, `file:` too; use `HttpUrl` for links), no control characters, no space at either end; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
+| `Url` | `nominal.Url` | an absolute URL with any scheme (`javascript:`, `data:`, `file:` too; use `HttpUrl` for links), no spaces or control characters; `protocol`, `hostname`, `host`, `origin`, `pathname`, `searchParams`, `toURL()`, `canonical()` | yes |
 | `HttpUrl` | `nominal.HttpUrl` | an http or https URL | yes |
 | `CountryCode` | `nominal.CountryCode` | an officially assigned ISO 3166-1 alpha-2 code or `XK` (Kosovo), upper case (`UK`, `EU` refused); `flag`, static `codes`; JSON Schema `enum` | yes |
 | `CurrencyCode` | `nominal.CurrencyCode` | an ISO 4217 List One code, upper case, funds, metals, `XTS` and `XXX` included; `minorUnits` (`undefined` for `XAU`, `XXX`), `isFund`, static `codes`; JSON Schema `enum` | yes |

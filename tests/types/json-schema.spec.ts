@@ -153,8 +153,10 @@ const cases: ReadonlyArray<readonly [AnyNominalType, readonly string[], readonly
     (type) =>
       [
         type,
-        ['https://example.com', 'https://example.com/!', 'https://example.com/a\u007Fb'],
+        ['https://example.com', 'https://example.com/!', 'https://example.com/a%20b'],
         [
+          'https://example.com/a b',
+          'https://example.com/a\u007Fb',
           ' https://example.com',
           'https://example.com ',
           'https://exa\nmple.com',

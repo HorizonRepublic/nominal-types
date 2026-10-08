@@ -30,11 +30,11 @@ describe('Url', () => {
     expect(HttpUrl.parse(text).ok).toBe(false);
   });
 
-  it('keeps the first character after the controls, and DEL, which the parser encodes', () => {
+  it('keeps the first character after the controls, and refuses spaces and DEL anywhere', () => {
     expect(new Url('https://example.com/!').value).toBe('https://example.com/!');
-    expect(new Url('https://example.com/a\u007Fb').canonical().value).toBe(
-      'https://example.com/a%7Fb',
-    );
+    expect(new Url('https://example.com/a%20b').value).toBe('https://example.com/a%20b');
+    expect(Url.parse('https://example.com/a b').ok).toBe(false);
+    expect(Url.parse('https://example.com/a\u007Fb').ok).toBe(false);
   });
 
   it('takes javascript:, data: and file: URLs, which HttpUrl refuses', () => {
@@ -106,7 +106,7 @@ describe('Url as JSON Schema', () => {
       title: 'nominal.Url',
       type: 'string',
       format: 'uri',
-      pattern: '^[^\\u0000-\\u0020](?:[^\\u0000-\\u001F]*[^\\u0000-\\u0020])?$',
+      pattern: '^[^\\u0000-\\u0020\\u007F]+$',
       example: 'https://example.com/docs',
       description: 'a URL',
     });

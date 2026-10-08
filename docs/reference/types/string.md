@@ -305,7 +305,7 @@ An absolute URL like `https://example.com/a?b=1`: anything `new URL(text)` accep
 
 - Any scheme is accepted, including `javascript:`, `data:`, `file:` and `mailto:`. Use `HttpUrl` for a link shown to users or opened by your server.
 - `value` keeps the text as given. The members read the parsed URL.
-- Control characters anywhere, and a space at either end, are refused: `' https://example.com'`, `'https://exa\nmple.com'`. `new URL()` drops them, so the value would differ from the URL it read.
+- Spaces and control characters are refused anywhere: `' https://example.com'`, `'https://example.com/a b'`, `'https://exa\nmple.com'`. A URL can't hold them, and `new URL()` would drop or encode them, so the value would differ from the URL it read.
 - The host is read as browsers read it: `http://0x7f.1` has the `hostname` `127.0.0.1`. To refuse internal hosts, check `hostname` with [`IpAddress`](#ipaddress) and its `isGlobal`.
 
 | Property    | Value                                                            |

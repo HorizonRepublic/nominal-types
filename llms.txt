@@ -37,8 +37,8 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). No dependencies
 | `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
 | `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
 | `@horizon-republic/nominal-types/adapters/class-validator` | `NominalField`, types `NominalFieldOptions`, `NominalTarget`, `TargetValue` | `class-validator` ^0.14 or ^0.15, `class-transformer` ^0.5 |
-| `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory` | `@nestjs/common` ^11 or ^12 |
-| `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, type `OpenApiDocument` | `@nestjs/swagger` ^11 or ^12 |
+| `@horizon-republic/nominal-types/adapters/nest` | `NominalPipe`, `NominalSerializerInterceptor`, types `NominalPipeOptions`, `NominalPipeTarget`, `NominalExceptionFactory` | `@nestjs/common` ^11 or ^12 |
+| `@horizon-republic/nominal-types/adapters/swagger` | `applyNominalTypes`, `ApiNominalProperty`, `ApiNominalBody`, `ApiNominalQuery`, types `OpenApiDocument`, `ApiNominalBodyOptions`, `ApiNominalQueryOptions` | `@nestjs/swagger` ^11 or ^12 |
 | `@horizon-republic/nominal-types/adapters/graphql` | `toGraphQL`, type `GraphQLOptions` | `graphql` ^16 or ^17 |
 | `@horizon-republic/nominal-types/adapters/superjson` | `toSuperjson`, types `SuperjsonTransformer`, `SuperjsonValue` | `superjson` |
 | `@horizon-republic/nominal-types/adapters/mikro-orm` | `toMikroOrm`, types `MikroOrmOptions`, `MikroOrmType` | `@mikro-orm/core` ^7 |
@@ -61,7 +61,9 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). No dependencies
 | an existing Zod or Valibot schema | `toZod()` / `toValibot()` fields, `constrainZod()` / `constrainValibot()` for rules across fields |
 | class-validator DTOs | `@NominalField(Type)` |
 | NestJS parameters and bodies | `NominalPipe` |
+| NestJS responses with class-transformer | `NominalSerializerInterceptor` in place of `ClassSerializerInterceptor` |
 | an OpenAPI document from `@nestjs/swagger` | `applyNominalTypes(document)` |
+| Swagger for a body or query value checked by `NominalPipe` | `@ApiNominalBody(schema)`, `@ApiNominalQuery(name, schema)` |
 | a GraphQL scalar | `toGraphQL(Type)` |
 | instances through tRPC or Next.js | `superjson.registerCustom(...toSuperjson(Type))` |
 | a database column | `toMikroOrm`, `toTypeOrm`, `toDrizzle`, `toSequelize` |
@@ -201,7 +203,7 @@ config.PORT.value; // 3000 for PORT=3000
 
 ### TypeScript types
 
-`ValueOf<Schema>` (the value a schema gives: `type CreateBooking = ValueOf<typeof CreateBooking>`), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?>`, `Narrowed<Instance, Value>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
+`ValueOf<Schema>` (the value a schema gives: `type CreateBookingBody = ValueOf<typeof CreateBooking>`; give the type its own name, since Bun and SWC record a schema named like the type in Nest's parameter metadata), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?>`, `Narrowed<Instance, Value>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
 
 ## Built-in types
 
@@ -351,7 +353,7 @@ import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types
 import type { ValueOf } from '@horizon-republic/nominal-types';
 
 const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
-type CreateOrder = ValueOf<typeof CreateOrder>;
+type CreateOrderBody = ValueOf<typeof CreateOrder>;
 
 @Controller('orders')
 export class OrdersController {
@@ -362,21 +364,26 @@ export class OrdersController {
   public list(@Query('page') page?: PositiveInteger, @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }).optional())) ids?: readonly Uuid[]): void {}
 
   @Post()
-  public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder): void {}
+  public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody): void {}
 }
 ```
 
-- `new NominalPipe(target?, options?)`. `target` is a nominal type, an `n.of()`/`n.object()` schema or any synchronous Standard Schema (a `fromArk()` schema, a Zod object). Without a target it uses Nest 12's `{ schema }` on the parameter if that is a nominal type or `n.of()` schema, else the parameter's declared type, and passes every other argument through. Safe to bind globally.
+- `new NominalPipe(target?, options?)`. `target` is a nominal type, an `n.of()`/`n.object()` schema or any synchronous Standard Schema (a `fromArk()` schema, a Zod object). Without a target it uses Nest 12's `{ schema }` on the parameter if that is a nominal type or `n.of()` schema, else the parameter's declared type (a nominal type, or the `n.of()`/`n.object()` schema Bun and SWC record for a type alias named like the schema), and passes every other argument through. Safe to bind globally.
 - Declared types lose array items and `?`: `Uuid[]` is not checked without a schema, and a missing value of a declared type reaches the handler as `undefined`. To require it or check a list, give the parameter its own pipe or a `{ schema }`.
 - In a query string, a lone value for an array schema becomes a list of one, and a string for a number or boolean type is read as its value (`?page=2` gives `2`), unless `fromString: false`.
 - Options: `fromString` (default `true`), `hideValues` (default `false`), `exceptionFactory(issues, metadata)` (default: `BadRequestException` with `{ statusCode: 400, error: 'Bad Request', message: ['id: must be a UUID (was "x")'] }`). In a microservice pass an `exceptionFactory` that returns an `RpcException`.
-- Pipes never run on `@Headers()`. `ClassSerializerInterceptor` writes instances as `{ "value": … }`; without it, responses use each instance's `toJSON()`.
+- Pipes never run on `@Headers()`. Without an interceptor, responses use each instance's `toJSON()`. Nest's `ClassSerializerInterceptor` writes instances as `{ "value": … }`; use `NominalSerializerInterceptor` in its place (same arguments: `app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)))`). It writes every instance, at any depth, as its `toJSON()`, then runs class-transformer as before (`@Exclude()`, `@Expose()`, groups, `@SerializeOptions()`).
+- Give a schema's value type its own name (`type CreateOrderBody = ValueOf<typeof CreateOrder>`). Under Bun and SWC, `order: CreateOrder` with a shared name records the schema object as the parameter type: `@nestjs/swagger` writes a broken `$ref` and a global `ValidationPipe` answers 500.
 - Nest 12 `@Body({ schema: CreateOrder })` works only together with the global `NominalPipe`.
 
 ### Swagger
 
 - `applyNominalTypes(document)` fills the schemas `@nestjs/swagger` leaves empty for nominal types with each type's OpenAPI 3.0 schema. Use it on the result of `SwaggerModule.createDocument()`. Two of your types with the same last part need different schema names: `@ApiSchema({ name: 'billing.Email' })`.
 - `@ApiNominalProperty(target, options?)` writes the type's schema into a DTO property; `options` are `@ApiProperty()` options and win.
+- `@ApiNominalBody(target, options?)` on the route writes the request body that `@Body(new NominalPipe(target))` hides from `@nestjs/swagger`. Options: `name` (lists an object schema under `components.schemas` and refers to it with `$ref`; otherwise inline), `description`, `required` (default: required unless the schema accepts `undefined`).
+- `@ApiNominalQuery(name, target, options?)` on the route writes a query parameter with the whole schema: a list behind `new NominalPipe(n.of(Uuid).array({ max }))` keeps `items`, `format`, `pattern` and `maxItems`, which `@nestjs/swagger` loses. `@Query('page') page?: PositiveInteger` is shown required by `@nestjs/swagger`; write `@ApiNominalQuery('page', PositiveInteger, { required: false })` or pass `n.of(PositiveInteger).optional()`. Options: `description`, `required`.
+- Types: `ApiNominalBodyOptions`, `ApiNominalQueryOptions`.
+- Schemas are matched by class name, so a minified server build needs class names kept (esbuild/tsup `keepNames: true`, terser `keep_classnames: true`).
 
 ### GraphQL
 

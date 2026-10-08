@@ -35,12 +35,12 @@ import type { ValueOf } from '@horizon-republic/nominal-types';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
 const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
-type CreateOrder = ValueOf<typeof CreateOrder>;
+type CreateOrderBody = ValueOf<typeof CreateOrder>;
 
 @Controller('orders')
 export class OrdersController {
   @Post()
-  public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder) {
+  public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody) {
     return { domain: order.customer.domain }; // order.customer is an Email
   }
 }
@@ -60,7 +60,7 @@ A body with `"customer": "jane"` gets this answer:
 
 New project? Check bodies with [n.object()](../core/check-an-object.md). Use [class-validator](../validators/class-validator.md) instead if your DTOs already use it.
 
-1. Describe the body in its own file. The schema and its type share one name, so you import one thing:
+1. Describe the body in its own file. Give the type of a checked body its own name, such as `CreateOrderBody`. A type named like the schema breaks Swagger and pipes under Bun and SWC; see [Limits](#limits).
 
    ```ts
    // create-order.ts
@@ -76,7 +76,7 @@ New project? Check bodies with [n.object()](../core/check-an-object.md). Use [cl
      note: n.of(AnyString).optional(),
    });
 
-   export type CreateOrder = ValueOf<typeof CreateOrder>;
+   export type CreateOrderBody = ValueOf<typeof CreateOrder>;
    ```
 
    `ValueOf` gives the type of a checked body. It takes the place of a DTO class (a class that describes a request body).
@@ -88,12 +88,12 @@ New project? Check bodies with [n.object()](../core/check-an-object.md). Use [cl
    import { Body, Controller, Post } from '@nestjs/common';
    import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
-   import { CreateOrder } from './create-order';
+   import { CreateOrder, type CreateOrderBody } from './create-order';
 
    @Controller('orders')
    export class OrdersController {
      @Post()
-     public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder) {
+     public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrderBody) {
        return {
          domain: order.customer.domain, // order.customer is an Email
          sku: order.sku.value,
@@ -128,12 +128,12 @@ On Nest 12 you can put the schema in the decorator instead. The global pipe from
 // orders.controller.ts (Nest 12)
 import { Body, Controller, Post } from '@nestjs/common';
 
-import { CreateOrder } from './create-order';
+import { CreateOrder, type CreateOrderBody } from './create-order';
 
 @Controller('orders')
 export class OrdersController {
   @Post()
-  public create(@Body({ schema: CreateOrder }) order: CreateOrder) {
+  public create(@Body({ schema: CreateOrder }) order: CreateOrderBody) {
     return { domain: order.customer.domain };
   }
 }
@@ -142,6 +142,8 @@ export class OrdersController {
 Without the global pipe, Nest doesn't check `{ schema }`, and the handler gets the raw body.
 
 To check one field against another, such as two dates in order, add a constraint to the schema. See [How to check one field against another](../core/check-fields-together.md).
+
+Swagger doesn't see a body behind `NominalPipe`. To show it, add `@ApiNominalBody(CreateOrder)` to the route; see [How to document nominal types in Swagger](../api-docs/swagger.md#document-a-request-body).
 
 ## Check route parameters and query values
 
@@ -289,6 +291,67 @@ The client sending `'nope'` gets this error:
 
 Without `exceptionFactory`, the client gets only `{ "status": "error", "message": "Internal server error" }`.
 
+## Send instances in responses
+
+Without an interceptor, Nest writes each instance with its `toJSON()`. An `Email` becomes `"jane@example.com"`.
+
+Nest's `ClassSerializerInterceptor` runs class-transformer, which ignores `toJSON()`. It writes each instance as `{ "value": … }`. Use `NominalSerializerInterceptor` in its place. It takes the same arguments and options, and it needs class-transformer too:
+
+```ts
+// main.ts
+import { NestFactory, Reflector } from '@nestjs/core';
+import { NominalSerializerInterceptor } from '@horizon-republic/nominal-types/adapters/nest';
+
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)));
+  await app.listen(3000);
+}
+
+void bootstrap();
+```
+
+`@Exclude()`, `@Expose()`, groups and `@SerializeOptions()` work as before:
+
+```ts
+// users.controller.ts
+import { Controller, Get } from '@nestjs/common';
+import { Exclude } from 'class-transformer';
+import { AnyString, Email, Uuid } from '@horizon-republic/nominal-types';
+
+export class User {
+  @Exclude()
+  public password: AnyString;
+
+  public constructor(
+    public id: Uuid,
+    public email: Email,
+    password: AnyString,
+  ) {
+    this.password = password;
+  }
+}
+
+@Controller('users')
+export class UsersController {
+  @Get('me')
+  public me(): User {
+    const id = new Uuid('0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f');
+
+    return new User(id, new Email('jane@example.com'), new AnyString('secret'));
+  }
+}
+```
+
+The answers:
+
+```text
+ClassSerializerInterceptor     200 {"id":{"value":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f"},"email":{"value":"jane@example.com"}}
+NominalSerializerInterceptor   200 {"id":"0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f","email":"jane@example.com"}
+```
+
 ## Errors
 
 A rejected value fails the request with status 400. The body has the same shape as the one from Nest's own validation. Each message starts with where the value was: the parameter name, the field, or the list index.
@@ -304,7 +367,7 @@ To answer with something else, pass `exceptionFactory`. It works on the global p
 import { Body, Controller, Post, UnprocessableEntityException } from '@nestjs/common';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
-import { CreateOrder } from './create-order';
+import { CreateOrder, type CreateOrderBody } from './create-order';
 
 const checkOrder = new NominalPipe(CreateOrder, {
   exceptionFactory: (issues) => new UnprocessableEntityException({ issues }),
@@ -313,7 +376,7 @@ const checkOrder = new NominalPipe(CreateOrder, {
 @Controller('orders')
 export class OrdersController {
   @Post()
-  public create(@Body(checkOrder) order: CreateOrder) {
+  public create(@Body(checkOrder) order: CreateOrderBody) {
     return { sku: order.sku.value };
   }
 }
@@ -331,7 +394,9 @@ To keep rejected values out of answers and logs, pass `hideValues: true`, as in 
 
 - Write `page?: PositiveInteger`, not `page: PositiveInteger | undefined`. TypeScript records the second as `Object`, so the global pipe doesn't check it.
 - The global pipe doesn't check a parameter declared `Uuid[]`. TypeScript records only `Array` for it, so `?ids=nope&ids=nope` reaches the handler as plain strings. Use a schema, as in [Lists and optional values](#lists-and-optional-values).
-- `@Body() order: CreateOrder` with no pipe and no `{ schema }` is not checked. `CreateOrder` is a type, not a class, so the global pipe can't see it.
+- `@Body() order: CreateOrderBody` with no pipe and no `{ schema }` is not checked. `CreateOrderBody` is a type, not a class, so the global pipe can't see it.
+- Give the type of a schema's value its own name, as in `type CreateOrderBody = ValueOf<typeof CreateOrder>`. Bun and SWC record the schema itself as the type of `order: CreateOrder` when the schema and the type share the name. The global `NominalPipe` then checks the body. But `@nestjs/swagger` writes a broken `$ref` (`#/components/schemas/`), and a global `ValidationPipe` answers with status 500.
+- Under `NominalSerializerInterceptor`, a getter that class-transformer calls sees values, not instances. In `@Expose() get domain() { return this.email.domain; }`, `this.email` is a string, so `domain` is left out of the answer. Set such a value in a plain field instead.
 - Nest doesn't run pipes on `@Headers()`. Check a header inside the handler with `parse()`:
 
   ```ts

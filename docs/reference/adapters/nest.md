@@ -2,12 +2,13 @@
 
 Entry point: `@horizon-republic/nominal-types/adapters/nest`. Needs `@nestjs/common` 11 or 12.
 
-| Export                    | Kind  | Use it for                                            |
-| ------------------------- | ----- | ----------------------------------------------------- |
-| `NominalPipe`             | class | a Nest pipe that turns route arguments into instances |
-| `NominalPipeOptions`      | type  | the options of `NominalPipe`                          |
-| `NominalPipeTarget`       | type  | what `NominalPipe` checks against                     |
-| `NominalExceptionFactory` | type  | a function that builds the error for rejected input   |
+| Export                         | Kind  | Use it for                                                     |
+| ------------------------------ | ----- | -------------------------------------------------------------- |
+| `NominalPipe`                  | class | a Nest pipe that turns route arguments into instances          |
+| `NominalSerializerInterceptor` | class | a `ClassSerializerInterceptor` that writes instances as values |
+| `NominalPipeOptions`           | type  | the options of `NominalPipe`                                   |
+| `NominalPipeTarget`            | type  | what `NominalPipe` checks against                              |
+| `NominalExceptionFactory`      | type  | a function that builds the error for rejected input            |
 
 ## NominalPipe
 
@@ -28,7 +29,7 @@ With a `target`, the pipe checks every argument against it.
 Without one, it picks the target per argument, in this order:
 
 1. the parameter's `{ schema }` option on Nest 12, when it is a nominal type or an `n.of()` schema;
-2. the type the parameter is declared with, when it is a nominal type;
+2. the type the parameter is declared with, when it is a nominal type, or an `n.of()` or `n.object()` schema that Bun and SWC record for a type named like the schema;
 3. nothing: the argument passes through untouched.
 
 So a global `new NominalPipe()` is safe beside other pipes. It leaves DTO classes and schemas of other libraries alone.
@@ -119,6 +120,37 @@ const custom = new NominalPipe(Uuid, {
 custom.transform('nope', { type: 'param', data: 'id' });
 // throws UnprocessableEntityException:
 // { message: [{ message: 'must be a UUID (was "nope")' }], error: 'Unprocessable Entity', statusCode: 422 }
+```
+
+## NominalSerializerInterceptor
+
+```ts
+new NominalSerializerInterceptor(reflector: Reflector, defaultOptions?: ClassSerializerInterceptorOptions);
+```
+
+Extends Nest's `ClassSerializerInterceptor` and takes the same arguments. Needs class-transformer, as `ClassSerializerInterceptor` does.
+
+`ClassSerializerInterceptor` writes an instance as `{ "value": … }`, because class-transformer ignores `toJSON()`. This interceptor first replaces every instance in the response with its `toJSON()`: in lists, plain objects and class instances, at any depth. Then class-transformer runs as before, with `@Exclude()`, `@Expose()`, groups and `@SerializeOptions()`.
+
+| Response                                   | Answer                                  |
+| ------------------------------------------ | --------------------------------------- |
+| `new Email('jane@example.com')`            | `jane@example.com`                      |
+| `{ email: new Email('jane@example.com') }` | `{"email":"jane@example.com"}`          |
+| `[new PositiveInteger(1)]`                 | `[1]`                                   |
+| an object without instances                | what `ClassSerializerInterceptor` gives |
+
+The response itself is not changed. An object that holds an instance is copied with its class, so a getter on it reads the plain value: in `get domain() { return this.email.domain; }`, `this.email` is a string.
+
+```ts
+// main.ts
+import { NestFactory, Reflector } from '@nestjs/core';
+import { NominalSerializerInterceptor } from '@horizon-republic/nominal-types/adapters/nest';
+
+import { AppModule } from './app.module';
+
+const app = await NestFactory.create(AppModule);
+app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)));
+await app.listen(3000);
 ```
 
 ## See also

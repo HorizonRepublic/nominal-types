@@ -46,6 +46,7 @@ export type Platform = 'fastify' | 'express';
 export interface Started {
   readonly app: INestApplication;
   readonly get: (path: string) => Promise<{ status: number; body: unknown }>;
+  readonly post: (path: string, body: unknown) => Promise<{ status: number; body: unknown }>;
 }
 
 export const start = async (
@@ -67,6 +68,15 @@ export const start = async (
     app,
     get: async (path) => {
       const response = await fetch(`${base}${path}`);
+
+      return { status: response.status, body: await response.json() };
+    },
+    post: async (path, body) => {
+      const response = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
       return { status: response.status, body: await response.json() };
     },

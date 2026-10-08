@@ -21,9 +21,9 @@ export const CreateOrder = n.object({
   note: n.of(AnyString).optional(),
 });
 
-export type CreateOrder = ValueOf<typeof CreateOrder>;
+export type CreateOrderBody = ValueOf<typeof CreateOrder>;
 
-export const summary = (order: CreateOrder): string =>
+export const summary = (order: CreateOrderBody): string =>
   `${order.quantity.value} × ${order.sku.value} for ${order.customer.domain}`;
 ```
 
@@ -36,10 +36,10 @@ Make each value with `new`. A typo in a test value then fails at once with a `No
 import { Email, PositiveInteger } from '@horizon-republic/nominal-types';
 import { expect, it } from 'vitest';
 
-import { type CreateOrder, Sku, summary } from './orders.ts';
+import { type CreateOrderBody, Sku, summary } from './orders.ts';
 
 it('names the quantity, the SKU and the domain', () => {
-  const order: CreateOrder = {
+  const order: CreateOrderBody = {
     customer: new Email('jane@example.com'),
     sku: new Sku('ABC-1234'),
     quantity: new PositiveInteger(2),

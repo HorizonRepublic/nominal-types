@@ -1,9 +1,7 @@
 import 'reflect-metadata';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
-import { ApiProperty, ApiSchema, DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ApiProperty, ApiSchema } from '@nestjs/swagger';
 import type { OpenAPIObject } from '@nestjs/swagger';
-import { Test } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -12,6 +10,7 @@ import { NominalField } from '../../../src/adapters/class-validator/index.ts';
 import { ApiNominalProperty, applyNominalTypes } from '../../../src/adapters/swagger/index.ts';
 import { AnyString, Email, n, Uuid } from '../../../src/index.ts';
 import { nestMajor } from '../nest/support.ts';
+import { documentFor, emailSchema, parameterNamed, uuidSchema } from './support.ts';
 
 class UserId extends Uuid.subtype('UserId') {}
 
@@ -27,6 +26,9 @@ class ManualDto {
 
   @ApiNominalProperty(Email, { description: 'Where invoices go' })
   public billing!: Email;
+
+  @ApiNominalProperty(n.object({ street: AnyString, note: n.of(AnyString).optional() }).optional())
+  public address?: unknown;
 }
 
 class ReflectedDto {
@@ -51,45 +53,6 @@ class UsersController {
     return body;
   }
 }
-
-const documentFor = async (controller: new () => unknown): Promise<OpenAPIObject> => {
-  const module = await Test.createTestingModule({ controllers: [controller] }).compile();
-  const app = module.createNestApplication(new FastifyAdapter());
-
-  await app.init();
-  const document = SwaggerModule.createDocument(app, new DocumentBuilder().build());
-
-  await app.close();
-
-  return document;
-};
-
-const parameterNamed = (document: OpenAPIObject, path: string, name: string): unknown =>
-  (document.paths[path]?.get?.parameters ?? []).find(
-    (parameter) => 'name' in parameter && parameter.name === name,
-  );
-
-const uuidSchema = (title: string): Record<string, unknown> => ({
-  title,
-  type: 'string',
-  pattern: Uuid.pattern.source,
-  format: 'uuid',
-  minLength: 36,
-  maxLength: 36,
-  example: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f',
-  description: 'a UUID',
-});
-
-const emailSchema = {
-  title: 'nominal.Email',
-  type: 'string',
-  pattern: Email.pattern.source,
-  format: 'email',
-  minLength: 6,
-  maxLength: 254,
-  example: 'jane.doe@example.com',
-  description: 'an email address',
-};
 
 describe('applyNominalTypes', () => {
   let raw: OpenAPIObject;
@@ -174,6 +137,13 @@ describe('ApiNominalProperty', () => {
   });
 
   it('marks properties required unless the schema is optional', () => {
+    expect(schema).toMatchObject({ required: ['contact', 'items', 'billing'] });
+  });
+
+  it('keeps the required fields of an object schema apart from whether the property is', () => {
+    expect(schema).toMatchObject({
+      properties: { address: { type: 'object', required: ['street'] } },
+    });
     expect(schema).toMatchObject({ required: ['contact', 'items', 'billing'] });
   });
 

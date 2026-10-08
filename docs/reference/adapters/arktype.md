@@ -78,7 +78,7 @@ Each issue is `{ message, path? }`. The message is the type's own, as `Email.par
 
 JSON Schema targets: `draft-2020-12`, `draft-07` and `openapi-3.0`. Each `toArk()` field is described by its type: pattern, format, limits, example. Ask with `CreateOrder['~standard'].jsonSchema.input({ target: 'openapi-3.0' })`. Another target throws `TypeError: JSON Schema target <name> is not supported`.
 
-To name the value's type, use `ValueOf`: `type CreateOrder = ValueOf<typeof CreateOrder>`.
+To name the value's type, use `ValueOf`: `type CreateOrderBody = ValueOf<typeof CreateOrder>`.
 
 ## constrainArk()
 

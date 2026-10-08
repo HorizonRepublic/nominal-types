@@ -82,7 +82,10 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
     return declared;
   }
 
-  return isNominalType(metadata.metatype) ? metadata.metatype : undefined;
+  // Bun and SWC record a schema in place of the type alias that shares its name with it.
+  const metatype: unknown = metadata.metatype;
+
+  return isTarget(metatype) ? metatype : undefined;
 };
 
 /**
@@ -91,7 +94,8 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
  * @remarks
  * Given a type or a `n.of()` schema, it checks that. Given none, it uses the parameter's
  * `{ schema }` on Nest 12 when that is a nominal type or a `n.of()` schema, else the type the
- * parameter is declared with, and passes every other argument through untouched; that makes it
+ * parameter is declared with, or the schema Bun and SWC record for a type named like a schema,
+ * and passes every other argument through untouched; that makes it
  * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` needs a schema,
  * and a missing value of a declared type is passed on as `undefined`; to require it, give the
  * parameter a pipe of its own or a schema. In a query string, a lone value given to an array schema is wrapped into an
@@ -160,6 +164,7 @@ export class NominalPipe implements PipeTransform<unknown, unknown> {
     return (
       this.#target === undefined &&
       !isTarget(Reflect.get(metadata, 'schema')) &&
+      isNominalType(declared) &&
       target === declared
     );
   }

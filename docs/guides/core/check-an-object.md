@@ -22,10 +22,10 @@ export const CreateOrder = n.object({
   note: n.of(AnyString).optional(),
 });
 
-export type CreateOrder = ValueOf<typeof CreateOrder>;
+export type CreateOrderBody = ValueOf<typeof CreateOrder>;
 ```
 
-The last line names the type of a checked object, for functions such as `(order: CreateOrder) => …`.
+The last line names the type of a checked object, for functions such as `(order: CreateOrderBody) => …`. Give the type a name of its own. In NestJS, a type named like the schema breaks Swagger and pipes under Bun and SWC; see [Limits in the NestJS guide](../frameworks/nestjs.md#limits).
 
 ## Check a body
 

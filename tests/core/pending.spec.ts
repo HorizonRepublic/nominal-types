@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { nothingPending, takePending } from '../../src/core/pending.ts';
 import { trustedConstructorFor } from '../../src/core/type-functions.ts';
 import type { Parsed } from '../../src/index.ts';
-import { AnyString, Email, Nominal, objectOf, PositiveInteger } from '../../src/index.ts';
+import { AnyString, Email, n, Nominal, PositiveInteger } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
 // `parse` checks a value once and hands it to the constructor it calls through a single slot.
@@ -78,7 +78,7 @@ describe('the value parse hands to its constructor', () => {
   it('is gone when the constructor throws before super()', () => {
     beforeSuper = refuse;
 
-    class Box extends Nominal('pending.Box', objectOf({ n: PositiveInteger })) {
+    class Box extends Nominal('pending.Box', n.object({ n: PositiveInteger })) {
       public constructor(input: { n: number }) {
         beforeSuper();
         super(input);

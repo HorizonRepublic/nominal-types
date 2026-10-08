@@ -54,7 +54,7 @@ export class PredicateSchema<Value> extends NativeSchema<Value> {
  *
  * export class EvenNumber extends Nominal(
  *   'EvenNumber',
- *   satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
+ *   n.satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
  * ) {}
  * ```
  */

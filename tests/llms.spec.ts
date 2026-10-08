@@ -20,21 +20,31 @@ const entryPoints = [
     ),
 ] as const;
 
-// The names an index file exports, values and types alike.
-const exportsOf = (file: string): string[] =>
-  [...readFileSync(join(root, file), 'utf8').matchAll(/export (?:type )?\{([^}]*)\}/gu)].flatMap(
-    (match) =>
-      (match[1] ?? '')
-        .split(',')
-        .map(
-          (name) =>
-            name
-              .trim()
-              .split(/\s+as\s+/u)
-              .at(-1) ?? '',
-        )
-        .filter((name) => name !== ''),
+// The names in `export { … }` and `export type { … }` lists of a file, as they are exported.
+const listedExportsOf = (source: string): string[] =>
+  [...source.matchAll(/export (?:type )?\{([^}]*)\}/gu)].flatMap((match) =>
+    (match[1] ?? '')
+      .split(',')
+      .map(
+        (name) =>
+          name
+            .trim()
+            .split(/\s+as\s+/u)
+            .at(-1) ?? '',
+      )
+      .filter((name) => name !== ''),
   );
+
+// The names an index file exports, values, types and namespaces alike.
+const exportsOf = (file: string): string[] => {
+  const source = readFileSync(join(root, file), 'utf8');
+  const namespaces = [...source.matchAll(/export \* as (\w+)/gu)].map((match) => match[1] ?? '');
+
+  return [...namespaces, ...listedExportsOf(source)];
+};
+
+// The members of the namespace `n`, which llms.txt names in their `n.` form.
+const namespaceMembers = listedExportsOf(readFileSync(join(root, 'src/core/n.ts'), 'utf8'));
 
 const markdownIn = (folder: string): string[] =>
   readdirSync(join(root, folder), { withFileTypes: true }).flatMap((entry) => {
@@ -64,6 +74,10 @@ describe('llms.txt', () => {
 
   it.each(exported)('names $name from $entry', ({ name }) => {
     expect(llms).toContain(`\`${name}`);
+  });
+
+  it.each(namespaceMembers)('names n.%s', (name) => {
+    expect(llms).toContain(`\`n.${name}`);
   });
 
   it.each(docsPages)('links the docs page %s, which ships in the package', (page) => {

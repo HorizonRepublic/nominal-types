@@ -6,7 +6,7 @@ Using `@nestjs/swagger`? See [How to document nominal types in Swagger](swagger.
 
 ## Before you start
 
-- Nothing extra to install. Every type, every `schemaOf()` schema and every `objectOf()` schema can describe itself.
+- Nothing extra to install. Every type, every `n.of()` schema and every `n.object()` schema can describe itself.
 - The schema lives under the property [`~standard`](../../reference/glossary.md), the one every [Standard Schema](../../reference/glossary.md) library uses. Its tilde keeps it out of your editor's autocomplete.
 
 ## Quick example
@@ -32,19 +32,19 @@ Pick the `target` by where the schema goes:
 
 ## Describe a request body
 
-An `objectOf()` schema describes every field and lists the required ones:
+An `n.object()` schema describes every field and lists the required ones:
 
 ```ts
 // schema.ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-const CreateOrder = objectOf({
+const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 CreateOrder['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
@@ -73,14 +73,14 @@ JSON.stringify({ id: new Int64(12) }); // '{"id":"12"}'
 
 ## Make your own type's schema useful
 
-Every schema has the type's name as `title`. The built-in types also add a format, length limits and an example, so tools show a real value. Give your own type the same with the third argument of `matching()`:
+Every schema has the type's name as `title`. The built-in types also add a format, length limits and an example, so tools show a real value. Give your own type the same with the third argument of `n.matching()`:
 
 ```ts
-import { AnyString, matching } from '@horizon-republic/nominal-types';
+import { AnyString, n } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype(
   'shop.Sku',
-  matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { minLength: 8, maxLength: 8, examples: ['TEA-0042'] }),
+  n.matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { minLength: 8, maxLength: 8, examples: ['TEA-0042'] }),
 ) {}
 
 Sku['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
@@ -92,17 +92,17 @@ The second argument also becomes the message: `Sku.parse('tea')` gives `must be 
 
 A type shows only the examples it accepts itself. A subtype never shows a parent's example that its own rule rejects.
 
-A regular expression describes itself. A type guard needs its JSON Schema as the third argument of `satisfying()`:
+A regular expression describes itself. A type guard needs its JSON Schema as the third argument of `n.satisfying()`:
 
 ```ts
-import { Integer, satisfying } from '@horizon-republic/nominal-types';
+import { Integer, n } from '@horizon-republic/nominal-types';
 
 const isEven = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value % 2 === 0;
 
 class EvenNumber extends Integer.subtype(
   'shop.EvenNumber',
-  satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
+  n.satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
 ) {}
 
 EvenNumber['~standard'].jsonSchema.input({ target: 'openapi-3.0' });
@@ -115,7 +115,7 @@ A rule from another library describes itself if that library supports [Standard 
 
 | Problem                                                             | What happens                                                                          |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| a type guard without the third argument of `satisfying()`           | throws `TypeError: shop.EvenNumber: the schema cannot describe itself as JSON Schema` |
+| a type guard without the third argument of `n.satisfying()`         | throws `TypeError: shop.EvenNumber: the schema cannot describe itself as JSON Schema` |
 | a rule from a library without Standard JSON Schema, such as Valibot | throws `TypeError: shop.Code: the schema cannot describe itself as JSON Schema`       |
 | an unknown `target`, such as `draft-04`                             | throws `TypeError: JSON Schema target draft-04 is not supported`                      |
 

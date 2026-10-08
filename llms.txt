@@ -8,15 +8,16 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 
 - Use `Type.parse(input)` for input that may be wrong (requests, files, env, queue messages). It returns `{ ok: true, value }` or `{ ok: false, issues }` and never throws.
 - Use `new Type(value)` only where a bad value is a bug. It throws `NominalError`.
-- Check request bodies, configs and value objects with `objectOf()` and `constraint()`. If the project already uses ArkType, Zod, Valibot or class-validator, keep it and use that library's adapter instead.
+- Build schemas, rules and checks through the namespace `n`: `import { n } from '@horizon-republic/nominal-types'`, then `n.object()`, `n.of()`, `n.constraint()`, `n.oneOf()`, `n.matching()`, `n.satisfying()`, `n.hideValues()`, `n.isType()`, `n.isObject()`, `n.isConstraint()`. These functions have no top-level exports of their own.
+- Check request bodies, configs and value objects with `n.object()` and `n.constraint()`. If the project already uses ArkType, Zod, Valibot or class-validator, keep it and use that library's adapter instead.
 - Declare a type as a class: `export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}`. Add behaviour as getters and methods in the class body.
-- For strings, numbers, bigints and booleans, build on a base type (`AnyString.subtype(...)`, `PositiveInteger.subtype(...)`). Only types under a base type can be read from text by `fromString()` and `fromEnv()`. Use `Nominal(name, rule)` for objects (`objectOf()`) and for types with no base.
+- For strings, numbers, bigints and booleans, build on a base type (`AnyString.subtype(...)`, `PositiveInteger.subtype(...)`). Only types under a base type can be read from text by `fromString()` and `fromEnv()`. Use `Nominal(name, rule)` for objects (`n.object()`) and for types with no base.
 - Name types with the part of the system in front and a dot: `'billing.InvoiceNumber'`. Each part holds letters, digits, `_` and `-`. A `/`, a space or an empty part throws `TypeError`. Built-in types are named `nominal.Email`, `nominal.Uuid` and so on. Name the class like the last part.
 - Compare instances with `a.equals(b)`, never `===`. Read the plain value with `.value`. Arithmetic needs `.value` (`quantity.value * 2`); `>`, `<`, `Number(x)` and template strings work on the instance itself. The date and time types are the exception: `>` and `<` throw, so compare with `Temporal.Instant.compare(a.value, b.value)`.
 - For dates and times use `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` from `@horizon-republic/nominal-types/temporal`, never `Date` or a string type. On Node.js 22 and 24, `import 'temporal-polyfill/global'` first in the program; without `Temporal`, building a value throws `TypeError`.
-- `matching()` takes a regular expression with no flag or only `u`. Other flags throw `TypeError`.
+- `n.matching()` takes a regular expression with no flag or only `u`. Other flags throw `TypeError`.
 - Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
-- Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `hideValues(issues)`.
+- Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `n.hideValues(issues)`.
 - Install the peer package of an adapter yourself (`npm install zod`). Every peer dependency is optional; nothing loads until the adapter's entry point is imported.
 - Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3.
 
@@ -50,12 +51,12 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). The only depend
 | Situation | Use |
 | --- | --- |
 | one value from outside, such as a route parameter | `Uuid.parse(input)` |
-| a request body or a message | `objectOf({ ... }).parse(body)` |
-| a rule across fields (end after start, guests ≤ capacity) | `constraint()` passed to `objectOf()` |
-| a value object of several fields | `class Stay extends Nominal('booking.Stay', objectOf({ ... }, rule)) {}` |
-| configuration from environment variables | `class Config extends Nominal('app.Config', objectOf({ ... }).fromEnv()) {}`, `new Config(process.env)` |
-| numbers or booleans from a query string or CSV | `schemaOf(PositiveInteger).fromString()` |
-| a list, a missing value, `null` | `schemaOf(Tag).array({ max: 20 })`, `.optional()`, `.nullable()` |
+| a request body or a message | `n.object({ ... }).parse(body)` |
+| a rule across fields (end after start, guests ≤ capacity) | `n.constraint()` passed to `n.object()` |
+| a value object of several fields | `class Stay extends Nominal('booking.Stay', n.object({ ... }, rule)) {}` |
+| configuration from environment variables | `class Config extends Nominal('app.Config', n.object({ ... }).fromEnv()) {}`, `new Config(process.env)` |
+| numbers or booleans from a query string or CSV | `n.of(PositiveInteger).fromString()` |
+| a list, a missing value, `null` | `n.of(Tag).array({ max: 20 })`, `.optional()`, `.nullable()` |
 | an existing ArkType schema | `toArk()` fields, `fromArk()` around the object |
 | an existing Zod or Valibot schema | `toZod()` / `toValibot()` fields, `constrainZod()` / `constrainValibot()` for rules across fields |
 | class-validator DTOs | `@NominalField(Type)` |
@@ -64,37 +65,37 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). The only depend
 | a GraphQL scalar | `toGraphQL(Type)` |
 | instances through tRPC or Next.js | `superjson.registerCustom(...toSuperjson(Type))` |
 | a database column | `toMikroOrm`, `toTypeOrm`, `toDrizzle`, `toSequelize` |
-| any other Standard Schema library | the type itself, or `schemaOf(Type)` where the library treats a function as its own construct |
+| any other Standard Schema library | the type itself, or `n.of(Type)` where the library treats a function as its own construct |
 | messages without personal data | `{ sensitive: true }`, `hideValues` |
 
 ## Core API
 
-All from `@horizon-republic/nominal-types`.
+All from `@horizon-republic/nominal-types`. `n` is a namespace object: `import { n } from '@horizon-republic/nominal-types'` gives every member below written `n.…`. `Nominal`, the built-in types, the classes and every TypeScript type are imported by their own names.
 
 ### Declaring types
 
-- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `matching()`, `satisfying()`, `oneOf()`, `objectOf()`, `constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean }`.
-- `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first. A rule that narrows the value, such as `oneOf()`, narrows the type of `value` too.
+- `Nominal(name, rule, options?)` returns a class to extend. `rule` is a `RegExp`, `n.matching()`, `n.satisfying()`, `n.oneOf()`, `n.object()`, `n.constraint()` or any synchronous Standard Schema. `options` is `NominalOptions`: `{ sensitive?: boolean }`.
+- `Type.subtype(name, rule?, options?)` makes a narrower type. Its instances pass where the parent is expected, not the other way round. It runs the parent's rules first. A rule that narrows the value, such as `n.oneOf()`, narrows the type of `value` too.
 - `Type.variant(name, rule, options?)` makes a sibling: the same methods, its own rule in place of the source's, and the two don't mix.
-- `matching(pattern, description?, json?)` builds a rule from a regular expression. `description` completes "must be …" in messages. `json` adds JSON Schema keywords such as `format` or `examples`. Returns a `PatternSchema`.
-- `satisfying(guard, description, json?)` builds a rule from a type guard `(value: unknown) => value is T`. Without `json` the type can't describe itself as JSON Schema. Returns a `PredicateSchema`.
-- `oneOf(...values)` builds a rule for a fixed set of strings, finite numbers, booleans or `null`, compared with `===`. Returns a `OneOfSchema` (`values`, `accepts`); its values are `OneOfValue`. The value type is the union of the listed literals. Message `must be one of "draft", "paid" (was "lost")`, or `must be "admin" (was "user")` for one value. JSON Schema `{ type?, enum }`. An empty list, a repeated value, a bigint, `NaN`, an infinity or an object throws `TypeError`. It takes no enum object: spread `Object.values()` of a string enum, list the members of a numeric one.
-- `isNominalType(value)` tells whether a value is a nominal type class, also from another copy of the package.
+- `n.matching(pattern, description?, json?)` builds a rule from a regular expression. `description` completes "must be …" in messages. `json` adds JSON Schema keywords such as `format` or `examples`. Returns a `PatternSchema`.
+- `n.satisfying(guard, description, json?)` builds a rule from a type guard `(value: unknown) => value is T`. Without `json` the type can't describe itself as JSON Schema. Returns a `PredicateSchema`.
+- `n.oneOf(...values)` builds a rule for a fixed set of strings, finite numbers, booleans or `null`, compared with `===`. Returns a `OneOfSchema` (`values`, `accepts`); its values are `OneOfValue`. The value type is the union of the listed literals. Message `must be one of "draft", "paid" (was "lost")`, or `must be "admin" (was "user")` for one value. JSON Schema `{ type?, enum }`. An empty list, a repeated value, a bigint, `NaN`, an infinity or an object throws `TypeError`. It takes no enum object: spread `Object.values()` of a string enum, list the members of a numeric one.
+- `n.isType(value)` tells whether a value is a nominal type class, also from another copy of the package.
 
 ```ts
-import { AnyString, matching, Nominal, oneOf, PositiveInteger, satisfying } from '@horizon-republic/nominal-types';
+import { AnyString, n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-export class Sku extends AnyString.subtype('shop.Sku', matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['TEA-0042'] })) {
+export class Sku extends AnyString.subtype('shop.Sku', n.matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['TEA-0042'] })) {
   public get category(): string {
     return this.value.slice(0, 3);
   }
 }
 
-export class Quantity extends PositiveInteger.subtype('shop.Quantity', satisfying((value: unknown): value is number => typeof value === 'number' && value <= 99, 'at most 99', { maximum: 99 })) {}
+export class Quantity extends PositiveInteger.subtype('shop.Quantity', n.satisfying((value: unknown): value is number => typeof value === 'number' && value <= 99, 'at most 99', { maximum: 99 })) {}
 
 export class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
-export class OrderStatus extends AnyString.subtype('shop.OrderStatus', oneOf('draft', 'paid', 'shipped')) {}
+export class OrderStatus extends AnyString.subtype('shop.OrderStatus', n.oneOf('draft', 'paid', 'shipped')) {}
 
 new Sku('TEA-0042').category; // 'TEA'
 Quantity.parse(100); // { ok: false, issues: [{ message: 'must be at most 99 (was 100)' }] }
@@ -125,34 +126,34 @@ What `parse()` does with an instance: an instance of the same type or a subtype 
 | `toJSON()` | the value; big integer types write a decimal string; date and time types write their RFC 3339 text |
 | `toString()` | the value as text; JSON for an object value; date and time types write their text |
 | `[Symbol.toPrimitive]` | the value, so `>`, `Number(x)` and template strings work; an object or Temporal value throws `TypeError` outside a string |
-| getters per field, `copyWith(changes)` | on types built on `objectOf()`; `copyWith` returns a checked copy and throws `NominalError` |
+| getters per field, `copyWith(changes)` | on types built on `n.object()`; `copyWith` returns a checked copy and throws `NominalError` |
 
-A field of an `objectOf()` type can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws `TypeError` for such a field.
+A field of an `n.object()` type can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws `TypeError` for such a field.
 
 ### Schemas
 
-- `schemaOf(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `schemaOf()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
-- `objectOf(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, a `schemaOf()` schema, another `objectOf()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string and makes every field optional in the input type, so `new Config(process.env)` compiles. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
-- `constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
-- `isObjectSchema(value)`, `isConstraint(value)` tell those apart.
+- `n.of(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `n.of()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
+- `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string and makes every field optional in the input type, so `new Config(process.env)` compiles. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
+- `n.constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
+- `n.isObject(value)`, `n.isConstraint(value)` tell those apart.
 
 ```ts
-import { AnyString, constraint, Email, Nominal, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
 );
 
-export const CreateBooking = objectOf({
+export const CreateBooking = n.object({
   customer: Email,
   guests: PositiveInteger,
   capacity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 }, withinCapacity);
 
-export class Stay extends Nominal('booking.Stay', objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity)) {
+export class Stay extends Nominal('booking.Stay', n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity)) {
   public get free(): number {
     return this.capacity.value - this.guests.value;
   }
@@ -170,11 +171,11 @@ stay.copyWith({ guests: 5 }); // throws NominalError: booking.Stay: guests: must
 Configuration:
 
 ```ts
-import { AnyBoolean, Nominal, objectOf, PositiveInteger, schemaOf, Url } from '@horizon-republic/nominal-types';
+import { AnyBoolean, n, Nominal, PositiveInteger, Url } from '@horizon-republic/nominal-types';
 
-export class Config extends Nominal('app.Config', objectOf({
+export class Config extends Nominal('app.Config', n.object({
   PORT: PositiveInteger,
-  DEBUG: schemaOf(AnyBoolean).optional(),
+  DEBUG: n.of(AnyBoolean).optional(),
   DATABASE_URL: Url,
 }).fromEnv()) {}
 
@@ -187,7 +188,7 @@ config.PORT.value; // 3000 for PORT=3000
 - `NominalError` extends `TypeError`. Members: `typeName`, `issues` (`{ message, path? }[]`), and `message` such as `'nominal.Uuid: must be a UUID (was "x")'`, with a path in front of each issue that has one: `'booking.Stay: guests: must not exceed the capacity'`.
 - Messages read `must be <description> (was <value>)`. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`).
 - A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email`, `IpAddress` (and the types under it) and `MacAddress` are sensitive.
-- `hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")` and Valibot's `received "x"`.
+- `n.hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")` and Valibot's `received "x"`.
 - Rules from other libraries keep their own messages.
 
 ### JSON Schema
@@ -195,7 +196,7 @@ config.PORT.value; // 3000 for PORT=3000
 - `Type['~standard'].jsonSchema.input({ target })` and `.output({ target })`. Targets: `'draft-2020-12'`, `'draft-07'`, `'openapi-3.0'`; any other throws `TypeError`.
 - `title` is the type name. A type with several rules gets `allOf`, one entry per rule. Only examples the whole type accepts are kept; OpenAPI 3.0 gets one `example`.
 - Big integer types: input is `anyOf` a decimal string and a safe integer; output is the string.
-- `objectOf()` output adds `additionalProperties: false`.
+- `n.object()` output adds `additionalProperties: false`.
 - A rule without JSON Schema throws `TypeError: <name>: the schema cannot describe itself as JSON Schema`.
 
 ### TypeScript types
@@ -269,7 +270,7 @@ Temporal.Instant.compare(sent.value, new Instant('2024-05-01T10:00:00Z').value);
 Instant.parse('2024-05-01 09:30:00'); // { ok: false, issues: [{ message: 'must be an RFC 3339 date-time with Z or an offset (was "2024-05-01 09:30:00")' }] }
 ```
 
-A number type never converts its input: `PositiveInteger.parse('2')` fails; `schemaOf(PositiveInteger).fromString()` reads `'2'`. Big integer types are the one exception and take a decimal string. A number beyond 2^53 - 1 is refused by big integer types, since it may have lost digits.
+A number type never converts its input: `PositiveInteger.parse('2')` fails; `n.of(PositiveInteger).fromString()` reads `'2'`. Big integer types are the one exception and take a decimal string. A number beyond 2^53 - 1 is refused by big integer types, since it may have lost digits.
 
 ## Adapters
 
@@ -316,13 +317,13 @@ CreateOrder.safeParse({ customer: 'jane@example.com', quantity: 2 }); // { succe
 
 ```ts
 import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
 export class CreateOrderDto {
   @NominalField(Email)
   public customer!: Email;
 
-  @NominalField(schemaOf(Uuid).array({ min: 1, max: 50 }))
+  @NominalField(n.of(Uuid).array({ min: 1, max: 50 }))
   public items!: readonly Uuid[];
 }
 ```
@@ -346,10 +347,10 @@ await app.listen(3000);
 // orders.controller.ts
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
-import { Email, objectOf, PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
 import type { ValueOf } from '@horizon-republic/nominal-types';
 
-const CreateOrder = objectOf({ customer: Email, quantity: PositiveInteger });
+const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
 type CreateOrder = ValueOf<typeof CreateOrder>;
 
 @Controller('orders')
@@ -358,14 +359,14 @@ export class OrdersController {
   public find(@Param('id') id: Uuid): void {} // checked by the global pipe from the declared type
 
   @Get()
-  public list(@Query('page') page?: PositiveInteger, @Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }).optional())) ids?: readonly Uuid[]): void {}
+  public list(@Query('page') page?: PositiveInteger, @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }).optional())) ids?: readonly Uuid[]): void {}
 
   @Post()
   public create(@Body(new NominalPipe(CreateOrder)) order: CreateOrder): void {}
 }
 ```
 
-- `new NominalPipe(target?, options?)`. `target` is a nominal type, a `schemaOf()`/`objectOf()` schema or any synchronous Standard Schema (a `fromArk()` schema, a Zod object). Without a target it uses Nest 12's `{ schema }` on the parameter if that is a nominal type or `schemaOf()` schema, else the parameter's declared type, and passes every other argument through. Safe to bind globally.
+- `new NominalPipe(target?, options?)`. `target` is a nominal type, an `n.of()`/`n.object()` schema or any synchronous Standard Schema (a `fromArk()` schema, a Zod object). Without a target it uses Nest 12's `{ schema }` on the parameter if that is a nominal type or `n.of()` schema, else the parameter's declared type, and passes every other argument through. Safe to bind globally.
 - Declared types lose array items and `?`: `Uuid[]` is not checked without a schema, and a missing value of a declared type reaches the handler as `undefined`. To require it or check a list, give the parameter its own pipe or a `{ schema }`.
 - In a query string, a lone value for an array schema becomes a list of one, and a string for a number or boolean type is read as its value (`?page=2` gives `2`), unless `fromString: false`.
 - Options: `fromString` (default `true`), `hideValues` (default `false`), `exceptionFactory(issues, metadata)` (default: `BadRequestException` with `{ statusCode: 400, error: 'Bad Request', message: ['id: must be a UUID (was "x")'] }`). In a microservice pass an `exceptionFactory` that returns an `RpcException`.
@@ -421,7 +422,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to get a JSON Schema for a type](docs/guides/api-docs/json-schema.md)
 - [How to document nominal types in Swagger](docs/guides/api-docs/swagger.md)
 - [How to make a stricter type or a variant](docs/guides/core/build-on-a-type.md)
-- [How to check a request body with objectOf()](docs/guides/core/check-an-object.md)
+- [How to check a request body with n.object()](docs/guides/core/check-an-object.md)
 - [How to check one field against another](docs/guides/core/check-fields-together.md)
 - [How to check untrusted input](docs/guides/core/check-input.md)
 - [How to declare a type](docs/guides/core/declare-a-type.md)

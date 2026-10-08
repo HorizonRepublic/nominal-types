@@ -2,16 +2,16 @@
 
 This guide shows how to check a list of values, a value that may be missing and a value that may be `null`.
 
-All three start from `schemaOf(Type)`. It turns a type into a schema you can build on.
+All three start from `n.of(Type)`. It turns a type into a schema you can build on.
 
 ## Accept a list
 
 Call `.array()`:
 
 ```ts
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 
-const Ids = schemaOf(Uuid).array();
+const Ids = n.of(Uuid).array();
 
 Ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // { ok: true, value: [Uuid { value: '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f' }] }
 Ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']); // { ok: false, issues: [{ message: 'must be a UUID (was "nope")', path: [1] }] }
@@ -25,9 +25,9 @@ Every item is checked. Each issue has the item's index in `path`. The result is 
 Pass `min`, `max`, or an exact `length`:
 
 ```ts
-import { HttpUrl, schemaOf } from '@horizon-republic/nominal-types';
+import { HttpUrl, n } from '@horizon-republic/nominal-types';
 
-const Photos = schemaOf(HttpUrl).array({ max: 3 });
+const Photos = n.of(HttpUrl).array({ max: 3 });
 
 const urls: unknown = [
   'https://shop.example/1.jpg',
@@ -37,8 +37,8 @@ const urls: unknown = [
 ];
 
 Photos.parse(urls); // { ok: false, issues: [{ message: 'must have at most 3 items (was 4)' }] }
-schemaOf(HttpUrl).array({ min: 1 }).parse([]); // { ok: false, issues: [{ message: 'must have at least 1 item (was 0)' }] }
-schemaOf(HttpUrl).array({ length: 2 }).parse([]); // { ok: false, issues: [{ message: 'must have 2 items (was 0)' }] }
+n.of(HttpUrl).array({ min: 1 }).parse([]); // { ok: false, issues: [{ message: 'must have at least 1 item (was 0)' }] }
+n.of(HttpUrl).array({ length: 2 }).parse([]); // { ok: false, issues: [{ message: 'must have 2 items (was 0)' }] }
 ```
 
 The count is checked before the items. Options that don't make sense, such as `length` together with `min`, throw a `TypeError` when you declare the schema.
@@ -48,9 +48,9 @@ The count is checked before the items. Options that don't make sense, such as `l
 Pass `unique: true`:
 
 ```ts
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 
-const Ids = schemaOf(Uuid).array({ unique: true, max: 100 });
+const Ids = n.of(Uuid).array({ unique: true, max: 100 });
 
 Ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F']);
 // { ok: false, issues: [{ message: 'must not repeat an item (was "0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F")', path: [1] }] }
@@ -63,11 +63,11 @@ Items are compared with `equals()`, so these two UUIDs are the same. The issue p
 When a list means something in your domain, give it a name with `Nominal()`. The class can have methods:
 
 ```ts
-import { Nominal, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Nominal, Uuid } from '@horizon-republic/nominal-types';
 
 export class CustomerId extends Uuid.subtype('shop.CustomerId') {}
 
-export class Podium extends Nominal('shop.Podium', schemaOf(CustomerId).array({ length: 3 })) {
+export class Podium extends Nominal('shop.Podium', n.of(CustomerId).array({ length: 3 })) {
   get winner(): CustomerId {
     return this.value[0];
   }
@@ -90,50 +90,50 @@ new Podium(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // throws NominalError: sh
 Call `.optional()`. It lets `undefined` through and checks anything else:
 
 ```ts
-import { Email, schemaOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 
-const MaybeEmail = schemaOf(Email).optional();
+const MaybeEmail = n.of(Email).optional();
 
 MaybeEmail.parse(undefined); // { ok: true, value: undefined }
 MaybeEmail.parse('nope'); // { ok: false, issues: [{ message: 'must be an email address (was a string of 4 characters)' }] }
 MaybeEmail.parse(null); // { ok: false, issues: [{ message: 'must be a string (was null)' }] }
 ```
 
-In an `objectOf()` schema, an optional field may also be left out.
+In an `n.object()` schema, an optional field may also be left out.
 
 ## Allow null
 
 `null` is not a missing value. For `null`, call `.nullable()`:
 
 ```ts
-import { Email, schemaOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 
-schemaOf(Email).nullable().parse(null); // { ok: true, value: null }
-schemaOf(Email).nullable().parse(undefined); // { ok: false, issues: [{ message: 'must be a string (was undefined)' }] }
+n.of(Email).nullable().parse(null); // { ok: true, value: null }
+n.of(Email).nullable().parse(undefined); // { ok: false, issues: [{ message: 'must be a string (was undefined)' }] }
 ```
 
 ## Combine them
 
 The calls read left to right:
 
-| Schema                                  | Accepts                               |
-| --------------------------------------- | ------------------------------------- |
-| `schemaOf(Uuid).array().optional()`     | a list of `Uuid`, or `undefined`      |
-| `schemaOf(Uuid).optional().array()`     | a list whose items may be `undefined` |
-| `schemaOf(Email).optional().nullable()` | an `Email`, `undefined` or `null`     |
+| Schema                              | Accepts                               |
+| ----------------------------------- | ------------------------------------- |
+| `n.of(Uuid).array().optional()`     | a list of `Uuid`, or `undefined`      |
+| `n.of(Uuid).optional().array()`     | a list whose items may be `undefined` |
+| `n.of(Email).optional().nullable()` | an `Email`, `undefined` or `null`     |
 
 ## Use them as fields
 
-Put these schemas into `objectOf()`, or pass them to `NominalPipe` in NestJS, like any type:
+Put these schemas into `n.object()`, or pass them to `NominalPipe` in NestJS, like any type:
 
 ```ts
-import { AnyString, Email, objectOf, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, Uuid } from '@horizon-republic/nominal-types';
 
-const UpdateProfile = objectOf({
+const UpdateProfile = n.object({
   email: Email,
-  nickname: schemaOf(AnyString).optional(),
-  backupEmail: schemaOf(Email).nullable(),
-  teams: schemaOf(Uuid).array({ max: 10 }),
+  nickname: n.of(AnyString).optional(),
+  backupEmail: n.of(Email).nullable(),
+  teams: n.of(Uuid).array({ max: 10 }),
 });
 
 UpdateProfile.parse({ email: 'jane@example.com', backupEmail: null, teams: [] });
@@ -146,8 +146,8 @@ To read list items from text, such as `?ids=1&ids=2`, see [How to read numbers a
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `schemaOf()`, `array()`, `optional()`, `nullable()` and their messages.
-- [How to check a request body with objectOf()](check-an-object.md)
+- [Schemas](../../reference/schemas.md): `n.of()`, `array()`, `optional()`, `nullable()` and their messages.
+- [How to check a request body with n.object()](check-an-object.md)
 - [Where checks belong](../../explanation/where-checks-belong.md), for body size limits on your server.
 
 [← Guides](../README.md)

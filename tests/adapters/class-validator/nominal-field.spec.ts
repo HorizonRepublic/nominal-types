@@ -5,7 +5,7 @@ import type { ValidationError } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 
 import { NominalField } from '../../../src/adapters/class-validator/index.ts';
-import { Email, PositiveInteger, schemaOf, Uuid } from '../../../src/index.ts';
+import { Email, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 
 const first = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
@@ -18,13 +18,13 @@ class OrderDto {
   @NominalField(Email)
   public contact!: Email;
 
-  @NominalField(schemaOf(Uuid).array({ min: 1, max: 3 }))
+  @NominalField(n.of(Uuid).array({ min: 1, max: 3 }))
   public items!: readonly Uuid[];
 
-  @NominalField(schemaOf(Email).optional())
+  @NominalField(n.of(Email).optional())
   public backup?: Email;
 
-  @NominalField(schemaOf(Email).nullable())
+  @NominalField(n.of(Email).nullable())
   public replyTo!: Email | null;
 
   @IsString()
@@ -124,7 +124,7 @@ describe('NominalField', () => {
 
   it('reads strings when the schema asks for it', () => {
     class PageDto {
-      @NominalField(schemaOf(PositiveInteger).fromString())
+      @NominalField(n.of(PositiveInteger).fromString())
       public page!: PositiveInteger;
     }
 

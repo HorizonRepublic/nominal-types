@@ -19,7 +19,7 @@ One value at a time, after warm-up, Node.js 25.3:
 | `new PositiveInteger(42)`, four rules           | 31 ns |
 | `new AnyBigInt('9007199254740993')`             | 64 ns |
 | `value instanceof Email`, `email.equals(other)` |  5 ns |
-| `schemaOf(Uuid).array().parse(ids)`, 1000 UUIDs | 70 µs |
+| `n.of(Uuid).array().parse(ids)`, 1000 UUIDs     | 70 µs |
 
 ## Other libraries, one value
 
@@ -44,21 +44,21 @@ One value at a time, after warm-up, Node.js 25.3:
 
 The document is 3 MB of JSON: 3000 customers with two addresses each, and 4300 orders with five items, each with a nested price. That is about 112,000 values. Two broken versions have one bad quantity in the last order, or a broken email in every hundredth customer.
 
-| Setup                                 | Valid document | One error deep inside | Every hundredth email broken |
-| ------------------------------------- | -------------: | --------------------: | ---------------------------: |
-| ArkType                               |         1.3 ms |                 15 ms |                        14 ms |
-| Typia                                 |         2.4 ms |                5.8 ms |                       3.3 ms |
-| nominal-types `objectOf()`            |         5.6 ms |                5.5 ms |                       5.5 ms |
-| nominal-types + ArkType adapter       |         4.5 ms |                 15 ms |                        14 ms |
-| Zod                                   |         6.8 ms |                7.0 ms |                       6.8 ms |
-| Valibot                               |         7.1 ms |                7.2 ms |                       7.2 ms |
-| nominal-types + Zod adapter           |         9.1 ms |                 13 ms |                       9.4 ms |
-| nominal-types + Valibot adapter       |          12 ms |                 15 ms |                        15 ms |
-| class-validator                       |         105 ms |                103 ms |                       105 ms |
-| nominal-types + class-validator       |         110 ms |                111 ms |                       109 ms |
-| nominal-types + ArkType, `schemaOf()` |         110 ms |                111 ms |                       201 ms |
+| Setup                             | Valid document | One error deep inside | Every hundredth email broken |
+| --------------------------------- | -------------: | --------------------: | ---------------------------: |
+| ArkType                           |         1.3 ms |                 15 ms |                        14 ms |
+| Typia                             |         2.4 ms |                5.8 ms |                       3.3 ms |
+| nominal-types `n.object()`        |         5.6 ms |                5.5 ms |                       5.5 ms |
+| nominal-types + ArkType adapter   |         4.5 ms |                 15 ms |                        14 ms |
+| Zod                               |         6.8 ms |                7.0 ms |                       6.8 ms |
+| Valibot                           |         7.1 ms |                7.2 ms |                       7.2 ms |
+| nominal-types + Zod adapter       |         9.1 ms |                 13 ms |                       9.4 ms |
+| nominal-types + Valibot adapter   |          12 ms |                 15 ms |                        15 ms |
+| class-validator                   |         105 ms |                103 ms |                       105 ms |
+| nominal-types + class-validator   |         110 ms |                111 ms |                       109 ms |
+| nominal-types + ArkType, `n.of()` |         110 ms |                111 ms |                       201 ms |
 
-Only the nominal-types rows build instances. `objectOf()` builds one for each of the 112,000 values. The ArkType adapter builds one for each `toArk()` field.
+Only the nominal-types rows build instances. `n.object()` builds one for each of the 112,000 values. The ArkType adapter builds one for each `toArk()` field.
 
 ## One ArkType object
 
@@ -68,7 +68,7 @@ An object with a UUID, an email and a count:
 | ----------------------------------- | -----: |
 | ArkType alone, plain values         | 100 ns |
 | the ArkType adapter, with instances | 256 ns |
-| `schemaOf()` fields inside ArkType  | 1.9 µs |
+| `n.of()` fields inside ArkType      | 1.9 µs |
 
 ## In a NestJS app
 
@@ -85,11 +85,11 @@ The same 3 MB document is posted as a JSON body to a NestJS 12 app on Fastify. E
 | ArkType                                               |  21 ms |                 33 ms |                        32 ms |
 | Typia                                                 |  24 ms |                 25 ms |                        23 ms |
 | nominal-types + ArkType adapter                       |  24 ms |                 35 ms |                        33 ms |
-| nominal-types `objectOf()`                            |  26 ms |                 24 ms |                        24 ms |
+| nominal-types `n.object()`                            |  26 ms |                 24 ms |                        24 ms |
 | Zod                                                   |  26 ms |                 27 ms |                        26 ms |
 | Valibot                                               |  27 ms |                 27 ms |                        26 ms |
 | class-validator                                       | 129 ms |                122 ms |                       123 ms |
-| nominal-types + ArkType, `schemaOf()`                 | 135 ms |                129 ms |                       222 ms |
+| nominal-types + ArkType, `n.of()`                     | 135 ms |                129 ms |                       222 ms |
 | nominal-types + class-validator                       | 141 ms |                131 ms |                       132 ms |
 | class-validator, with 1000 other DTOs in the app      |  1.1 s |                 1.1 s |                        1.1 s |
 | nominal-types + class-validator, with 1000 other DTOs |  1.1 s |                 1.1 s |                        1.1 s |

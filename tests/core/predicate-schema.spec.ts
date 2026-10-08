@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Nominal, NominalError, PredicateSchema, satisfying } from '../../src/index.ts';
+import { n, Nominal, NominalError, PredicateSchema } from '../../src/index.ts';
 import { issuesOf, outputOf, valueOf } from '../support/results.ts';
 
 const isEven = (value: unknown): value is number =>
@@ -8,12 +8,12 @@ const isEven = (value: unknown): value is number =>
 
 class EvenNumber extends Nominal(
   'PredicateEven',
-  satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
+  n.satisfying(isEven, 'an even number', { type: 'integer', multipleOf: 2 }),
 ) {}
 
 const isSmall = (value: unknown): value is number => typeof value === 'number' && value < 10;
 
-class Opaque extends Nominal('PredicateOpaque', satisfying(isEven, 'an even number')) {}
+class Opaque extends Nominal('PredicateOpaque', n.satisfying(isEven, 'an even number')) {}
 
 describe('PredicateSchema', () => {
   it('throws for a value the guard refuses', () => {
@@ -42,7 +42,7 @@ describe('PredicateSchema', () => {
   });
 
   it('validates on its own as a Standard Schema', () => {
-    const schema = satisfying(isEven, 'an even number');
+    const schema = n.satisfying(isEven, 'an even number');
 
     expect(outputOf(schema['~standard'].validate(8))).toBe(8);
     expect(schema['~standard'].validate(7).issues).toHaveLength(1);
@@ -68,7 +68,7 @@ describe('PredicateSchema', () => {
     });
 
     it('takes its description from the schema rather than the body', () => {
-      const schema = satisfying(isEven, 'an even number', { description: 'something else' });
+      const schema = n.satisfying(isEven, 'an even number', { description: 'something else' });
 
       expect(schema['~standard'].jsonSchema.output({ target: 'openapi-3.0' })).toStrictEqual({
         description: 'an even number',
@@ -91,7 +91,7 @@ describe('PredicateSchema', () => {
   it('constrains a subtype', () => {
     class SmallEven extends EvenNumber.subtype(
       'PredicateSmallEven',
-      satisfying(isSmall, 'below 10'),
+      n.satisfying(isSmall, 'below 10'),
     ) {}
 
     expect(valueOf(SmallEven.parse(new EvenNumber(4)))).toBeInstanceOf(SmallEven);

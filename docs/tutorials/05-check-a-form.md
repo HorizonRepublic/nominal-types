@@ -48,20 +48,20 @@ Notice that `secret` is not in the message. Only its length is.
 
 ## Step 2: Describe the form
 
-Change the first line of `main.ts` to import three more names:
+Change the first line of `main.ts` to import two more names:
 
 ```ts
-import { AnyBoolean, AnyString, Email, objectOf, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyBoolean, AnyString, Email, n } from '@horizon-republic/nominal-types';
 ```
 
 Delete the `console.log(Password.parse('secret'));` line. In its place, add the form and a function that checks it:
 
 ```ts
-const SignUp = objectOf({
+const SignUp = n.object({
   username: Username,
   email: Email,
   password: Password,
-  newsletter: schemaOf(AnyBoolean).optional(),
+  newsletter: n.of(AnyBoolean).optional(),
 });
 
 const checkSignUp = (body: unknown): void => {
@@ -81,9 +81,10 @@ const checkSignUp = (body: unknown): void => {
 
 Here is what is new:
 
-- `objectOf()` takes one type per field and returns an [object schema](../reference/glossary.md). Its `parse()` checks every field.
+- `n` is the [namespace](../reference/glossary.md) that holds the functions which build schemas.
+- `n.object()` takes one type per field and returns an [object schema](../reference/glossary.md). Its `parse()` checks every field.
 - `AnyBoolean` is the built-in type for `true` and `false`.
-- `schemaOf(AnyBoolean).optional()` lets the `newsletter` field be missing.
+- `n.of(AnyBoolean).optional()` lets the `newsletter` field be missing.
 - Each issue has a `path`: the list of keys that lead to the bad field.
 
 ## Step 3: Check a good form
@@ -166,7 +167,7 @@ Here is `main.ts` so far:
 
 ```ts
 // main.ts
-import { AnyBoolean, AnyString, Email, objectOf, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyBoolean, AnyString, Email, n } from '@horizon-republic/nominal-types';
 
 class Username extends AnyString.subtype('shop.Username', /^[a-z0-9_]{3,20}$/u) {
   get profilePath(): string {
@@ -178,11 +179,11 @@ class StaffEmail extends Email.subtype('shop.StaffEmail', /@shop\.example\.com$/
 
 class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
-const SignUp = objectOf({
+const SignUp = n.object({
   username: Username,
   email: Email,
   password: Password,
-  newsletter: schemaOf(AnyBoolean).optional(),
+  newsletter: n.of(AnyBoolean).optional(),
 });
 
 const checkSignUp = (body: unknown): void => {

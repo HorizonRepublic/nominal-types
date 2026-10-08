@@ -16,10 +16,10 @@ new NominalPipe(options?: NominalPipeOptions);
 new NominalPipe(target: NominalPipeTarget, options?: NominalPipeOptions);
 ```
 
-| Parameter | Type                                                                                                                        | Description                                                                                                                                  |
-| --------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `target`  | nominal type, `schemaOf()` or `objectOf()` schema, or any synchronous Standard Schema (such as `fromArk()` or a Zod object) | optional; what to check the argument against. An asynchronous schema throws `TypeError: NominalPipe: asynchronous schemas are not supported` |
-| `options` | `NominalPipeOptions`                                                                                                        | optional; see [Options](#options)                                                                                                            |
+| Parameter | Type                                                                                                                    | Description                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target`  | nominal type, `n.of()` or `n.object()` schema, or any synchronous Standard Schema (such as `fromArk()` or a Zod object) | optional; what to check the argument against. An asynchronous schema throws `TypeError: NominalPipe: asynchronous schemas are not supported` |
+| `options` | `NominalPipeOptions`                                                                                                    | optional; see [Options](#options)                                                                                                            |
 
 ### What it checks
 
@@ -27,7 +27,7 @@ With a `target`, the pipe checks every argument against it.
 
 Without one, it picks the target per argument, in this order:
 
-1. the parameter's `{ schema }` option on Nest 12, when it is a nominal type or a `schemaOf()` schema;
+1. the parameter's `{ schema }` option on Nest 12, when it is a nominal type or an `n.of()` schema;
 2. the type the parameter is declared with, when it is a nominal type;
 3. nothing: the argument passes through untouched.
 
@@ -35,11 +35,11 @@ So a global `new NominalPipe()` is safe beside other pipes. It leaves DTO classe
 
 The declared type comes from `emitDecoratorMetadata`. That metadata loses array items and `?`:
 
-- a parameter declared as `Uuid[]` is not checked; use `schemaOf(Uuid).array()`;
+- a parameter declared as `Uuid[]` is not checked; use `n.of(Uuid).array()`;
 - a missing value of a declared type passes on as `undefined`, so declare the parameter with `?`;
 - a parameter declared as `PositiveInteger | undefined` is not checked; write `page?: PositiveInteger`.
 
-A pipe with a `target`, or a nominal type or `schemaOf()` schema in `{ schema }`, decides whether a value may be missing. Under a global pipe, `new NominalPipe(PositiveInteger)` on a parameter rejects a missing value, and `new NominalPipe(schemaOf(Email).optional())` lets it through. This works on Nest 11 and 12.
+A pipe with a `target`, or a nominal type or `n.of()` schema in `{ schema }`, decides whether a value may be missing. Under a global pipe, `new NominalPipe(PositiveInteger)` on a parameter rejects a missing value, and `new NominalPipe(n.of(Email).optional())` lets it through. This works on Nest 11 and 12.
 
 ### Query strings and route parameters
 
@@ -48,7 +48,7 @@ A pipe with a `target`, or a nominal type or `schemaOf()` schema in `{ schema }`
 | `'2'` for a number or boolean type  | reads it as `2` (`'true'` as `true`), unless `fromString: false` |
 | `'02'` or `'abc'` for a number type | rejects it: `page: must be a number (was "02")`                  |
 | `?ids=a` for an array schema        | wraps the lone value: `['a']`                                    |
-| a string for a `schemaOf()` schema  | reads text only through the schema's own `fromString()`          |
+| a string for an `n.of()` schema     | reads text only through the schema's own `fromString()`          |
 
 Bodies are never read from strings. Nest runs no pipes on `@Headers()`.
 
@@ -81,7 +81,7 @@ A controller, with `app.useGlobalPipes(new NominalPipe())` in `main.ts`:
 ```ts
 // orders.controller.ts
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { PositiveInteger, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
 @Controller('orders')
@@ -93,7 +93,7 @@ export class OrdersController {
 
   @Get()
   list(
-    @Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
+    @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
     @Query('page') page?: PositiveInteger, // '?page=2' arrives as 2, no page as undefined
   ) {
     return { page: page?.value ?? 1, ids: ids.length };

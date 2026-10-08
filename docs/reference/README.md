@@ -4,14 +4,14 @@ Exact facts about everything the package exports, for looking things up. Terms a
 
 ## Core
 
-| Page                                          | What's in it                                                                               |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [Declaring types](declaring.md)               | `Nominal()`, `subtype()`, `variant()`, `matching()`, `satisfying()`, `oneOf()`, type names |
-| [Type members](type-members.md)               | `new`, `parse()`, `instanceof`, `value`, `equals()`, `toJSON()`, `copyWith()`              |
-| [Schemas](schemas.md)                         | `schemaOf()`, `array()`, `fromString()`, `objectOf()`, `fromEnv()`, `constraint()`         |
-| [Errors and messages](errors-and-messages.md) | `NominalError`, issues, message text, sensitive types, `hideValues()`                      |
-| [JSON Schema](json-schema.md)                 | Targets, `input()` and `output()`, what each schema is described as                        |
-| [TypeScript types](typescript-types.md)       | Every exported type, such as `ValueOf`, `InputOf` and `Parsed`                             |
+| Page                                          | What's in it                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [Declaring types](declaring.md)               | `Nominal()`, `subtype()`, `variant()`, `n.matching()`, `n.satisfying()`, `n.oneOf()`, type names |
+| [Type members](type-members.md)               | `new`, `parse()`, `instanceof`, `value`, `equals()`, `toJSON()`, `copyWith()`                    |
+| [Schemas](schemas.md)                         | `n`, `n.of()`, `array()`, `fromString()`, `n.object()`, `fromEnv()`, `n.constraint()`            |
+| [Errors and messages](errors-and-messages.md) | `NominalError`, issues, message text, sensitive types, `n.hideValues()`                          |
+| [JSON Schema](json-schema.md)                 | Targets, `input()` and `output()`, what each schema is described as                              |
+| [TypeScript types](typescript-types.md)       | Every exported type, such as `ValueOf`, `InputOf` and `Parsed`                                   |
 
 ## Built-in types
 

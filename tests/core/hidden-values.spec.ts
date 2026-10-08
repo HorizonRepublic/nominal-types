@@ -5,18 +5,16 @@ import {
   AnyNumber,
   AnyString,
   Email,
-  hideValues,
+  n,
   Nominal,
   NominalError,
-  objectOf,
   PositiveInteger,
-  schemaOf,
 } from '../../src/index.ts';
 import { issuesOf, thrownBy } from '../support/results.ts';
 
-const hidden = (message: string): string => hideValues([{ message }])[0]?.message ?? '';
+const hidden = (message: string): string => n.hideValues([{ message }])[0]?.message ?? '';
 
-describe('hideValues', () => {
+describe('n.hideValues', () => {
   it.each([
     [
       'must be a UUID (was "secret-password-123")',
@@ -58,9 +56,9 @@ describe('hideValues', () => {
     const untouched = { message: 'is not allowed', path: ['admin'] };
 
     expect(
-      hideValues([{ message: 'must be one (was 2)', path: ['a', 0] }, untouched]),
+      n.hideValues([{ message: 'must be one (was 2)', path: ['a', 0] }, untouched]),
     ).toStrictEqual([{ message: 'must be one (was a number)', path: ['a', 0] }, untouched]);
-    expect(hideValues([untouched])[0]).toBe(untouched);
+    expect(n.hideValues([untouched])[0]).toBe(untouched);
   });
 });
 
@@ -82,13 +80,13 @@ describe('a sensitive type', () => {
   });
 
   it('leaves the value out where it is a field or an item', () => {
-    const Login = objectOf({ email: AnyString, password: Password });
+    const Login = n.object({ email: AnyString, password: Password });
 
     expect(issuesOf(Login.parse({ email: 1, password: 'short' }))).toStrictEqual([
       { message: 'must be a string (was 1)', path: ['email'] },
       { message: 'must be matched by ^.{12,}$ (was a string of 5 characters)', path: ['password'] },
     ]);
-    expect(issuesOf(schemaOf(Password).array().parse(['short']))).toStrictEqual([
+    expect(issuesOf(n.of(Password).array().parse(['short']))).toStrictEqual([
       { message: 'must be matched by ^.{12,}$ (was a string of 5 characters)', path: [0] },
     ]);
     expect(toArk(Password)('short').toString()).toBe(
@@ -97,7 +95,7 @@ describe('a sensitive type', () => {
   });
 
   it('leaves every field value out when the type holds an object', () => {
-    const Card = Nominal('hidden.Card', objectOf({ holder: AnyString, number: AnyNumber }), {
+    const Card = Nominal('hidden.Card', n.object({ holder: AnyString, number: AnyNumber }), {
       sensitive: true,
     });
 

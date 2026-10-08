@@ -588,11 +588,11 @@ new TextDecoder().decode(data.toBytes()); // 'hello'
 `Base64` has no size limit. To cap the size, or to refuse the empty string, declare a subtype:
 
 ```ts
-import { Base64, matching } from '@horizon-republic/nominal-types';
+import { Base64, n } from '@horizon-republic/nominal-types';
 
 class Avatar extends Base64.subtype(
   'profile.Avatar',
-  matching(/^.{4,1000000}$/u, 'from 1 to 750,000 bytes'),
+  n.matching(/^.{4,1000000}$/u, 'from 1 to 750,000 bytes'),
 ) {}
 
 Avatar.parse(''); // { ok: false, issues: [{ message: 'must be from 1 to 750,000 bytes (was "")' }] }

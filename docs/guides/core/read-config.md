@@ -4,18 +4,18 @@ This guide shows how to read and check all environment variables of an app in on
 
 ## Describe the configuration
 
-List the variables with `objectOf()`, call `.fromEnv()`, and make a type of it with `Nominal()`:
+List the variables with `n.object()`, call `.fromEnv()`, and make a type of it with `Nominal()`:
 
 ```ts
 // config.ts
-import { AnyBoolean, HttpUrl, Nominal, objectOf, Port, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyBoolean, HttpUrl, n, Nominal, Port } from '@horizon-republic/nominal-types';
 
 export class Config extends Nominal(
   'app.Config',
-  objectOf({
+  n.object({
     PORT: Port,
     API_URL: HttpUrl,
-    DEBUG: schemaOf(AnyBoolean).fromString().optional(),
+    DEBUG: n.of(AnyBoolean).fromString().optional(),
   }).fromEnv(),
 ) {}
 
@@ -61,15 +61,15 @@ NominalError: app.Config: PORT: must be a number (was "80a"); API_URL: must be a
 
 ## Make a variable optional
 
-Wrap the type in `schemaOf()`, then call `.fromString()` before `.optional()`, as `DEBUG` does in `config.ts`. `.fromEnv()` reads only plain type fields. A field wrapped in `schemaOf()` keeps its text as it is.
+Wrap the type in `n.of()`, then call `.fromString()` before `.optional()`, as `DEBUG` does in `config.ts`. `.fromEnv()` reads only plain type fields. A field wrapped in `n.of()` keeps its text as it is.
 
 Without `.fromString()`, a number in an optional variable is rejected:
 
 ```ts
-import { objectOf, Port, schemaOf } from '@horizon-republic/nominal-types';
+import { n, Port } from '@horizon-republic/nominal-types';
 
-const Wrong = objectOf({ PORT: schemaOf(Port).optional() }).fromEnv();
-const Right = objectOf({ PORT: schemaOf(Port).fromString().optional() }).fromEnv();
+const Wrong = n.object({ PORT: n.of(Port).optional() }).fromEnv();
+const Right = n.object({ PORT: n.of(Port).fromString().optional() }).fromEnv();
 
 Wrong.parse({ PORT: '3000' }); // { ok: false, issues: [{ message: 'must be a number (was "3000")', path: ['PORT'] }] }
 Right.parse({ PORT: '3000' }); // { ok: true, value: { PORT: Port { value: 3000 } } }

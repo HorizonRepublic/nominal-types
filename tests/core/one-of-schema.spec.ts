@@ -1,27 +1,30 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import type { OneOfSchema } from '../../src/index.ts';
-import { AnyNumber, AnyString, Nominal, NominalError, oneOf } from '../../src/index.ts';
+import { AnyNumber, AnyString, n, Nominal, NominalError } from '../../src/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
 
 class OrderStatus extends AnyString.subtype(
   'OneOfSchemaStatus',
-  oneOf('draft', 'paid', 'shipped'),
+  n.oneOf('draft', 'paid', 'shipped'),
 ) {}
 
-class Rating extends AnyNumber.subtype('OneOfSchemaRating', oneOf(1, 2, 3)) {}
+class Rating extends AnyNumber.subtype('OneOfSchemaRating', n.oneOf(1, 2, 3)) {}
 
-class Answer extends Nominal('OneOfSchemaAnswer', oneOf('yes', 'no', true, false, 0, 1.5, null)) {}
+class Answer extends Nominal(
+  'OneOfSchemaAnswer',
+  n.oneOf('yes', 'no', true, false, 0, 1.5, null),
+) {}
 
-describe('oneOf() described and typed', () => {
+describe('n.oneOf() described and typed', () => {
   describe('JSON Schema', () => {
     it.each([
-      ['strings', oneOf('a', 'b'), { type: 'string', enum: ['a', 'b'] }],
-      ['integers', oneOf(1, 2), { type: 'integer', enum: [1, 2] }],
-      ['numbers with fractions', oneOf(1, 2.5), { type: 'number', enum: [1, 2.5] }],
-      ['booleans', oneOf(true), { type: 'boolean', enum: [true] }],
-      ['null alone', oneOf(null), { enum: [null] }],
-      ['several kinds', oneOf('a', 1, null), { enum: ['a', 1, null] }],
+      ['strings', n.oneOf('a', 'b'), { type: 'string', enum: ['a', 'b'] }],
+      ['integers', n.oneOf(1, 2), { type: 'integer', enum: [1, 2] }],
+      ['numbers with fractions', n.oneOf(1, 2.5), { type: 'number', enum: [1, 2.5] }],
+      ['booleans', n.oneOf(true), { type: 'boolean', enum: [true] }],
+      ['null alone', n.oneOf(null), { enum: [null] }],
+      ['several kinds', n.oneOf('a', 1, null), { enum: ['a', 1, null] }],
     ])('describes %s as enum', (_, schema, body) => {
       expect(schema['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toStrictEqual({
         $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -92,7 +95,7 @@ describe('oneOf() described and typed', () => {
     }
 
     it('takes the values of a string enum', () => {
-      const SizeType = Nominal('OneOfEnumSize', oneOf(...Object.values(Size)));
+      const SizeType = Nominal('OneOfEnumSize', n.oneOf(...Object.values(Size)));
 
       expect(SizeType.parse('S').ok).toBe(true);
       expect(SizeType.parse('Small').ok).toBe(false);
@@ -100,7 +103,7 @@ describe('oneOf() described and typed', () => {
     });
 
     it('refuses the member names a numeric enum also holds (class-validator #1060)', () => {
-      const LevelType = Nominal('OneOfEnumLevel', oneOf(Level.Low, Level.High));
+      const LevelType = Nominal('OneOfEnumLevel', n.oneOf(Level.Low, Level.High));
 
       expect(Object.values(Level)).toContain('Low');
       expect(LevelType.parse(0).ok).toBe(true);
@@ -116,7 +119,7 @@ describe('oneOf() described and typed', () => {
       expectTypeOf(new Answer('yes').value).toEqualTypeOf<
         'yes' | 'no' | true | false | 0 | 1.5 | null
       >();
-      expectTypeOf(oneOf('a', 'b')).toEqualTypeOf<OneOfSchema<'a' | 'b'>>();
+      expectTypeOf(n.oneOf('a', 'b')).toEqualTypeOf<OneOfSchema<'a' | 'b'>>();
     });
 
     it('keeps the narrowed value in a subtype of a subtype', () => {
@@ -129,7 +132,7 @@ describe('oneOf() described and typed', () => {
 
     it('refuses values of another kind than the parent at compile time', () => {
       // @ts-expect-error a number is not a string
-      AnyString.subtype('OneOfMixed', oneOf('a', 1));
+      AnyString.subtype('OneOfMixed', n.oneOf('a', 1));
       // @ts-expect-error a listed value is required by new for a type declared with Nominal()
       expect(() => new Answer('maybe')).toThrow(NominalError);
     });

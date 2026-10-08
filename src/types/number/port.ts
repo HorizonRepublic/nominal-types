@@ -13,6 +13,6 @@ const PortBase: SubtypeOf<typeof Uint16, 'nominal.Port'> = Uint16.subtype(
  * @remarks
  * Port 0 is reserved and refused: it asks the system for any free port, which is not a port to
  * connect to. Reach for `Uint16` where 0 belongs. The value is a number; read `'8080'` from text
- * with `schemaOf(Port).fromString()`.
+ * with `n.of(Port).fromString()`.
  */
 export class Port extends PortBase {}

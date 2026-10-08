@@ -2,28 +2,32 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { type } from 'arktype';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
-import { Email, Nominal, PositiveInteger, constraint, schemaOf, Uint8 } from '../../src/index.ts';
+import { Email, n, Nominal, PositiveInteger, Uint8 } from '../../src/index.ts';
 import { issuesOf, outputOf, valueOf } from '../support/results.ts';
 
-const endAfterStart = constraint(
+const endAfterStart = n.constraint(
   { start: PositiveInteger, end: PositiveInteger },
   ({ start, end }) => end > start,
   { path: 'end' },
 );
 
-const notBelow = constraint({ min: Uint8, max: Uint8 }, ({ min, max }) => max >= min || 'too low', {
-  path: 'max',
-});
+const notBelow = n.constraint(
+  { min: Uint8, max: Uint8 },
+  ({ min, max }) => max >= min || 'too low',
+  {
+    path: 'max',
+  },
+);
 
-const withinBudget = constraint(
-  { prices: schemaOf(PositiveInteger).array(), budget: PositiveInteger },
+const withinBudget = n.constraint(
+  { prices: n.of(PositiveInteger).array(), budget: PositiveInteger },
   ({ prices, budget }) =>
     prices.reduce((sum, price) => sum + price.value, 0) <= budget.value || 'over budget',
   { path: 'prices' },
 );
 
-const optionalMin = constraint(
-  { min: schemaOf(Uint8).optional(), max: Uint8 },
+const optionalMin = n.constraint(
+  { min: n.of(Uint8).optional(), max: Uint8 },
   ({ min, max }) => min === undefined || max >= min,
 );
 
@@ -40,7 +44,7 @@ const validate = (schema: StandardSchemaV1, input: unknown): StandardSchemaV1.Re
 const issues = (schema: StandardSchemaV1, input: unknown): readonly StandardSchemaV1.Issue[] =>
   validate(schema, input).issues ?? [];
 
-describe('constraint', () => {
+describe('n.constraint', () => {
   describe('the check', () => {
     it('accepts fields that agree, also past one digit', () => {
       expect(issues(endAfterStart, { start: 9, end: 10 })).toStrictEqual([]);
@@ -63,19 +67,21 @@ describe('constraint', () => {
     });
 
     it('uses the message from the options when the check returns false', () => {
-      const rule = constraint({ a: Uint8, b: Uint8 }, ({ a, b }) => a < b, { message: 'a first' });
+      const rule = n.constraint({ a: Uint8, b: Uint8 }, ({ a, b }) => a < b, {
+        message: 'a first',
+      });
 
       expect(issues(rule, { a: 2, b: 1 })).toStrictEqual([{ message: 'a first' }]);
     });
 
     it('puts the issue on the object when no path is given', () => {
-      const rule = constraint({ a: Uint8, b: Uint8 }, ({ a, b }) => a < b);
+      const rule = n.constraint({ a: Uint8, b: Uint8 }, ({ a, b }) => a < b);
 
       expect(issues(rule, { a: 2, b: 1 })).toStrictEqual([{ message: 'a, b must agree' }]);
     });
 
     it('takes a path deeper than one key', () => {
-      const rule = constraint({ a: Uint8, b: Uint8 }, () => false, { path: ['b', 'value', 0] });
+      const rule = n.constraint({ a: Uint8, b: Uint8 }, () => false, { path: ['b', 'value', 0] });
 
       expect(issues(rule, { a: 1, b: 1 })).toStrictEqual([
         { message: 'must agree with a', path: ['b', 'value', 0] },
@@ -83,14 +89,14 @@ describe('constraint', () => {
     });
 
     it('treats an empty message from the check as the message', () => {
-      const rule = constraint({ a: Uint8 }, () => '');
+      const rule = n.constraint({ a: Uint8 }, () => '');
 
       expect(issues(rule, { a: 1 })).toStrictEqual([{ message: '' }]);
     });
 
     it('receives instances of the listed types', () => {
       const check = vi.fn<() => boolean>(() => true);
-      const rule = constraint({ email: Email, count: PositiveInteger }, check);
+      const rule = n.constraint({ email: Email, count: PositiveInteger }, check);
 
       validate(rule, { email: 'jane@example.com', count: 2 });
 
@@ -104,7 +110,7 @@ describe('constraint', () => {
   describe('fields that fail on their own', () => {
     it('reports each failed field under its key and skips the check', () => {
       const check = vi.fn<() => boolean>(() => true);
-      const rule = constraint({ start: PositiveInteger, end: PositiveInteger }, check);
+      const rule = n.constraint({ start: PositiveInteger, end: PositiveInteger }, check);
 
       expect(issues(rule, { start: 0, end: 'x' })).toStrictEqual([
         { message: 'must be a positive integer (was 0)', path: ['start'] },
@@ -120,7 +126,7 @@ describe('constraint', () => {
     });
 
     it('keeps the path inside a field', () => {
-      const rule = constraint({ ids: schemaOf(PositiveInteger).array() }, () => true);
+      const rule = n.constraint({ ids: n.of(PositiveInteger).array() }, () => true);
 
       expect(issues(rule, { ids: [1, 0] })).toStrictEqual([
         { message: 'must be a positive integer (was 0)', path: ['ids', 1] },
@@ -160,7 +166,7 @@ describe('constraint', () => {
   });
 
   describe('fields of other kinds', () => {
-    it('takes a schemaOf() array and sums its items', () => {
+    it('takes a n.of() array and sums its items', () => {
       expect(issues(withinBudget, { prices: [3, 4], budget: 7 })).toStrictEqual([]);
       expect(issues(withinBudget, { prices: [3, 5], budget: 7 })).toStrictEqual([
         { message: 'over budget', path: ['prices'] },
@@ -173,7 +179,7 @@ describe('constraint', () => {
     });
 
     it('takes a schema from another library for a plain field', () => {
-      const rule = constraint(
+      const rule = n.constraint(
         { limit: type('number'), used: PositiveInteger },
         ({ limit, used }) => {
           expectTypeOf(limit).toEqualTypeOf<number>();
@@ -199,17 +205,17 @@ describe('constraint', () => {
 
       expect(() =>
         validate(
-          constraint({ a: later }, () => true),
+          n.constraint({ a: later }, () => true),
           { a: 1 },
         ),
-      ).toThrow(new TypeError('constraint: asynchronous schemas are not supported'));
+      ).toThrow(new TypeError('n.constraint: asynchronous schemas are not supported'));
     });
   });
 
   describe('as the rule of a type', () => {
     class AgeRange extends Nominal(
       'AgeRange',
-      constraint(
+      n.constraint(
         { min: Uint8, max: Uint8 },
         ({ min, max }) => max >= min || 'must not be below min',
         {

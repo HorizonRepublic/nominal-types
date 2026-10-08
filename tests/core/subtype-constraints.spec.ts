@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { matching, Nominal, NominalError } from '../../src/index.ts';
+import { n, Nominal, NominalError } from '../../src/index.ts';
 import { FlashSku, PromoSku, Sku } from '../support/fixtures.ts';
 import { handWritten, issuesOf, stringOnly, valueOf } from '../support/results.ts';
 
@@ -155,8 +155,11 @@ describe('Subtype constraints', () => {
       expect(Percentage.subtype('Low', type('number < 10')).typeName).toBe('Low');
     });
 
-    it('describes a constraint with matching', () => {
-      class Labelled extends Sku.subtype('LabelledSku', matching(/^SKU-1/u, 'a first-range SKU')) {}
+    it('describes a constraint with n.matching', () => {
+      class Labelled extends Sku.subtype(
+        'LabelledSku',
+        n.matching(/^SKU-1/u, 'a first-range SKU'),
+      ) {}
 
       expect(issuesOf(Labelled.parse('SKU-2000'))).toStrictEqual([
         { message: 'must be a first-range SKU (was "SKU-2000")' },

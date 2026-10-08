@@ -8,7 +8,7 @@ import { levelOf, rulesOf } from '../../src/core/hierarchy.ts';
 import { stepsOf } from '../../src/core/plan.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 import { describeRules } from '../../src/core/rules-json.ts';
-import { matching } from '../../src/index.ts';
+import { n } from '../../src/index.ts';
 
 class Root {}
 class Plain extends Root {}
@@ -24,7 +24,7 @@ const runOf =
     return result instanceof Rejection ? { issues: result.issues } : { value: result };
   };
 
-const patterns = (...list: RegExp[]): NominalSchema[] => list.map((pattern) => matching(pattern));
+const patterns = (...list: RegExp[]): NominalSchema[] => list.map((pattern) => n.matching(pattern));
 
 describe('hierarchy', () => {
   it('finds no rules on the root', () => {
@@ -61,9 +61,9 @@ describe('folding neighbouring patterns', () => {
   });
 
   it('keeps patterns with different flags apart', () => {
-    const run = runOf(matching(/^a/), matching(/^ab/u));
+    const run = runOf(n.matching(/^a/), n.matching(/^ab/u));
 
-    expect(stepsFor([matching(/^a/), matching(/^ab/u)])).toHaveLength(2);
+    expect(stepsFor([n.matching(/^a/), n.matching(/^ab/u)])).toHaveLength(2);
     expect(run('abc')).toStrictEqual({ value: 'abc' });
     expect(run('ac')).toMatchObject({ issues: [{ message: 'must be matched by ^ab (was "ac")' }] });
   });
@@ -83,7 +83,7 @@ describe('rules from another library', () => {
   const trimmed = type('string').pipe((text) => text.trim());
 
   it('passes each rule the value the previous one produced', () => {
-    expect(runOf(trimmed, matching(/^ab$/u))('  ab  ')).toStrictEqual({ value: 'ab' });
+    expect(runOf(trimmed, n.matching(/^ab$/u))('  ab  ')).toStrictEqual({ value: 'ab' });
   });
 
   it('turns their issues into plain ones, with plain paths', () => {

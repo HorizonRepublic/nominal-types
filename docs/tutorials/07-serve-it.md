@@ -187,14 +187,7 @@ Here is the full `main.ts`:
 import { createServer } from 'node:http';
 import { text } from 'node:stream/consumers';
 
-import {
-  AnyBoolean,
-  AnyString,
-  Email,
-  constraint,
-  objectOf,
-  schemaOf,
-} from '@horizon-republic/nominal-types';
+import { AnyBoolean, AnyString, Email, n } from '@horizon-republic/nominal-types';
 
 class Username extends AnyString.subtype('shop.Username', /^[a-z0-9_]{3,20}$/u) {
   get profilePath(): string {
@@ -206,19 +199,19 @@ class StaffEmail extends Email.subtype('shop.StaffEmail', /@shop\.example\.com$/
 
 class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
-const passwordsMatch = constraint(
+const passwordsMatch = n.constraint(
   { password: Password, repeatPassword: Password },
   ({ password, repeatPassword }) => password.equals(repeatPassword),
   { path: 'repeatPassword', message: 'must match the password' },
 );
 
-const SignUp = objectOf(
+const SignUp = n.object(
   {
     username: Username,
     email: Email,
     password: Password,
     repeatPassword: Password,
-    newsletter: schemaOf(AnyBoolean).optional(),
+    newsletter: n.of(AnyBoolean).optional(),
   },
   passwordsMatch,
 );
@@ -260,6 +253,6 @@ server.listen(3000, () => {
 You finished the tutorial. Next, put the same types into a real application:
 
 - [How to use nominal types with NestJS](../guides/frameworks/nestjs.md) checks bodies like `SignUp` in a NestJS app.
-- [How to check a request body with objectOf()](../guides/core/check-an-object.md) covers nested objects, lists and strict mode.
+- [How to check a request body with n.object()](../guides/core/check-an-object.md) covers nested objects, lists and strict mode.
 
 [← Tutorials](README.md)

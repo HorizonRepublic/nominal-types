@@ -124,9 +124,9 @@ A constraint on a nested object:
 ```ts
 import { type } from 'arktype';
 import { constrainArk, fromArk, toArk } from '@horizon-republic/nominal-types/adapters/arktype';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests.value <= capacity.value || 'must not exceed the capacity',
   { path: 'guests' },
@@ -148,7 +148,7 @@ constrainArk(type('string'), withinCapacity);
 ## See also
 
 - [How to use nominal types with ArkType](../../guides/validators/arktype.md)
-- [Schemas: `constraint()`](../schemas.md)
+- [Schemas: `n.constraint()`](../schemas.md)
 - [Benchmarks](../benchmarks.md)
 
 [← Adapters](README.md) · [← Reference](../README.md)

@@ -66,7 +66,7 @@ export class Email extends EmailBase {
    * ```ts
    * class CompanyEmail extends Email {
    *   static override readonly pattern = /^[a-z.]+@example\.com$/u;
-   *   static override readonly rule = matching(CompanyEmail.pattern);
+   *   static override readonly rule = n.matching(CompanyEmail.pattern);
    * }
    * ```
    */

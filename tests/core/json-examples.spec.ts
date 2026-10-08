@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AnyString, Email, matching, Nominal, schemaOf, Uuid } from '../../src/index.ts';
+import { AnyString, Email, n, Nominal, Uuid } from '../../src/index.ts';
 
 const v4 = '6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718';
 const v7 = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
@@ -35,7 +35,7 @@ describe('examples across a hierarchy', () => {
   });
 
   it('drops a parent example the subtype rejects', () => {
-    class UuidV4 extends Uuid.subtype('UuidV4', matching(/^.{14}4/u, 'a version 4 UUID')) {}
+    class UuidV4 extends Uuid.subtype('UuidV4', n.matching(/^.{14}4/u, 'a version 4 UUID')) {}
     const schema = draft(UuidV4);
 
     expect(schema).not.toHaveProperty('examples');
@@ -45,7 +45,7 @@ describe('examples across a hierarchy', () => {
   it("moves a subtype's own examples to the top and keeps them out of allOf", () => {
     class UuidV4 extends Uuid.subtype(
       'UuidV4',
-      matching(/^.{14}4/u, 'a version 4 UUID', { examples: [v4] }),
+      n.matching(/^.{14}4/u, 'a version 4 UUID', { examples: [v4] }),
     ) {}
     const schema = draft(UuidV4);
 
@@ -58,7 +58,7 @@ describe('examples across a hierarchy', () => {
   it('keeps a parent example the subtype also accepts, once', () => {
     class CompanyEmail extends Email.subtype(
       'CompanyEmail',
-      matching(/@example\.com$/u, 'a company address', { examples: ['jane.doe@example.com'] }),
+      n.matching(/@example\.com$/u, 'a company address', { examples: ['jane.doe@example.com'] }),
     ) {}
 
     expect(draft(CompanyEmail)['examples']).toStrictEqual(['jane.doe@example.com']);
@@ -67,11 +67,11 @@ describe('examples across a hierarchy', () => {
   it("gives a variant only examples its own rule accepts, not its source's", () => {
     class Code extends AnyString.subtype(
       'Code',
-      matching(/^C-\d{3}$/u, 'a code', { examples: ['C-001'] }),
+      n.matching(/^C-\d{3}$/u, 'a code', { examples: ['C-001'] }),
     ) {}
     class LegacyCode extends Code.variant(
       'LegacyCode',
-      matching(/^L\d{2}$/u, 'a legacy code', { examples: ['L01'] }),
+      n.matching(/^L\d{2}$/u, 'a legacy code', { examples: ['L01'] }),
     ) {}
 
     expect(draft(LegacyCode)).toMatchObject({ title: 'LegacyCode', examples: ['L01'] });
@@ -80,10 +80,10 @@ describe('examples across a hierarchy', () => {
   it('checks examples against a rule added with extends', () => {
     class Code extends Nominal(
       'Code2',
-      matching(/^C-\d{3}$/u, 'a code', { examples: ['C-001', 'C-900'] }),
+      n.matching(/^C-\d{3}$/u, 'a code', { examples: ['C-001', 'C-900'] }),
     ) {}
     class HighCode extends Code {
-      public static override readonly rule = matching(/^C-9/u, 'a high code');
+      public static override readonly rule = n.matching(/^C-9/u, 'a high code');
     }
 
     expect(draft(HighCode)['examples']).toStrictEqual(['C-900']);
@@ -91,6 +91,6 @@ describe('examples across a hierarchy', () => {
   });
 
   it('carries the item examples into an array schema', () => {
-    expect(draft(schemaOf(Uuid).array())).toMatchObject({ items: { examples: [v7] } });
+    expect(draft(n.of(Uuid).array())).toMatchObject({ items: { examples: [v7] } });
   });
 });

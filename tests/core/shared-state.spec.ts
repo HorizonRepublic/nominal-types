@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NominalPipe } from '../../src/adapters/nest/index.ts';
 import { applyNominalTypes } from '../../src/adapters/swagger/index.ts';
 import type * as library from '../../src/index.ts';
-import { Email, matching, Nominal, schemaOf, Uuid } from '../../src/index.ts';
+import { Email, n, Nominal, Uuid } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
 const first = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
@@ -34,7 +34,7 @@ describe('state shared by copies of the package', () => {
   it('reads strings for a type from another copy', async () => {
     const copy = await anotherCopy();
 
-    expect(valueOf(schemaOf(copy.PositiveInteger).fromString().parse('2')).value).toBe(2);
+    expect(valueOf(n.of(copy.PositiveInteger).fromString().parse('2')).value).toBe(2);
     expect(
       new NominalPipe().transform('2', { type: 'query', metatype: copy.PositiveInteger }),
     ).toBeInstanceOf(copy.PositiveInteger);
@@ -44,7 +44,7 @@ describe('state shared by copies of the package', () => {
     const copy = await anotherCopy();
 
     expect(
-      new NominalPipe(copy.schemaOf(copy.Uuid).array()).transform(first, { type: 'query' }),
+      new NominalPipe(copy.n.of(copy.Uuid).array()).transform(first, { type: 'query' }),
     ).toHaveLength(1);
   });
 });
@@ -68,8 +68,8 @@ describe('a type name declared twice', () => {
   it('stays silent when the same type is declared again', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    Nominal('DeclaredAgain', matching(/^a$/u, 'an a'));
-    Nominal('DeclaredAgain', matching(/^a$/u, 'an a'));
+    Nominal('DeclaredAgain', n.matching(/^a$/u, 'an a'));
+    Nominal('DeclaredAgain', n.matching(/^a$/u, 'an a'));
 
     expect(warn).not.toHaveBeenCalled();
   });

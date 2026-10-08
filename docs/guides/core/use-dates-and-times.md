@@ -34,14 +34,14 @@ An `Instant` needs an offset in its text, such as `Z` or `+02:00`. The other thr
 
 ## Check a request body
 
-Use the types as fields of `objectOf()`, like any other type:
+Use the types as fields of `n.object()`, like any other type:
 
 ```ts
 import 'temporal-polyfill/global';
-import { Email, objectOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 import { Instant, PlainDate } from '@horizon-republic/nominal-types/temporal';
 
-const ScheduleReminder = objectOf({
+const ScheduleReminder = n.object({
   customer: Email,
   sendAt: Instant,
   due: PlainDate,
@@ -82,7 +82,7 @@ Make a [subtype](../../reference/glossary.md) with a rule on the Temporal value:
 
 ```ts
 import 'temporal-polyfill/global';
-import { satisfying } from '@horizon-republic/nominal-types';
+import { n } from '@horizon-republic/nominal-types';
 import { PlainDate } from '@horizon-republic/nominal-types/temporal';
 
 const isFrom1900 = (value: unknown): value is Temporal.PlainDate =>
@@ -90,7 +90,7 @@ const isFrom1900 = (value: unknown): value is Temporal.PlainDate =>
 
 export class BirthDate extends PlainDate.subtype(
   'people.BirthDate',
-  satisfying(isFrom1900, 'a date from 1900 on', {}),
+  n.satisfying(isFrom1900, 'a date from 1900 on', {}),
 ) {}
 
 new BirthDate('1990-07-15').value.year; // 1990
@@ -105,10 +105,10 @@ Each type has a text form, so `fromString()` and `fromEnv()` read it:
 
 ```ts
 import 'temporal-polyfill/global';
-import { Nominal, objectOf } from '@horizon-republic/nominal-types';
+import { n, Nominal } from '@horizon-republic/nominal-types';
 import { PlainTime } from '@horizon-republic/nominal-types/temporal';
 
-class Config extends Nominal('app.Config', objectOf({ BACKUP_AT: PlainTime }).fromEnv()) {}
+class Config extends Nominal('app.Config', n.object({ BACKUP_AT: PlainTime }).fromEnv()) {}
 
 new Config({ BACKUP_AT: '03:00:00' }).BACKUP_AT.value.hour; // 3
 ```
@@ -120,7 +120,7 @@ The database adapters give each type a column: `timestamptz`, `date`, `time` and
 ## See also
 
 - [Dates and times](../../reference/types/temporal.md): every rule and message
-- [How to check a request body with objectOf()](check-an-object.md)
+- [How to check a request body with n.object()](check-an-object.md)
 - [How to make a stricter type or a variant](build-on-a-type.md)
 
 [← Guides](../README.md)

@@ -17,21 +17,21 @@ A request passes three kinds of checks:
 | Kind      | What it checks                                                 | Done by                                                 |
 | --------- | -------------------------------------------------------------- | ------------------------------------------------------- |
 | Transport | the size of the body, the URL and the headers                  | your HTTP server: Node.js, Express, Fastify             |
-| Structure | which fields exist, which are required, lists and their length | `objectOf()`, or ArkType, Zod, Valibot, class-validator |
+| Structure | which fields exist, which are required, lists and their length | `n.object()`, or ArkType, Zod, Valibot, class-validator |
 | Value     | whether a value is really an `Email`, and what it can do       | nominal types                                           |
 
-This package covers structure and value. `objectOf()` says which fields an object has, and each field is a nominal type. One schema does both jobs:
+This package covers structure and value. `n.object()` says which fields an object has, and each field is a nominal type. One schema does both jobs:
 
 ```ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-const CreateOrder = objectOf({
+const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 const body: unknown = { customer: 'jane@example.com', quantity: 0, admin: true };
@@ -47,21 +47,21 @@ It finds the missing `sku` and the bad `quantity` in one pass. Keys the schema d
 
 ## When another library checks the structure
 
-`objectOf()` has no unions of different object shapes, no recursive schemas, no transforms and no asynchronous checks. For those, ArkType checks the structure, and its adapter puts nominal types into its fields.
+`n.object()` has no unions of different object shapes, no recursive schemas, no transforms and no asynchronous checks. For those, ArkType checks the structure, and its adapter puts nominal types into its fields.
 
 A project that already uses ArkType, Zod, Valibot or class-validator keeps it, with its adapter. [Choosing how to check input](choosing-an-approach.md) compares these ways.
 
 ## Lists, missing values and text
 
-Some places take one schema for one value: a NestJS route parameter, or a field of another library's schema. `schemaOf()` gives such a place a list, an optional value or a `null`, built from a type: `schemaOf(Uuid).array()`.
+Some places take one schema for one value: a NestJS route parameter, or a field of another library's schema. `n.of()` gives such a place a list, an optional value or a `null`, built from a type: `n.of(Uuid).array()`.
 
 Some transports carry only text: environment variables, query strings, CSV files. A number arrives there as `'3'`. `fromString()` reads it first:
 
 ```ts
-import { PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 PositiveInteger.parse('3'); // { ok: false, issues: [{ message: 'must be a number (was "3")' }] }
-schemaOf(PositiveInteger).fromString().parse('3'); // { ok: true, value: PositiveInteger { value: 3 } }
+n.of(PositiveInteger).fromString().parse('3'); // { ok: true, value: PositiveInteger { value: 3 } }
 ```
 
 Add `fromString()` only where the input is text. A type's rule never reads text by itself, so a JSON body that sends `"3"` for a number is refused.
@@ -84,7 +84,7 @@ A database can hold values written before a rule changed, or by other code. The 
 
 | Boundary                          | What turns plain input into nominal types                                                                                                                                                          |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| an HTTP request body or a message | [`objectOf()`](../guides/core/check-an-object.md), or the adapter of a validator you already use                                                                                                   |
+| an HTTP request body or a message | [`n.object()`](../guides/core/check-an-object.md), or the adapter of a validator you already use                                                                                                   |
 | a NestJS parameter or payload     | [`NominalPipe`](../guides/frameworks/nestjs.md)                                                                                                                                                    |
 | a class-validator DTO             | [`@NominalField()`](../guides/validators/class-validator.md)                                                                                                                                       |
 | a GraphQL argument                | a scalar from [`toGraphQL()`](../guides/frameworks/graphql.md)                                                                                                                                     |
@@ -94,7 +94,7 @@ A database can hold values written before a rule changed, or by other code. The 
 
 ## See also
 
-- [How to check a request body with objectOf()](../guides/core/check-an-object.md)
+- [How to check a request body with n.object()](../guides/core/check-an-object.md)
 - [Choosing how to check input](choosing-an-approach.md)
 - [How to accept lists, missing values and null](../guides/core/lists-and-optional-values.md)
 - [How to read numbers and booleans from text](../guides/core/read-text-values.md)

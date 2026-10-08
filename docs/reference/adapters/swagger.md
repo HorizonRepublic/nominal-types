@@ -38,14 +38,14 @@ Name the class like the type or like its last part. Otherwise, give the type's n
 function ApiNominalProperty(target: NominalTarget, options?: ApiPropertyOptions): PropertyDecorator;
 ```
 
-| Parameter | Type                                | Default | Description                                               |
-| --------- | ----------------------------------- | ------- | --------------------------------------------------------- |
-| `target`  | nominal type or `schemaOf()` schema | —       | what the property holds                                   |
-| `options` | `@ApiProperty()` options            | `{}`    | they win over the generated schema, such as `description` |
+| Parameter | Type                            | Default | Description                                               |
+| --------- | ------------------------------- | ------- | --------------------------------------------------------- |
+| `target`  | nominal type or `n.of()` schema | —       | what the property holds                                   |
+| `options` | `@ApiProperty()` options        | `{}`    | they win over the generated schema, such as `description` |
 
-Writes the whole OpenAPI 3.0 schema into the property. A list gets `items`, `minItems` and `maxItems`. The property is required unless the schema accepts a missing value, as `schemaOf(Email).optional()` does.
+Writes the whole OpenAPI 3.0 schema into the property. A list gets `items`, `minItems` and `maxItems`. The property is required unless the schema accepts a missing value, as `n.of(Email).optional()` does.
 
-Throws `TypeError: ApiNominalProperty() takes a nominal type or a schemaOf() schema` when `target` is neither.
+Throws `TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema` when `target` is neither.
 
 To validate the same property, put `@NominalField()` from the [class-validator adapter](class-validator.md) next to it.
 
@@ -88,21 +88,21 @@ Document DTO properties:
 
 ```ts
 import { ApiNominalProperty } from '@horizon-republic/nominal-types/adapters/swagger';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
 export class CreateOrderDto {
   @ApiNominalProperty(Email)
   customer!: Email; // { type: 'string', format: 'email', maxLength: 254, … }, required
 
-  @ApiNominalProperty(schemaOf(Uuid).array({ min: 1, max: 50 }))
+  @ApiNominalProperty(n.of(Uuid).array({ min: 1, max: 50 }))
   items!: readonly Uuid[]; // { type: 'array', items: { format: 'uuid', … }, minItems: 1, maxItems: 50 }
 
-  @ApiNominalProperty(schemaOf(Email).optional(), { description: 'where copies go' })
+  @ApiNominalProperty(n.of(Email).optional(), { description: 'where copies go' })
   backup?: Email; // not required, description: 'where copies go'
 }
 
 ApiNominalProperty(String as never);
-// throws TypeError: ApiNominalProperty() takes a nominal type or a schemaOf() schema
+// throws TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema
 ```
 
 ## See also

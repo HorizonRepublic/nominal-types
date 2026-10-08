@@ -53,7 +53,7 @@ A parameter declared with a nominal type is documented once the document is fill
 ```ts
 // users.controller.ts
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 import { UserId } from './user-id';
 
 @Controller('users')
@@ -64,13 +64,13 @@ export class UsersController {
   }
 
   @Get()
-  search(@Query('ids', { schema: schemaOf(Uuid).array({ max: 100 }) }) ids: readonly Uuid[]): number {
+  search(@Query('ids', { schema: n.of(Uuid).array({ max: 100 }) }) ids: readonly Uuid[]): number {
     return ids.length;
   }
 }
 ```
 
-On Nest 12, a `schemaOf()` schema in the `schema` option is documented by `@nestjs/swagger` itself, with `items` and `maxItems`.
+On Nest 12, an `n.of()` schema in the `schema` option is documented by `@nestjs/swagger` itself, with `items` and `maxItems`.
 
 ## Document DTO properties
 
@@ -78,17 +78,17 @@ Use `@ApiNominalProperty()` for lists and optional values. It writes the whole s
 
 ```ts
 // create-order.dto.ts
-import { AnyString, Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, Uuid } from '@horizon-republic/nominal-types';
 import { ApiNominalProperty } from '@horizon-republic/nominal-types/adapters/swagger';
 
 export class CreateOrderDto {
   @ApiNominalProperty(Email)
   customer!: Email;
 
-  @ApiNominalProperty(schemaOf(Uuid).array({ min: 1, max: 50 }))
+  @ApiNominalProperty(n.of(Uuid).array({ min: 1, max: 50 }))
   coupons!: readonly Uuid[];
 
-  @ApiNominalProperty(schemaOf(AnyString).optional(), { description: 'Shown on the packing slip' })
+  @ApiNominalProperty(n.of(AnyString).optional(), { description: 'Shown on the packing slip' })
   note?: AnyString;
 }
 ```
@@ -144,7 +144,7 @@ export class Mailbox extends AnyString.subtype('shop.MailboxAddress', /^[a-z]+@e
 
 A schema that was not filled stays `{ "type": "object", "properties": {} }`. Check the class name against the type name.
 
-`@ApiNominalProperty()` takes a nominal type or a `schemaOf()` schema. Anything else throws `TypeError: ApiNominalProperty() takes a nominal type or a schemaOf() schema`.
+`@ApiNominalProperty()` takes a nominal type or an `n.of()` schema. Anything else throws `TypeError: ApiNominalProperty() takes a nominal type or an n.of() schema`.
 
 ## Limits
 

@@ -3,7 +3,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
-import { AnyBoolean, Email, PositiveInteger, schemaOf, Uuid } from '../../../src/index.ts';
+import { AnyBoolean, Email, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { badRequest, describeIds, first, nestMajor, platforms, second, start } from './support.ts';
 import type { Started } from './support.ts';
 
@@ -11,28 +11,26 @@ import type { Started } from './support.ts';
 class ExplicitController {
   @Get('ids')
   public ids(
-    @Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 3 }))) ids: readonly Uuid[],
+    @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 3 }))) ids: readonly Uuid[],
   ): unknown {
     return { ids: describeIds(ids), frozen: Object.isFrozen(ids) };
   }
 
   @Get('optional-ids')
   public optionalIds(
-    @Query('ids', new NominalPipe(schemaOf(Uuid).array().optional())) ids?: readonly Uuid[],
+    @Query('ids', new NominalPipe(n.of(Uuid).array().optional())) ids?: readonly Uuid[],
   ): unknown {
     return { ids: describeIds(ids) };
   }
 
   @Get('email')
-  public email(
-    @Query('email', new NominalPipe(schemaOf(Email).optional())) email?: Email,
-  ): unknown {
+  public email(@Query('email', new NominalPipe(n.of(Email).optional())) email?: Email): unknown {
     return { email: email === undefined ? 'none' : email.domain };
   }
 
   @Get('pages')
   public pages(
-    @Query('pages', new NominalPipe(schemaOf(PositiveInteger).fromString().array()))
+    @Query('pages', new NominalPipe(n.of(PositiveInteger).fromString().array()))
     pages: readonly PositiveInteger[],
   ): unknown {
     return { pages: pages.map((page) => page.value) };
@@ -223,16 +221,12 @@ describe.runIf(nestMajor >= 12).each(platforms)(
       @Controller('declared')
       class DeclaredController {
         @Get('ids')
-        public ids(
-          @Query('ids', { schema: schemaOf(Uuid).array() }) ids: readonly Uuid[],
-        ): unknown {
+        public ids(@Query('ids', { schema: n.of(Uuid).array() }) ids: readonly Uuid[]): unknown {
           return { ids: describeIds(ids) };
         }
 
         @Get('email')
-        public email(
-          @Query('email', { schema: schemaOf(Email).optional() }) email?: Email,
-        ): unknown {
+        public email(@Query('email', { schema: n.of(Email).optional() }) email?: Email): unknown {
           return { email: email === undefined ? 'none' : email.domain };
         }
 

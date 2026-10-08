@@ -14,7 +14,7 @@ const plainIssue = (issue: StandardSchemaV1.Issue): StandardSchemaV1.Issue =>
 
 /**
  * Internal: how a rule from another library runs inside a type, chosen once: the runner of a
- * `schemaOf()` schema, or the rule's `validate`.
+ * `n.of()` schema, or the rule's `validate`.
  *
  * @throws TypeError naming the type when the rule answers with a Promise.
  */

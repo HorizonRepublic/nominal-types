@@ -33,6 +33,6 @@ Every entry point works with `import` and `require`, on Node.js 22.12 or later.
 
 ## No adapter needed
 
-Any library that reads [Standard Schema](../glossary.md) takes a nominal type or a `schemaOf()` schema as it is. See [How to use a type inside any Standard Schema library](../../guides/validators/standard-schema.md).
+Any library that reads [Standard Schema](../glossary.md) takes a nominal type or an `n.of()` schema as it is. See [How to use a type inside any Standard Schema library](../../guides/validators/standard-schema.md).
 
 [← Reference](../README.md)

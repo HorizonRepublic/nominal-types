@@ -3,20 +3,12 @@ import { z } from 'zod';
 
 import { constrainZod, toZod } from '../../../src/adapters/zod/index.ts';
 import type * as library from '../../../src/index.ts';
-import {
-  constraint,
-  Email,
-  Nominal,
-  objectOf,
-  PositiveInteger,
-  satisfying,
-  Uuid,
-} from '../../../src/index.ts';
+import { Email, n, Nominal, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { edgeSamples, sampleTypes } from '../../support/samples.ts';
 
 const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -70,7 +62,7 @@ describe('toZod', () => {
   it('keeps the paths inside a type that holds an object', () => {
     class Range extends Nominal(
       'zodtest.Range',
-      objectOf({ start: PositiveInteger, end: PositiveInteger }),
+      n.object({ start: PositiveInteger, end: PositiveInteger }),
     ) {}
 
     expect(
@@ -93,7 +85,7 @@ describe('toZod', () => {
   it('leaves out the schema of a type that has none', () => {
     const Even = Nominal(
       'zodtest.Even',
-      satisfying((value: unknown): value is number => value === 2, 'two'),
+      n.satisfying((value: unknown): value is number => value === 2, 'two'),
     );
 
     expect(z.toJSONSchema(toZod(Even), { io: 'input' })).not.toHaveProperty('title');
@@ -134,7 +126,7 @@ describe('constrainZod', () => {
     const check = vi.fn<() => boolean>(() => true);
     const Checked = constrainZod(
       z.object({ guests: toZod(PositiveInteger) }),
-      constraint({ guests: PositiveInteger }, check),
+      n.constraint({ guests: PositiveInteger }, check),
     );
 
     expect(Checked.safeParse({ guests: 0 }).success).toBe(false);
@@ -144,7 +136,7 @@ describe('constrainZod', () => {
   it('adds an issue with no path to the object', () => {
     const Never = constrainZod(
       z.object({ a: toZod(PositiveInteger) }),
-      constraint({ a: PositiveInteger }, () => 'never'),
+      n.constraint({ a: PositiveInteger }, () => 'never'),
     );
 
     expect(issues(Never.safeParse({ a: 1 }))).toStrictEqual([{ message: 'never', path: [] }]);

@@ -2,10 +2,10 @@ import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
 import { toArk, fromArk, constrainArk } from '../../../src/adapters/arktype/index.ts';
-import { constraint, Email, PositiveInteger, Uuid } from '../../../src/index.ts';
+import { Email, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { satisfiesSchema } from '../../support/json-schema.ts';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity,
 );

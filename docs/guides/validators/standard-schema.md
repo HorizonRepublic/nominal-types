@@ -2,13 +2,13 @@
 
 Every nominal type is a [Standard Schema](../../reference/glossary.md): a common interface that many libraries read. Pass the type to such a library, and it hands you instances, such as an `Email`, instead of strings.
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use this guide if you already use a library that reads Standard Schema.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use this guide if you already use a library that reads Standard Schema.
 
 For ArkType, Zod and Valibot, use their adapters instead: [ArkType](arktype.md), [Zod](zod.md), [Valibot](valibot.md).
 
 ## Before you start
 
-- Nothing extra to install. Every type, every `schemaOf()` schema and every `objectOf()` schema is a Standard Schema.
+- Nothing extra to install. Every type, every `n.of()` schema and every `n.object()` schema is a Standard Schema.
 - The library must read Standard Schema version 1.
 
 ## Quick example
@@ -18,14 +18,14 @@ Every Standard Schema has a property named [`~standard`](../../reference/glossar
 ```ts
 // check.ts
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
 // What a library does with any schema you hand it:
 const check = (schema: StandardSchemaV1, value: unknown) => schema['~standard'].validate(value);
 
 check(Email, 'jane@example.com'); // { value: Email { value: 'jane@example.com' } }
 check(Email, 'nope'); // { issues: [{ message: 'must be an email address (was a string of 4 characters)' }] }
-check(schemaOf(Uuid).array(), ['nope']); // { issues: [{ message: 'must be a UUID (was "nope")', path: [0] }] }
+check(n.of(Uuid).array(), ['nope']); // { issues: [{ message: 'must be a UUID (was "nope")', path: [0] }] }
 ```
 
 You never write `check()` yourself. You pass `Email` where the library asks for a schema.
@@ -49,12 +49,12 @@ async function bootstrap(): Promise<void> {
 void bootstrap();
 ```
 
-Then pass the type, or a `schemaOf()` schema for a list, as the `schema` option:
+Then pass the type, or an `n.of()` schema for a list, as the `schema` option:
 
 ```ts
 // users.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
 @Controller('users')
 export class UsersController {
@@ -64,7 +64,7 @@ export class UsersController {
   }
 
   @Get('many')
-  many(@Query('ids', { schema: schemaOf(Uuid).array({ max: 2 }) }) ids: readonly Uuid[]): number {
+  many(@Query('ids', { schema: n.of(Uuid).array({ max: 2 }) }) ids: readonly Uuid[]): number {
     return ids.length;
   }
 }
@@ -74,15 +74,15 @@ export class UsersController {
 
 For NestJS 11 and 12 the package also has its own `NominalPipe`, which needs no `schema` option. See [How to use nominal types with NestJS](../frameworks/nestjs.md).
 
-## Pass schemaOf() when a library treats a class as its own
+## Pass n.of() when a library treats a class as its own
 
-Some libraries read a class in a schema as something of their own. ArkType fails with `TypeError: Class constructor Email cannot be invoked without 'new'`. Pass `schemaOf(Type)` instead, a plain schema object:
+Some libraries read a class in a schema as something of their own. ArkType fails with `TypeError: Class constructor Email cannot be invoked without 'new'`. Pass `n.of(Type)` instead, a plain schema object:
 
 ```ts
 import { type } from 'arktype';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
-const Invitation = type({ email: schemaOf(Email), team: schemaOf(Uuid) });
+const Invitation = type({ email: n.of(Email), team: n.of(Uuid) });
 
 const invitation = Invitation.assert({
   email: 'jane@example.com',
@@ -92,7 +92,7 @@ const invitation = Invitation.assert({
 invitation.email instanceof Email; // true
 ```
 
-For ArkType itself, the [ArkType adapter](arktype.md) is much faster. Use `schemaOf()` this way for libraries without an adapter.
+For ArkType itself, the [ArkType adapter](arktype.md) is much faster. Use `n.of()` this way for libraries without an adapter.
 
 ## Errors
 
@@ -111,7 +111,7 @@ The library decides what to do with them. NestJS answers 400 with the messages. 
 
 ## See also
 
-- [Schemas reference](../../reference/schemas.md): `schemaOf()` and its chain.
+- [Schemas reference](../../reference/schemas.md): `n.of()` and its chain.
 - [How to accept lists, missing values and null](../core/lists-and-optional-values.md)
 - [How to use nominal types with NestJS](../frameworks/nestjs.md)
 - [Standard Schema website](https://standardschema.dev)

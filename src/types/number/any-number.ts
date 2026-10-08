@@ -20,7 +20,7 @@ const AnyNumberBase: NominalType<'nominal.AnyNumber', NominalSchema<number, numb
  *
  * @remarks
  * JSON has no `NaN` or infinity, and `JSON.stringify` writes them as `null`; reach for
- * `FiniteNumber` where a value travels as JSON. `schemaOf(Type).fromString()` reads a number
+ * `FiniteNumber` where a value travels as JSON. `n.of(Type).fromString()` reads a number
  * written the way JSON writes one, such as `'2'`, `'-1.5'` or `'1e3'`.
  */
 export class AnyNumber extends AnyNumberBase {}

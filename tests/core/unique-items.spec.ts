@@ -2,22 +2,13 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import type * as library from '../../src/index.ts';
 import type { ArrayOptions } from '../../src/index.ts';
-import {
-  AnyNumber,
-  AnyString,
-  Email,
-  Nominal,
-  objectOf,
-  PositiveInteger,
-  schemaOf,
-  Uuid,
-} from '../../src/index.ts';
+import { AnyNumber, AnyString, Email, n, Nominal, PositiveInteger, Uuid } from '../../src/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
 const first = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 const second = '6f1c2a3e-8b9d-4e5f-a1b2-c3d4e5f60718';
-const uuids = schemaOf(Uuid).array({ unique: true });
+const uuids = n.of(Uuid).array({ unique: true });
 
 // Compares the digits as written, case included.
 class ExactUuid extends Uuid {
@@ -85,33 +76,28 @@ describe('array({ unique: true })', () => {
   });
 
   it('follows a class that overrides equals() itself', () => {
-    const exact = schemaOf(ExactUuid).array({ unique: true });
+    const exact = n.of(ExactUuid).array({ unique: true });
 
     expect(exact.parse([first, first.toUpperCase()]).ok).toBe(true);
     expect(exact.parse([first, second, first]).ok).toBe(false);
   });
 
   it.each([
-    ['numbers', schemaOf(PositiveInteger), [1, 2, 1], 'must not repeat an item (was 1)'],
+    ['numbers', n.of(PositiveInteger), [1, 2, 1], 'must not repeat an item (was 1)'],
     [
       'NaN (class-validator #2690)',
-      schemaOf(AnyNumber),
+      n.of(AnyNumber),
       [Number.NaN, Number.NaN],
       'must not repeat an item (was NaN)',
     ],
     [
       'undefined',
-      schemaOf(AnyString).optional(),
+      n.of(AnyString).optional(),
       [undefined, 'a', undefined],
       'must not repeat an item (was undefined)',
     ],
-    [
-      'null',
-      schemaOf(AnyString).nullable(),
-      [null, 'a', null],
-      'must not repeat an item (was null)',
-    ],
-    ['strings', schemaOf(AnyString), ['a', 'b', 'a'], 'must not repeat an item (was "a")'],
+    ['null', n.of(AnyString).nullable(), [null, 'a', null], 'must not repeat an item (was null)'],
+    ['strings', n.of(AnyString), ['a', 'b', 'a'], 'must not repeat an item (was "a")'],
   ])('finds repeated %s', (_, schema, input, message) => {
     expect(issuesOf(schema.array({ unique: true }).parse(input))).toStrictEqual([
       { message, path: [input.length - 1] },
@@ -119,11 +105,11 @@ describe('array({ unique: true })', () => {
   });
 
   it('keeps 0 and -0 apart, as equals() does', () => {
-    expect(schemaOf(AnyNumber).array({ unique: true }).parse([0, -0]).ok).toBe(true);
+    expect(n.of(AnyNumber).array({ unique: true }).parse([0, -0]).ok).toBe(true);
   });
 
   it('compares objects field by field', () => {
-    const Line = objectOf({ sku: AnyString, quantity: PositiveInteger });
+    const Line = n.object({ sku: AnyString, quantity: PositiveInteger });
     const lines = Line.array({ unique: true });
 
     expect(
@@ -138,7 +124,7 @@ describe('array({ unique: true })', () => {
   });
 
   it('compares nested arrays item by item', () => {
-    const pairs = schemaOf(Uuid).array().array({ unique: true });
+    const pairs = n.of(Uuid).array().array({ unique: true });
 
     expect(
       pairs.parse([
@@ -153,15 +139,14 @@ describe('array({ unique: true })', () => {
 
   it('leaves the value out for a sensitive type', () => {
     expect(
-      issuesOf(
-        schemaOf(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example.com']),
-      ),
+      issuesOf(n.of(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example.com'])),
     ).toStrictEqual([
       { message: 'must not repeat an item (was a string of 16 characters)', path: [1] },
     ]);
     expect(
       issuesOf(
-        schemaOf(Email)
+        n
+          .of(Email)
           .optional()
           .array({ unique: true })
           .parse(['jane@example.com', 'jane@example.com']),
@@ -172,7 +157,7 @@ describe('array({ unique: true })', () => {
   });
 
   it('checks the count first and the items next, and looks for repeats only then', () => {
-    const list = schemaOf(Uuid).array({ max: 2, unique: true });
+    const list = n.of(Uuid).array({ max: 2, unique: true });
 
     expect(issuesOf(list.parse([first, first, first]))).toStrictEqual([
       { message: 'must have at most 2 items (was 3)' },
@@ -183,8 +168,8 @@ describe('array({ unique: true })', () => {
   });
 
   it('lets repeats through without it, or with unique: false', () => {
-    expect(schemaOf(Uuid).array().parse([first, first]).ok).toBe(true);
-    expect(schemaOf(Uuid).array({ unique: false }).parse([first, first]).ok).toBe(true);
+    expect(n.of(Uuid).array().parse([first, first]).ok).toBe(true);
+    expect(n.of(Uuid).array({ unique: false }).parse([first, first]).ok).toBe(true);
   });
 
   it.each(['yes', 1, null])('refuses unique: %o', (unique) => {
@@ -192,13 +177,13 @@ describe('array({ unique: true })', () => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const options = { unique } as unknown as ArrayOptions;
 
-    expect(() => schemaOf(Uuid).array(options)).toThrow(
+    expect(() => n.of(Uuid).array(options)).toThrow(
       new TypeError(`array(): unique must be true or false (was ${String(unique)})`),
     );
   });
 
   it('puts the path of the field and the repeat on an issue inside an object', () => {
-    const Team = objectOf({ members: schemaOf(Uuid).array({ unique: true }) });
+    const Team = n.object({ members: n.of(Uuid).array({ unique: true }) });
 
     expect(issuesOf(Team.parse({ members: [first, first] }))).toStrictEqual([
       { message: `must not repeat an item (was "${first}")`, path: ['members', 1] },
@@ -206,7 +191,7 @@ describe('array({ unique: true })', () => {
   });
 
   it('works as the rule of a nominal type', () => {
-    class Tags extends Nominal('UniqueTags', schemaOf(AnyString).array({ unique: true })) {}
+    class Tags extends Nominal('UniqueTags', n.of(AnyString).array({ unique: true })) {}
 
     expect(new Tags(['a', 'b']).value).toHaveLength(2);
     expect(Tags.parse(['a', 'a']).ok).toBe(false);
@@ -225,13 +210,13 @@ describe('array({ unique: true })', () => {
 
   it('finds repeats among instances of another copy of the package', async () => {
     const copy = await anotherCopy();
-    const fromCopy = schemaOf(copy.Uuid).array({ unique: true });
+    const fromCopy = n.of(copy.Uuid).array({ unique: true });
 
     expect(issuesOf(fromCopy.parse([first, first.toUpperCase()]))).toStrictEqual([
       { message: 'must not repeat an item (was a string of 36 characters)', path: [1] },
     ]);
     expect(uuids.parse([new copy.Uuid(first), first]).ok).toBe(false);
-    expect(copy.schemaOf(Uuid).array({ unique: true }).parse([first, second]).ok).toBe(true);
+    expect(copy.n.of(Uuid).array({ unique: true }).parse([first, second]).ok).toBe(true);
   });
 
   it('describes itself with uniqueItems', () => {
@@ -243,7 +228,7 @@ describe('array({ unique: true })', () => {
       uniqueItems: true,
     });
     expect(
-      schemaOf(Uuid).array()['~standard'].jsonSchema.input({ target: 'draft-07' }),
+      n.of(Uuid).array()['~standard'].jsonSchema.input({ target: 'draft-07' }),
     ).not.toHaveProperty('uniqueItems');
   });
 

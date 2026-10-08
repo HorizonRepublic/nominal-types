@@ -22,12 +22,12 @@ In `main.ts`, delete everything below the `checkSignUp` function. We keep the ty
 Add a `repeatPassword` field to `SignUp`:
 
 ```ts
-const SignUp = objectOf({
+const SignUp = n.object({
   username: Username,
   email: Email,
   password: Password,
   repeatPassword: Password,
-  newsletter: schemaOf(AnyBoolean).optional(),
+  newsletter: n.of(AnyBoolean).optional(),
 });
 ```
 
@@ -52,30 +52,17 @@ The form passes: each password is valid on its own, and nothing compares them ye
 
 ## Step 2: Add a rule across fields
 
-Change the import at the top of `main.ts` to add `constraint`:
-
-```ts
-import {
-  AnyBoolean,
-  AnyString,
-  Email,
-  constraint,
-  objectOf,
-  schemaOf,
-} from '@horizon-republic/nominal-types';
-```
-
 A [constraint](../reference/glossary.md) is a rule across fields of an object. Add this one above `SignUp`:
 
 ```ts
-const passwordsMatch = constraint(
+const passwordsMatch = n.constraint(
   { password: Password, repeatPassword: Password },
   ({ password, repeatPassword }) => password.equals(repeatPassword),
   { path: 'repeatPassword', message: 'must match the password' },
 );
 ```
 
-`constraint()` takes three things:
+`n.constraint()` takes three things:
 
 1. The fields the rule reads, each with its type.
 2. A check. It gets the fields as instances and returns `true` when they agree.
@@ -89,16 +76,16 @@ jane_doe signed up with jane@example.com
 
 ## Step 3: Give the rule to the form
 
-Pass `passwordsMatch` to `objectOf()` after the fields. Replace `SignUp` with this:
+Pass `passwordsMatch` to `n.object()` after the fields. Replace `SignUp` with this:
 
 ```ts
-const SignUp = objectOf(
+const SignUp = n.object(
   {
     username: Username,
     email: Email,
     password: Password,
     repeatPassword: Password,
-    newsletter: schemaOf(AnyBoolean).optional(),
+    newsletter: n.of(AnyBoolean).optional(),
   },
   passwordsMatch,
 );
@@ -141,14 +128,7 @@ Here is `main.ts` so far:
 
 ```ts
 // main.ts
-import {
-  AnyBoolean,
-  AnyString,
-  Email,
-  constraint,
-  objectOf,
-  schemaOf,
-} from '@horizon-republic/nominal-types';
+import { AnyBoolean, AnyString, Email, n } from '@horizon-republic/nominal-types';
 
 class Username extends AnyString.subtype('shop.Username', /^[a-z0-9_]{3,20}$/u) {
   get profilePath(): string {
@@ -160,19 +140,19 @@ class StaffEmail extends Email.subtype('shop.StaffEmail', /@shop\.example\.com$/
 
 class Password extends AnyString.subtype('shop.Password', /^.{12,}$/u, { sensitive: true }) {}
 
-const passwordsMatch = constraint(
+const passwordsMatch = n.constraint(
   { password: Password, repeatPassword: Password },
   ({ password, repeatPassword }) => password.equals(repeatPassword),
   { path: 'repeatPassword', message: 'must match the password' },
 );
 
-const SignUp = objectOf(
+const SignUp = n.object(
   {
     username: Username,
     email: Email,
     password: Password,
     repeatPassword: Password,
-    newsletter: schemaOf(AnyBoolean).optional(),
+    newsletter: n.of(AnyBoolean).optional(),
   },
   passwordsMatch,
 );

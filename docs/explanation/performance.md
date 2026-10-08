@@ -24,13 +24,13 @@ An existing instance passed to `parse()` is not checked again.
 
 | Way                                    | Speed                                                                 |
 | -------------------------------------- | --------------------------------------------------------------------- |
-| `objectOf()`                           | about as fast as Zod and Valibot, which give plain values             |
-| ArkType with `toArk()` and `fromArk()` | about as fast as `objectOf()`                                         |
+| `n.object()`                           | about as fast as Zod and Valibot, which give plain values             |
+| ArkType with `toArk()` and `fromArk()` | about as fast as `n.object()`                                         |
 | Zod or Valibot with its adapter        | slower than the library alone, in the same range                      |
-| `schemaOf()` inside another library    | many times slower than an adapter                                     |
+| `n.of()` inside another library        | many times slower than an adapter                                     |
 | class-validator with `@NominalField()` | a few percent over class-validator, which is far slower than the rest |
 
-Inside a library that has an adapter, use the adapter, not `schemaOf()`. The library runs a `schemaOf()` field on its slow path.
+Inside a library that has an adapter, use the adapter, not `n.of()`. The library runs an `n.of()` field on its slow path.
 
 class-validator also gets slower as the app registers more DTO classes, whatever the fields hold.
 

@@ -19,7 +19,7 @@ Core:
 - [How to declare a type](guides/core/declare-a-type.md)
 - [How to make a stricter type or a variant](guides/core/build-on-a-type.md)
 - [How to check untrusted input](guides/core/check-input.md)
-- [How to check a request body with objectOf()](guides/core/check-an-object.md)
+- [How to check a request body with n.object()](guides/core/check-an-object.md)
 - [How to accept lists, missing values and null](guides/core/lists-and-optional-values.md)
 - [How to check one field against another](guides/core/check-fields-together.md)
 - [How to make a value object](guides/core/make-a-value-object.md)

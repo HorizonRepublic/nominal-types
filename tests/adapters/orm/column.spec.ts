@@ -37,6 +37,7 @@ import {
   Longitude,
   MacAddress,
   MediaType,
+  n,
   NegativeBigInt,
   NegativeInteger,
   NegativeNumber,
@@ -54,7 +55,6 @@ import {
   PositiveBigInt,
   PositiveInteger,
   PositiveNumber,
-  satisfying,
   SemVer,
   Uint16,
   Uint32,
@@ -69,7 +69,7 @@ import {
 
 const Percent = Nominal(
   'columns.Percent',
-  satisfying(
+  n.satisfying(
     (value: unknown): value is number =>
       typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100,
     'a percent',
@@ -77,13 +77,13 @@ const Percent = Nominal(
 );
 const Flag = Nominal(
   'columns.Flag',
-  satisfying((value: unknown): value is boolean => typeof value === 'boolean', 'a flag'),
+  n.satisfying((value: unknown): value is boolean => typeof value === 'boolean', 'a flag'),
 );
 const Code = Nominal('columns.Code', /^[A-Z]{3}$/u);
 // Takes fractions, but none below 1.
 const Price = Nominal(
   'columns.Price',
-  satisfying(
+  n.satisfying(
     (value: unknown): value is number => typeof value === 'number' && value >= 1,
     'a price',
   ),

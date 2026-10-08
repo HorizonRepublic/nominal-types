@@ -6,15 +6,15 @@ import {
   AnyBoolean,
   AnyNumber,
   Email,
+  n,
   Nominal,
   PositiveInteger,
-  schemaOf,
 } from '../../src/index.ts';
 import { valueOf } from '../support/results.ts';
 
 class Range extends Nominal(
   'Range',
-  type({ start: schemaOf(PositiveInteger), end: schemaOf(PositiveInteger), 'note?': 'string' }),
+  type({ start: n.of(PositiveInteger), end: n.of(PositiveInteger), 'note?': 'string' }),
 ) {}
 
 class Tags extends Nominal('Tags', type({ names: 'string[]', meta: { owner: 'string' } })) {}
@@ -139,7 +139,7 @@ describe('object values', () => {
   });
 
   it('keeps the frozen array a schema builds', () => {
-    class Team extends Nominal('Team', schemaOf(Email).array()) {}
+    class Team extends Nominal('Team', n.of(Email).array()) {}
 
     const team = new Team(['jane@example.com']);
 

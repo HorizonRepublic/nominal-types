@@ -6,15 +6,15 @@ import {
   AnyBoolean,
   Email,
   Int64,
+  n,
   Nominal,
   NominalError,
-  objectOf,
   PositiveInteger,
 } from '../../src/index.ts';
 
 class Range extends Nominal(
   'sjtest.Range',
-  objectOf({ start: PositiveInteger, end: PositiveInteger }),
+  n.object({ start: PositiveInteger, end: PositiveInteger }),
 ) {}
 
 class WorkEmail extends Email.subtype('sjtest.WorkEmail', /@acme\.com$/u) {}

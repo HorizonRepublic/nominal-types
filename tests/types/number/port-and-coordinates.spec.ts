@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { columnKindOf } from '../../../src/adapters/orm/column.ts';
 import type * as library from '../../../src/index.ts';
-import { Latitude, Longitude, Port, schemaOf, Uint16 } from '../../../src/index.ts';
+import { Latitude, Longitude, n, Port, Uint16 } from '../../../src/index.ts';
 import { issuesOf, valueOf } from '../../support/results.ts';
 
 describe('Port', () => {
@@ -29,13 +29,13 @@ describe('Port', () => {
     ['1', 1],
     ['65535', 65_535],
   ])('reads %s from text', (text, port) => {
-    expect(valueOf(schemaOf(Port).fromString().parse(text)).value).toBe(port);
+    expect(valueOf(n.of(Port).fromString().parse(text)).value).toBe(port);
   });
 
   it.each(['+80', '-0', '080', ' 80', '80 ', '0', '65536', '80.5', '0x50', '8e1x', ''])(
     'refuses %j as text, which validator.js isPort partly takes (validatorjs/validator.js#2208)',
     (text) => {
-      expect(schemaOf(Port).fromString().parse(text).ok).toBe(false);
+      expect(n.of(Port).fromString().parse(text).ok).toBe(false);
     },
   );
 
@@ -65,9 +65,9 @@ describe.each([
   );
 
   it('reads a number from text through fromString()', () => {
-    expect(valueOf(schemaOf(type).fromString().parse('51.5')).value).toBe(51.5);
-    expect(valueOf(schemaOf(type).fromString().parse(`-${limit}`)).value).toBe(-limit);
-    expect(schemaOf(type).fromString().parse(`${limit}.0000001`).ok).toBe(false);
+    expect(valueOf(n.of(type).fromString().parse('51.5')).value).toBe(51.5);
+    expect(valueOf(n.of(type).fromString().parse(`-${limit}`)).value).toBe(-limit);
+    expect(n.of(type).fromString().parse(`${limit}.0000001`).ok).toBe(false);
   });
 
   it('is stored in a double column', () => {

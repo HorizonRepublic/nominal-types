@@ -2,9 +2,9 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { describe, expect, it, vi } from 'vitest';
 
 import type * as library from '../../src/index.ts';
-import { constraint, isConstraint, PositiveInteger, schemaOf, Uint8 } from '../../src/index.ts';
+import { n, PositiveInteger, Uint8 } from '../../src/index.ts';
 
-const endAfterStart = constraint(
+const endAfterStart = n.constraint(
   { start: PositiveInteger, end: PositiveInteger },
   ({ start, end }) => end > start,
   { path: 'end' },
@@ -19,10 +19,10 @@ const plainSchema = (jsonSchema?: unknown): StandardSchemaV1<unknown, unknown> =
   },
 });
 
-describe('constraint', () => {
+describe('n.constraint', () => {
   describe('JSON Schema', () => {
     it('describes the listed fields, the required ones and nothing else', () => {
-      const rule = constraint({ min: schemaOf(Uint8).optional(), max: Uint8 }, () => true);
+      const rule = n.constraint({ min: n.of(Uint8).optional(), max: Uint8 }, () => true);
       const schema = rule['~standard'].jsonSchema.input({ target: 'draft-2020-12' });
 
       expect(schema).toMatchObject({
@@ -42,7 +42,7 @@ describe('constraint', () => {
     });
 
     it('throws for a field that cannot describe itself', () => {
-      const rule = constraint({ a: plainSchema() }, () => true);
+      const rule = n.constraint({ a: plainSchema() }, () => true);
 
       expect(() => rule['~standard'].jsonSchema.input({ target: 'draft-07' })).toThrow(
         new TypeError('a field of the constraint cannot describe itself as JSON Schema'),
@@ -54,24 +54,24 @@ describe('constraint', () => {
     ['no converter for the side', { output: () => ({}) }],
     ['a converter that returns no object', { input: () => 'schema' }],
   ])('throws for a field schema with %s', (_name, jsonSchema) => {
-    const rule = constraint({ a: plainSchema(jsonSchema) }, () => true);
+    const rule = n.constraint({ a: plainSchema(jsonSchema) }, () => true);
 
     expect(() => rule['~standard'].jsonSchema.input({ target: 'draft-07' })).toThrow(TypeError);
   });
 
-  describe('isConstraint', () => {
+  describe('n.isConstraint', () => {
     it('tells a constraint from other values', () => {
-      expect(isConstraint(endAfterStart)).toBe(true);
-      expect(isConstraint(schemaOf(Uint8))).toBe(false);
-      expect(isConstraint(null)).toBe(false);
-      expect(isConstraint('constraint')).toBe(false);
+      expect(n.isConstraint(endAfterStart)).toBe(true);
+      expect(n.isConstraint(n.of(Uint8))).toBe(false);
+      expect(n.isConstraint(null)).toBe(false);
+      expect(n.isConstraint('constraint')).toBe(false);
     });
 
     it('recognises a constraint built by another copy of the package', async () => {
       vi.resetModules();
       const copy: typeof library = await import('../../src/index.ts');
 
-      expect(isConstraint(copy.constraint({ a: copy.Uint8 }, () => true))).toBe(true);
+      expect(n.isConstraint(copy.n.constraint({ a: copy.Uint8 }, () => true))).toBe(true);
     });
   });
 });

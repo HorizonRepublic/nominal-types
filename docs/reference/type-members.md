@@ -152,7 +152,7 @@ Type.rule: NominalSchema
 
 The rule of the type's own level. A type that adds no rule, such as `subtype('shop.Port')` without a rule, returns the rule of the closest type above it.
 
-`Type.rule` is not the whole check. For a schema that runs every rule of the type, use [`schemaOf(Type)`](schemas.md#schemaof).
+`Type.rule` is not the whole check. For a schema that runs every rule of the type, use [`n.of(Type)`](schemas.md#nof).
 
 A class that extends a type can set `static rule`. See [A `rule` set in a subclass](declaring.md#a-rule-set-in-a-subclass).
 
@@ -302,9 +302,9 @@ Number(quantity) + 1; // 4
 quantity.value * 2; // 6
 ```
 
-## Members of a type built on objectOf()
+## Members of a type built on n.object()
 
-A type whose rule is an [`objectOf()`](schemas.md#objectof) schema adds two members to its instances:
+A type whose rule is an [`n.object()`](schemas.md#nobject) schema adds two members to its instances:
 
 | Member              | Description                                                                           |
 | ------------------- | ------------------------------------------------------------------------------------- |
@@ -318,15 +318,15 @@ A subtype of such a type keeps the getters and `copyWith()`.
 A field can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws a `TypeError` for them:
 
 ```
-TypeError: a type built on objectOf() cannot have a field named value: every instance has a member of that name
+TypeError: a type built on n.object() cannot have a field named value: every instance has a member of that name
 ```
 
 Example:
 
 ```ts
-import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -334,7 +334,7 @@ const withinCapacity = constraint(
 
 class Stay extends Nominal(
   'booking.Stay',
-  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+  n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
 ) {}
 
 const stay = new Stay({ guests: 2, capacity: 4 });

@@ -93,7 +93,7 @@ describe('NominalPipe', () => {
       expect(() => pipe.transform('nope', param(String))).toThrow(RangeError);
     });
 
-    it('leaves values out of the messages for every type with hideValues', () => {
+    it('leaves values out of the messages for every type with n.hideValues', () => {
       const pipe = new NominalPipe({
         hideValues: true,
         exceptionFactory: (issues) => new RangeError(issues.map((issue) => issue.message).join()),

@@ -2,7 +2,7 @@
 
 Declare [DTO](../../reference/glossary.md) properties as nominal types, so a valid value becomes an instance, such as an `Email`, and a bad one fails with the type's message.
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use this guide if you already use class-validator.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use this guide if you already use class-validator.
 
 ## Before you start
 
@@ -19,7 +19,7 @@ Put `@NominalField()` on each property, with the type it holds:
 // create-order.dto.ts
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { AnyString, Email, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
@@ -28,7 +28,7 @@ export class CreateOrderDto {
   @NominalField(Email) customer!: Email;
   @NominalField(Sku) sku!: Sku;
   @NominalField(PositiveInteger) quantity!: PositiveInteger;
-  @NominalField(schemaOf(AnyString).optional()) note?: AnyString;
+  @NominalField(n.of(AnyString).optional()) note?: AnyString;
 }
 
 const order = plainToInstance(CreateOrderDto, { customer: 'jane@example.com', sku: 'TEA-0042', quantity: 2 });
@@ -88,13 +88,13 @@ export class OrdersController {
 
 ## Lists, optional and nested fields
 
-For a list or an optional value, pass a [`schemaOf()`](../core/lists-and-optional-values.md) schema. For a nested DTO, use class-validator's `@ValidateNested()` and class-transformer's `@Type()` as usual:
+For a list or an optional value, pass an [`n.of()`](../core/lists-and-optional-values.md) schema. For a nested DTO, use class-validator's `@ValidateNested()` and class-transformer's `@Type()` as usual:
 
 ```ts
 // create-shipment.dto.ts
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
 
 export class AddressDto {
@@ -103,10 +103,10 @@ export class AddressDto {
 }
 
 export class CreateShipmentDto {
-  @NominalField(schemaOf(Uuid).array({ min: 1, max: 50 }))
+  @NominalField(n.of(Uuid).array({ min: 1, max: 50 }))
   orders!: readonly Uuid[];
 
-  @NominalField(schemaOf(Email).optional())
+  @NominalField(n.of(Email).optional())
   backup?: Email;
 
   @ValidateNested()
@@ -123,11 +123,11 @@ Query values are always strings. For number and boolean types, read the text fir
 
 ```ts
 // search-orders.dto.ts
-import { PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 import { NominalField } from '@horizon-republic/nominal-types/adapters/class-validator';
 
 export class SearchOrdersDto {
-  @NominalField(schemaOf(PositiveInteger).fromString())
+  @NominalField(n.of(PositiveInteger).fromString())
   page!: PositiveInteger;
 }
 ```
@@ -155,7 +155,7 @@ export class ContactDto {
 }
 ```
 
-For a `schemaOf(...).array()` property, `serialize` gets the whole list. A missing value (`undefined` or `null`) is written as it is, without calling `serialize`. [Email](../../reference/types/string.md) lists `canonical()` and the other methods.
+For an `n.of(...).array()` property, `serialize` gets the whole list. A missing value (`undefined` or `null`) is written as it is, without calling `serialize`. [Email](../../reference/types/string.md) lists `canonical()` and the other methods.
 
 ## Errors
 
@@ -192,7 +192,7 @@ export class ContactDto {
 
 - `serialize` runs only through `ClassSerializerInterceptor` or `instanceToPlain`. Plain `JSON.stringify` always writes the value.
 - With `ClassSerializerInterceptor`, an instance in a property without `@NominalField()` comes out as `{ "value": "jane@example.com" }`. Decorate every such property.
-- `@NominalField()` takes a nominal type or a `schemaOf()` schema. Anything else throws `TypeError: NominalField() takes a nominal type or a schemaOf() schema`.
+- `@NominalField()` takes a nominal type or an `n.of()` schema. Anything else throws `TypeError: NominalField() takes a nominal type or an n.of() schema`.
 
 ## See also
 

@@ -4,12 +4,12 @@ This guide shows how to turn text into number and boolean types: query strings, 
 
 ## Read one value
 
-Call `.fromString()` on `schemaOf(Type)`:
+Call `.fromString()` on `n.of(Type)`:
 
 ```ts
-import { Port, schemaOf } from '@horizon-republic/nominal-types';
+import { n, Port } from '@horizon-republic/nominal-types';
 
-const PortText = schemaOf(Port).fromString();
+const PortText = n.of(Port).fromString();
 
 PortText.parse('8080'); // { ok: true, value: Port { value: 8080 } }
 PortText.parse('0'); // { ok: false, issues: [{ message: 'must be a port from 1 to 65535 (was 0)' }] }
@@ -23,15 +23,15 @@ Numbers are read as JSON writes them, such as `'2'`, `'-1.5'` and `'1e3'`. Boole
 
 ## Read a query string
 
-Describe the parameters with `objectOf()` and call `.fromEnv()`. Each field of a number, boolean, big integer or string type is read from text:
+Describe the parameters with `n.object()` and call `.fromEnv()`. Each field of a number, boolean, big integer or string type is read from text:
 
 ```ts
-import { AnyBoolean, AnyString, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyBoolean, AnyString, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const SearchQuery = objectOf({
+const SearchQuery = n.object({
   page: PositiveInteger,
   inStock: AnyBoolean,
-  q: schemaOf(AnyString).optional(),
+  q: n.of(AnyString).optional(),
 }).fromEnv();
 
 const url = new URL('https://shop.example/search?page=2&inStock=true&utm=mail');
@@ -47,11 +47,11 @@ SearchQuery.parse(Object.fromEntries(url.searchParams));
 Turn each row into an object of cells, then parse it with the same kind of schema:
 
 ```ts
-import { AnyString, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { AnyString, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-const Row = objectOf({ sku: Sku, quantity: PositiveInteger }).fromEnv();
+const Row = n.object({ sku: Sku, quantity: PositiveInteger }).fromEnv();
 
 const csv = 'sku,quantity\nABC-1234,2\nXYZ-0001,zero';
 const [header = '', ...lines] = csv.split('\n');
@@ -71,15 +71,15 @@ for (const line of lines) {
 Call `.fromString()` before `.array()`, so each item is read:
 
 ```ts
-import { PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const Ids = schemaOf(PositiveInteger).fromString().array();
+const Ids = n.of(PositiveInteger).fromString().array();
 
 Ids.parse('3,5,8'.split(',')); // { ok: true, value: [PositiveInteger { value: 3 }, PositiveInteger { value: 5 }, PositiveInteger { value: 8 }] }
 Ids.parse(['1', 'two']); // { ok: false, issues: [{ message: 'must be a number (was "two")', path: [1] }] }
 ```
 
-The same order works for `.optional()` and `.nullable()`: `schemaOf(PositiveInteger).fromString().optional()`.
+The same order works for `.optional()` and `.nullable()`: `n.of(PositiveInteger).fromString().optional()`.
 
 ## Limits
 

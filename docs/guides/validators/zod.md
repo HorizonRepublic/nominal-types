@@ -2,7 +2,7 @@
 
 Put nominal types into [Zod](https://zod.dev) schemas and get instances back, such as an `Email`, instead of strings.
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use this guide if you already use Zod.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use this guide if you already use Zod.
 
 ## Before you start
 
@@ -102,9 +102,9 @@ A [constraint](../../reference/glossary.md) checks one field against another. At
 ```ts
 import { z } from 'zod';
 import { constrainZod, toZod } from '@horizon-republic/nominal-types/adapters/zod';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -121,7 +121,7 @@ CreateBooking.safeParse({ hotel: 'Lviv', stays: [{ guests: 4, capacity: 3 }] }).
 // [{ code: 'custom', message: 'must not exceed the capacity', path: ['stays', 0, 'guests'] }]
 ```
 
-[How to check one field against another](../core/check-fields-together.md) explains `constraint()`.
+[How to check one field against another](../core/check-fields-together.md) explains `n.constraint()`.
 
 ## Describe the body as JSON Schema
 
@@ -157,7 +157,7 @@ Each issue is a Zod issue with `code: 'custom'`, the type's `message` and a `pat
 ## See also
 
 - [Zod adapter reference](../../reference/adapters/zod.md): every export, its signature and errors.
-- [How to check a request body with objectOf()](../core/check-an-object.md)
+- [How to check a request body with n.object()](../core/check-an-object.md)
 - [How to check one field against another](../core/check-fields-together.md)
 - [How to get a JSON Schema for a type](../api-docs/json-schema.md)
 

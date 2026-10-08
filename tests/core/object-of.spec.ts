@@ -4,30 +4,21 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { objectShape } from '../../src/core/object-shape.ts';
 import { Rejection } from '../../src/core/rejection.ts';
 import type * as library from '../../src/index.ts';
-import {
-  AnyString,
-  constraint,
-  Email,
-  isObjectSchema,
-  Nominal,
-  objectOf,
-  PositiveInteger,
-  schemaOf,
-} from '../../src/index.ts';
+import { AnyString, Email, n, Nominal, PositiveInteger } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
-const Item = objectOf({ sku: AnyString, quantity: PositiveInteger });
+const Item = n.object({ sku: AnyString, quantity: PositiveInteger });
 
-const Order = objectOf({
+const Order = n.object({
   email: Email,
   items: Item.array({ min: 1 }),
-  note: schemaOf(AnyString).optional(),
-  backup: schemaOf(Email).nullable(),
+  note: n.of(AnyString).optional(),
+  backup: n.of(Email).nullable(),
 });
 
 const valid = { email: 'jane@example.com', items: [{ sku: 'a', quantity: 2 }], backup: null };
 
-describe('objectOf', () => {
+describe('n.object', () => {
   describe('fields', () => {
     it('builds an instance for every field, nested objects and arrays included', () => {
       const order = valueOf(Order.parse(valid));
@@ -69,15 +60,15 @@ describe('objectOf', () => {
     });
 
     it('takes a schema from another library for a plain field', () => {
-      const Limit = objectOf({ value: type('number > 0') });
+      const Limit = n.object({ value: type('number > 0') });
 
       expect(valueOf(Limit.parse({ value: 2 }))).toStrictEqual({ value: 2 });
       expect(issuesOf(Limit.parse({ value: 0 }))).toHaveLength(1);
     });
 
     it('refuses a field named __proto__', () => {
-      expect(() => objectOf(Object.fromEntries([['__proto__', PositiveInteger]]))).toThrow(
-        new TypeError('objectOf(): a field cannot be named __proto__'),
+      expect(() => n.object(Object.fromEntries([['__proto__', PositiveInteger]]))).toThrow(
+        new TypeError('n.object(): a field cannot be named __proto__'),
       );
     });
   });
@@ -110,15 +101,15 @@ describe('objectOf', () => {
     });
   });
 
-  it('refuses such a constraint on a subtype or variant of a type built on objectOf()', () => {
-    const fits = constraint(
+  it('refuses such a constraint on a subtype or variant of a type built on n.object()', () => {
+    const fits = n.constraint(
       { guests: PositiveInteger, capacity: PositiveInteger },
       ({ guests, capacity }) => guests <= capacity,
     );
-    const Party = Nominal('objects.Party', objectOf({ guests: PositiveInteger }));
+    const Party = Nominal('objects.Party', n.object({ guests: PositiveInteger }));
     const Room = Nominal(
       'objects.Room',
-      objectOf({ guests: PositiveInteger, capacity: PositiveInteger }),
+      n.object({ guests: PositiveInteger, capacity: PositiveInteger }),
     );
 
     expect(() => Party.subtype('objects.SmallParty', fits)).toThrow(
@@ -133,16 +124,16 @@ describe('objectOf', () => {
   });
 
   it('refuses a constraint that reads a field the object does not declare', () => {
-    const fits = constraint(
+    const fits = n.constraint(
       { guests: PositiveInteger, capacity: PositiveInteger },
       ({ guests, capacity }) => guests <= capacity,
     );
 
-    expect(() => objectOf({ guests: PositiveInteger }, fits)).toThrow(
-      new TypeError('objectOf: a constraint reads capacity, which the object does not declare'),
+    expect(() => n.object({ guests: PositiveInteger }, fits)).toThrow(
+      new TypeError('n.object: a constraint reads capacity, which the object does not declare'),
     );
     expect(() =>
-      objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, fits),
+      n.object({ guests: PositiveInteger, capacity: PositiveInteger }, fits),
     ).not.toThrow();
   });
 
@@ -161,9 +152,9 @@ describe('objectOf', () => {
   });
 
   describe('constraints', () => {
-    const Range = objectOf(
+    const Range = n.object(
       { start: PositiveInteger, end: PositiveInteger },
-      constraint(
+      n.constraint(
         { start: PositiveInteger, end: PositiveInteger },
         ({ start, end }) => end > start,
         {
@@ -181,7 +172,7 @@ describe('objectOf', () => {
 
     it('does not run when a field fails', () => {
       const check = vi.fn<() => boolean>(() => true);
-      const Checked = objectOf({ a: PositiveInteger }, constraint({ a: PositiveInteger }, check));
+      const Checked = n.object({ a: PositiveInteger }, n.constraint({ a: PositiveInteger }, check));
 
       expect(Checked.parse({ a: 0 }).ok).toBe(false);
       expect(check).not.toHaveBeenCalled();
@@ -223,7 +214,7 @@ describe('objectOf', () => {
     it.each([true, false])(
       'run constraints once the fields pass, with generation %o',
       (generate) => {
-        const never = constraint({ a: type('unknown') }, () => false, { message: 'never' });
+        const never = n.constraint({ a: type('unknown') }, () => false, { message: 'never' });
         const { run } = objectShape(fields, [never], false, generate);
 
         expect(run({ a: 1 })).toStrictEqual(new Rejection([{ message: 'never' }]));
@@ -279,8 +270,8 @@ describe('objectOf', () => {
     vi.resetModules();
     const copy: typeof library = await import('../../src/index.ts');
 
-    expect(isObjectSchema(Order)).toBe(true);
-    expect(isObjectSchema(copy.objectOf({ a: copy.Email }))).toBe(true);
-    expect(isObjectSchema(schemaOf(Email))).toBe(false);
+    expect(n.isObject(Order)).toBe(true);
+    expect(n.isObject(copy.n.object({ a: copy.Email }))).toBe(true);
+    expect(n.isObject(n.of(Email))).toBe(false);
   });
 });

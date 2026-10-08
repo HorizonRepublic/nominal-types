@@ -30,11 +30,11 @@ This controller takes an order as the request body:
 ```ts
 // orders.controller.ts
 import { Body, Controller, Post } from '@nestjs/common';
-import { Email, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 import type { ValueOf } from '@horizon-republic/nominal-types';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
-const CreateOrder = objectOf({ customer: Email, quantity: PositiveInteger });
+const CreateOrder = n.object({ customer: Email, quantity: PositiveInteger });
 type CreateOrder = ValueOf<typeof CreateOrder>;
 
 @Controller('orders')
@@ -58,22 +58,22 @@ A body with `"customer": "jane"` gets this answer:
 
 ## Check a request body
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use [class-validator](../validators/class-validator.md) instead if your DTOs already use it.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use [class-validator](../validators/class-validator.md) instead if your DTOs already use it.
 
 1. Describe the body in its own file. The schema and its type share one name, so you import one thing:
 
    ```ts
    // create-order.ts
-   import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+   import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
    import type { ValueOf } from '@horizon-republic/nominal-types';
 
    export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-   export const CreateOrder = objectOf({
+   export const CreateOrder = n.object({
      customer: Email,
      sku: Sku,
      quantity: PositiveInteger,
-     note: schemaOf(AnyString).optional(),
+     note: n.of(AnyString).optional(),
    });
 
    export type CreateOrder = ValueOf<typeof CreateOrder>;
@@ -205,20 +205,20 @@ To require a value, give the parameter a pipe of its own: `@Query('page', new No
 
 ## Lists and optional values
 
-The parameter's type can't show `Uuid[]`. Describe a list, or a value that may be missing, with [schemaOf()](../core/lists-and-optional-values.md). Give the schema to a pipe on the parameter:
+The parameter's type can't show `Uuid[]`. Describe a list, or a value that may be missing, with [n.of()](../core/lists-and-optional-values.md). Give the schema to a pipe on the parameter:
 
 ```ts
 // users.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
 @Controller('users')
 export class UsersController {
   @Get()
   public search(
-    @Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
-    @Query('email', new NominalPipe(schemaOf(Email).optional())) email?: Email,
+    @Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[],
+    @Query('email', new NominalPipe(n.of(Email).optional())) email?: Email,
   ) {
     return { ids: ids.map((id) => id.value), email: email?.value ?? 'none' };
   }
@@ -230,14 +230,14 @@ On Nest 12, you can put the schema in the decorator instead, and keep the global
 ```ts
 // users.controller.ts (Nest 12)
 import { Controller, Get, Query } from '@nestjs/common';
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
 @Controller('users')
 export class UsersController {
   @Get()
   public search(
-    @Query('ids', { schema: schemaOf(Uuid).array({ max: 100 }) }) ids: readonly Uuid[],
-    @Query('email', { schema: schemaOf(Email).optional() }) email?: Email,
+    @Query('ids', { schema: n.of(Uuid).array({ max: 100 }) }) ids: readonly Uuid[],
+    @Query('email', { schema: n.of(Email).optional() }) email?: Email,
   ) {
     return { ids: ids.map((id) => id.value), email: email?.value ?? 'none' };
   }
@@ -255,7 +255,7 @@ GET /users                                                    400 {"statusCode":
 Two details about lists in a query string, the same on Express and Fastify:
 
 - `?ids=a` gives one string, not a list. The pipe turns it into a list of one.
-- Items of a schema are read from text only if you ask: `schemaOf(PositiveInteger).fromString().array()`. Then `?pages=1&pages=x` gets `pages.1: must be a number (was "x")`.
+- Items of a schema are read from text only if you ask: `n.of(PositiveInteger).fromString().array()`. Then `?pages=1&pages=x` gets `pages.1: must be a number (was "x")`.
 
 ## Check message payloads
 
@@ -359,7 +359,7 @@ To keep rejected values out of answers and logs, pass `hideValues: true`, as in 
 ## See also
 
 - [NestJS adapter reference](../../reference/adapters/nest.md): every option of `NominalPipe`, with defaults.
-- [How to check a request body with objectOf()](../core/check-an-object.md)
+- [How to check a request body with n.object()](../core/check-an-object.md)
 - [How to describe types in Swagger](../api-docs/swagger.md)
 - [How to use nominal types with GraphQL](graphql.md)
 - [Where checks belong](../../explanation/where-checks-belong.md), for body size limits and other checks Nest does before the pipe.

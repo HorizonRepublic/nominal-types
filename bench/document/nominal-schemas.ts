@@ -5,37 +5,29 @@ import { z } from 'zod';
 import { fromArk, toArk } from '../../src/adapters/arktype/index.ts';
 import { toValibot } from '../../src/adapters/valibot/index.ts';
 import { toZod } from '../../src/adapters/zod/index.ts';
-import {
-  AnyString,
-  Email,
-  NonNegativeInteger,
-  objectOf,
-  PositiveInteger,
-  schemaOf,
-  Uuid,
-} from '../../src/index.ts';
+import { AnyString, Email, n, NonNegativeInteger, PositiveInteger, Uuid } from '../../src/index.ts';
 import { CountryCode, Postcode, Sku } from './types.ts';
 
 export const nominalWithArkType = type({
-  exportId: schemaOf(Uuid),
+  exportId: n.of(Uuid),
   customers: type({
-    id: schemaOf(Uuid),
-    email: schemaOf(Email),
+    id: n.of(Uuid),
+    email: n.of(Email),
     name: 'string > 0',
     addresses: type({
-      country: schemaOf(CountryCode),
-      postcode: schemaOf(Postcode),
+      country: n.of(CountryCode),
+      postcode: n.of(Postcode),
       line: 'string > 0',
     }).array(),
   }).array(),
   orders: type({
-    id: schemaOf(Uuid),
-    customerId: schemaOf(Uuid),
+    id: n.of(Uuid),
+    customerId: n.of(Uuid),
     status: "'new' | 'paid' | 'shipped'",
     items: type({
-      sku: schemaOf(Sku),
-      quantity: schemaOf(PositiveInteger),
-      price: type({ amountMinor: schemaOf(NonNegativeInteger), currency: "'UAH' | 'EUR' | 'USD'" }),
+      sku: n.of(Sku),
+      quantity: n.of(PositiveInteger),
+      price: type({ amountMinor: n.of(NonNegativeInteger), currency: "'UAH' | 'EUR' | 'USD'" }),
     }).array(),
     tags: 'string[]',
   }).array(),
@@ -72,25 +64,31 @@ const nonEmpty = AnyString.subtype('bench.NonEmpty', /^./u);
 const status = AnyString.subtype('bench.OrderStatus', /^(?:new|paid|shipped)$/u);
 const currency = AnyString.subtype('bench.Currency', /^(?:UAH|EUR|USD)$/u);
 
-export const nominalObjectOf = objectOf({
+export const nominalObjectOf = n.object({
   exportId: Uuid,
-  customers: objectOf({
-    id: Uuid,
-    email: Email,
-    name: nonEmpty,
-    addresses: objectOf({ country: CountryCode, postcode: Postcode, line: nonEmpty }).array(),
-  }).array(),
-  orders: objectOf({
-    id: Uuid,
-    customerId: Uuid,
-    status,
-    items: objectOf({
-      sku: Sku,
-      quantity: PositiveInteger,
-      price: objectOf({ amountMinor: NonNegativeInteger, currency }),
-    }).array(),
-    tags: schemaOf(AnyString).array(),
-  }).array(),
+  customers: n
+    .object({
+      id: Uuid,
+      email: Email,
+      name: nonEmpty,
+      addresses: n.object({ country: CountryCode, postcode: Postcode, line: nonEmpty }).array(),
+    })
+    .array(),
+  orders: n
+    .object({
+      id: Uuid,
+      customerId: Uuid,
+      status,
+      items: n
+        .object({
+          sku: Sku,
+          quantity: PositiveInteger,
+          price: n.object({ amountMinor: NonNegativeInteger, currency }),
+        })
+        .array(),
+      tags: n.of(AnyString).array(),
+    })
+    .array(),
 });
 
 export const nominalZod = z.object({

@@ -1,7 +1,7 @@
 import 'temporal-polyfill/global';
 import { describe, expect, it, vi } from 'vitest';
 
-import { NominalError, satisfying } from '../../src/index.ts';
+import { n, NominalError } from '../../src/index.ts';
 import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
 import { issuesOf, thrownBy, valueOf } from '../support/results.ts';
 
@@ -10,7 +10,7 @@ const isModern = (value: unknown): value is Temporal.PlainDate =>
 
 class BirthDate extends PlainDate.subtype(
   'temporal.BirthDate',
-  satisfying(isModern, 'a date from 1900 on', {}),
+  n.satisfying(isModern, 'a date from 1900 on', {}),
 ) {}
 
 const temporal = Object.getOwnPropertyDescriptor(globalThis, 'Temporal') ?? {};

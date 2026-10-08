@@ -3,7 +3,7 @@ import { NativeSchema } from './native-schema.ts';
 import { stringOnly } from './string-rule.ts';
 
 /**
- * A value `oneOf()` can list: one JSON can carry as it is.
+ * A value `n.oneOf()` can list: one JSON can carry as it is.
  */
 export type OneOfValue = string | number | boolean | null;
 
@@ -41,7 +41,7 @@ const sharedType = (values: readonly OneOfValue[]): string | undefined => {
 
 const checkedValues = <Value extends OneOfValue>(values: readonly Value[]): Set<Value> => {
   if (values.length === 0) {
-    throw new TypeError('oneOf(): list at least one value');
+    throw new TypeError('n.oneOf(): list at least one value');
   }
 
   const set = new Set<Value>();
@@ -49,12 +49,12 @@ const checkedValues = <Value extends OneOfValue>(values: readonly Value[]): Set<
   for (const value of values) {
     if (!isListable(value)) {
       throw new TypeError(
-        `oneOf(): values must be strings, finite numbers, booleans or null (was ${describeValue(value)})`,
+        `n.oneOf(): values must be strings, finite numbers, booleans or null (was ${describeValue(value)})`,
       );
     }
 
     if (set.has(value)) {
-      throw new TypeError(`oneOf(): ${describeValue(value)} is listed twice`);
+      throw new TypeError(`n.oneOf(): ${describeValue(value)} is listed twice`);
     }
 
     set.add(value);
@@ -64,7 +64,7 @@ const checkedValues = <Value extends OneOfValue>(values: readonly Value[]): Set<
 };
 
 /**
- * A Standard Schema that accepts only the values it lists: what `oneOf()` returns.
+ * A Standard Schema that accepts only the values it lists: what `n.oneOf()` returns.
  *
  * @remarks
  * Nominal types recognise it and test the value directly, without going through `validate`. A
@@ -128,7 +128,7 @@ export class OneOfSchema<Value extends OneOfValue> extends NativeSchema<Value> {
  * ```ts
  * export class OrderStatus extends AnyString.subtype(
  *   'shop.OrderStatus',
- *   oneOf('draft', 'paid', 'shipped'),
+ *   n.oneOf('draft', 'paid', 'shipped'),
  * ) {}
  *
  * OrderStatus.parse('lost');

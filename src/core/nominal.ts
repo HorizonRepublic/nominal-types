@@ -256,7 +256,7 @@ export const isNominalType = (value: unknown): value is AnyNominalType =>
  * Extend the result to add behaviour. The name brands the type at compile time and identifies it
  * at runtime across ESM and CommonJS copies of this package, so it has to be unique among the
  * nominal types one application loads. A subclass that overrides `rule` stays the same type;
- * `subtype` makes a distinct one. A regular expression stands for `matching(pattern)`.
+ * `subtype` makes a distinct one. A regular expression stands for `n.matching(pattern)`.
  *
  * @example
  * ```ts

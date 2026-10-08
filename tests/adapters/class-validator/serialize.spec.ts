@@ -8,11 +8,11 @@ import { ValidateNested, validateSync } from 'class-validator';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { NominalField } from '../../../src/adapters/class-validator/index.ts';
-import { AnyBigInt, Email, Nominal, schemaOf, Uuid } from '../../../src/index.ts';
+import { AnyBigInt, Email, n, Nominal, Uuid } from '../../../src/index.ts';
 
 const first = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
-class Pair extends Nominal('SerializedPair', schemaOf(Uuid).array({ length: 2 })) {}
+class Pair extends Nominal('SerializedPair', n.of(Uuid).array({ length: 2 })) {}
 
 class AddressDto {
   @NominalField(Email)
@@ -23,7 +23,7 @@ class AccountDto {
   @NominalField(Email)
   public contact!: Email;
 
-  @NominalField(schemaOf(Uuid).array())
+  @NominalField(n.of(Uuid).array())
   public teams!: readonly Uuid[];
 
   @NominalField(AnyBigInt)
@@ -32,7 +32,7 @@ class AccountDto {
   @NominalField(Pair)
   public pair!: Pair;
 
-  @NominalField(schemaOf(Email).optional())
+  @NominalField(n.of(Email).optional())
   public backup?: Email;
 
   @ValidateNested()
@@ -98,12 +98,12 @@ describe('the serialize option', () => {
     @NominalField(Email, { serialize: (email) => email.canonical().value })
     public email!: Email;
 
-    @NominalField(schemaOf(Uuid).array(), {
+    @NominalField(n.of(Uuid).array(), {
       serialize: (ids) => ids.map((id) => id.canonical().value),
     })
     public teams!: readonly Uuid[];
 
-    @NominalField(schemaOf(Email).optional(), { serialize: (email) => email.domain })
+    @NominalField(n.of(Email).optional(), { serialize: (email) => email.domain })
     public backup?: Email;
 
     @NominalField(Email, {

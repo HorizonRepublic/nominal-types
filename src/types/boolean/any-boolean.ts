@@ -22,7 +22,7 @@ const AnyBooleanBase: NominalType<'nominal.AnyBoolean', NominalSchema<boolean, b
  * `true` or `false`: the type a flag with a meaning of its own is declared under.
  *
  * @remarks
- * `schemaOf(Type).fromString()` reads the text `'true'` and `'false'`, and nothing else.
+ * `n.of(Type).fromString()` reads the text `'true'` and `'false'`, and nothing else.
  *
  * @example
  * ```ts

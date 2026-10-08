@@ -51,13 +51,13 @@ grantAdmin(new Email('jane@gmail.com')); // ❌ compile error: Argument of type 
 Built-in types have no options such as a maximum. Make a subtype with that limit:
 
 ```ts
-import { PositiveInteger, satisfying } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 const isAtMost99 = (value: unknown): value is number => typeof value === 'number' && value <= 99;
 
 export class Quantity extends PositiveInteger.subtype(
   'shop.Quantity',
-  satisfying(isAtMost99, 'at most 99', { maximum: 99 }),
+  n.satisfying(isAtMost99, 'at most 99', { maximum: 99 }),
 ) {}
 
 new Quantity(3).value; // 3
@@ -106,7 +106,7 @@ Don't give such a subclass a rule of its own with `static rule`. `new` on the su
 `variant()` makes a type next to the original. It keeps the methods and replaces the original's rule. The rules above the original, here the string check of `AnyString`, still run:
 
 ```ts
-import { AnyString, matching } from '@horizon-republic/nominal-types';
+import { AnyString, n } from '@horizon-republic/nominal-types';
 
 export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {
   get category(): string {
@@ -116,7 +116,7 @@ export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {
 
 export class LegacySku extends Sku.variant(
   'shop.LegacySku',
-  matching(/^[A-Z]{3}\d{6}$/u, 'a legacy SKU such as ABC123456'),
+  n.matching(/^[A-Z]{3}\d{6}$/u, 'a legacy SKU such as ABC123456'),
 ) {}
 
 const legacy = new LegacySku('ABC123456');

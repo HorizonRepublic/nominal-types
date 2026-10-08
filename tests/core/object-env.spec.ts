@@ -3,13 +3,11 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   AnyBoolean,
   AnyString,
-  constraint,
   Int64,
+  n,
   Nominal,
   NominalError,
-  objectOf,
   PositiveInteger,
-  schemaOf,
   Uint16,
   Url,
 } from '../../src/index.ts';
@@ -17,14 +15,16 @@ import { issuesOf, valueOf } from '../support/results.ts';
 
 class Port extends Uint16.subtype('envtest.Port') {}
 
-const Settings = objectOf({
-  PORT: Port,
-  DEBUG: AnyBoolean,
-  DATABASE_URL: Url,
-  LIMIT: Int64,
-  NAME: schemaOf(AnyString).optional(),
-  WORKERS: schemaOf(PositiveInteger).fromString().optional(),
-}).fromEnv();
+const Settings = n
+  .object({
+    PORT: Port,
+    DEBUG: AnyBoolean,
+    DATABASE_URL: Url,
+    LIMIT: Int64,
+    NAME: n.of(AnyString).optional(),
+    WORKERS: n.of(PositiveInteger).fromString().optional(),
+  })
+  .fromEnv();
 
 const env = {
   PORT: '3000',
@@ -34,7 +34,7 @@ const env = {
   HOME: '/root',
 };
 
-describe('objectOf().fromEnv()', () => {
+describe('n.object().fromEnv()', () => {
   it('reads numbers, booleans, big integers and strings from text, and drops other keys', () => {
     const settings = valueOf(Settings.parse(env));
 
@@ -71,10 +71,11 @@ describe('objectOf().fromEnv()', () => {
   });
 
   it('keeps constraints and strictness', () => {
-    const Ranged = objectOf(
-      { MIN: PositiveInteger, MAX: PositiveInteger },
-      constraint({ MIN: PositiveInteger, MAX: PositiveInteger }, ({ MIN, MAX }) => MAX >= MIN),
-    )
+    const Ranged = n
+      .object(
+        { MIN: PositiveInteger, MAX: PositiveInteger },
+        n.constraint({ MIN: PositiveInteger, MAX: PositiveInteger }, ({ MIN, MAX }) => MAX >= MIN),
+      )
       .strict()
       .fromEnv();
 
@@ -96,9 +97,9 @@ describe('objectOf().fromEnv()', () => {
   });
 
   it('is asked for on objects, where fromString() points to it', () => {
-    expect(() => objectOf({ PORT: Port }).fromString()).toThrow(
+    expect(() => n.object({ PORT: Port }).fromString()).toThrow(
       new TypeError(
-        'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an objectOf() schema, call fromEnv()',
+        'fromString(): call it on n.of(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an n.object() schema, call fromEnv()',
       ),
     );
   });

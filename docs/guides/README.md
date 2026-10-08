@@ -11,7 +11,7 @@ Your own types, and checking input with no other library.
 | declare a type of my own                      | [How to declare a type](core/declare-a-type.md)                                   |
 | make a stricter type or a variant of a type   | [How to make a stricter type or a variant](core/build-on-a-type.md)               |
 | check a value I don't trust                   | [How to check untrusted input](core/check-input.md)                               |
-| check a request body                          | [How to check a request body with objectOf()](core/check-an-object.md)            |
+| check a request body                          | [How to check a request body with n.object()](core/check-an-object.md)            |
 | accept a list, a missing value or `null`      | [How to accept lists, missing values and null](core/lists-and-optional-values.md) |
 | check one field against another               | [How to check one field against another](core/check-fields-together.md)           |
 | make a value object of several fields         | [How to make a value object](core/make-a-value-object.md)                         |
@@ -24,7 +24,7 @@ Your own types, and checking input with no other library.
 
 ## Validators
 
-You already use a validation library. New project? Check bodies with [objectOf()](core/check-an-object.md) instead.
+You already use a validation library. New project? Check bodies with [n.object()](core/check-an-object.md) instead.
 
 | I want to…                                      | Guide                                                                             |
 | ----------------------------------------------- | --------------------------------------------------------------------------------- |

@@ -1,7 +1,7 @@
 import 'temporal-polyfill/global';
 import { describe, expect, it } from 'vitest';
 
-import { schemaOf } from '../../src/index.ts';
+import { n } from '../../src/index.ts';
 import type { AnyNominalType } from '../../src/index.ts';
 import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../src/temporal/index.ts';
 import { satisfiesSchema } from '../support/json-schema.ts';
@@ -45,7 +45,7 @@ describe.each(cases)('%o', (type, { accepted, refused, huge }) => {
   });
 
   it.each(accepted)('reads %j from strings', (text) => {
-    expect(valueOf(schemaOf(type).fromString().parse(text)).equals(valueOf(type.parse(text)))).toBe(
+    expect(valueOf(n.of(type).fromString().parse(text)).equals(valueOf(type.parse(text)))).toBe(
       true,
     );
   });

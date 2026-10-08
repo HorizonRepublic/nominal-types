@@ -207,7 +207,7 @@ const describeObject =
   });
 
 /**
- * Internal: how an `objectOf()` schema runs and describes itself: every field through its own
+ * Internal: how an `n.object()` schema runs and describes itself: every field through its own
  * schema, all issues collected, unknown keys dropped or, when `strict`, refused, the constraints
  * once every field passed. The result is a new object, read-only by type; a nominal type built on
  * it freezes it.

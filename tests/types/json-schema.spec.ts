@@ -13,11 +13,11 @@ import {
   Ipv6Address,
   Isbn,
   Isin,
-  isNominalType,
   Issn,
   LanguageTag,
   MacAddress,
   MediaType,
+  n,
   NonBlankString,
   ObjectId,
   SemVer,
@@ -190,7 +190,7 @@ const examplesIn = (schema: unknown): unknown[] => {
   ];
 };
 
-const builtIns = Object.values(library).filter((value) => isNominalType(value));
+const builtIns = Object.values(library).filter((value) => n.isType(value));
 
 describe('JSON Schema examples', () => {
   it.each(builtIns.map((type) => [type.typeName, type] as const))(

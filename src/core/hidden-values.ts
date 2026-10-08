@@ -86,7 +86,7 @@ const hiddenMessage = (message: string): string => {
  *
  * @example
  * ```ts
- * hideValues([{ message: 'must be an email address (was "jane@example")' }]);
+ * n.hideValues([{ message: 'must be an email address (was "jane@example")' }]);
  * // [{ message: 'must be an email address (was a string of 12 characters)' }]
  * ```
  */

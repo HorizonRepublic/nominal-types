@@ -1,4 +1,4 @@
-import { charactersOf, rewrittenHidden } from './messages.ts';
+import { charactersOf } from './messages.ts';
 import { settings } from './settings.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 
@@ -113,7 +113,7 @@ export const hideValues = (
   issues: readonly StandardSchemaV1.Issue[],
 ): readonly StandardSchemaV1.Issue[] =>
   issues.map((issue) => {
-    const rewritten = rewrittenHidden(issue);
+    const rewritten = settings.writer?.hidden(issue);
 
     if (rewritten !== undefined) {
       return rewritten;

@@ -5,37 +5,15 @@ import { settings } from './settings.ts';
 type Run = (value: unknown) => unknown;
 
 /**
- * The step in front of the checks of a string type, which trims a string when
- * `n.configure({ normalize: { trimStrings: true } })` is set; the setting is read on each run.
- *
- * @internal
- */
-export interface TrimStep {
-  /**
-   * Marks the step as the one that trims.
-   */
-  readonly trim: true;
-}
-
-/**
  * Any step a type's function runs.
  *
  * @internal
  */
-export type AnyStep = Step | ConvertStep | TrimStep;
+export type AnyStep = Step | ConvertStep;
 
 const isRun = (value: unknown): value is Run => typeof value === 'function';
 
-const isTrim = (step: AnyStep): step is TrimStep => 'trim' in step;
-
-const isCheck = (step: Step | ConvertStep): step is Step => 'accepts' in step;
-
-/**
- * The step that trims strings while the setting asks for it.
- *
- * @internal
- */
-export const trimStep: TrimStep = { trim: true };
+const isCheck = (step: AnyStep): step is Step => 'accepts' in step;
 
 /**
  * Text trimmed while the setting asks for it.
@@ -51,6 +29,15 @@ export const trimmedText = (text: string): string => (settings.trimStrings ? tex
  */
 export const trimmed = (value: unknown): unknown =>
   typeof value === 'string' ? trimmedText(value) : value;
+
+/**
+ * The step in front of the checks of a string type, which trims a string when
+ * `n.configure({ normalize: { trimStrings: true } })` is set; the setting is read on each run.
+ * A loop runs it as any other conversion, and generated code inlines it.
+ *
+ * @internal
+ */
+export const trimStep: ConvertStep = { convert: trimmed };
 
 let probed: boolean | undefined;
 
@@ -111,9 +98,7 @@ const loopOver =
     let value = input;
 
     for (const step of steps) {
-      if (isTrim(step)) {
-        value = trimmed(value);
-      } else if (isCheck(step)) {
+      if (isCheck(step)) {
         if (!step.accepts(value)) {
           return new Rejection(step.issues(value, input));
         }
@@ -141,7 +126,7 @@ const generated = (steps: readonly AnyStep[], generate: boolean | undefined): Ru
   const names: string[] = ['Rejection', 'settings'];
   const values: unknown[] = [Rejection, settings];
   const lines = steps.map((step, index) => {
-    if (isTrim(step)) {
+    if (step === trimStep) {
       return trimSource;
     }
 

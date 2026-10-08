@@ -1,5 +1,5 @@
-import { generateFunction, trimmed, trimSource } from './compile.ts';
-import type { AnyStep, TrimStep } from './compile.ts';
+import { generateFunction, trimSource, trimStep } from './compile.ts';
+import type { AnyStep } from './compile.ts';
 import type { ConvertStep, Step } from './plan.ts';
 import { Rejection } from './rejection.ts';
 import { settings } from './settings.ts';
@@ -30,8 +30,6 @@ export const acceptsByRunning =
   (input) =>
     !(run(input) instanceof Rejection);
 
-const isTrim = (step: AnyStep): step is TrimStep => 'trim' in step;
-
 const isCheck = (step: Step | ConvertStep): step is Step => 'issues' in step;
 
 const isAccepts = (value: unknown): value is Accepts => typeof value === 'function';
@@ -48,12 +46,6 @@ const loopOver =
     let value = input;
 
     for (const [index, step] of steps.entries()) {
-      if (isTrim(step)) {
-        value = trimmed(value);
-
-        continue;
-      }
-
       if (isCheck(step)) {
         if (!step.accepts(value)) {
           return false;
@@ -84,7 +76,7 @@ const generated = (steps: readonly AnyStep[]): Accepts | undefined => {
   const lines = steps.map((step, index) => {
     const at = String(index);
 
-    if (isTrim(step)) {
+    if (step === trimStep) {
       return trimSource;
     }
 

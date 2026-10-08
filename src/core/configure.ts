@@ -1,7 +1,7 @@
 import { issueCodes } from './issue-codes.ts';
 import type { Messages } from './issue-codes.ts';
+import { issueWriter } from './issue-writer.ts';
 import { settings } from './settings.ts';
-import type { Settings } from './settings.ts';
 
 /**
  * Settings for the whole process, given to `n.configure()`: how messages read, whether they and
@@ -113,14 +113,17 @@ const fail = (message: string): never => {
   throw new TypeError(`n.configure(): ${message}`);
 };
 
-const options: Readonly<Record<keyof Configuration, true>> = {
-  messages: true,
-  values: true,
-  inspect: true,
-  normalize: true,
-  codes: true,
-  codegen: true,
-};
+// The options that take one of a few values, in the order their values are checked.
+const choices = {
+  values: ['show', 'length', 'hide'],
+  inspect: ['show', 'hide'],
+  codes: [true, false],
+  codegen: ['auto', 'off'],
+} as const;
+
+const choiceNames = ['values', 'inspect', 'codes', 'codegen'] as const;
+
+const options: ReadonlySet<string> = new Set([...choiceNames, 'messages', 'normalize']);
 
 const listed = (items: readonly unknown[]): string => {
   // @throws-ignore the items are option names and the literal choices of an option
@@ -215,8 +218,8 @@ const checkMessages = (messages: unknown): void => {
  *
  * @internal
  */
-const changesOf = (given: Configuration): Partial<Settings> => {
-  const unknown = Object.keys(given).find((name) => !Object.hasOwn(options, name));
+const changesOf = (given: Configuration): Readonly<Record<string, unknown>> => {
+  const unknown = Object.keys(given).find((name) => !options.has(name));
 
   if (unknown !== undefined) {
     fail(`there is no option ${unknown}`);
@@ -224,20 +227,17 @@ const changesOf = (given: Configuration): Partial<Settings> => {
 
   checkMessages(given.messages);
 
-  choice('values', given.values, ['show', 'length', 'hide']);
-  choice('inspect', given.inspect, ['show', 'hide']);
-  choice('codes', given.codes, [true, false]);
-  choice('codegen', given.codegen, ['auto', 'off']);
+  for (const name of choiceNames) {
+    choice(name, given[name], choices[name]);
+  }
 
   const trimStrings = trimStringsOf(given.normalize);
+  const chosen = choiceNames.filter((name) => given[name] !== undefined);
 
   return {
     ...('messages' in given ? { messages: frozen(given.messages) } : {}),
-    ...(given.values === undefined ? {} : { values: given.values }),
-    ...(given.inspect === undefined ? {} : { inspect: given.inspect }),
+    ...Object.fromEntries(chosen.map((name) => [name, given[name]])),
     ...(trimStrings === undefined ? {} : { trimStrings }),
-    ...(given.codes === undefined ? {} : { codes: given.codes }),
-    ...(given.codegen === undefined ? {} : { codegen: given.codegen }),
   };
 };
 
@@ -275,6 +275,10 @@ export const configure = (given: Configuration = {}): FullConfiguration => {
   const previous = snapshot();
 
   Object.assign(settings, changes);
+
+  if (settings.codes || settings.messages !== undefined) {
+    settings.writer = issueWriter;
+  }
 
   return previous;
 };

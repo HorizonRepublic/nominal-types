@@ -53,6 +53,8 @@ npm install @horizon-republic/nominal-types
 
 It has no dependencies, and works with both `import` and `require` on Node.js 22.12 or later.
 
+Coming from version 2? See [How to move from version 2](docs/guides/core/migrate-from-v2.md).
+
 ## Make your own type
 
 A type is a class with a rule. Start from a built-in type, and add getters for its behaviour:

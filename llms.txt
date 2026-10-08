@@ -19,7 +19,7 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 - Rules must be synchronous. An asynchronous Standard Schema throws `TypeError: <name>: asynchronous schemas are not supported` when a value is checked.
 - Declare types holding passwords or personal data with `{ sensitive: true }`. Where messages leave the app, use `hideValues: true` on `NominalPipe` or `toGraphQL()`, or call `n.hideValues(issues)`.
 - Install the peer package of an adapter yourself (`npm install zod`). Every peer dependency is optional; nothing loads until the adapter's entry point is imported.
-- Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3.
+- Don't write code for version 2.0.x. It had `NType()`, `Type.getPipe()`, types such as `FirstName` and `UUID`, and constructors that checked nothing. None of these exist in version 3. To port such code, follow `docs/guides/core/migrate-from-v2.md`.
 
 ## Install and entry points
 
@@ -437,6 +437,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to keep values out of error messages](docs/guides/core/hide-values.md)
 - [How to accept lists, missing values and null](docs/guides/core/lists-and-optional-values.md)
 - [How to make a value object](docs/guides/core/make-a-value-object.md)
+- [How to move from version 2](docs/guides/core/migrate-from-v2.md)
 - [How to read configuration from environment variables](docs/guides/core/read-config.md)
 - [How to read numbers and booleans from text](docs/guides/core/read-text-values.md)
 - [How to use dates and times](docs/guides/core/use-dates-and-times.md)

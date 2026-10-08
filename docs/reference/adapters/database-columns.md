@@ -45,18 +45,36 @@ A database without a kind of column uses its own. On SQLite, for example, MikroO
 
 - An instance is stored as its `toJSON()`: the text of an `Email`, the digits of an `Int64` as a string.
 - With `serialize`, it is stored as what `serialize` returns, such as `email.canonical().value`.
+- A plain value the type accepts is stored as its instance would be.
+- A plain value the type rejects is written as it is. Query conditions go through the same step, which keeps patterns such as `'%@example.com'` working.
 - `null` and `undefined` are written as they are.
 - Drizzle writes booleans as `1` and `0`, which every dialect takes.
+
+So the database can hold values the type refuses. They come from a plain value cast past the compiler, raw SQL, a migration or another app. Reading such a row throws.
 
 ## Reads
 
 - A stored value becomes an instance, checked by the type.
 - Numbers and booleans are read from text and from integers, as drivers return them: `'42'` gives `42`; `1`, `'t'` and `'true'` give `true`.
 - A value the type rejects throws a `NominalError`, for example a row written before a rule changed.
-- `trusted: true` builds instances without the check.
+- `trusted: true` builds instances without the check. A bad stored value then becomes a bad instance: its getters give wrong answers, and nothing checks it again. Use it only for a column that nothing else writes to.
 - `null` stays `null`.
 
 The error names the type: `NominalError: nominal.Email: must be an email address (was a string of 3 characters)`.
+
+With the Drizzle adapter:
+
+```ts
+import { Email } from '@horizon-republic/nominal-types';
+import { toDrizzle } from '@horizon-republic/nominal-types/adapters/drizzle';
+
+const email = toDrizzle(Email);
+const trusted = toDrizzle(Email, { trusted: true });
+
+email.toDriver('not an address' as unknown as Email); // 'not an address', written as it is
+email.fromDriver('not an address'); // throws NominalError: nominal.Email: must be an email address (was a string of 14 characters)
+trusted.fromDriver('not an address').domain; // 'not an address'
+```
 
 ## Options every adapter takes
 

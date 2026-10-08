@@ -7,6 +7,19 @@ Make `@nestjs/swagger` describe each nominal type with its pattern, format, leng
 - Install Swagger for Nest: `npm install @nestjs/swagger`.
 - The helpers come from the [adapter](../../reference/glossary.md) `@horizon-republic/nominal-types/adapters/swagger`. It is a separate [entry point](../../reference/glossary.md): you need `@nestjs/swagger` only if you import it.
 - It works with `@nestjs/swagger` 11 and 12. It needs neither class-validator nor class-transformer.
+- `@nestjs/swagger` 12 asks for TypeScript 5.5 to 6 as a peer dependency. With TypeScript 7, `npm install` stops with `ERESOLVE`. Let it use your TypeScript with an override in `package.json`:
+
+  ```json
+  {
+    "overrides": {
+      "@nestjs/swagger": {
+        "typescript": "$typescript"
+      }
+    }
+  }
+  ```
+
+  `$typescript` stands for the version in your own `devDependencies`.
 
 ## Quick example
 

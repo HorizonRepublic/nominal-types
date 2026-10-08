@@ -29,6 +29,7 @@ Core:
 - [How to keep values out of error messages](guides/core/hide-values.md)
 - [How to test code that takes nominal types](guides/core/write-tests.md)
 - [How to fix common problems](guides/core/fix-common-problems.md)
+- [How to move from version 2](guides/core/migrate-from-v2.md)
 
 Validators:
 

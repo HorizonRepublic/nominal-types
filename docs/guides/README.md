@@ -21,6 +21,7 @@ Your own types, and checking input with no other library.
 | keep values out of error messages             | [How to keep values out of error messages](core/hide-values.md)                   |
 | test code that takes nominal types            | [How to test code that takes nominal types](core/write-tests.md)                  |
 | fix an error or a surprise                    | [How to fix common problems](core/fix-common-problems.md)                         |
+| move my code from version 2                   | [How to move from version 2](core/migrate-from-v2.md)                             |
 
 ## Validators
 

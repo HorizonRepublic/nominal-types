@@ -95,13 +95,17 @@ new Email('not an address'); // throws NominalError: nominal.Email: must be an e
 
 The three ways side by side:
 
-| Question                            | Checked string    | Branded string      | Class from this package        |
-| ----------------------------------- | ----------------- | ------------------- | ------------------------------ |
-| Does the compiler keep types apart? | no                | yes                 | yes                            |
-| Was every value checked?            | only where called | no, a cast skips it | yes, `new` and `parse()` check |
-| Can code tell it apart at runtime?  | no                | no                  | yes, `email instanceof Email`  |
-| Can it have methods?                | no                | no                  | yes, `email.domain`            |
-| What does it cost?                  | nothing extra     | nothing extra       | one small object per value     |
+| Question                                              | Checked string    | Branded string      | Class from this package                                 |
+| ----------------------------------------------------- | ----------------- | ------------------- | ------------------------------------------------------- |
+| Does the compiler keep types apart?                   | no                | yes                 | yes                                                     |
+| Was every value checked?                              | only where called | no, a cast skips it | yes, `new` and `parse()` check                          |
+| Can code tell it apart at runtime?                    | no                | no                  | yes, `email instanceof Email`                           |
+| Can it have methods?                                  | no                | no                  | yes, `email.domain`                                     |
+| What does it cost?                                    | nothing extra     | nothing extra       | one small object per value                              |
+| Do `===`, `Set` and `Map` match equal values?         | yes               | yes                 | no, they compare objects: use `a.equals(b)` or `.value` |
+| Does it stay itself through JSON, a cache or a queue? | yes, a string     | yes, a string       | no, it comes back as a plain value: `parse()` it again  |
+
+[How to fix common problems](../guides/core/fix-common-problems.md#includes-set-and-map-dont-find-an-equal-value) shows each fix with code.
 
 ## Checked once
 

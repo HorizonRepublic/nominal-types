@@ -51,8 +51,6 @@ Every `Email` you hold is valid, and it has methods such as `email.domain`. [Wha
 npm install @horizon-republic/nominal-types
 ```
 
-> These docs describe version 3, which is not on npm yet. `npm install` gives version 2, which has a different API.
-
 It works with both `import` and `require`, on Node.js 22.12 or later.
 
 ## Make your own type

@@ -20,14 +20,12 @@ import { standardProps, vendor } from './standard-props.ts';
 import type { StandardProps } from './standard-schema.ts';
 import type { TextForm } from './text-form.ts';
 
-const { arraySchemas } = shared;
-
 /**
  * Internal: whether a schema accepts an array at its top, also behind `optional()` and
  * `nullable()`, so an adapter can wrap a lone value from a query string.
  */
 export const isArraySchema = (value: unknown): boolean =>
-  typeof value === 'object' && value !== null && arraySchemas.has(value);
+  typeof value === 'object' && value !== null && shared.arraySchemas.has(value);
 
 /**
  * Internal: whether a value is a schema built by `n.of()`, including one from another copy of
@@ -81,7 +79,7 @@ export class TypeSchema<Input, Output> {
     registerPaths(this, this.#paths);
 
     if (options.array === true) {
-      arraySchemas.add(this);
+      shared.arraySchemas.add(this);
     }
   }
 

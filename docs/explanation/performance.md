@@ -100,18 +100,22 @@ A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps o
 
 | Your code imports                                       | Minified | Gzipped  |
 | ------------------------------------------------------- | -------- | -------- |
-| `Uuid`                                                  | 24 KB    | 8.6 KB   |
+| `Uuid`                                                  | 25 KB    | 8.7 KB   |
 | `Email`                                                 | 24 KB    | 8.6 KB   |
 | `Integer`                                               | 23 KB    | 8.1 KB   |
-| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 55 KB    | 19 KB    |
-| `PlainDate` from `/temporal`                            | 24 KB    | 8.6 KB   |
-| `Uuid` and the adapter for a validator or a framework   | 25–26 KB | 9 KB     |
-| `Uuid` and the adapter for a database                   | 33 KB    | 11–12 KB |
-| everything                                              | 87 KB    | 30 KB    |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 58 KB    | 19 KB    |
+| `PlainDate` from `/temporal`                            | 25 KB    | 8.7 KB   |
+| `Uuid` and the adapter for a validator or a framework   | 25–27 KB | 9–9.5 KB |
+| `Uuid` and the adapter for a database                   | 34–35 KB | 12 KB    |
+| everything                                              | 102 KB   | 35 KB    |
 
 About 22 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
 
 The bundler leaves parts out only when your code loads the package with `import`. With `require()`, the bundle holds the whole package.
+
+## Loading in Node.js
+
+Node.js runs the package without a bundler, so it loads every module the package is made of. Bundlers get a build with a module for each type. Node.js gets a build of a few larger files, so an `import` of the package takes about as long as a `require()`.
 
 ## See also
 

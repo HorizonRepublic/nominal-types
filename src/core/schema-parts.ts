@@ -26,22 +26,24 @@ export type SchemaParts =
 
 const key = Symbol.for('@horizon-republic/nominal-types/schema-parts/1');
 
-const existing: unknown = Reflect.get(globalThis, key);
-
 const isPartsMap = (value: unknown): value is WeakMap<object, SchemaParts> =>
   value instanceof WeakMap;
 
+let found: WeakMap<object, SchemaParts> | undefined;
+
 // Shared by every copy of the package in one application, as `shared.ts` is, so an entry point
-// bundled as CommonJS with a copy of its own reads the schemas the main entry point built.
-const parts: WeakMap<object, SchemaParts> = isPartsMap(existing)
-  ? existing
-  : (() => {
-      const created = new WeakMap<object, SchemaParts>();
+// bundled as CommonJS with a copy of its own reads the schemas the main entry point built. Found
+// on first use, so an app bundle that builds no schema leaves it out.
+const parts = (): WeakMap<object, SchemaParts> => {
+  if (found === undefined) {
+    const existing: unknown = Reflect.get(globalThis, key);
 
-      Reflect.set(globalThis, key, created);
+    found = isPartsMap(existing) ? existing : new WeakMap();
+    Reflect.set(globalThis, key, found);
+  }
 
-      return created;
-    })();
+  return found;
+};
 
 const owners = new WeakMap<object, object>();
 
@@ -56,7 +58,7 @@ export const recordParts = (schema: object, paths: object, pathParts?: SchemaPar
     return;
   }
 
-  parts.set(
+  parts().set(
     schema,
     'item' in pathParts
       ? { ...pathParts, item: owners.get(pathParts.item) ?? pathParts.item }
@@ -67,4 +69,4 @@ export const recordParts = (schema: object, paths: object, pathParts?: SchemaPar
 /**
  * Internal: what a schema is made of, or `undefined` for a schema no copy of this package built.
  */
-export const partsOf = (schema: object): SchemaParts | undefined => parts.get(schema);
+export const partsOf = (schema: object): SchemaParts | undefined => parts().get(schema);

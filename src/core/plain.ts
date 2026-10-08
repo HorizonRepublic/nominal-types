@@ -26,9 +26,6 @@ export type Plain<Value> =
       ? Value
       : { -readonly [Key in keyof Value]: Plain<Value[Key]> };
 
-const { root } = ownTypes;
-const objectPrototype = Object.prototype;
-
 const enter = (value: object, path: object[]): void => {
   if (path.includes(value)) {
     throw new TypeError('n.plain(): the value refers to itself, which JSON cannot write');
@@ -36,8 +33,6 @@ const enter = (value: object, path: object[]): void => {
 
   path.push(value);
 };
-
-const { hasOwn } = Object;
 
 // Copying first and replacing only the objects inside lets V8 clone the array or object in one
 // step, about twice as fast as building the copy key by key.
@@ -68,7 +63,7 @@ const plainRecord = (value: object, path: object[]): object => {
   for (const key in copy) {
     const item = copy[key];
 
-    if (typeof item === 'object' && item !== null && hasOwn(copy, key)) {
+    if (typeof item === 'object' && item !== null && Object.hasOwn(copy, key)) {
       copy[key] = plainOf(item, path);
     }
   }
@@ -95,7 +90,7 @@ const plainInstance = (value: { toJSON(): unknown }, path: object[]): unknown =>
 };
 
 const plainOf = (value: object, path: object[]): unknown => {
-  if (value instanceof root) {
+  if (value instanceof ownTypes.root) {
     return plainInstance(value, path);
   }
 
@@ -105,7 +100,7 @@ const plainOf = (value: object, path: object[]): unknown => {
 
   const prototype: unknown = Object.getPrototypeOf(value);
 
-  if (prototype === objectPrototype || prototype === null) {
+  if (prototype === Object.prototype || prototype === null) {
     return plainRecord(value, path);
   }
 

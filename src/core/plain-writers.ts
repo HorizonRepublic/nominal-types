@@ -25,8 +25,6 @@ const instanceSource = `function writeInstance(value) {
   return typeof json === 'object' && json !== null ? plain(json) : json;
 }`;
 
-const rootToJson: unknown = Reflect.get(ownTypes.root.prototype, 'toJSON');
-
 // Without code generation every field shares one call site, so the walk of `n.plain()` is as fast.
 const instanceLoop: Write = (value) =>
   typeof value === 'object' && value !== null ? plainValue(value) : value;
@@ -39,7 +37,7 @@ export const instanceWriter = (generate?: boolean): Write => {
   const built = generateFunction(
     ['rootToJson', 'plain'],
     instanceSource,
-    [rootToJson, plainValue],
+    [Reflect.get(ownTypes.root.prototype, 'toJSON'), plainValue],
     generate,
   );
 

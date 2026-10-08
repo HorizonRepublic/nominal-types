@@ -25,12 +25,13 @@ const pathName = (path: RegExp, id: string): string | null =>
 
 // Bundlers drop whole modules an app doesn't use, by `sideEffects: false`, so each type stays a
 // module of its own; a type declared at the top level of a shared chunk would stay in every bundle.
-// The core every type needs is one chunk, since plain Node pays for every module it loads.
-const esmChunks = {
+// The core every type needs is one chunk.
+const moduleChunks = {
   chunkFileNames: '[name].js',
   codeSplitting: {
     groups: [
       {
+        debugName: 'core',
         name: (id: string) => {
           const core = corePath.exec(id);
 
@@ -39,11 +40,13 @@ const esmChunks = {
         priority: 2,
       },
       {
+        debugName: 'types',
         name: (id: string) => pathName(typePath, id),
         priority: 1,
         includeDependenciesRecursively: false,
       },
       {
+        debugName: 'adapters',
         name: (id: string) => pathName(adapterPath, id),
         minShareCount: 2,
         includeDependenciesRecursively: false,
@@ -52,42 +55,73 @@ const esmChunks = {
   },
 };
 
-const config: UserConfig = {
-  entry: {
-    index: 'src/index.ts',
-    'core/n': 'src/core/n.ts',
-    'temporal/index': 'src/temporal/index.ts',
-    'testing/index': 'src/testing/index.ts',
-    'adapters/nest/index': 'src/adapters/nest/index.ts',
-    'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
-    'adapters/swagger/index': 'src/adapters/swagger/index.ts',
-    'adapters/arktype/index': 'src/adapters/arktype/index.ts',
-    'adapters/zod/index': 'src/adapters/zod/index.ts',
-    'adapters/valibot/index': 'src/adapters/valibot/index.ts',
-    'adapters/mikro-orm/index': 'src/adapters/mikro-orm/index.ts',
-    'adapters/typeorm/index': 'src/adapters/typeorm/index.ts',
-    'adapters/drizzle/index': 'src/adapters/drizzle/index.ts',
-    'adapters/sequelize/index': 'src/adapters/sequelize/index.ts',
-    'adapters/graphql/index': 'src/adapters/graphql/index.ts',
-    'adapters/superjson/index': 'src/adapters/superjson/index.ts',
-    'adapters/fastify/index': 'src/adapters/fastify/index.ts',
-  },
-  format: ['esm', 'cjs'],
-  inputOptions: (options, format) =>
-    format === 'es' ? { ...options, plugins: [namespaceN, options.plugins] } : options,
+const entry = {
+  index: 'src/index.ts',
+  'temporal/index': 'src/temporal/index.ts',
+  'testing/index': 'src/testing/index.ts',
+  'adapters/nest/index': 'src/adapters/nest/index.ts',
+  'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
+  'adapters/swagger/index': 'src/adapters/swagger/index.ts',
+  'adapters/arktype/index': 'src/adapters/arktype/index.ts',
+  'adapters/zod/index': 'src/adapters/zod/index.ts',
+  'adapters/valibot/index': 'src/adapters/valibot/index.ts',
+  'adapters/mikro-orm/index': 'src/adapters/mikro-orm/index.ts',
+  'adapters/typeorm/index': 'src/adapters/typeorm/index.ts',
+  'adapters/drizzle/index': 'src/adapters/drizzle/index.ts',
+  'adapters/sequelize/index': 'src/adapters/sequelize/index.ts',
+  'adapters/graphql/index': 'src/adapters/graphql/index.ts',
+  'adapters/superjson/index': 'src/adapters/superjson/index.ts',
+  'adapters/fastify/index': 'src/adapters/fastify/index.ts',
+};
+
+const shared = {
   platform: 'neutral',
   target: 'es2022',
-  dts: true,
   sourcemap: true,
-  // CommonJS can't be tree-shaken, so it stays one file per entry, which Node loads faster.
+} satisfies UserConfig;
+
+/**
+ * The ES modules bundlers read, through the `module` condition: a module per type, so an app keeps
+ * only the types it imports; and the CommonJS build.
+ */
+const forBundlers: UserConfig = {
+  ...shared,
+  entry: { ...entry, 'core/n': 'src/core/n.ts' },
+  format: ['esm', 'cjs'],
+  inputOptions: (options, format) =>
+    format === 'es'
+      ? {
+          ...options,
+          plugins: [namespaceN, options.plugins],
+          preserveEntrySignatures: 'allow-extension',
+        }
+      : options,
+  dts: true,
   outputOptions: (options, format, { cjsDts }) => ({
     ...options,
     sourcemapExcludeSources: true,
-    ...(format === 'es' && !cjsDts ? esmChunks : {}),
+    ...(format === 'es' && !cjsDts ? moduleChunks : {}),
   }),
   clean: true,
+};
+
+/**
+ * The ES modules Node.js imports, through the `import` condition: a few files shared between the
+ * entry points, since Node.js pays for every module it loads and drops nothing it doesn't use.
+ * Types come from the declarations of the bundler build.
+ */
+const forNode: UserConfig = {
+  ...shared,
+  entry,
+  format: 'esm',
+  outDir: 'dist/node',
+  dts: false,
+  outputOptions: (options) => ({ ...options, sourcemapExcludeSources: true }),
+  clean: false,
   publint: true,
   attw: { profile: 'strict', level: 'error' },
 };
 
-export default config;
+const configs: UserConfig[] = [forBundlers, forNode];
+
+export default configs;

@@ -7,13 +7,11 @@ import { shared } from './shared.ts';
  */
 export type TextForm = (text: string) => unknown;
 
-const forms = shared.textForms;
-
 /**
  * Internal: gives a type and every type under it a text form.
  */
 export const defineTextForm = (type: object, form: TextForm): void => {
-  forms.set(type, form);
+  shared.textForms.set(type, form);
 };
 
 /**
@@ -23,7 +21,7 @@ export const textFormOf = (type: unknown): TextForm | undefined => {
   let current: unknown = type;
 
   while (typeof current === 'function') {
-    const form = forms.get(current);
+    const form = shared.textForms.get(current);
 
     if (form !== undefined) {
       return form;

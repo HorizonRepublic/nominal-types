@@ -1,20 +1,84 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { build } from 'esbuild';
 
 const require = createRequire(import.meta.url);
 const { name, exports } = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
+const root = new URL('../', import.meta.url);
 const entries = Object.keys(exports).filter((entry) => entry !== './package.json');
+const specifierOf = (entry) => (entry === '.' ? name : `${name}/${entry.slice(2)}`);
+
+// The files of this package a bundler takes for an entry point, imported or required: esbuild with
+// its default conditions for the browser and for Node.js, and with the conditions Vite passes.
+const bundlers = [
+  { platform: 'browser' },
+  { platform: 'node' },
+  { platform: 'browser', conditions: ['module', 'browser', 'production'] },
+];
+
+const bundledFiles = async (specifier, options, contents) => {
+  const result = await build({
+    ...options,
+    stdin: { contents, resolveDir: fileURLToPath(root) },
+    bundle: true,
+    write: false,
+    metafile: true,
+    format: 'esm',
+    logLevel: 'silent',
+    plugins: [
+      {
+        name: 'peers',
+        setup: (setup) => {
+          // esbuild runs filters as Go regular expressions, which take no flags.
+          // oxlint-disable-next-line require-unicode-regexp
+          setup.onResolve({ filter: /^[^./]/ }, ({ path }) =>
+            path === specifier ? undefined : { path, external: true },
+          );
+        },
+      },
+    ],
+  });
+
+  return Object.keys(result.metafile.inputs).filter((file) => file.startsWith('dist/'));
+};
 
 for (const entry of entries) {
-  const specifier = entry === '.' ? name : `${name}/${entry.slice(2)}`;
+  const specifier = specifierOf(entry);
   const esm = await import(specifier);
   const cjs = require(specifier);
+  const moduleUrl = new URL(exports[entry].module, root);
+  const bundled = await import(moduleUrl.href);
+  const modulePath = relative(fileURLToPath(root), fileURLToPath(moduleUrl));
 
   ok(Object.keys(esm).length > 0, `${specifier} exports nothing`);
   deepStrictEqual(Object.keys(cjs).toSorted(), Object.keys(esm).toSorted(), specifier);
+  deepStrictEqual(Object.keys(bundled).toSorted(), Object.keys(esm).toSorted(), specifier);
+
+  // Node.js imports the build made for it, and a bundler takes the one made of a module per type
+  // whether the app imports or requires the package.
+  strictEqual(import.meta.resolve(specifier), new URL(exports[entry].import.default, root).href);
+
+  for (const options of bundlers) {
+    for (const contents of [
+      `export * from '${specifier}';`,
+      `module.exports = require('${specifier}');`,
+    ]) {
+      const files = await bundledFiles(specifier, options, contents);
+      const label = `${JSON.stringify(options)} ${contents}`;
+
+      ok(files.includes(modulePath), `${label} misses ${modulePath}: ${files.join(', ')}`);
+      ok(
+        files.every((file) => !file.startsWith('dist/node/') && !file.endsWith('.cjs')),
+        `${label} takes ${files.join(', ')}`,
+      );
+    }
+  }
 }
 
 for (const { AnyString, Email, NominalError } of [await import(name), require(name)]) {

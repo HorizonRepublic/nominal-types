@@ -14,7 +14,8 @@ import {
   withPresence,
 } from './object-helpers.ts';
 import type { ObjectParts, Presence } from './object-helpers.ts';
-import { objectMark } from './object-members.ts';
+import { objectMembers } from './object-members.ts';
+import { objectMark, objectMembersSlot } from './object-rule.ts';
 import { objectShape } from './object-shape.ts';
 import type {
   Extended,
@@ -90,6 +91,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     this.#presence = presence;
     objectParts.set(this, { source, constraints, strict, hidden, presence });
     Object.defineProperty(this, objectMark, { value: true });
+    Object.defineProperty(this, objectMembersSlot, { value: objectMembers });
   }
 
   /**

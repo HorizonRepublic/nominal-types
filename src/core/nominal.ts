@@ -29,7 +29,7 @@ import {
 import { defineInspect } from './inspect.ts';
 import { jsonText } from './messages.ts';
 import { NominalError, settled } from './nominal-error.ts';
-import { checkObjectRule, defineObjectMembers, objectKeysOf } from './object-members.ts';
+import { objectKeysOf, objectMembersOf, objectRuleAbove } from './object-rule.ts';
 import { asRule } from './pattern-schema.ts';
 import { nothingPending, takePending } from './pending.ts';
 import { registerType } from './registry.ts';
@@ -47,6 +47,17 @@ let isTrusted: (target: typeof NominalRoot, instance: object) => boolean;
 let checkedOf: (instance: object) => unknown;
 
 const unchecked = Symbol('unchecked');
+
+// A constraint given to `subtype()` or `variant()` of a type built on `n.object()` can read only
+// the fields the object declares.
+const checkObjectRule = (owner: 'subtype' | 'variant', target: object, rule: unknown): void => {
+  const objectRule = objectRuleAbove(target);
+  const keys = objectKeysOf(objectRule);
+
+  if (keys !== undefined) {
+    objectMembersOf(objectRule)?.check(owner, keys, rule);
+  }
+};
 
 class NominalRoot {
   public static readonly typeName: string = 'Nominal';
@@ -385,7 +396,7 @@ const derive = (
     const keys = objectKeysOf(rule);
 
     if (keys !== undefined) {
-      defineObjectMembers(derived.prototype, keys);
+      objectMembersOf(rule)?.define(derived.prototype, keys);
     }
   }
 

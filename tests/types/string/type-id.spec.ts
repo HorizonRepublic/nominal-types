@@ -239,14 +239,15 @@ describe('TypeId.generate', () => {
   });
 
   it('holds a version 7 UUID with the RFC 9562 variant and the current time', () => {
-    vi.useFakeTimers({ now: new Date('2026-10-08T12:00:00.000Z'), toFake: ['Date'] });
+    // A time ahead of the real clock: the generator never goes back to an earlier millisecond.
+    vi.useFakeTimers({ now: new Date('2099-10-08T12:00:00.000Z'), toFake: ['Date'] });
 
     const id = TypeId.generate('order');
 
     expect(valueOf(UuidV7.parse(id.toUuid().value)).timestamp.toISOString()).toBe(
-      '2026-10-08T12:00:00.000Z',
+      '2099-10-08T12:00:00.000Z',
     );
-    expect(id.timestamp?.toISOString()).toBe('2026-10-08T12:00:00.000Z');
+    expect(id.timestamp?.toISOString()).toBe('2099-10-08T12:00:00.000Z');
   });
 
   it('sorts ids made in one millisecond in the order they were made', () => {

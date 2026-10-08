@@ -1,5 +1,5 @@
 import type { AnyConstraint } from './constraint-types.ts';
-import { objectMark } from './object-members.ts';
+import { objectMark } from './object-rule.ts';
 import { ObjectSchema } from './object-schema.ts';
 import type { ObjectFields, ObjectInput, ObjectValue } from './object-types.ts';
 

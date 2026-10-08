@@ -1,5 +1,6 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
+import type * as library from '../../src/index.ts';
 import { AnyString, n, Nominal, NominalError, PositiveInteger } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
@@ -110,6 +111,28 @@ describe('a type built on n.object()', () => {
     expect(full.guests.value).toBe(3);
     expect(full).toBeInstanceOf(Stay);
     expect(() => new FullStay({ guests: 2, capacity: 3 })).toThrow(NominalError);
+  });
+
+  it('gets its getters, copyWith() and field checks from a schema built by another copy of the package', async () => {
+    vi.resetModules();
+    const copy: typeof library = await import('../../src/index.ts');
+    const Room = Nominal(
+      'objects.CopiedRoom',
+      copy.n.object({ guests: copy.PositiveInteger, capacity: copy.PositiveInteger }),
+    );
+    const room = new Room({ guests: 2, capacity: 3 });
+    const readsBeds = n.constraint({ beds: PositiveInteger }, () => true);
+    const readsGuests = n.constraint({ guests: PositiveInteger }, () => true);
+
+    expect(room.guests.value).toBe(2);
+    expect(room.copyWith({ guests: 3 }).guests.value).toBe(3);
+    expect(() => Room.subtype('objects.CopiedSuite', readsBeds)).toThrow(
+      new TypeError('subtype: a constraint reads beds, which the object does not declare'),
+    );
+    expect(() => Room.subtype('objects.CopiedHall', readsGuests)).not.toThrow();
+    expect(() =>
+      Nominal('objects.CopiedValue', copy.n.object({ value: copy.PositiveInteger })),
+    ).toThrow(TypeError);
   });
 
   it('describes itself as an object in JSON Schema', () => {

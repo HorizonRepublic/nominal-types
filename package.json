@@ -42,67 +42,131 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "module": "./dist/index.js",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/node/index.js"
+      },
       "require": "./dist/index.cjs"
     },
     "./temporal": {
-      "import": "./dist/temporal/index.js",
+      "module": "./dist/temporal/index.js",
+      "import": {
+        "types": "./dist/temporal/index.d.ts",
+        "default": "./dist/node/temporal/index.js"
+      },
       "require": "./dist/temporal/index.cjs"
     },
     "./testing": {
-      "import": "./dist/testing/index.js",
+      "module": "./dist/testing/index.js",
+      "import": {
+        "types": "./dist/testing/index.d.ts",
+        "default": "./dist/node/testing/index.js"
+      },
       "require": "./dist/testing/index.cjs"
     },
     "./adapters/nest": {
-      "import": "./dist/adapters/nest/index.js",
+      "module": "./dist/adapters/nest/index.js",
+      "import": {
+        "types": "./dist/adapters/nest/index.d.ts",
+        "default": "./dist/node/adapters/nest/index.js"
+      },
       "require": "./dist/adapters/nest/index.cjs"
     },
     "./adapters/class-validator": {
-      "import": "./dist/adapters/class-validator/index.js",
+      "module": "./dist/adapters/class-validator/index.js",
+      "import": {
+        "types": "./dist/adapters/class-validator/index.d.ts",
+        "default": "./dist/node/adapters/class-validator/index.js"
+      },
       "require": "./dist/adapters/class-validator/index.cjs"
     },
     "./adapters/swagger": {
-      "import": "./dist/adapters/swagger/index.js",
+      "module": "./dist/adapters/swagger/index.js",
+      "import": {
+        "types": "./dist/adapters/swagger/index.d.ts",
+        "default": "./dist/node/adapters/swagger/index.js"
+      },
       "require": "./dist/adapters/swagger/index.cjs"
     },
     "./adapters/arktype": {
-      "import": "./dist/adapters/arktype/index.js",
+      "module": "./dist/adapters/arktype/index.js",
+      "import": {
+        "types": "./dist/adapters/arktype/index.d.ts",
+        "default": "./dist/node/adapters/arktype/index.js"
+      },
       "require": "./dist/adapters/arktype/index.cjs"
     },
     "./adapters/zod": {
-      "import": "./dist/adapters/zod/index.js",
+      "module": "./dist/adapters/zod/index.js",
+      "import": {
+        "types": "./dist/adapters/zod/index.d.ts",
+        "default": "./dist/node/adapters/zod/index.js"
+      },
       "require": "./dist/adapters/zod/index.cjs"
     },
     "./adapters/valibot": {
-      "import": "./dist/adapters/valibot/index.js",
+      "module": "./dist/adapters/valibot/index.js",
+      "import": {
+        "types": "./dist/adapters/valibot/index.d.ts",
+        "default": "./dist/node/adapters/valibot/index.js"
+      },
       "require": "./dist/adapters/valibot/index.cjs"
     },
     "./adapters/mikro-orm": {
-      "import": "./dist/adapters/mikro-orm/index.js",
+      "module": "./dist/adapters/mikro-orm/index.js",
+      "import": {
+        "types": "./dist/adapters/mikro-orm/index.d.ts",
+        "default": "./dist/node/adapters/mikro-orm/index.js"
+      },
       "require": "./dist/adapters/mikro-orm/index.cjs"
     },
     "./adapters/typeorm": {
-      "import": "./dist/adapters/typeorm/index.js",
+      "module": "./dist/adapters/typeorm/index.js",
+      "import": {
+        "types": "./dist/adapters/typeorm/index.d.ts",
+        "default": "./dist/node/adapters/typeorm/index.js"
+      },
       "require": "./dist/adapters/typeorm/index.cjs"
     },
     "./adapters/drizzle": {
-      "import": "./dist/adapters/drizzle/index.js",
+      "module": "./dist/adapters/drizzle/index.js",
+      "import": {
+        "types": "./dist/adapters/drizzle/index.d.ts",
+        "default": "./dist/node/adapters/drizzle/index.js"
+      },
       "require": "./dist/adapters/drizzle/index.cjs"
     },
     "./adapters/sequelize": {
-      "import": "./dist/adapters/sequelize/index.js",
+      "module": "./dist/adapters/sequelize/index.js",
+      "import": {
+        "types": "./dist/adapters/sequelize/index.d.ts",
+        "default": "./dist/node/adapters/sequelize/index.js"
+      },
       "require": "./dist/adapters/sequelize/index.cjs"
     },
     "./adapters/graphql": {
-      "import": "./dist/adapters/graphql/index.js",
+      "module": "./dist/adapters/graphql/index.js",
+      "import": {
+        "types": "./dist/adapters/graphql/index.d.ts",
+        "default": "./dist/node/adapters/graphql/index.js"
+      },
       "require": "./dist/adapters/graphql/index.cjs"
     },
     "./adapters/superjson": {
-      "import": "./dist/adapters/superjson/index.js",
+      "module": "./dist/adapters/superjson/index.js",
+      "import": {
+        "types": "./dist/adapters/superjson/index.d.ts",
+        "default": "./dist/node/adapters/superjson/index.js"
+      },
       "require": "./dist/adapters/superjson/index.cjs"
     },
     "./adapters/fastify": {
-      "import": "./dist/adapters/fastify/index.js",
+      "module": "./dist/adapters/fastify/index.js",
+      "import": {
+        "types": "./dist/adapters/fastify/index.d.ts",
+        "default": "./dist/node/adapters/fastify/index.js"
+      },
       "require": "./dist/adapters/fastify/index.cjs"
     },
     "./package.json": "./package.json"

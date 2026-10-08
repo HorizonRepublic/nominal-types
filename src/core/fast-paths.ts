@@ -16,6 +16,8 @@ import {
   writers,
 } from './plain-writers.ts';
 import type { Write } from './plain-writers.ts';
+import { recordParts } from './schema-parts.ts';
+import type { SchemaParts } from './schema-parts.ts';
 import {
   arrayAcceptor,
   emptyOrAcceptor,
@@ -36,6 +38,10 @@ export interface FastPaths {
   readonly write: Write;
   readonly accepts: Accepts;
   readonly plan: Plan;
+  /**
+   * What the schema is made of, a shape naming the paths of the schema it is around.
+   */
+  readonly parts?: SchemaParts;
 }
 
 /**
@@ -46,6 +52,7 @@ export const registerPaths = (schema: object, paths: FastPaths): void => {
   writers.set(schema, paths.write);
   acceptors.set(schema, paths.accepts);
   plans.set(schema, paths.plan);
+  recordParts(schema, paths, paths.parts);
 };
 
 /**
@@ -79,6 +86,7 @@ export const typePaths = (type: AnyNominalType): FastPaths => ({
   write: instanceWriter(),
   accepts: typeAcceptor(type),
   plan: { kind: 'type', type },
+  parts: { kind: 'type', type },
 });
 
 /**
@@ -97,6 +105,7 @@ export const arrayPaths = (
     accepts:
       options.unique === true ? acceptsByRunning(run) : arrayAcceptor(item.accepts, min, max),
     plan: { kind: 'array', item: item.plan },
+    parts: { kind: 'array', item, options },
   };
 };
 
@@ -104,6 +113,7 @@ const emptyOrPaths = (item: FastPaths, empty?: null): FastPaths => ({
   write: emptyOrWriter(item.write, empty),
   accepts: emptyOrAcceptor(item.accepts, empty),
   plan: { kind: 'empty', item: item.plan, empty },
+  parts: { kind: empty === null ? 'nullable' : 'optional', item },
 });
 
 /**
@@ -123,6 +133,7 @@ export const textPaths = (item: FastPaths, form: TextForm): FastPaths => ({
   write: item.write,
   accepts: (input) => item.accepts(typeof input === 'string' ? (form(input) ?? input) : input),
   plan: item.plan,
+  parts: { kind: 'text', item },
 });
 
 /**
@@ -159,6 +170,11 @@ export const objectPaths = (
       kind: 'object',
       fields: fields.map(({ key, optional }) => ({ key, optional, plan: planOf(source[key]) })),
       write,
+    },
+    parts: {
+      kind: 'object',
+      fields: fields.map(({ key, optional }) => ({ key, optional, field: source[key] })),
+      strict: options.strict,
     },
   };
 };

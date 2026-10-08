@@ -56,19 +56,19 @@ const adapter = (entry, use) =>
 // Upper bounds in KiB, a little above the sizes measured when they were set, so a change that
 // pulls unused types or helpers into an app's bundle fails here.
 const cases = [
-  ['only Uuid', `import { Uuid } from '${name}'; globalThis.out = Uuid.parse('');`, 26, 9],
+  ['only Uuid', `import { Uuid } from '${name}'; globalThis.out = Uuid.parse('');`, 26, 9.5],
   ['only Email', `import { Email } from '${name}'; globalThis.out = Email.parse('');`, 26, 9],
   [
     'only Integer',
     `import { Integer } from '${name}'; globalThis.out = Integer.parse(1);`,
     24.5,
-    8.5,
+    9,
   ],
   [
     'n.object and three types',
     `import { Email, n, PositiveInteger, Uuid } from '${name}'; globalThis.out = n.object({ id: Uuid, email: Email, age: PositiveInteger }).parse({});`,
-    57.5,
-    19,
+    58,
+    19.5,
   ],
   ['everything', `import * as all from '${name}'; globalThis.out = all;`, 97, 33],
   [
@@ -76,6 +76,12 @@ const cases = [
     `import { PlainDate } from '${name}/temporal'; globalThis.out = PlainDate.parse('');`,
     26,
     9.5,
+  ],
+  [
+    'testing',
+    `import { Email } from '${name}'; import { arbitraryOf } from '${name}/testing'; globalThis.out = arbitraryOf(Email);`,
+    50,
+    18,
   ],
   ['arktype', adapter('arktype', 'toArk'), 27, 9.5],
   ['class-validator', adapter('class-validator', 'NominalField'), 27, 9.5],

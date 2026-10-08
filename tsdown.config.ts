@@ -57,6 +57,7 @@ const config: UserConfig = {
     index: 'src/index.ts',
     'core/n': 'src/core/n.ts',
     'temporal/index': 'src/temporal/index.ts',
+    'testing/index': 'src/testing/index.ts',
     'adapters/nest/index': 'src/adapters/nest/index.ts',
     'adapters/class-validator/index': 'src/adapters/class-validator/index.ts',
     'adapters/swagger/index': 'src/adapters/swagger/index.ts',

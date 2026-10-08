@@ -32,6 +32,9 @@
       "temporal": [
         "./dist/temporal/index.d.cts"
       ],
+      "testing": [
+        "./dist/testing/index.d.cts"
+      ],
       "adapters/*": [
         "./dist/adapters/*/index.d.cts"
       ]
@@ -45,6 +48,10 @@
     "./temporal": {
       "import": "./dist/temporal/index.js",
       "require": "./dist/temporal/index.cjs"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.js",
+      "require": "./dist/testing/index.cjs"
     },
     "./adapters/nest": {
       "import": "./dist/adapters/nest/index.js",
@@ -146,6 +153,7 @@
     "elysia": "^1.4.30",
     "esbuild": "^0.28.2",
     "eslint-plugin-jsdoc": "^65.2.0",
+    "fast-check": "^4.10.2",
     "fastify": "^5.12.5",
     "graphql": "^17.0.2",
     "hono": "^4.13.13",
@@ -178,6 +186,7 @@
     "arktype": "^2.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0 || ^0.15.0",
+    "fast-check": "^4.6.0",
     "fastify": "^5.0.0",
     "graphql": "^16.0.0 || ^17.0.0",
     "rxjs": "^7.2.0",
@@ -203,6 +212,9 @@
       "optional": true
     },
     "class-validator": {
+      "optional": true
+    },
+    "fast-check": {
       "optional": true
     },
     "fastify": {

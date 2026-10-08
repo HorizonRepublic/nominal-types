@@ -1,4 +1,4 @@
-import type { IssueCode, IssueDetails, Messages, NominalIssue } from './issue-codes.ts';
+import type { IssueCode, NominalIssue } from './issue-codes.ts';
 import { settings } from './settings.ts';
 
 const longestShown = 64;
@@ -142,72 +142,10 @@ export interface Wording {
   readonly max?: number | undefined;
 }
 
-interface Draft {
-  readonly code: IssueCode;
-  readonly english: string;
-  readonly hiddenEnglish: string;
-  readonly wording: Wording;
-}
-
-// Kept only for issues a messages function wrote, so `hideValues` can have it write them again
-// with the value hidden, which it can't find in a message it didn't write.
-const drafts = new WeakMap<object, Draft>();
-
-/**
- * Whether issues need more than the English message: a code, or a messages function.
- *
- * @internal
- */
-export const customized = (): boolean => settings.codes || settings.messages !== undefined;
-
 type Path = NominalIssue['path'];
 
-const keysOf = (path: NonNullable<Path>): PropertyKey[] =>
-  path.map((segment) => (typeof segment === 'object' ? segment.key : segment));
-
-const detailsOf = (draft: Draft, path: Path): IssueDetails => {
-  const { description, value, typeName, min, max } = draft.wording;
-
-  return {
-    code: draft.code,
-    message: draft.english,
-    ...(description === undefined ? {} : { description }),
-    ...(value === undefined ? {} : { value }),
-    ...(typeName === undefined ? {} : { typeName }),
-    ...(path === undefined || path.length === 0 ? {} : { path: keysOf(path) }),
-    ...(min === undefined ? {} : { min }),
-    ...(max === undefined ? {} : { max }),
-  };
-};
-
-const formatted = (format: Messages, details: IssueDetails): string | undefined => {
-  const write = typeof format === 'function' ? format : format[details.code];
-
-  return typeof write === 'string' ? write : write?.(details);
-};
-
-const issueWith = (code: IssueCode, message: string, path: Path): NominalIssue => {
-  if (!settings.codes) {
-    return path === undefined ? { message } : { message, path };
-  }
-
-  return path === undefined ? { code, message } : { code, message, path };
-};
-
-const written = (draft: Draft, path: Path): NominalIssue => {
-  const format = settings.messages;
-  const message =
-    format === undefined
-      ? draft.english
-      : (formatted(format, detailsOf(draft, path)) ?? draft.english);
-  const issue = issueWith(draft.code, message, path);
-
-  if (format !== undefined) {
-    drafts.set(issue, draft);
-  }
-
-  return issue;
-};
+const plainIssue = (message: string, path: Path): NominalIssue =>
+  path === undefined ? { message } : { message, path };
 
 /**
  * An issue of this package, with its code when `codes` is set and its message written
@@ -226,12 +164,11 @@ export const issueOf = (
   } = {},
 ): NominalIssue => {
   const { hiddenEnglish = english, wording = {}, path } = options;
+  const { writer } = settings;
 
-  if (!customized()) {
-    return path === undefined ? { message: english } : { message: english, path };
-  }
-
-  return written({ code, english, hiddenEnglish, wording }, path);
+  return writer === undefined
+    ? plainIssue(english, path)
+    : writer.write({ code, english, hiddenEnglish, wording }, path);
 };
 
 /**
@@ -251,17 +188,18 @@ export const valueIssue = (
     readonly path?: Path;
   } = {},
 ): NominalIssue => {
-  const { describe = describeValue, description, typeName, path } = options;
+  const { describe, description, typeName, path } = options;
+  const { writer } = settings;
   const shown = shownValue(value, describe);
   const english = withValue(head, shown);
 
-  if (!customized()) {
-    return path === undefined ? { message: english } : { message: english, path };
+  if (writer === undefined) {
+    return plainIssue(english, path);
   }
 
   const hiddenValue = settings.values === 'hide' ? undefined : describeHidden(value);
 
-  return written(
+  return writer.write(
     {
       code,
       english,
@@ -289,29 +227,6 @@ export const rejectedIssue = (
   });
 
 /**
- * The issue written again with its value hidden, for `hideValues`, when a messages
- * function wrote it; `undefined` for any other issue.
- *
- * @internal
- */
-export const rewrittenHidden = (issue: NominalIssue): NominalIssue | undefined => {
-  const draft = drafts.get(issue);
-
-  if (draft === undefined) {
-    return undefined;
-  }
-
-  return written(
-    {
-      ...draft,
-      english: draft.hiddenEnglish,
-      wording: { ...draft.wording, value: draft.wording.hiddenValue },
-    },
-    issue.path,
-  );
-};
-
-/**
  * An issue of a field or an item, with `key` in front of its path, keeping its code; a
  * messages function writes it again, for the longer path.
  *
@@ -319,13 +234,10 @@ export const rewrittenHidden = (issue: NominalIssue): NominalIssue | undefined =
  */
 export const atPath = (issue: NominalIssue, key: PropertyKey): NominalIssue => {
   const path = [key, ...(issue.path ?? [])];
+  const rewritten = settings.writer?.atPath(issue, path);
 
-  if (settings.messages !== undefined) {
-    const draft = drafts.get(issue);
-
-    if (draft !== undefined) {
-      return written(draft, path);
-    }
+  if (rewritten !== undefined) {
+    return rewritten;
   }
 
   const { code } = issue;

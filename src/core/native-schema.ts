@@ -1,6 +1,6 @@
 import type { IssueCode } from './issue-codes.ts';
 import { forTarget } from './json-target.ts';
-import { customized, describeHidden, describeValue, issueOf, shownValue } from './messages.ts';
+import { describeValue } from './messages.ts';
 import { Rejection } from './rejection.ts';
 import { settings } from './settings.ts';
 import { standardProps } from './standard-props.ts';
@@ -62,25 +62,11 @@ export abstract class NativeSchema<Value> {
     describe: (value: unknown) => string = describeValue,
     typeName?: string,
   ): readonly StandardSchemaV1.Issue[] {
-    const message = this.messageFor(value, describe);
+    const { writer } = settings;
 
-    if (!customized()) {
-      return [{ message }];
-    }
-
-    const hiddenValue = settings.values === 'hide' ? undefined : describeHidden(value);
-
-    return [
-      issueOf(this.codeFor(value), message, {
-        hiddenEnglish: this.messageFor(value, describeHidden),
-        wording: {
-          description: this.descriptionFor(value),
-          value: shownValue(value, describe),
-          hiddenValue,
-          typeName,
-        },
-      }),
-    ];
+    return writer === undefined
+      ? [{ message: this.messageFor(value, describe) }]
+      : [writer.rule(this, value, describe, typeName)];
   }
 
   /**

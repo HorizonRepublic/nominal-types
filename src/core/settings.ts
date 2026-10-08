@@ -1,4 +1,63 @@
-import type { Messages } from './issue-codes.ts';
+import type { IssueCode, Messages, NominalIssue } from './issue-codes.ts';
+import type { Wording } from './messages.ts';
+import type { NativeSchema } from './native-schema.ts';
+
+type Path = NominalIssue['path'];
+
+/**
+ * What an issue is written from: its code, its English message with and without the value, and
+ * the wording a messages function reads.
+ *
+ * @internal
+ */
+export interface Draft {
+  /**
+   * The code of the issue.
+   */
+  readonly code: IssueCode;
+  /**
+   * The English message.
+   */
+  readonly english: string;
+  /**
+   * The English message with the value hidden.
+   */
+  readonly hiddenEnglish: string;
+  /**
+   * What a messages function reads besides the code and the English message.
+   */
+  readonly wording: Wording;
+}
+
+/**
+ * Writes the issues of this package once `n.configure()` has set codes or a messages function;
+ * the English messages need none of it.
+ *
+ * @internal
+ */
+export interface IssueWriter {
+  /**
+   * The issue a draft gives at a path.
+   */
+  readonly write: (draft: Draft, path: Path) => NominalIssue;
+  /**
+   * The issue a rule of this package reports for a rejected value.
+   */
+  readonly rule: (
+    rule: NativeSchema<unknown>,
+    value: unknown,
+    describe: (value: unknown) => string,
+    typeName: string | undefined,
+  ) => NominalIssue;
+  /**
+   * The issue written again for a longer path; `undefined` when it keeps its message.
+   */
+  readonly atPath: (issue: NominalIssue, path: NonNullable<Path>) => NominalIssue | undefined;
+  /**
+   * The issue written again with its value hidden; `undefined` when it wasn't written here.
+   */
+  readonly hidden: (issue: NominalIssue) => NominalIssue | undefined;
+}
 
 /**
  * What `n.configure()` has set, read where it applies: in a message as it is written,
@@ -36,26 +95,33 @@ export interface Settings {
    * Whether checks may be built with generated code.
    */
   codegen: 'auto' | 'off';
+  /**
+   * Writes issues once codes or messages were set, put here by `n.configure()` so the code stays
+   * out of a bundle that never calls it; `undefined` until then.
+   */
+  writer: IssueWriter | undefined;
 }
 
 const key = Symbol.for('@horizon-republic/nominal-types/settings/1');
 
-/**
- * The settings every type starts with, which keep the package as it is unconfigured.
- *
- * @internal
- */
-export const defaults: Readonly<Settings> = Object.freeze({
-  messages: undefined,
-  values: 'show',
-  inspect: 'show',
-  trimStrings: false,
-  codes: false,
-  codegen: 'auto',
-});
+const created = (): Settings => {
+  const fresh: Settings = {
+    messages: undefined,
+    values: 'show',
+    inspect: 'show',
+    trimStrings: false,
+    codes: false,
+    codegen: 'auto',
+    writer: undefined,
+  };
+
+  Reflect.set(globalThis, key, fresh);
+
+  return fresh;
+};
 
 const isSettings = (value: unknown): value is Settings =>
-  typeof value === 'object' && value !== null && typeof Reflect.get(value, 'values') === 'string';
+  typeof value === 'object' && value !== null && 'writer' in value;
 
 const existing: unknown = Reflect.get(globalThis, key);
 
@@ -64,12 +130,4 @@ const existing: unknown = Reflect.get(globalThis, key);
  *
  * @internal
  */
-export const settings: Settings = isSettings(existing)
-  ? existing
-  : (() => {
-      const created: Settings = { ...defaults };
-
-      Reflect.set(globalThis, key, created);
-
-      return created;
-    })();
+export const settings: Settings = isSettings(existing) ? existing : created();

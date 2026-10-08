@@ -53,9 +53,10 @@ AnyNumber                     any number, NaN and the infinities included
         ├── NonNegativeInteger        ≥ 0
         ├── NonPositiveInteger        ≤ 0
         ├── Int8, Int16, Int32
-        ├── Uint8, Uint32
-        └── Uint16                    0 to 65,535
-            └── Port                      1 to 65,535
+        ├── Uint8
+        ├── Uint16                    0 to 65,535
+        │   └── Port                      1 to 65,535
+        └── Uint32
 
 AnyBigInt                     any integer, as a bigint
 ├── PositiveBigInt                ≥ 1

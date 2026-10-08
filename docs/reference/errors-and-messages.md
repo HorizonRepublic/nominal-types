@@ -137,7 +137,7 @@ These facts hold for a sensitive type:
 - For a type that holds an object, the values of all its fields are hidden.
 - `console.log()` shows its instances without the value: `Email { value: <hidden, a string of 16 characters> }`.
 - Its subtypes and variants are sensitive too. `{ sensitive: false }` turns it off for one of them.
-- The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
+- The built-in `Email`, `E164PhoneNumber`, `IpAddress` with the types under it, `MacAddress`, `Iban` and `Jwt` are sensitive.
 - A schema made with [`fromEnv()`](schemas.md#objectschema) hides the values of all its fields in the same way.
 
 Example:

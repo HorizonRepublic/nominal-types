@@ -1,6 +1,7 @@
 import * as fc from 'fast-check';
 import type { Arbitrary } from 'fast-check';
 
+import { codeArbitraries } from './built-in-codes.ts';
 import { grammarArbitraries } from './built-in-grammars.ts';
 import { networkArbitraries } from './built-in-network.ts';
 import { numberArbitraries } from './built-in-numbers.ts';
@@ -57,6 +58,7 @@ const fixed: Readonly<Record<string, () => Arbitrary<unknown>>> = {
   ...numberArbitraries,
   ...networkArbitraries,
   ...textArbitraries,
+  ...codeArbitraries,
 };
 
 /**

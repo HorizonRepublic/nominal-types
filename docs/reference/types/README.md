@@ -11,6 +11,7 @@ AnyString                     any string
 ├── NonEmptyString            at least one character
 │   └── NonBlankString            not only white space
 ├── Email
+├── E164PhoneNumber           a phone number, such as +14155552671
 ├── Uuid                      any version
 │   ├── UuidV4                    random
 │   └── UuidV7                    starts with the time
@@ -28,6 +29,7 @@ AnyString                     any string
 ├── HexColor                  #1e90ff
 ├── Base64                    bytes as text, + and / with = padding
 ├── Base64Url                 bytes as text, - and _ without padding
+├── Jwt                       a token, such as an access token
 ├── Hostname                  localhost, api.example.com
 │   └── DomainName                with a top-level domain
 ├── IpAddress                 IPv4 or IPv6
@@ -40,7 +42,9 @@ AnyString                     any string
 ├── Isbn                      a book, such as 9780306406157
 ├── Issn                      a journal, such as 0378-5955
 ├── Gtin                      a bar code number, EAN or UPC
-└── Isin                      a security, such as US0378331005
+├── Isin                      a security, such as US0378331005
+├── Iban                      a bank account, such as GB82WEST1234…
+└── Bic                       a bank, such as DEUTDEFF
 
 AnyNumber                     any number, NaN and the infinities included
 └── FiniteNumber              any number but NaN and the infinities
@@ -86,7 +90,7 @@ PlainDateTime                 a date and time without an offset
 
 | Page                           | Types                                                |
 | ------------------------------ | ---------------------------------------------------- |
-| [Strings](string.md)           | `AnyString` and the 33 types under it                |
+| [Strings](string.md)           | `AnyString` and the 37 types under it                |
 | [Numbers](number.md)           | `AnyNumber` and the 20 types under it                |
 | [Big integers](bigint.md)      | `AnyBigInt`, its sign types, `Int64`, `Uint64`       |
 | [Booleans](boolean.md)         | `AnyBoolean`                                         |
@@ -98,6 +102,7 @@ PlainDateTime                 a date and time without an offset
 | Value                                       | Type                                                            | Why                                             |
 | ------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------- |
 | an email address                            | `Email`                                                         | checks the address and hides it in messages     |
+| a phone number                              | `E164PhoneNumber`                                               | `+` and digits; hidden in messages              |
 | an id made as a UUID                        | `Uuid`                                                          | any version, any case                           |
 | a UUID made by `crypto.randomUUID()`        | `UuidV4`                                                        | version 4 only                                  |
 | a UUID that sorts by time                   | `UuidV7`                                                        | version 7 only, with its `timestamp`            |
@@ -115,6 +120,7 @@ PlainDateTime                 a date and time without an offset
 | a color from a color picker                 | `HexColor`                                                      | `#` required; channels as numbers               |
 | a file or a key inside JSON                 | `Base64`                                                        | `toBytes()` gives the bytes                     |
 | a part of a token or of a URL               | `Base64Url`                                                     | `-` and `_`, no `=` padding                     |
+| an access token, before you verify it       | `Jwt`                                                           | checks the form only, never the signature       |
 | a server name, such as a database host      | `Hostname`                                                      | `localhost` too; no URL, port or trailing dot   |
 | a domain a user owns, such as `example.com` | `DomainName`                                                    | needs a top-level domain                        |
 | a client or server IP address               | `IpAddress`, or `Ipv4Address` and `Ipv6Address` for one version | `isGlobal` tells internal addresses apart       |
@@ -124,6 +130,8 @@ PlainDateTime                 a date and time without an offset
 | a journal or a magazine                     | `Issn`                                                          | check digit checked                             |
 | the number under a product's bar code       | `Gtin`                                                          | EAN and UPC numbers, check digit checked        |
 | a share or a bond                           | `Isin`                                                          | check digit checked, upper case only            |
+| a bank account                              | `Iban`                                                          | country rules and check digits checked          |
+| a bank, for a transfer abroad               | `Bic`                                                           | the SWIFT code, 8 or 11 characters              |
 | a required name or title                    | `NonBlankString`                                                | not `''` and not only spaces                    |
 | a required text that may be spaces          | `NonEmptyString`                                                | not `''`                                        |
 | free text                                   | `AnyString`                                                     | any string, `''` included                       |

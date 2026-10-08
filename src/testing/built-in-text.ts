@@ -96,7 +96,10 @@ const base64Of = (data: Uint8Array): string => {
   return text;
 };
 
-const base64UrlOf = (data: Uint8Array): string =>
+/**
+ * Internal: bytes as RFC 4648 §5 base64url text, without padding.
+ */
+export const base64UrlOf = (data: Uint8Array): string =>
   base64Of(data).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 
 /**

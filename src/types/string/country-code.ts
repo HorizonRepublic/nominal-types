@@ -4,11 +4,15 @@ import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
-// The 249 officially assigned code elements of ISO 3166-1 alpha-2, as the ISO 3166 Maintenance
-// Agency lists them on 8 October 2026 (the last one added was SS, in 2011), and XK, the code the
-// European Union, banks and payment providers use for Kosovo. Reserved codes such as UK and EU
-// are not assigned to a country and stay out.
-const codes: readonly string[] = Object.freeze(
+/**
+ * Internal: the 249 officially assigned code elements of ISO 3166-1 alpha-2, and XK.
+ *
+ * @remarks
+ * As the ISO 3166 Maintenance Agency lists them on 8 October 2026 (the last one added was SS, in
+ * 2011), and XK, the code the European Union, banks and payment providers use for Kosovo. Reserved
+ * codes such as UK and EU are not assigned to a country and stay out.
+ */
+export const countryCodes: readonly string[] = Object.freeze(
   [
     'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ',
     'BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ',
@@ -39,7 +43,7 @@ const codes: readonly string[] = Object.freeze(
   ].flatMap((row) => row.split(' ')),
 );
 
-const assigned = new Set(codes);
+const assigned = new Set(countryCodes);
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const regionalIndicatorA = 0x1_f1_e6;
@@ -52,7 +56,7 @@ const CountryCodeBase: SubtypeOf<typeof AnyString, 'nominal.CountryCode'> = AnyS
   stringOnly(
     satisfying(isCountryCode, 'an ISO 3166-1 alpha-2 country code', {
       type: 'string',
-      enum: codes,
+      enum: countryCodes,
       minLength: 2,
       maxLength: 2,
       examples: ['US'],
@@ -81,7 +85,7 @@ export class CountryCode extends CountryCodeBase {
   /**
    * Every code the type accepts, in alphabetical order.
    */
-  public static readonly codes: readonly string[] = codes;
+  public static readonly codes: readonly string[] = countryCodes;
 
   /**
    * The flag emoji, written as the two regional indicator symbols for the code.

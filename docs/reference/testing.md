@@ -40,25 +40,29 @@ A value from an override is still checked: values the type or schema refuses are
 
 Each built-in type has its own generator. It makes values from the whole range of the type, edges included:
 
-| Types                                                | What the values include                                                                                       |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Number types                                         | the lowest and highest value, the numbers next to an excluded bound, `-0` where the rule takes it             |
-| `AnyNumber`                                          | `NaN`, `Infinity` and `-Infinity` as well                                                                     |
-| Big integer types                                    | bigints, decimal text and safe integers, out to the bounds and to text of 1000 characters                     |
-| `Email`                                              | dots, plus tags, `xn--` top-level domains, 6 and 254 characters, 64 characters before the `@`                 |
-| `Hostname`, `DomainName`                             | labels of 63 characters, names of 253 characters, `xn--` labels that decode, either case                      |
-| `Url`, `HttpUrl`                                     | many schemes, hosts by name, IPv4 and IPv6, ports, paths, queries and fragments, `HTTP` in any case           |
-| `IpAddress`, `Ipv4Address`, `Ipv6Address`            | every IPv6 text form, `::` and an IPv4 part included                                                          |
-| `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`               | every prefix length, host bits zero                                                                           |
-| `Uuid`, `UuidV4`, `UuidV7`                           | every version, either case, the nil and max UUIDs                                                             |
-| `Isbn`, `Issn`, `Gtin`, `Isin`                       | every length, valid check digits, `X` where it is allowed                                                     |
-| `CountryCode`, `CurrencyCode`                        | every code in the list                                                                                        |
-| `LanguageTag`, `SemVer`, `MediaType`                 | every part of the grammar, such as extensions, prereleases and parameters                                     |
-| `Base64`, `Base64Url`                                | the text of byte strings of 0 to 48 bytes                                                                     |
-| `DecimalString`                                      | either sign, `0`, fractions, text of 100 characters                                                           |
-| `TypeId`                                             | ids with and without a prefix, prefixes of 63 characters; a type from `TypeId.withPrefix()` gets its prefix   |
-| `Money`                                              | every currency, with no more digits after the point than its minor units; up to 8 for a currency without them |
-| `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` | text from year 0000 to 9999, and Temporal objects when the runtime has `Temporal`                             |
+| Types                                                | What the values include                                                                                                                  |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Number types                                         | the lowest and highest value, the numbers next to an excluded bound, `-0` where the rule takes it                                        |
+| `AnyNumber`                                          | `NaN`, `Infinity` and `-Infinity` as well                                                                                                |
+| Big integer types                                    | bigints, decimal text and safe integers, out to the bounds and to text of 1000 characters                                                |
+| `Email`                                              | dots, plus tags, `xn--` top-level domains, 6 and 254 characters, 64 characters before the `@`                                            |
+| `Hostname`, `DomainName`                             | labels of 63 characters, names of 253 characters, `xn--` labels that decode, either case                                                 |
+| `Url`, `HttpUrl`                                     | many schemes, hosts by name, IPv4 and IPv6, ports, paths, queries and fragments, `HTTP` in any case                                      |
+| `IpAddress`, `Ipv4Address`, `Ipv6Address`            | every IPv6 text form, `::` and an IPv4 part included                                                                                     |
+| `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`               | every prefix length, host bits zero                                                                                                      |
+| `Uuid`, `UuidV4`, `UuidV7`                           | every version, either case, the nil and max UUIDs                                                                                        |
+| `Isbn`, `Issn`, `Gtin`, `Isin`                       | every length, valid check digits, `X` where it is allowed                                                                                |
+| `CountryCode`, `CurrencyCode`                        | every code in the list                                                                                                                   |
+| `E164PhoneNumber`                                    | every country calling code, numbers up to 15 digits                                                                                      |
+| `Iban`                                               | every country of the registry with its BBAN shape, valid check digits                                                                    |
+| `Bic`                                                | 8 and 11 characters, every country `CountryCode` accepts                                                                                 |
+| `Jwt`                                                | many `alg` values, `none` with an empty signature, `exp`, `nbf` and `iat` as whole and fractional numbers, tokens up to 8,192 characters |
+| `LanguageTag`, `SemVer`, `MediaType`                 | every part of the grammar, such as extensions, prereleases and parameters                                                                |
+| `Base64`, `Base64Url`                                | the text of byte strings of 0 to 48 bytes                                                                                                |
+| `DecimalString`                                      | either sign, `0`, fractions, text of 100 characters                                                                                      |
+| `TypeId`                                             | ids with and without a prefix, prefixes of 63 characters; a type from `TypeId.withPrefix()` gets its prefix                              |
+| `Money`                                              | every currency, with no more digits after the point than its minor units; up to 8 for a currency without them                            |
+| `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` | text from year 0000 to 9999, and Temporal objects when the runtime has `Temporal`                                                        |
 
 Other string types are made from their pattern, such as `HexColor`, `MacAddress`, `ObjectId` and `Ulid`.
 

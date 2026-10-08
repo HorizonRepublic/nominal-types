@@ -174,5 +174,9 @@ JSON Schema can't express every rule. Then the schema accepts more than the type
 | `Hostname`, `DomainName`                                                                                             | the check that an `xn--` label decodes                                             |
 | `IpPrefix` and its subtypes                                                                                          | the check that the host bits are zero                                              |
 | `Isbn`, `Issn`, `Gtin`, `Isin`                                                                                       | the check digit                                                                    |
+| `Iban`                                                                                                               | the rules of each country and the check digits                                     |
+| `Bic`                                                                                                                | the check that the country exists                                                  |
+| `E164PhoneNumber`                                                                                                    | the check that the country calling code is assigned                                |
+| `Jwt`                                                                                                                | the check that the header and the payload are JSON objects                         |
 
 [← Reference](README.md)

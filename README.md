@@ -131,7 +131,7 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 
 ## Built-in types
 
-- Strings: `AnyString`, `NonEmptyString`, `NonBlankString`, `Email`, `Uuid`, `UuidV4`, `UuidV7`, `Ulid`, `TypeId`, `ObjectId`, `SemVer`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `DecimalString`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url`, `Hostname`, `DomainName`, `IpAddress`, `Ipv4Address`, `Ipv6Address`, `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`, `MacAddress`, `Isbn`, `Issn`, `Gtin`, `Isin`.
+- Strings: `AnyString`, `NonEmptyString`, `NonBlankString`, `Email`, `E164PhoneNumber`, `Uuid`, `UuidV4`, `UuidV7`, `Ulid`, `TypeId`, `ObjectId`, `SemVer`, `Url`, `HttpUrl`, `CountryCode`, `CurrencyCode`, `DecimalString`, `LanguageTag`, `MediaType`, `HexColor`, `Base64`, `Base64Url`, `Jwt`, `Hostname`, `DomainName`, `IpAddress`, `Ipv4Address`, `Ipv6Address`, `IpPrefix`, `Ipv4Prefix`, `Ipv6Prefix`, `MacAddress`, `Isbn`, `Issn`, `Gtin`, `Isin`, `Iban`, `Bic`.
 - Numbers: `AnyNumber`, `FiniteNumber`, `PositiveNumber`, `NegativeNumber`, `NonNegativeNumber`, `NonPositiveNumber`, `Float32`, `Latitude`, `Longitude`, `Integer`, `PositiveInteger`, `NegativeInteger`, `NonNegativeInteger`, `NonPositiveInteger`, `Int8`, `Int16`, `Int32`, `Uint8`, `Uint16`, `Uint32`, `Port`.
 - Big integers: `AnyBigInt`, `PositiveBigInt`, `NegativeBigInt`, `NonNegativeBigInt`, `NonPositiveBigInt`, `Int64`, `Uint64`.
 - Booleans: `AnyBoolean`.

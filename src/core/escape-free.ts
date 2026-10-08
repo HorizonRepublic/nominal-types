@@ -7,15 +7,19 @@ import { isClashed } from './registry.ts';
 // Built-in types whose rule is a guard rather than a pattern, and whose text never holds `"`, `\`
 // or a control character; the tests prove each of them. A subtype or a subclass inherits the rule.
 const escapeFreeTypes: ReadonlySet<string> = new Set([
+  'nominal.Bic',
   'nominal.CountryCode',
   'nominal.CurrencyCode',
+  'nominal.E164PhoneNumber',
   'nominal.Gtin',
   'nominal.Hostname',
+  'nominal.Iban',
   'nominal.IpAddress',
   'nominal.IpPrefix',
   'nominal.Isbn',
   'nominal.Isin',
   'nominal.Issn',
+  'nominal.Jwt',
   'nominal.LanguageTag',
 ]);
 

@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { AnyString, matching, Nominal, satisfying } from '../../src/index.ts';
+import { AnyString, n, Nominal } from '../../src/index.ts';
 
 const openApi = { target: 'openapi-3.0' } as const;
 
@@ -20,7 +20,7 @@ describe('JSON Schema for OpenAPI 3.0', () => {
   it('picks its example from those the whole type accepts', () => {
     const Sku = AnyString.subtype(
       'openapi.Sku',
-      matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['ABC-1234', 'TOY-0001'] }),
+      n.matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU', { examples: ['ABC-1234', 'TOY-0001'] }),
     );
     const ToySku = Sku.subtype('openapi.ToySku', /^TOY-/u);
 
@@ -33,7 +33,7 @@ describe('JSON Schema for OpenAPI 3.0', () => {
     ['Binary', { contentEncoding: 'base64', format: 'binary' }, { format: 'binary' }],
     ['Base32', { contentEncoding: 'base32' }, {}],
   ])('writes the encoding of %s without contentEncoding', (name, json, written) => {
-    const rule = matching(/^[A-Z]*$/u, 'encoded text', json);
+    const rule = n.matching(/^[A-Z]*$/u, 'encoded text', json);
     const Encoded = AnyString.subtype(`openapi.${name}`, rule);
 
     for (const schema of [
@@ -48,7 +48,7 @@ describe('JSON Schema for OpenAPI 3.0', () => {
   it('names the type whose rule has no JSON Schema, on every target', () => {
     const Even = Nominal(
       'openapi.Even',
-      satisfying((value: unknown): value is number => value === 2, 'two'),
+      n.satisfying((value: unknown): value is number => value === 2, 'two'),
     );
 
     for (const target of ['draft-2020-12', 'draft-07', 'openapi-3.0'] as const) {

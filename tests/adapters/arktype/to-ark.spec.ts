@@ -11,10 +11,10 @@ import {
   Email,
   Int8,
   Integer,
+  n,
   Nominal,
   NonNegativeInteger,
   PositiveInteger,
-  schemaOf,
   Uint8,
   Url,
   Uuid,
@@ -93,7 +93,7 @@ describe('toArk', () => {
   it('reports every issue of a type holding an object, with its path, in one message', () => {
     class Range extends Nominal(
       'ArkRange',
-      type({ start: schemaOf(PositiveInteger), end: schemaOf(PositiveInteger) }),
+      type({ start: n.of(PositiveInteger), end: n.of(PositiveInteger) }),
     ) {}
 
     const schema = fromArk(type({ range: toArk(Range) }));

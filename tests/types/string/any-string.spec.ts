@@ -21,12 +21,11 @@ import {
   Issn,
   LanguageTag,
   MacAddress,
-  matching,
+  n,
   NominalError,
   NonBlankString,
   NonEmptyString,
   ObjectId,
-  satisfying,
   SemVer,
   Ulid,
   Url,
@@ -154,9 +153,9 @@ describe('types under AnyString', () => {
   });
 
   it('leaves the string check out in front of a rule that checks for a string itself', () => {
-    const pattern = matching(/^a/u);
-    const guard = satisfying(isA, 'a');
-    const marked = stringOnly(satisfying(isA, 'a'));
+    const pattern = n.matching(/^a/u);
+    const guard = n.satisfying(isA, 'a');
+    const marked = stringOnly(n.satisfying(isA, 'a'));
 
     expect(withoutImpliedString([stringRule, pattern])).toStrictEqual([pattern]);
     expect(withoutImpliedString([stringRule, marked, guard])).toStrictEqual([marked, guard]);

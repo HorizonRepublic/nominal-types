@@ -2,16 +2,16 @@ import { type } from 'arktype';
 import { describe, expect, it, vi } from 'vitest';
 
 import { toArk, fromArk, constrainArk } from '../../../src/adapters/arktype/index.ts';
-import { constraint, PositiveInteger } from '../../../src/index.ts';
+import { n, PositiveInteger } from '../../../src/index.ts';
 import { issuesOf, valueOf } from '../../support/results.ts';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
 );
 
-const atMostTen = constraint(
+const atMostTen = n.constraint(
   { capacity: PositiveInteger },
   ({ capacity }) => capacity.value <= 10,
   {
@@ -105,7 +105,7 @@ describe('constraints in fromArk', () => {
     const check = vi.fn<() => boolean>(() => true);
     const Booking = fromArk(
       type({ guests: toArk(PositiveInteger) }),
-      constraint({ guests: PositiveInteger }, check),
+      n.constraint({ guests: PositiveInteger }, check),
     );
 
     expect(issuesOf(Booking.parse({ guests: 0 }))).toHaveLength(1);

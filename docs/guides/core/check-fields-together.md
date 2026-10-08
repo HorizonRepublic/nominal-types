@@ -9,23 +9,23 @@ A type checks one value. A [constraint](../../reference/glossary.md) reads sever
 List the fields the rule reads, with their types. Then write the check:
 
 ```ts
-import { constraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => (guests.value <= capacity.value ? true : 'must not exceed the capacity'),
   { path: 'guests' },
 );
 
-const BookRoom = objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity);
+const BookRoom = n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity);
 
 BookRoom.parse({ guests: 2, capacity: 3 }); // { ok: true, value: { guests: PositiveInteger, capacity: PositiveInteger } }
 BookRoom.parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'must not exceed the capacity', path: ['guests'] }] }
 ```
 
-The check gets each field as an instance of its type. Pass constraints to `objectOf()` after the fields.
+The check gets each field as an instance of its type. Pass constraints to `n.object()` after the fields.
 
-Every field a constraint reads must also be a field of the object. Otherwise `objectOf()` throws a `TypeError` when you declare it: `objectOf: a constraint reads capacity, which the object does not declare`.
+Every field a constraint reads must also be a field of the object. Otherwise `n.object()` throws a `TypeError` when you declare it: `n.object: a constraint reads capacity, which the object does not declare`.
 
 The check returns:
 
@@ -40,18 +40,18 @@ The check returns:
 `path` names the field the issue belongs to. Without `path`, the issue belongs to the whole object:
 
 ```ts
-import { constraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 const fields = { guests: PositiveInteger, capacity: PositiveInteger };
 
-const onGuests = constraint(fields, ({ guests, capacity }) => guests.value <= capacity.value, {
+const onGuests = n.constraint(fields, ({ guests, capacity }) => guests.value <= capacity.value, {
   path: 'guests',
   message: 'too many guests',
 });
-const onObject = constraint(fields, ({ guests, capacity }) => guests.value <= capacity.value);
+const onObject = n.constraint(fields, ({ guests, capacity }) => guests.value <= capacity.value);
 
-objectOf(fields, onGuests).parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'too many guests', path: ['guests'] }] }
-objectOf(fields, onObject).parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'guests, capacity must agree' }] }
+n.object(fields, onGuests).parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'too many guests', path: ['guests'] }] }
+n.object(fields, onObject).parse({ guests: 4, capacity: 3 }); // { ok: false, issues: [{ message: 'guests, capacity must agree' }] }
 ```
 
 ## Know when the check runs
@@ -59,15 +59,15 @@ objectOf(fields, onObject).parse({ guests: 4, capacity: 3 }); // { ok: false, is
 The check runs only when every field is valid. An invalid field gets its own message, and the check is skipped:
 
 ```ts
-import { constraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => (guests.value <= capacity.value ? true : 'must not exceed the capacity'),
   { path: 'guests' },
 );
 
-const BookRoom = objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity);
+const BookRoom = n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity);
 
 BookRoom.parse({ guests: 0, capacity: 3 }); // { ok: false, issues: [{ message: 'must be a positive integer (was 0)', path: ['guests'] }] }
 ```
@@ -79,20 +79,20 @@ So the check never handles a missing or wrong field.
 Pass them one after another. Each one that fails adds its issue:
 
 ```ts
-import { constraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => (guests.value <= capacity.value ? true : 'must not exceed the capacity'),
   { path: 'guests' },
 );
-const adultsAmongGuests = constraint(
+const adultsAmongGuests = n.constraint(
   { guests: PositiveInteger, adults: PositiveInteger },
   ({ guests, adults }) => (adults.value <= guests.value ? true : 'must not exceed the guests'),
   { path: 'adults' },
 );
 
-const BookRoom = objectOf(
+const BookRoom = n.object(
   { guests: PositiveInteger, adults: PositiveInteger, capacity: PositiveInteger },
   withinCapacity,
   adultsAmongGuests,
@@ -107,22 +107,22 @@ BookRoom.parse({ guests: 4, adults: 5, capacity: 3 });
 
 ## Read a list or a field of another library
 
-A field of a constraint can be a `schemaOf()` schema or a schema from another library:
+A field of a constraint can be an `n.of()` schema or a schema from another library:
 
 ```ts
-import { constraint, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 import { z } from 'zod';
 
-const fields = { prices: schemaOf(PositiveInteger).array(), budget: z.number() };
+const fields = { prices: n.of(PositiveInteger).array(), budget: z.number() };
 
-const withinBudget = constraint(
+const withinBudget = n.constraint(
   fields,
   ({ prices, budget }) =>
     prices.reduce((sum, price) => sum + price.value, 0) <= budget ? true : 'must not exceed the budget',
   { path: 'prices' },
 );
 
-const Basket = objectOf(fields, withinBudget);
+const Basket = n.object(fields, withinBudget);
 
 Basket.parse({ prices: [30, 80], budget: 100 }); // { ok: false, issues: [{ message: 'must not exceed the budget', path: ['prices'] }] }
 ```
@@ -134,7 +134,7 @@ Basket.parse({ prices: [30, 80], budget: 100 }); // { ok: false, issues: [{ mess
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `constraint()` and its options.
-- [How to check a request body with objectOf()](check-an-object.md)
+- [Schemas](../../reference/schemas.md): `n.constraint()` and its options.
+- [How to check a request body with n.object()](check-an-object.md)
 
 [← Guides](../README.md)

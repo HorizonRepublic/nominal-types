@@ -92,22 +92,22 @@ const checkOf =
  * becomes an instance, and a value the type rejects fails validation with the type's message.
  *
  * @remarks
- * Takes a nominal type or a `schemaOf()` schema, so `schemaOf(Uuid).array()` and
- * `schemaOf(Email).optional()` describe lists and optional properties. The value becomes an
+ * Takes a nominal type or a `n.of()` schema, so `n.of(Uuid).array()` and
+ * `n.of(Email).optional()` describe lists and optional properties. The value becomes an
  * instance only when the DTO is built with `plainToInstance`, which NestJS's `ValidationPipe` does
  * with `transform: true`; validation works either way. Turning the DTO back into a plain object
  * with `instanceToPlain`, as NestJS's `ClassSerializerInterceptor` does, gives each instance's
  * value again, or what `serialize` makes of it. The property counts as known for `whitelist`.
  * The other options are class-validator's own, such as `message` or `groups`.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `schemaOf()` schema.
+ * @throws TypeError when `target` is neither a nominal type nor a `n.of()` schema.
  *
  * @example
  * ```ts
  * class CreateOrderDto {
  *   @NominalField(Email) contact!: Email;
- *   @NominalField(schemaOf(Uuid).array({ min: 1, max: 50 })) items!: readonly Uuid[];
- *   @NominalField(schemaOf(Email).optional()) backup?: Email;
+ *   @NominalField(n.of(Uuid).array({ min: 1, max: 50 })) items!: readonly Uuid[];
+ *   @NominalField(n.of(Email).optional()) backup?: Email;
  * }
  * ```
  */
@@ -116,7 +116,7 @@ export const NominalField = <Target extends NominalTarget>(
   options: NominalFieldOptions<TargetValue<Target>> = {},
 ): PropertyDecorator => {
   if (!isTarget(target)) {
-    throw new TypeError('NominalField() takes a nominal type or a schemaOf() schema');
+    throw new TypeError('NominalField() takes a nominal type or an n.of() schema');
   }
 
   const { serialize, ...validation } = options;

@@ -1,6 +1,6 @@
-# How to check a request body with objectOf()
+# How to check a request body with n.object()
 
-This guide shows how to check an object, such as a request body or a message, with `objectOf()` and no other library.
+This guide shows how to check an object, such as a request body or a message, with `n.object()` and no other library.
 
 This is the way to check bodies in new code. If you already use ArkType, Zod, Valibot or class-validator, see its guide under [Guides](../README.md).
 
@@ -10,16 +10,16 @@ List the fields and their types:
 
 ```ts
 // create-order.ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 import type { ValueOf } from '@horizon-republic/nominal-types';
 
 export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-export const CreateOrder = objectOf({
+export const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 export type CreateOrder = ValueOf<typeof CreateOrder>;
@@ -90,17 +90,17 @@ CreateOrder.strict().parse(body); // { ok: false, issues: [{ message: 'is not al
 
 ## Nest objects and lists of objects
 
-A field can be another `objectOf()`, or a list of them with `.array()`:
+A field can be another `n.object()`, or a list of them with `.array()`:
 
 ```ts
-import { AnyString, Email, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-const PlaceOrder = objectOf({
+const PlaceOrder = n.object({
   customer: Email,
-  address: objectOf({ city: AnyString, street: AnyString }),
-  items: objectOf({ sku: Sku, quantity: PositiveInteger }).array({ min: 1 }),
+  address: n.object({ city: AnyString, street: AnyString }),
+  items: n.object({ sku: Sku, quantity: PositiveInteger }).array({ min: 1 }),
 });
 
 PlaceOrder.parse({
@@ -121,11 +121,11 @@ For lists, missing values and `null`, see [How to accept lists, missing values a
 A field can be any Standard Schema that answers at once, such as Zod or ArkType:
 
 ```ts
-import { Email, objectOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 import { type } from 'arktype';
 import { z } from 'zod';
 
-const Search = objectOf({
+const Search = n.object({
   customer: Email,
   limit: type('1 <= number.integer <= 100'),
   sort: z.enum(['newest', 'oldest']),
@@ -140,11 +140,11 @@ Search.parse({ customer: 'jane@example.com', limit: 500, sort: 'top' });
 
 ## Limits
 
-`objectOf()` has no unions of different object shapes, recursive schemas, transforms or asynchronous checks. For those, use ArkType with its adapter: [How to use nominal types with ArkType](../validators/arktype.md).
+`n.object()` has no unions of different object shapes, recursive schemas, transforms or asynchronous checks. For those, use ArkType with its adapter: [How to use nominal types with ArkType](../validators/arktype.md).
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `objectOf()`, `strict()` and `keys`.
+- [Schemas](../../reference/schemas.md): `n.object()`, `strict()` and `keys`.
 - [How to check one field against another](check-fields-together.md)
 - [How to use nominal types with NestJS](../frameworks/nestjs.md), for the same schema in a controller.
 - [How to get a JSON Schema for a type](../api-docs/json-schema.md), for the same schema in API docs.

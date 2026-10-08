@@ -10,7 +10,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { NominalField } from '../../../src/adapters/class-validator/index.ts';
 import { ApiNominalProperty, applyNominalTypes } from '../../../src/adapters/swagger/index.ts';
-import { AnyString, Email, schemaOf, Uuid } from '../../../src/index.ts';
+import { AnyString, Email, n, Uuid } from '../../../src/index.ts';
 import { nestMajor } from '../nest/support.ts';
 
 class UserId extends Uuid.subtype('UserId') {}
@@ -19,10 +19,10 @@ class ManualDto {
   @ApiNominalProperty(Email)
   public contact!: Email;
 
-  @ApiNominalProperty(schemaOf(Uuid).array({ min: 1, max: 5 }))
+  @ApiNominalProperty(n.of(Uuid).array({ min: 1, max: 5 }))
   public items!: readonly Uuid[];
 
-  @ApiNominalProperty(schemaOf(Email).optional())
+  @ApiNominalProperty(n.of(Email).optional())
   public backup?: Email;
 
   @ApiNominalProperty(Email, { description: 'Where invoices go' })
@@ -189,12 +189,12 @@ describe('ApiNominalProperty', () => {
 });
 
 describe.runIf(nestMajor >= 12)('the Nest 12 schema option', () => {
-  it('describes a schemaOf() schema inline and a class through applyNominalTypes', async () => {
+  it('describes a n.of() schema inline and a class through applyNominalTypes', async () => {
     @Controller('search')
     class SearchController {
       @Get()
       public search(
-        @Query('ids', { schema: schemaOf(Uuid).array({ max: 5 }) }) ids: readonly Uuid[],
+        @Query('ids', { schema: n.of(Uuid).array({ max: 5 }) }) ids: readonly Uuid[],
         @Query('owner', { schema: UserId }) owner: UserId,
       ): unknown {
         return [ids, owner];

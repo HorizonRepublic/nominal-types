@@ -1,6 +1,6 @@
 # How to check untrusted input
 
-This guide shows how to check a value from outside your code, such as a form field or a message, without `try`/`catch`. For a whole request body, see [How to check a request body with objectOf()](check-an-object.md).
+This guide shows how to check a value from outside your code, such as a form field or a message, without `try`/`catch`. For a whole request body, see [How to check a request body with n.object()](check-an-object.md).
 
 ## Check a value with parse()
 

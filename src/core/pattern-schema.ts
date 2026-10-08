@@ -64,7 +64,7 @@ export class PatternSchema extends NativeSchema<string> {
  *
  * @example
  * ```ts
- * export class Sku extends Nominal('Sku', matching(/^SKU-\d{4}$/u, 'a SKU')) {}
+ * export class Sku extends Nominal('Sku', n.matching(/^SKU-\d{4}$/u, 'a SKU')) {}
  * ```
  */
 export const matching = (

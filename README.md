@@ -81,7 +81,7 @@ Validators:
 - [Zod](https://zod.dev) 4: `toZod()` from `adapters/zod`. [Guide](docs/guides/validators/zod.md)
 - [Valibot](https://valibot.dev) 1: `toValibot()` from `adapters/valibot`. [Guide](docs/guides/validators/valibot.md)
 - [class-validator](https://github.com/typestack/class-validator) 0.14 and 0.15: `@NominalField()` from `adapters/class-validator`. [Guide](docs/guides/validators/class-validator.md)
-- any [Standard Schema](https://standardschema.dev) library: the type itself, or `schemaOf(Type)`, with no adapter. [Guide](docs/guides/validators/standard-schema.md)
+- any [Standard Schema](https://standardschema.dev) library: the type itself, or `n.of(Type)`, with no adapter. [Guide](docs/guides/validators/standard-schema.md)
 
 Web frameworks:
 
@@ -108,8 +108,8 @@ Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-rep
 
 ## What else it does
 
-- [Check a whole request body](docs/guides/core/check-an-object.md) with `objectOf()`, with no other library.
-- [Check one field against another](docs/guides/core/check-fields-together.md) with `constraint()`.
+- [Check a whole request body](docs/guides/core/check-an-object.md) with `n.object()`, with no other library.
+- [Check one field against another](docs/guides/core/check-fields-together.md) with `n.constraint()`.
 - [Make a value object](docs/guides/core/make-a-value-object.md) of several fields, with getters and `copyWith()`.
 - [Read configuration from environment variables](docs/guides/core/read-config.md) with `fromEnv()`.
 - [Keep values out of error messages](docs/guides/core/hide-values.md), such as passwords.

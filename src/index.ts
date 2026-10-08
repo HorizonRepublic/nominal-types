@@ -1,4 +1,22 @@
-export { isNominalType, Nominal } from './core/nominal.ts';
+export { Nominal } from './core/nominal.ts';
+/**
+ * The functions that build schemas, rules and checks, gathered under one name so a single
+ * import brings all of them.
+ *
+ * @remarks
+ * `n.object()` and `n.of()` build schemas, `n.constraint()` checks fields together,
+ * `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`, `n.hideValues()`
+ * masks values in issues, and `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a
+ * value is.
+ *
+ * @example
+ * ```ts
+ * import { Email, n, Uuid } from '@horizon-republic/nominal-types';
+ *
+ * const CreateOrder = n.object({ customer: Uuid, contact: Email, items: n.of(Uuid).array() });
+ * ```
+ */
+export * as n from './core/n.ts';
 export type {
   AnyNominalType,
   Brand,
@@ -22,13 +40,12 @@ export type {
   ValueOf,
 } from './core/contracts.ts';
 export { NominalError } from './core/nominal-error.ts';
-export { hideValues } from './core/hidden-values.ts';
-export { matching, PatternSchema } from './core/pattern-schema.ts';
-export { PredicateSchema, satisfying } from './core/predicate-schema.ts';
-export { oneOf, OneOfSchema } from './core/one-of.ts';
+export { PatternSchema } from './core/pattern-schema.ts';
+export { PredicateSchema } from './core/predicate-schema.ts';
+export { OneOfSchema } from './core/one-of.ts';
 export type { OneOfValue } from './core/one-of.ts';
 export type { StandardProps, StandardSchema } from './core/standard-schema.ts';
-export { isConstraint, Constraint, constraint } from './core/constraint.ts';
+export { Constraint } from './core/constraint.ts';
 export type {
   AnyConstraint,
   ConstraintField,
@@ -39,9 +56,9 @@ export type {
   ConstraintValues,
   ConstraintVerdict,
 } from './core/constraint-types.ts';
-export { isObjectSchema, ObjectSchema, objectOf } from './core/object-schema.ts';
+export { ObjectSchema } from './core/object-schema.ts';
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
-export { schemaOf, TypeSchema } from './core/type-schema.ts';
+export { TypeSchema } from './core/type-schema.ts';
 export type { NominalTarget, TargetValue } from './core/target.ts';
 export type { ArrayOptions } from './core/array-bounds.ts';
 export { AnyBigInt } from './types/bigint/any-bigint.ts';

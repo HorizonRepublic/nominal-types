@@ -12,8 +12,8 @@ import { textFormOf } from '../../core/text-form.ts';
 import { isArraySchema } from '../../core/type-schema.ts';
 
 /**
- * What `NominalPipe` checks a value against: a nominal type, a schema built by `schemaOf()` or
- * `objectOf()`, or any synchronous Standard Schema, such as one from `fromArk()` or Zod.
+ * What `NominalPipe` checks a value against: a nominal type, a schema built by `n.of()` or
+ * `n.object()`, or any synchronous Standard Schema, such as one from `fromArk()` or Zod.
  */
 export type NominalPipeTarget = NominalTarget | StandardSchemaV1;
 
@@ -56,7 +56,7 @@ export interface NominalPipeOptions {
   readonly exceptionFactory?: NominalExceptionFactory;
   /**
    * Whether a string from a query string or a route parameter is read as the value of a number or
-   * boolean type, so `?page=2` becomes `2`. On by default; a `schemaOf()` schema reads text only
+   * boolean type, so `?page=2` becomes `2`. On by default; a `n.of()` schema reads text only
    * through its own `fromString()`.
    */
   readonly fromString?: boolean;
@@ -89,8 +89,8 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
  * Validates a route argument into a nominal type and hands the handler the instance.
  *
  * @remarks
- * Given a type or a `schemaOf()` schema, it checks that. Given none, it uses the parameter's
- * `{ schema }` on Nest 12 when that is a nominal type or a `schemaOf()` schema, else the type the
+ * Given a type or a `n.of()` schema, it checks that. Given none, it uses the parameter's
+ * `{ schema }` on Nest 12 when that is a nominal type or a `n.of()` schema, else the type the
  * parameter is declared with, and passes every other argument through untouched; that makes it
  * safe to bind globally. Declared types lose array items and `?`, so `Uuid[]` needs a schema,
  * and a missing value of a declared type is passed on as `undefined`; to require it, give the
@@ -109,7 +109,7 @@ const targetOf = (metadata: ArgumentMetadata): NominalPipeTarget | undefined => 
  * findOne(@Param('id', new NominalPipe(Uuid)) id: Uuid) {}
  *
  * @Get()
- * list(@Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {}
+ * list(@Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {}
  * ```
  */
 export class NominalPipe implements PipeTransform<unknown, unknown> {

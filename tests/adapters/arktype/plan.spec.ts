@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { toArk, fromArk, constrainArk } from '../../../src/adapters/arktype/index.ts';
 import { describeArk } from '../../../src/adapters/arktype/json.ts';
 import { planOf } from '../../../src/adapters/arktype/plan.ts';
-import { constraint, Email, PositiveInteger, Uuid } from '../../../src/index.ts';
+import { Email, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { issuesOf } from '../../support/results.ts';
 
 const leaf = toArk(Uuid).json;
@@ -36,7 +36,7 @@ const problemOf = (node: { readonly meta: object }, data: unknown): unknown => {
   return typeof problem === 'function' ? Reflect.apply(problem, undefined, [{ data }]) : undefined;
 };
 
-const positive = constraint({ count: PositiveInteger }, () => false, { message: 'never' });
+const positive = n.constraint({ count: PositiveInteger }, () => false, { message: 'never' });
 const Counted = constrainArk(type({ count: toArk(PositiveInteger) }), positive);
 
 describe('plan internals', () => {

@@ -15,7 +15,7 @@ export const isConstraint = (value: unknown): value is AnyConstraint =>
  * Internal: throws when a constraint reads a key the object it is attached to doesn't declare.
  *
  * @remarks
- * Objects that drop undeclared keys before their constraints run, such as `objectOf()` and Zod's
+ * Objects that drop undeclared keys before their constraints run, such as `n.object()` and Zod's
  * and Valibot's objects, would fail such a constraint on every value; the mistake is in the
  * declaration, so it is reported where it is made.
  *

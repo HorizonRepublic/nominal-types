@@ -5,13 +5,13 @@ import type { NominalTarget, TargetValue } from './target.ts';
 import type { TypeSchema } from './type-schema.ts';
 
 /**
- * What a field of a constraint is checked against: a nominal type, a `schemaOf()` schema or any
+ * What a field of a constraint is checked against: a nominal type, a `n.of()` schema or any
  * synchronous Standard Schema, for fields that are no nominal type.
  */
 export type ConstraintField = NominalTarget | StandardSchemaV1;
 
 /**
- * The value a constraint's check receives for a field: an instance, what a `schemaOf()` schema
+ * The value a constraint's check receives for a field: an instance, what a `n.of()` schema
  * gives, or the output of another schema.
  */
 export type ConstraintValue<Field extends ConstraintField> = Field extends NominalTarget
@@ -53,7 +53,7 @@ export type ConstraintInputs<Fields extends Readonly<Record<string, ConstraintFi
 export type ConstraintVerdict = boolean | string;
 
 /**
- * Options of `constraint()`.
+ * Options of `n.constraint()`.
  */
 export interface ConstraintOptions<Key extends string> {
   /**

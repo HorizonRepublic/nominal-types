@@ -11,7 +11,7 @@ import type { Describe, Run } from './standard-props.ts';
 import type { TextForm } from './text-form.ts';
 
 /**
- * Internal: how a `schemaOf()` schema runs and describes itself, without `$schema`.
+ * Internal: how a `n.of()` schema runs and describes itself, without `$schema`.
  */
 export interface Shape<Output> {
   readonly run: Run<Output>;

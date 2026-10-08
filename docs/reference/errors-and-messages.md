@@ -62,7 +62,7 @@ An issue from another library keeps its message. Its path segments become plain 
 
 ## Message format
 
-Messages from `matching()`, `satisfying()`, `oneOf()` and the built-in types read:
+Messages from `n.matching()`, `n.satisfying()`, `n.oneOf()` and the built-in types read:
 
 ```
 must be <description> (was <value>)
@@ -83,15 +83,15 @@ The rejected value is written like this:
 
 Other messages:
 
-| Case                                            | Message                                     |
-| ----------------------------------------------- | ------------------------------------------- |
-| a pattern with no description                   | `must be matched by <pattern> (was "x")`    |
-| a pattern given a value that is not a string    | `must be a string (was 42)`                 |
-| `objectOf()` or a constraint given a non-object | `must be an object (was "x")`               |
-| a key refused by `strict()`                     | `is not allowed`                            |
-| `array()` counts and repeats                    | see [`array()`](schemas.md#array)           |
-| a constraint's check returns `false`            | see [`constraint()`](schemas.md#constraint) |
-| a rule from another library                     | that library's message                      |
+| Case                                            | Message                                        |
+| ----------------------------------------------- | ---------------------------------------------- |
+| a pattern with no description                   | `must be matched by <pattern> (was "x")`       |
+| a pattern given a value that is not a string    | `must be a string (was 42)`                    |
+| `n.object()` or a constraint given a non-object | `must be an object (was "x")`                  |
+| a key refused by `strict()`                     | `is not allowed`                               |
+| `array()` counts and repeats                    | see [`array()`](schemas.md#array)              |
+| a constraint's check returns `false`            | see [`n.constraint()`](schemas.md#nconstraint) |
+| a rule from another library                     | that library's message                         |
 
 ## Sensitive types
 
@@ -108,7 +108,7 @@ A type declared with `{ sensitive: true }` leaves the rejected value out of its 
 
 These facts hold for a sensitive type:
 
-- Every check hides the value: `new`, `parse()`, `validate`, a field of `objectOf()`, an array item and the adapters.
+- Every check hides the value: `new`, `parse()`, `validate`, a field of `n.object()`, an array item and the adapters.
 - For a type that holds an object, the values of all its fields are hidden.
 - Its subtypes and variants are sensitive too. `{ sensitive: false }` turns it off for one of them.
 - The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
@@ -129,10 +129,10 @@ Pin.parse('correct horse'); // issues: [{ message: 'must be matched by ^\\d+$ (w
 
 See also: [`NominalOptions`](declaring.md#nominaloptions), [How to keep values out of error messages](../guides/core/hide-values.md).
 
-## hideValues()
+## n.hideValues()
 
 ```ts
-hideValues(issues: readonly Issue[]): readonly Issue[]
+n.hideValues(issues: readonly Issue[]): readonly Issue[]
 ```
 
 | Parameter | Type               | Description            |
@@ -155,15 +155,15 @@ Throws: nothing.
 Example:
 
 ```ts
-import { hideValues, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 
 const result = Uuid.parse('secret-password-123');
 
 if (!result.ok) {
-  hideValues(result.issues); // [{ message: 'must be a UUID (was a string of 19 characters)' }]
+  n.hideValues(result.issues); // [{ message: 'must be a UUID (was a string of 19 characters)' }]
 }
 
-hideValues([{ message: 'Invalid type: Expected string but received 42' }]);
+n.hideValues([{ message: 'Invalid type: Expected string but received 42' }]);
 // [{ message: 'Invalid type: Expected string but received a number' }]
 ```
 
@@ -173,23 +173,23 @@ See also: [How to keep values out of error messages](../guides/core/hide-values.
 
 These are `TypeError`s for a mistake in the code, not in the input:
 
-| When                                                                                                                          | Message                                                                                                                                                                                                                                      |
-| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| declaring a type with an invalid name                                                                                         | `"billing/Invoice" is not a valid type name: use letters, digits, _ and -, with dots between parts, such as billing.InvoiceNumber`                                                                                                           |
-| a `RegExp` with a flag other than `u`                                                                                         | `/^[a-z]+$/i: only the u flag is supported, since JSON Schema patterns carry no flags`                                                                                                                                                       |
-| an `objectOf()` field with a reserved name, given to `Nominal()`                                                              | `a type built on objectOf() cannot have a field named value: every instance has a member of that name`                                                                                                                                       |
-| an `objectOf()` field named `__proto__`                                                                                       | `objectOf(): a field cannot be named __proto__`                                                                                                                                                                                              |
-| a constraint that lists a field its object doesn't declare                                                                    | `objectOf: a constraint reads capacity, which the object does not declare`; from `subtype()` or `variant()` of an object type, from the Zod or Valibot adapter it starts with `subtype:`, `variant:`, `constrainZod:` or `constrainValibot:` |
-| `schemaOf()` given something else                                                                                             | `schemaOf() takes a nominal type (was "Uuid")`                                                                                                                                                                                               |
-| `array()` with invalid options                                                                                                | see [`ArrayOptions`](schemas.md#arrayoptions)                                                                                                                                                                                                |
-| `oneOf()` with no values, a repeated value or a value of another kind                                                         | see [`oneOf()`](declaring.md#oneof)                                                                                                                                                                                                          |
-| `fromString()` in the wrong place                                                                                             | see [`fromString()`](schemas.md#fromstring)                                                                                                                                                                                                  |
-| checking a value with an asynchronous rule                                                                                    | `<type name>: asynchronous schemas are not supported`                                                                                                                                                                                        |
-| JSON Schema for an unknown target                                                                                             | `JSON Schema target draft-04 is not supported`                                                                                                                                                                                               |
-| JSON Schema of a type with a rule that has none: `satisfying()` with no `json`, or another library's schema with no converter | `<type name>: the schema cannot describe itself as JSON Schema`                                                                                                                                                                              |
-| JSON Schema of a `satisfying()` rule alone, with no `json`                                                                    | `the schema cannot describe itself as JSON Schema`                                                                                                                                                                                           |
-| JSON Schema of an `objectOf()` or constraint field with none                                                                  | `a field of the object cannot describe itself as JSON Schema`, or `… of the constraint …`                                                                                                                                                    |
-| comparing or converting an object instance                                                                                    | `booking.Stay holds an object and has no primitive value; compare its fields through .value`                                                                                                                                                 |
+| When                                                                                                                            | Message                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| declaring a type with an invalid name                                                                                           | `"billing/Invoice" is not a valid type name: use letters, digits, _ and -, with dots between parts, such as billing.InvoiceNumber`                                                                                                           |
+| a `RegExp` with a flag other than `u`                                                                                           | `/^[a-z]+$/i: only the u flag is supported, since JSON Schema patterns carry no flags`                                                                                                                                                       |
+| an `n.object()` field with a reserved name, given to `Nominal()`                                                                | `a type built on n.object() cannot have a field named value: every instance has a member of that name`                                                                                                                                       |
+| an `n.object()` field named `__proto__`                                                                                         | `n.object(): a field cannot be named __proto__`                                                                                                                                                                                              |
+| a constraint that lists a field its object doesn't declare                                                                      | `n.object: a constraint reads capacity, which the object does not declare`; from `subtype()` or `variant()` of an object type, from the Zod or Valibot adapter it starts with `subtype:`, `variant:`, `constrainZod:` or `constrainValibot:` |
+| `n.of()` given something else                                                                                                   | `n.of() takes a nominal type (was "Uuid")`                                                                                                                                                                                                   |
+| `array()` with invalid options                                                                                                  | see [`ArrayOptions`](schemas.md#arrayoptions)                                                                                                                                                                                                |
+| `n.oneOf()` with no values, a repeated value or a value of another kind                                                         | see [`n.oneOf()`](declaring.md#noneof)                                                                                                                                                                                                       |
+| `fromString()` in the wrong place                                                                                               | see [`fromString()`](schemas.md#fromstring)                                                                                                                                                                                                  |
+| checking a value with an asynchronous rule                                                                                      | `<type name>: asynchronous schemas are not supported`                                                                                                                                                                                        |
+| JSON Schema for an unknown target                                                                                               | `JSON Schema target draft-04 is not supported`                                                                                                                                                                                               |
+| JSON Schema of a type with a rule that has none: `n.satisfying()` with no `json`, or another library's schema with no converter | `<type name>: the schema cannot describe itself as JSON Schema`                                                                                                                                                                              |
+| JSON Schema of an `n.satisfying()` rule alone, with no `json`                                                                   | `the schema cannot describe itself as JSON Schema`                                                                                                                                                                                           |
+| JSON Schema of an `n.object()` or constraint field with none                                                                    | `a field of the object cannot describe itself as JSON Schema`, or `… of the constraint …`                                                                                                                                                    |
+| comparing or converting an object instance                                                                                      | `booking.Stay holds an object and has no primitive value; compare its fields through .value`                                                                                                                                                 |
 
 A type name used twice with different rules prints a warning instead. See [Type names](declaring.md#type-names).
 

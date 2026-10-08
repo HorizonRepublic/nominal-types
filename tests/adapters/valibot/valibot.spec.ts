@@ -3,12 +3,12 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { constrainValibot, toValibot } from '../../../src/adapters/valibot/index.ts';
 import type * as library from '../../../src/index.ts';
-import { constraint, Email, Nominal, objectOf, PositiveInteger, Uuid } from '../../../src/index.ts';
+import { Email, n, Nominal, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { edgeSamples, sampleTypes } from '../../support/samples.ts';
 
 const id = '0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -67,7 +67,7 @@ describe('toValibot', () => {
   it('writes the paths inside a type that holds an object into its message', () => {
     class Range extends Nominal(
       'valibottest.Range',
-      objectOf({ start: PositiveInteger, end: PositiveInteger }),
+      n.object({ start: PositiveInteger, end: PositiveInteger }),
     ) {}
 
     expect(
@@ -131,7 +131,7 @@ describe('constrainValibot', () => {
     const check = vi.fn<() => boolean>(() => true);
     const Checked = constrainValibot(
       v.object({ guests: toValibot(PositiveInteger) }),
-      constraint({ guests: PositiveInteger }, check),
+      n.constraint({ guests: PositiveInteger }, check),
     );
 
     expect(v.safeParse(Checked, { guests: 0 }).success).toBe(false);
@@ -141,8 +141,8 @@ describe('constrainValibot', () => {
   it('adds an issue with no path, and one with a deep path', () => {
     const Never = constrainValibot(
       v.object({ a: toValibot(PositiveInteger) }),
-      constraint({ a: PositiveInteger }, () => 'never'),
-      constraint({ a: PositiveInteger }, () => false, {
+      n.constraint({ a: PositiveInteger }, () => 'never'),
+      n.constraint({ a: PositiveInteger }, () => false, {
         path: ['a', 'value', 'x'],
         message: 'deep',
       }),

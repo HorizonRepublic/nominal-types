@@ -7,15 +7,15 @@ import {
   Email,
   FiniteNumber,
   Integer,
+  n,
   Nominal,
   PositiveInteger,
-  schemaOf,
   Uint16,
 } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
 describe('fromString() for numbers', () => {
-  const number = schemaOf(AnyNumber).fromString();
+  const number = n.of(AnyNumber).fromString();
 
   it.each([
     ['0', 0],
@@ -60,30 +60,28 @@ describe('fromString() for numbers', () => {
   });
 
   it('applies the rules of narrower types after reading', () => {
-    expect(valueOf(schemaOf(Uint16).fromString().parse('8080')).value).toBe(8080);
-    expect(issuesOf(schemaOf(Uint16).fromString().parse('70000'))).toStrictEqual([
+    expect(valueOf(n.of(Uint16).fromString().parse('8080')).value).toBe(8080);
+    expect(issuesOf(n.of(Uint16).fromString().parse('70000'))).toStrictEqual([
       { message: 'must be an unsigned 16-bit integer (was 70000)' },
     ]);
-    expect(issuesOf(schemaOf(Integer).fromString().parse('1.5'))).toStrictEqual([
+    expect(issuesOf(n.of(Integer).fromString().parse('1.5'))).toStrictEqual([
       { message: 'must be a safe integer (was 1.5)' },
     ]);
-    expect(issuesOf(schemaOf(FiniteNumber).fromString().parse('1e400'))).toStrictEqual([
+    expect(issuesOf(n.of(FiniteNumber).fromString().parse('1e400'))).toStrictEqual([
       { message: 'must be a finite number (was Infinity)' },
     ]);
   });
 
   it('reads every item of an array', () => {
     expect(
-      valueOf(schemaOf(PositiveInteger).fromString().array().parse(['1', 2])).map(
-        (page) => page.value,
-      ),
+      valueOf(n.of(PositiveInteger).fromString().array().parse(['1', 2])).map((page) => page.value),
     ).toStrictEqual([1, 2]);
   });
 
   it('reads a user subtype through its base type', () => {
     class Port extends Uint16.subtype('Port') {}
 
-    expect(valueOf(schemaOf(Port).fromString().parse('443'))).toBeInstanceOf(Port);
+    expect(valueOf(n.of(Port).fromString().parse('443'))).toBeInstanceOf(Port);
   });
 });
 
@@ -92,38 +90,38 @@ describe('fromString() for other kinds', () => {
     ['true', true],
     ['false', false],
   ])('reads %j as a boolean', (text, expected) => {
-    expect(valueOf(schemaOf(AnyBoolean).fromString().parse(text)).value).toBe(expected);
+    expect(valueOf(n.of(AnyBoolean).fromString().parse(text)).value).toBe(expected);
   });
 
   it.each(['TRUE', 'True', '1', '0', 'yes', '', ' true'])(
     'leaves %j to the boolean rule',
     (text) => {
-      expect(schemaOf(AnyBoolean).fromString().parse(text).ok).toBe(false);
+      expect(n.of(AnyBoolean).fromString().parse(text).ok).toBe(false);
     },
   );
 
   it('keeps text as it is for string and bigint types', () => {
-    expect(valueOf(schemaOf(Email).fromString().parse('jane@example.com')).value).toBe(
+    expect(valueOf(n.of(Email).fromString().parse('jane@example.com')).value).toBe(
       'jane@example.com',
     );
-    expect(valueOf(schemaOf(AnyBigInt).fromString().parse('42')).value).toBe(42n);
+    expect(valueOf(n.of(AnyBigInt).fromString().parse('42')).value).toBe(42n);
   });
 
   it('refuses a type with no text form', () => {
     const Sku = Nominal('Sku', /^SKU-\d{4}$/u);
 
-    expect(() => schemaOf(Sku).fromString()).toThrow(TypeError);
+    expect(() => n.of(Sku).fromString()).toThrow(TypeError);
   });
 
   it('refuses to be called after another method', () => {
-    expect(() => schemaOf(Integer).array().fromString()).toThrow(TypeError);
-    expect(() => schemaOf(Integer).optional().fromString()).toThrow(TypeError);
-    expect(() => schemaOf(Integer).fromString().fromString()).toThrow(TypeError);
+    expect(() => n.of(Integer).array().fromString()).toThrow(TypeError);
+    expect(() => n.of(Integer).optional().fromString()).toThrow(TypeError);
+    expect(() => n.of(Integer).fromString().fromString()).toThrow(TypeError);
   });
 
   it('describes the value, not the text', () => {
     expect(
-      schemaOf(Integer).fromString()['~standard'].jsonSchema.input({ target: 'openapi-3.0' }),
+      n.of(Integer).fromString()['~standard'].jsonSchema.input({ target: 'openapi-3.0' }),
     ).toStrictEqual(Integer['~standard'].jsonSchema.input({ target: 'openapi-3.0' }));
   });
 });

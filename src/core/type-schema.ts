@@ -25,7 +25,7 @@ export const isArraySchema = (value: unknown): boolean =>
   typeof value === 'object' && value !== null && arraySchemas.has(value);
 
 /**
- * Internal: whether a value is a schema built by `schemaOf()`, including one from another copy of
+ * Internal: whether a value is a schema built by `n.of()`, including one from another copy of
  * this package.
  */
 export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unknown> =>
@@ -36,13 +36,13 @@ export const isTypeSchema = (value: unknown): value is TypeSchema<unknown, unkno
   Reflect.get(Reflect.get(value, '~standard') ?? {}, 'vendor') === vendor;
 
 /**
- * A nominal type, or a shape around one, as a plain Standard Schema object: what `schemaOf()`
+ * A nominal type, or a shape around one, as a plain Standard Schema object: what `n.of()`
  * returns.
  *
  * @remarks
  * Each method returns a new schema and leaves this one as it is, so a schema can be shared and
- * extended freely. The methods read left to right: `schemaOf(Uuid).array().optional()` is an
- * optional array, `schemaOf(Uuid).optional().array()` an array of optional items.
+ * extended freely. The methods read left to right: `n.of(Uuid).array().optional()` is an
+ * optional array, `n.of(Uuid).optional().array()` an array of optional items.
  */
 export class TypeSchema<Input, Output> {
   public readonly '~standard': StandardProps<Input, Output>;
@@ -50,7 +50,7 @@ export class TypeSchema<Input, Output> {
   readonly #textForm: TextForm | undefined;
 
   /**
-   * Internal: built by `schemaOf()` and the methods below.
+   * Internal: built by `n.of()` and the methods below.
    */
   public constructor(
     shape: Shape<Output>,
@@ -73,7 +73,7 @@ export class TypeSchema<Input, Output> {
    *
    * @example
    * ```ts
-   * schemaOf(Uuid).array().parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']);
+   * n.of(Uuid).array().parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']);
    * // { ok: false, issues: [{ message: 'must be a UUID (was "nope")', path: [1] }] }
    * ```
    */
@@ -99,9 +99,9 @@ export class TypeSchema<Input, Output> {
    *
    * @example
    * ```ts
-   * schemaOf(Url).array({ max: 10 });
-   * schemaOf(UserId).array({ length: 3 });
-   * schemaOf(Uuid).array({ unique: true });
+   * n.of(Url).array({ max: 10 });
+   * n.of(UserId).array({ length: 3 });
+   * n.of(Uuid).array({ unique: true });
    * ```
    */
   public array(options: ArrayOptions = {}): TypeSchema<readonly Input[], readonly Output[]> {
@@ -116,7 +116,7 @@ export class TypeSchema<Input, Output> {
    * Only a string is read; any other value goes to the rule as it is. Numbers are read the way
    * JSON writes them (`'2'`, `'-1.5'`, `'1e3'`), booleans from `'true'` and `'false'`; other text
    * reaches the rule unchanged and is rejected with the usual message. String and bigint types
-   * take text already. Call it on `schemaOf(Type)` itself, before `array()`, `optional()` or
+   * take text already. Call it on `n.of(Type)` itself, before `array()`, `optional()` or
    * `nullable()`.
    *
    * @throws TypeError when called after another method, or for a type with no text form, such as
@@ -124,8 +124,8 @@ export class TypeSchema<Input, Output> {
    *
    * @example
    * ```ts
-   * schemaOf(Port).fromString().parse(process.env.PORT);
-   * schemaOf(PositiveInteger).fromString().array();
+   * n.of(Port).fromString().parse(process.env.PORT);
+   * n.of(PositiveInteger).fromString().array();
    * ```
    */
   public fromString(): TypeSchema<Input | string, Output> {
@@ -133,7 +133,7 @@ export class TypeSchema<Input, Output> {
 
     if (form === undefined) {
       throw new TypeError(
-        'fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an objectOf() schema, call fromEnv()',
+        'fromString(): call it on n.of(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an n.object() schema, call fromEnv()',
       );
     }
 
@@ -176,16 +176,16 @@ export class TypeSchema<Input, Output> {
  *
  * @example
  * ```ts
- * type({ email: schemaOf(Email), team: schemaOf(Uuid) });
- * schemaOf(Uuid).array({ min: 1, max: 100 });
- * schemaOf(Email).optional();
+ * type({ email: n.of(Email), team: n.of(Uuid) });
+ * n.of(Uuid).array({ min: 1, max: 100 });
+ * n.of(Email).optional();
  * ```
  */
 export const schemaOf = <Type extends AnyNominalType>(
   type: Type,
 ): TypeSchema<InputOf<Type['rule']>, Type['prototype']> => {
   if (!isNominalType(type)) {
-    throw new TypeError(`schemaOf() takes a nominal type (was ${describeValue(type)})`);
+    throw new TypeError(`n.of() takes a nominal type (was ${describeValue(type)})`);
   }
 
   const construct = constructorFor(type);

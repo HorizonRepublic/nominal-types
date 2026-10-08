@@ -1,17 +1,9 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import {
-  AnyString,
-  constraint,
-  Nominal,
-  NominalError,
-  objectOf,
-  PositiveInteger,
-  schemaOf,
-} from '../../src/index.ts';
+import { AnyString, n, Nominal, NominalError, PositiveInteger } from '../../src/index.ts';
 import { issuesOf, valueOf } from '../support/results.ts';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -19,8 +11,8 @@ const withinCapacity = constraint(
 
 class Stay extends Nominal(
   'objects.Stay',
-  objectOf(
-    { guests: PositiveInteger, capacity: PositiveInteger, note: schemaOf(AnyString).optional() },
+  n.object(
+    { guests: PositiveInteger, capacity: PositiveInteger, note: n.of(AnyString).optional() },
     withinCapacity,
   ),
 ) {
@@ -29,7 +21,7 @@ class Stay extends Nominal(
   }
 }
 
-describe('a type built on objectOf()', () => {
+describe('a type built on n.object()', () => {
   const stay = new Stay({ guests: 2, capacity: 3 });
 
   it('reads each field through a getter', () => {
@@ -96,9 +88,9 @@ describe('a type built on objectOf()', () => {
   it.each(['value', 'equals', 'copyWith', 'toJSON', 'toString', 'constructor'])(
     'refuses a field named %s',
     (key) => {
-      expect(() => Nominal(`objects.Bad${key}`, objectOf({ [key]: PositiveInteger }))).toThrow(
+      expect(() => Nominal(`objects.Bad${key}`, n.object({ [key]: PositiveInteger }))).toThrow(
         new TypeError(
-          `a type built on objectOf() cannot have a field named ${key}: every instance has a member of that name`,
+          `a type built on n.object() cannot have a field named ${key}: every instance has a member of that name`,
         ),
       );
     },
@@ -107,7 +99,7 @@ describe('a type built on objectOf()', () => {
   it('keeps getters in a subtype that adds a rule', () => {
     class FullStay extends Stay.subtype(
       'objects.FullStay',
-      constraint(
+      n.constraint(
         { guests: PositiveInteger, capacity: PositiveInteger },
         ({ guests, capacity }) => guests.value === capacity.value,
       ),

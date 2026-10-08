@@ -2,17 +2,17 @@
 
 This guide shows how to make a type of several fields with its own rules and methods, such as a hotel stay. Such a type is called a [value object](../../reference/glossary.md).
 
-A request body that you check once and take apart doesn't need one. Use a plain [objectOf() schema](check-an-object.md) for it.
+A request body that you check once and take apart doesn't need one. Use a plain [n.object() schema](check-an-object.md) for it.
 
 ## Declare the type
 
-Give an `objectOf()` schema to `Nominal()`. Add constraints for the rules across fields:
+Give an `n.object()` schema to `Nominal()`. Add constraints for the rules across fields:
 
 ```ts
 // stay.ts
-import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => (guests.value <= capacity.value ? true : 'must not exceed the capacity'),
   { path: 'guests' },
@@ -20,7 +20,7 @@ const withinCapacity = constraint(
 
 export class Stay extends Nominal(
   'booking.Stay',
-  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+  n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
 ) {
   get freePlaces(): number {
     return this.capacity.value - this.guests.value;
@@ -89,11 +89,11 @@ Give `subtype()` a constraint. The subtype keeps the methods and the rules of `S
 
 ```ts
 // family-stay.ts
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 import { Stay } from './stay.ts';
 
-const forFamilies = constraint(
+const forFamilies = n.constraint(
   { capacity: PositiveInteger },
   ({ capacity }) => (capacity.value >= 4 ? true : 'must hold at least 4 people'),
   { path: 'capacity' },
@@ -110,13 +110,13 @@ FamilyStay.parse({ guests: 3, capacity: 3 }); // { ok: false, issues: [{ message
 Every instance has `value`, `equals`, `copyWith`, `toJSON`, `toString` and `constructor`. A field with one of these names throws a `TypeError` when you declare the type:
 
 ```ts
-import { Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-Nominal('shop.Price', objectOf({ value: PositiveInteger }));
-// throws TypeError: a type built on objectOf() cannot have a field named value: every instance has a member of that name
+Nominal('shop.Price', n.object({ value: PositiveInteger }));
+// throws TypeError: a type built on n.object() cannot have a field named value: every instance has a member of that name
 ```
 
-Rename the field, for example to `amount`. A field named `__proto__` throws a `TypeError` in `objectOf()` itself.
+Rename the field, for example to `amount`. A field named `__proto__` throws a `TypeError` in `n.object()` itself.
 
 ## See also
 

@@ -9,16 +9,16 @@ This guide shows how to build test values, compare instances and check the issue
 
 ```ts
 // orders.ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 import type { ValueOf } from '@horizon-republic/nominal-types';
 
 export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-export const CreateOrder = objectOf({
+export const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 export type CreateOrder = ValueOf<typeof CreateOrder>;

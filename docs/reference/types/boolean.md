@@ -14,13 +14,13 @@ Root of the boolean types.
 | Message     | `must be a boolean (was 1)`                            |
 
 ```ts
-import { AnyBoolean, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyBoolean, n } from '@horizon-republic/nominal-types';
 
 class MarketingConsent extends AnyBoolean.subtype('shop.MarketingConsent') {}
 
 new MarketingConsent(true).value; // true
 MarketingConsent.parse('true'); // { ok: false, issues: [{ message: 'must be a boolean (was "true")' }] }
-schemaOf(MarketingConsent).fromString().parse('true'); // { ok: true, value: MarketingConsent }
+n.of(MarketingConsent).fromString().parse('true'); // { ok: true, value: MarketingConsent }
 ```
 
 To read `'true'` and `'false'` from text, use [`fromString()`](../schemas.md#fromstring).

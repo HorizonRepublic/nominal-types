@@ -4,30 +4,30 @@ Which way of checking a request body fits your project? All the ways give valid 
 
 ## The short answer
 
-| Your project                         | Use                                                       | Guide                                                                          |
-| ------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| new code, or no validation library   | `objectOf()`, with `constraint()` for rules across fields | [objectOf()](../guides/core/check-an-object.md)                                |
-| already uses ArkType                 | its schemas, with `toArk()` and `fromArk()`               | [ArkType](../guides/validators/arktype.md)                                     |
-| already uses Zod or Valibot          | its schemas, with `toZod()` or `toValibot()`              | [Zod](../guides/validators/zod.md), [Valibot](../guides/validators/valibot.md) |
-| already uses class-validator         | `@NominalField()` on DTO properties                       | [class-validator](../guides/validators/class-validator.md)                     |
-| uses another Standard Schema library | `schemaOf()` inside its schemas                           | [Standard Schema](../guides/validators/standard-schema.md)                     |
+| Your project                         | Use                                                         | Guide                                                                          |
+| ------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| new code, or no validation library   | `n.object()`, with `n.constraint()` for rules across fields | [n.object()](../guides/core/check-an-object.md)                                |
+| already uses ArkType                 | its schemas, with `toArk()` and `fromArk()`                 | [ArkType](../guides/validators/arktype.md)                                     |
+| already uses Zod or Valibot          | its schemas, with `toZod()` or `toValibot()`                | [Zod](../guides/validators/zod.md), [Valibot](../guides/validators/valibot.md) |
+| already uses class-validator         | `@NominalField()` on DTO properties                         | [class-validator](../guides/validators/class-validator.md)                     |
+| uses another Standard Schema library | `n.of()` inside its schemas                                 | [Standard Schema](../guides/validators/standard-schema.md)                     |
 
 For one value, such as a query parameter, call `Type.parse(input)`. See [How to check untrusted input](../guides/core/check-input.md). In NestJS, [`NominalPipe`](../guides/frameworks/nestjs.md) does it for each parameter.
 
-## objectOf()
+## n.object()
 
-`objectOf()` describes an object whose fields are nominal types:
+`n.object()` describes an object whose fields are nominal types:
 
 ```ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-export const CreateOrder = objectOf({
+export const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 CreateOrder.parse({ customer: 'jane@example.com', sku: 'ABC-1234', quantity: 2 }).ok; // true
@@ -60,7 +60,7 @@ export const CreateOrder = fromArk(
 CreateOrder.parse({ customer: 'jane@example.com', sku: 'ABC-1234', quantity: 2 }).ok; // true
 ```
 
-You keep what the library has, such as unions and recursion in ArkType. The field gives an instance. An adapter is much faster than `schemaOf()` inside the same library.
+You keep what the library has, such as unions and recursion in ArkType. The field gives an instance. An adapter is much faster than `n.of()` inside the same library.
 
 ## class-validator
 
@@ -88,26 +88,26 @@ Nominal types add a few percent to class-validator's own time. class-validator i
 
 ## Any other Standard Schema library
 
-Every nominal type is a Standard Schema. So a library that accepts Standard Schemas inside its own schemas takes `schemaOf(Email)` with no adapter.
+Every nominal type is a Standard Schema. So a library that accepts Standard Schemas inside its own schemas takes `n.of(Email)` with no adapter.
 
 It is slower than an adapter. Use it where no adapter exists, or in a schema that runs rarely, such as a config read once at startup.
 
 ## Rules across fields
 
-A rule that reads two fields, such as "guests fit the room", is a `constraint()`. Write it once and attach it where the object is checked:
+A rule that reads two fields, such as "guests fit the room", is an `n.constraint()`. Write it once and attach it where the object is checked:
 
 | Where the object is checked | How the constraint is attached                                                  |
 | --------------------------- | ------------------------------------------------------------------------------- |
-| `objectOf()`                | `objectOf({ … }, withinCapacity)`                                               |
+| `n.object()`                | `n.object({ … }, withinCapacity)`                                               |
 | ArkType                     | `fromArk(type({ … }), withinCapacity)`, or `constrainArk()` for a nested object |
 | Zod                         | `constrainZod(z.object({ … }), withinCapacity)`                                 |
 | Valibot                     | `constrainValibot(v.object({ … }), withinCapacity)`                             |
 
 ## A value with behaviour of its own
 
-Sometimes an object is a value of its own: a stay with guests and a capacity, an amount with its currency. It has rules across its fields and methods that belong to it. Make it a class on `objectOf()`. [How to make a value object](../guides/core/make-a-value-object.md) shows how.
+Sometimes an object is a value of its own: a stay with guests and a capacity, an amount with its currency. It has rules across its fields and methods that belong to it. Make it a class on `n.object()`. [How to make a value object](../guides/core/make-a-value-object.md) shows how.
 
-A request body doesn't need that. It is checked once and taken apart. A plain object from `objectOf()` is simpler, and its fields are instances already.
+A request body doesn't need that. It is checked once and taken apart. A plain object from `n.object()` is simpler, and its fields are instances already.
 
 ## What each way costs
 
@@ -115,7 +115,7 @@ A request body doesn't need that. It is checked once and taken apart. A plain ob
 
 ## See also
 
-- [How to check a request body with objectOf()](../guides/core/check-an-object.md)
+- [How to check a request body with n.object()](../guides/core/check-an-object.md)
 - [How to check one field against another](../guides/core/check-fields-together.md)
 - [Where checks belong](where-checks-belong.md)
 - [Benchmarks](../reference/benchmarks.md)

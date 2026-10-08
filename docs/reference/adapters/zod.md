@@ -75,9 +75,9 @@ A constraint inside an array:
 ```ts
 import { z } from 'zod';
 import { constrainZod, toZod } from '@horizon-republic/nominal-types/adapters/zod';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests.value <= capacity.value || 'must not exceed the capacity',
   { path: 'guests' },
@@ -95,7 +95,7 @@ z.array(Stay).safeParse([{ guests: 4, capacity: 3 }]).error?.issues;
 ## See also
 
 - [How to use nominal types with Zod](../../guides/validators/zod.md)
-- [Schemas: `constraint()`](../schemas.md)
+- [Schemas: `n.constraint()`](../schemas.md)
 - [Benchmarks](../benchmarks.md)
 
 [← Adapters](README.md) · [← Reference](../README.md)

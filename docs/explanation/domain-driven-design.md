@@ -39,7 +39,7 @@ sku.equals(new Sku('ABC-1234')); // true
 
 A value object often has more than one field: an amount and its currency, a stay with its guests and capacity. Its [invariant](../reference/glossary.md) is a rule that must always hold across those fields, such as "guests fit the room".
 
-In this package, such a value object is a class on `objectOf()`, with the invariant as a `constraint()`. A value that breaks the rule can't be built, so domain code never checks it again.
+In this package, such a value object is a class on `n.object()`, with the invariant as an `n.constraint()`. A value that breaks the rule can't be built, so domain code never checks it again.
 
 A value object never changes in place. `copyWith()` makes a new one, checked against the same invariant. [How to make a value object](../guides/core/make-a-value-object.md) shows the code.
 

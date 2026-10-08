@@ -10,15 +10,7 @@ import type { ExecutionResult, GraphQLFieldConfig } from 'graphql';
 import { describe, expect, it } from 'vitest';
 
 import { toGraphQL } from '../../src/adapters/graphql/index.ts';
-import {
-  AnyBoolean,
-  Email,
-  Int64,
-  Nominal,
-  objectOf,
-  PositiveInteger,
-  satisfying,
-} from '../../src/index.ts';
+import { AnyBoolean, Email, Int64, n, Nominal, PositiveInteger } from '../../src/index.ts';
 
 const EmailScalar = toGraphQL(Email, { serialize: (email) => email.canonical().value });
 const BigScalar = toGraphQL(Int64);
@@ -122,7 +114,7 @@ describe('toGraphQL', () => {
     );
   });
 
-  it('leaves values out of error messages with hideValues', () => {
+  it('leaves values out of error messages with n.hideValues', () => {
     const hidden = toGraphQL(PositiveInteger, { hideValues: true });
 
     // oxlint-disable-next-line typescript/no-deprecated
@@ -150,9 +142,9 @@ describe('toGraphQL', () => {
   it('names a scalar for a type declared without a description', () => {
     const Even = Nominal(
       'gql.even-number',
-      satisfying((value: unknown): value is number => value === 2, 'two'),
+      n.satisfying((value: unknown): value is number => value === 2, 'two'),
     );
-    const Pair = Nominal('gql.Pair', objectOf({ a: PositiveInteger }));
+    const Pair = Nominal('gql.Pair', n.object({ a: PositiveInteger }));
 
     expect(toGraphQL(Even)).toMatchObject({ name: 'even_number', description: 'two' });
     expect(toGraphQL(Pair)).toMatchObject({ name: 'Pair', description: null });

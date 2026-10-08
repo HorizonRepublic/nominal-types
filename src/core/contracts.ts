@@ -99,7 +99,7 @@ export interface NominalInstance<Name extends string, Value> {
 }
 
 /**
- * What `Nominal()` needs to know of an `objectOf()` schema to give the type its fields.
+ * What `Nominal()` needs to know of an `n.object()` schema to give the type its fields.
  */
 export interface ObjectRule<Input, Value> extends NominalSchema<Input, Value> {
   readonly keys: readonly string[];
@@ -107,7 +107,7 @@ export interface ObjectRule<Input, Value> extends NominalSchema<Input, Value> {
 }
 
 /**
- * An instance of a type built on `objectOf()`: a getter for each field, and `copyWith()`, which
+ * An instance of a type built on `n.object()`: a getter for each field, and `copyWith()`, which
  * returns a checked copy with some fields changed.
  */
 export type ObjectInstance<Name extends string, Input, Value> = NominalInstance<Name, Value> &
@@ -115,7 +115,7 @@ export type ObjectInstance<Name extends string, Input, Value> = NominalInstance<
   ObjectCopy<Input>;
 
 /**
- * The copy method of an instance of a type built on `objectOf()`.
+ * The copy method of an instance of a type built on `n.object()`.
  */
 export interface ObjectCopy<Input> {
   /**
@@ -156,7 +156,7 @@ export interface AnyNominalType {
  * @remarks
  * The class is a Standard Schema and a Standard JSON Schema through its static `~standard`, so
  * consumers that call `~standard` accept the class itself. Consumers that parse definitions treat
- * any function as their own construct, and take the plain object `schemaOf(Type)` returns instead.
+ * any function as their own construct, and take the plain object `n.of(Type)` returns instead.
  */
 export interface NominalType<
   Name extends string,
@@ -193,7 +193,7 @@ export interface NominalType<
 }
 
 /**
- * An instance whose value a rule narrowed, such as `oneOf()` under `AnyString`, typed with the
+ * An instance whose value a rule narrowed, such as `n.oneOf()` under `AnyString`, typed with the
  * narrower value.
  */
 export type Narrowed<Instance extends NominalInstance<string, unknown>, Value> = [
@@ -207,7 +207,7 @@ export type Narrowed<Instance extends NominalInstance<string, unknown>, Value> =
  * brand of its own on top of the parent's.
  *
  * @remarks
- * A rule that narrows the value, such as `oneOf()`, narrows `value` on the instance too.
+ * A rule that narrows the value, such as `n.oneOf()`, narrows `value` on the instance too.
  */
 export type SubtypeOf<
   Parent extends AnyNominalType,

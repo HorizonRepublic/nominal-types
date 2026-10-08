@@ -78,9 +78,9 @@ A position on Earth in decimal degrees, as GPS and GeoJSON write it. Both ends o
 -180 and 180 are the same line on Earth, but `equals()` tells them apart.
 
 ```ts
-import { Latitude, Longitude, objectOf } from '@horizon-republic/nominal-types';
+import { Latitude, Longitude, n } from '@horizon-republic/nominal-types';
 
-const Place = objectOf({ lat: Latitude, lon: Longitude });
+const Place = n.object({ lat: Latitude, lon: Longitude });
 
 Place.parse({ lat: 51.5072, lon: -0.1276 }).ok; // true
 Place.parse({ lat: 91, lon: 0 }); // { ok: false, issues: [{ message: 'must be a latitude from -90 to 90 (was 91)', path: ['lat'] }] }
@@ -124,11 +124,11 @@ A TCP or UDP port number from 1 to 65,535. Port 0 is not accepted: it asks the s
 | Message     | `must be a port from 1 to 65535 (was 0)`                                |
 
 ```ts
-import { Port, schemaOf } from '@horizon-republic/nominal-types';
+import { n, Port } from '@horizon-republic/nominal-types';
 
 new Port(8080).value; // 8080
-schemaOf(Port).fromString().parse('443'); // { ok: true, value: Port { value: 443 } }
-schemaOf(Port).fromString().parse('+80'); // { ok: false, issues: [{ message: 'must be a number (was "+80")' }] }
+n.of(Port).fromString().parse('443'); // { ok: true, value: Port { value: 443 } }
+n.of(Port).fromString().parse('+80'); // { ok: false, issues: [{ message: 'must be a number (was "+80")' }] }
 ```
 
 [← Built-in types](README.md)

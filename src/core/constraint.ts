@@ -25,7 +25,7 @@ interface FieldRunner {
 }
 
 const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
-  isNominalType(field) ? constructorFor(field) : foreignRunner(field, 'constraint');
+  isNominalType(field) ? constructorFor(field) : foreignRunner(field, 'n.constraint');
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -46,7 +46,7 @@ const defaultMessage = (keys: readonly string[], path: readonly PropertyKey[]): 
 
 /**
  * A rule across the fields of an object, such as an end that must come after a start: what
- * `constraint()` returns.
+ * `n.constraint()` returns.
  *
  * @remarks
  * It is a Standard Schema over the object: it checks every field it lists against that field's
@@ -63,7 +63,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
   readonly #runners: readonly FieldRunner[];
 
   /**
-   * Internal: built by `constraint()`.
+   * Internal: built by `n.constraint()`.
    */
   public constructor(
     fields: Fields,
@@ -197,12 +197,12 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
  * that failed on its own reports its own issue and nothing more. Return `true` when the fields
  * agree, `false` for the message in the options, or a message.
  *
- * The result is a Standard Schema over the object. Give it to `objectOf()`, or to an adapter's
+ * The result is a Standard Schema over the object. Give it to `n.object()`, or to an adapter's
  * `constrain…()`.
  *
  * @example
  * ```ts
- * const withinCapacity = constraint(
+ * const withinCapacity = n.constraint(
  *   { guests: PositiveInteger, capacity: PositiveInteger },
  *   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
  *   { path: 'guests' },
@@ -210,7 +210,7 @@ export class Constraint<Fields extends Readonly<Record<string, ConstraintField>>
  *
  * class Occupancy extends Nominal(
  *   'booking.Occupancy',
- *   objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+ *   n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
  * ) {}
  *
  * new Occupancy({ guests: 3, capacity: 2 });

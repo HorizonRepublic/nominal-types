@@ -70,3 +70,16 @@ describe('documentation links', () => {
     expect([...anchorsOf(path)]).toContain(anchor);
   });
 });
+
+// A building function called or imported by itself rather than through the namespace `n`.
+const outsideN =
+  /(?<![.\w$])(?:objectOf|schemaOf|isNominalType|isObjectSchema|hideValues|oneOf|matching|satisfying|isConstraint|constraint)(?:\(|[\s,][\w\s,]*\}\s*from)/u;
+
+describe('documentation names', () => {
+  it.each(pages.map((path) => relative(root, path)))(
+    '%s reaches the building functions through n',
+    (page) => {
+      expect(readFileSync(join(root, page), 'utf8')).not.toMatch(outsideN);
+    },
+  );
+});

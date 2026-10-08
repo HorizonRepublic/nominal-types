@@ -1,7 +1,7 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { Nominal, schemaOf } from '../../src/index.ts';
+import { n, Nominal } from '../../src/index.ts';
 import { Sku } from '../support/fixtures.ts';
 import { handWritten, issuesOf, outputOf, stringOnly } from '../support/results.ts';
 
@@ -22,7 +22,7 @@ describe('Standard Schema', () => {
     });
 
     it('embeds into an ArkType object and yields instances', () => {
-      const order = type({ sku: schemaOf(Sku) });
+      const order = type({ sku: n.of(Sku) });
 
       expect(order.assert({ sku: 'SKU-0003' }).sku).toBeInstanceOf(Sku);
     });

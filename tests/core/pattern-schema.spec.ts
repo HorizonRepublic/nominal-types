@@ -1,12 +1,12 @@
 import { type } from 'arktype';
 import { describe, expect, it } from 'vitest';
 
-import { matching, Nominal, NominalError, PatternSchema, schemaOf } from '../../src/index.ts';
+import { n, Nominal, NominalError, PatternSchema } from '../../src/index.ts';
 import { issuesOf, outputOf, thrownBy, valueOf } from '../support/results.ts';
 
 class Code extends Nominal('PatternCode', /^C-\d{3}$/u) {}
 
-class Ticket extends Nominal('PatternTicket', matching(/^T-\d{3}$/u, 'a ticket number')) {}
+class Ticket extends Nominal('PatternTicket', n.matching(/^T-\d{3}$/u, 'a ticket number')) {}
 
 describe('PatternSchema', () => {
   describe('declaring a type from a regular expression', () => {
@@ -68,11 +68,11 @@ describe('PatternSchema', () => {
 
   describe('flags', () => {
     it.each([/a/u, /a/])('accepts %s', (pattern) => {
-      expect(matching(pattern).pattern).toBe(pattern);
+      expect(n.matching(pattern).pattern).toBe(pattern);
     });
 
     it.each([/a/iu, /a/gu, /a/uy, /a/mu, /a/su, /a/v])('refuses %s', (pattern) => {
-      expect(() => matching(pattern)).toThrow(/only the u flag is supported/u);
+      expect(() => n.matching(pattern)).toThrow(/only the u flag is supported/u);
     });
 
     it('refuses a flagged pattern passed to Nominal directly', () => {
@@ -82,8 +82,8 @@ describe('PatternSchema', () => {
 
   describe('Standard Schema', () => {
     it('validates on its own', () => {
-      expect(outputOf(matching(/^a$/u)['~standard'].validate('a'))).toBe('a');
-      expect(matching(/^a$/u)['~standard'].validate('b').issues).toHaveLength(1);
+      expect(outputOf(n.matching(/^a$/u)['~standard'].validate('a'))).toBe('a');
+      expect(n.matching(/^a$/u)['~standard'].validate('b').issues).toHaveLength(1);
     });
 
     it('validates to an instance through the type', () => {
@@ -91,7 +91,7 @@ describe('PatternSchema', () => {
     });
 
     it('embeds into an ArkType object', () => {
-      expect(type({ code: schemaOf(Code) }).assert({ code: 'C-001' }).code).toBeInstanceOf(Code);
+      expect(type({ code: n.of(Code) }).assert({ code: 'C-001' }).code).toBeInstanceOf(Code);
     });
   });
 

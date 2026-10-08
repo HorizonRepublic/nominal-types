@@ -3,32 +3,28 @@ import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
 import { NominalPipe } from '../../../src/adapters/nest/index.ts';
-import { AnyBoolean, PositiveInteger, schemaOf, Uuid } from '../../../src/index.ts';
+import { AnyBoolean, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { argument, first } from './support.ts';
 
 describe('NominalPipe as a unit', () => {
-  it('takes a schemaOf() schema in place of a type', () => {
-    expect(
-      new NominalPipe(schemaOf(Uuid).array()).transform([first], argument('query')),
-    ).toStrictEqual([new Uuid(first)]);
-  });
-
-  it('wraps a lone query value for an array schema, also behind nullable()', () => {
-    expect(
-      new NominalPipe(schemaOf(Uuid).array()).transform(first, argument('query')),
-    ).toHaveLength(1);
-    expect(
-      new NominalPipe(schemaOf(Uuid).array().nullable()).transform(first, argument('query')),
-    ).toHaveLength(1);
-    expect(new NominalPipe(schemaOf(Uuid)).transform(first, argument('query'))).toBeInstanceOf(
-      Uuid,
+  it('takes a n.of() schema in place of a type', () => {
+    expect(new NominalPipe(n.of(Uuid).array()).transform([first], argument('query'))).toStrictEqual(
+      [new Uuid(first)],
     );
   });
 
+  it('wraps a lone query value for an array schema, also behind nullable()', () => {
+    expect(new NominalPipe(n.of(Uuid).array()).transform(first, argument('query'))).toHaveLength(1);
+    expect(
+      new NominalPipe(n.of(Uuid).array().nullable()).transform(first, argument('query')),
+    ).toHaveLength(1);
+    expect(new NominalPipe(n.of(Uuid)).transform(first, argument('query'))).toBeInstanceOf(Uuid);
+  });
+
   it("doesn't wrap a lone value outside a query string", () => {
-    expect(() =>
-      new NominalPipe(schemaOf(Uuid).array()).transform(first, argument('body')),
-    ).toThrow(BadRequestException);
+    expect(() => new NominalPipe(n.of(Uuid).array()).transform(first, argument('body'))).toThrow(
+      BadRequestException,
+    );
   });
 
   it('reads query and route strings into number and boolean types', () => {
@@ -64,11 +60,11 @@ describe('NominalPipe as a unit', () => {
   });
 
   it('reads strings for a schema only through its fromString()', () => {
-    expect(() =>
-      new NominalPipe(schemaOf(PositiveInteger)).transform('2', argument('query')),
-    ).toThrow(BadRequestException);
+    expect(() => new NominalPipe(n.of(PositiveInteger)).transform('2', argument('query'))).toThrow(
+      BadRequestException,
+    );
     expect(
-      new NominalPipe(schemaOf(PositiveInteger).fromString()).transform('2', argument('query')),
+      new NominalPipe(n.of(PositiveInteger).fromString()).transform('2', argument('query')),
     ).toStrictEqual(new PositiveInteger(2));
   });
 
@@ -76,9 +72,9 @@ describe('NominalPipe as a unit', () => {
     const pipe = new NominalPipe();
 
     expect(pipe.transform(first, argument('query', { schema: Uuid }))).toBeInstanceOf(Uuid);
-    expect(
-      pipe.transform([first], argument('query', { schema: schemaOf(Uuid).array() })),
-    ).toHaveLength(1);
+    expect(pipe.transform([first], argument('query', { schema: n.of(Uuid).array() }))).toHaveLength(
+      1,
+    );
   });
 
   it('leaves a schema from another library to its own pipe', () => {

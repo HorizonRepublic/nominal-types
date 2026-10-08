@@ -115,16 +115,16 @@ The full error, for a type named `shop.Code`:
 TypeError: shop.Code: the schema cannot describe itself as JSON Schema
 ```
 
-Cause: something, such as Swagger, asked for the JSON Schema of a type whose rule has none. Two rules have none: a `satisfying()` type guard without its third argument, and a Valibot schema.
+Cause: something, such as Swagger, asked for the JSON Schema of a type whose rule has none. Two rules have none: an `n.satisfying()` type guard without its third argument, and a Valibot schema.
 
-Fix: give `satisfying()` the JSON Schema of the rule as its third argument, as in [How to declare a type](declare-a-type.md#declare-a-type-with-a-type-guard). Replace a Valibot rule with a pattern or a Zod or ArkType schema.
+Fix: give `n.satisfying()` the JSON Schema of the rule as its third argument, as in [How to declare a type](declare-a-type.md#declare-a-type-with-a-type-guard). Replace a Valibot rule with a pattern or a Zod or ArkType schema.
 
 ### TypeError: cannot have a field named value
 
 The full error:
 
 ```
-TypeError: a type built on objectOf() cannot have a field named value: every instance has a member of that name
+TypeError: a type built on n.object() cannot have a field named value: every instance has a member of that name
 ```
 
 Cause: `value`, `equals`, `copyWith`, `toJSON`, `toString` and `constructor` are members of every instance.
@@ -133,12 +133,12 @@ Fix: rename the field, for example to `amount`. See [How to make a value object]
 
 ## Check values
 
-### TypeError: fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type
+### TypeError: fromString(): call it on n.of(Type) of a string, number, bigint or boolean type
 
 The full error:
 
 ```
-TypeError: fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an objectOf() schema, call fromEnv()
+TypeError: fromString(): call it on n.of(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an n.object() schema, call fromEnv()
 ```
 
 Cause: one of these:
@@ -146,33 +146,33 @@ Cause: one of these:
 - `fromString()` comes after `array()`, `optional()` or `nullable()`;
 - the type was made with `Nominal()`, which has no text form.
 
-Fix: call `fromString()` first, as in `schemaOf(PositiveInteger).fromString().array()`. Declare a string, number or boolean type under a built-in type: `AnyString.subtype('shop.Code', /^\d{4}$/u)`, not `Nominal('shop.Code', /^\d{4}$/u)`.
+Fix: call `fromString()` first, as in `n.of(PositiveInteger).fromString().array()`. Declare a string, number or boolean type under a built-in type: `AnyString.subtype('shop.Code', /^\d{4}$/u)`, not `Nominal('shop.Code', /^\d{4}$/u)`.
 
 ### must be a number (was "3000") for an environment variable
 
-Cause: the field is wrapped in `schemaOf()`, for example to make it optional. `fromEnv()` reads only plain type fields from text.
+Cause: the field is wrapped in `n.of()`, for example to make it optional. `fromEnv()` reads only plain type fields from text.
 
-Fix: add `fromString()` to the field: `schemaOf(Port).fromString().optional()`. See [How to read configuration from environment variables](read-config.md).
+Fix: add `fromString()` to the field: `n.of(Port).fromString().optional()`. See [How to read configuration from environment variables](read-config.md).
 
 ### TypeError: a constraint reads a field which the object does not declare
 
 The full error:
 
 ```
-TypeError: objectOf: a constraint reads capacity, which the object does not declare
+TypeError: n.object: a constraint reads capacity, which the object does not declare
 ```
 
 Cause: the constraint lists a field that the object doesn't have:
 
 ```ts
-import { constraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests.value <= capacity.value,
 );
 
-objectOf({ guests: PositiveInteger }, withinCapacity); // throws TypeError: objectOf: a constraint reads capacity, which the object does not declare
+n.object({ guests: PositiveInteger }, withinCapacity); // throws TypeError: n.object: a constraint reads capacity, which the object does not declare
 ```
 
 `constrainZod()` and `constrainValibot()` throw the same error, starting with their own name.
@@ -296,13 +296,13 @@ Fix: give the parameter a schema:
 ```ts
 // users.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 import { NominalPipe } from '@horizon-republic/nominal-types/adapters/nest';
 
 @Controller('users')
 export class UsersController {
   @Get()
-  list(@Query('ids', new NominalPipe(schemaOf(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {
+  list(@Query('ids', new NominalPipe(n.of(Uuid).array({ max: 100 }))) ids: readonly Uuid[]) {
     return { count: ids.length };
   }
 }
@@ -363,7 +363,7 @@ if (!result.success) {
 
 Cause: the type went into an ArkType schema without the adapter, as in `type({ email: Email })`. ArkType reads a class as something of its own.
 
-Fix: use `toArk(Email)` from the adapter, as in [How to use nominal types with ArkType](../validators/arktype.md). Other libraries take `schemaOf(Email)`: see [How to use a type in any Standard Schema library](../validators/standard-schema.md).
+Fix: use `toArk(Email)` from the adapter, as in [How to use nominal types with ArkType](../validators/arktype.md). Other libraries take `n.of(Email)`: see [How to use a type in any Standard Schema library](../validators/standard-schema.md).
 
 ### TypeError: fromArk: …
 

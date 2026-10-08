@@ -2,24 +2,48 @@
 
 The functions that build schemas from nominal types: lists, optional values, objects and rules across fields. Terms are explained in the [glossary](glossary.md).
 
-| Entry                                 | What it does                                                                                |
-| ------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [`schemaOf()`](#schemaof)             | A type as a plain schema object, the start of a chain                                       |
-| [`TypeSchema`](#typeschema)           | What `schemaOf()` returns: `parse()`, `array()`, `fromString()`, `optional()`, `nullable()` |
-| [`ArrayOptions`](#arrayoptions)       | How many items `array()` accepts, and whether they may repeat                               |
-| [`objectOf()`](#objectof)             | A schema for an object whose fields are checked by their own schemas                        |
-| [`ObjectSchema`](#objectschema)       | What `objectOf()` returns: `strict()`, `fromEnv()`, `keys`                                  |
-| [`constraint()`](#constraint)         | A rule across fields of an object                                                           |
-| [`Constraint`](#constraint-class)     | What `constraint()` returns                                                                 |
-| [`isObjectSchema()`](#isobjectschema) | Tells an `objectOf()` schema from other values                                              |
-| [`isConstraint()`](#isconstraint)     | Tells a constraint from other values                                                        |
+| Entry                                | What it does                                                                            |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule                 |
+| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                                   |
+| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `array()`, `fromString()`, `optional()`, `nullable()` |
+| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                           |
+| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas                    |
+| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `fromEnv()`, `keys`                              |
+| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                       |
+| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                           |
+| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                          |
+| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                                    |
 
 Every schema here is a [Standard Schema](glossary.md) and a [Standard JSON Schema](glossary.md). Each method returns a new schema and leaves the old one as it is.
 
-## schemaOf()
+## n
 
 ```ts
-schemaOf(Type): TypeSchema<Input, Instance>
+import { n } from '@horizon-republic/nominal-types';
+```
+
+The [namespace](glossary.md) `n` holds the functions that build schemas, rules and checks. You import it once and call its members:
+
+| Member             | What it does                                    | Described in                                           |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------ |
+| `n.of()`           | A type as a plain schema object                 | [`n.of()`](#nof)                                       |
+| `n.object()`       | A schema for an object                          | [`n.object()`](#nobject)                               |
+| `n.constraint()`   | A rule across fields of an object               | [`n.constraint()`](#nconstraint)                       |
+| `n.matching()`     | A rule from a regular expression                | [`n.matching()`](declaring.md#nmatching)               |
+| `n.satisfying()`   | A rule from a type guard                        | [`n.satisfying()`](declaring.md#nsatisfying)           |
+| `n.oneOf()`        | A rule for a fixed set of values                | [`n.oneOf()`](declaring.md#noneof)                     |
+| `n.hideValues()`   | Issues with the values left out of the messages | [`n.hideValues()`](errors-and-messages.md#nhidevalues) |
+| `n.isType()`       | Tells a nominal type class from other values    | [`n.isType()`](declaring.md#nistype)                   |
+| `n.isObject()`     | Tells an `n.object()` schema from other values  | [`n.isObject()`](#nisobject)                           |
+| `n.isConstraint()` | Tells a constraint from other values            | [`n.isConstraint()`](#nisconstraint)                   |
+
+`Nominal`, the built-in types, the classes such as `TypeSchema` and `ObjectSchema`, and every TypeScript type are imported by their own names.
+
+## n.of()
+
+```ts
+n.of(Type): TypeSchema<Input, Instance>
 ```
 
 | Parameter | Type                 | Description       |
@@ -28,16 +52,16 @@ schemaOf(Type): TypeSchema<Input, Instance>
 
 Returns: a [`TypeSchema`](#typeschema) that checks every rule of `Type` and gives an instance. It handles instances as [`Type.parse()`](type-members.md#parse) does.
 
-Throws: a `TypeError` if `Type` is not a nominal type: `schemaOf() takes a nominal type (was "Uuid")`.
+Throws: a `TypeError` if `Type` is not a nominal type: `n.of() takes a nominal type (was "Uuid")`.
 
-Some libraries treat any class as one of their own constructs. They take the plain object `schemaOf()` returns where they don't take the class.
+Some libraries treat any class as one of their own constructs. They take the plain object `n.of()` returns where they don't take the class.
 
 Example:
 
 ```ts
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 
-const ids = schemaOf(Uuid).array({ min: 1, max: 100 });
+const ids = n.of(Uuid).array({ min: 1, max: 100 });
 
 ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // { ok: true, value: [Uuid] }
 ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', 'nope']); // { ok: false, issues: [{ message: 'must be a UUID (was "nope")', path: [1] }] }
@@ -47,7 +71,7 @@ See also: [How to accept lists, missing values and null](../guides/core/lists-an
 
 ## TypeSchema
 
-The class `schemaOf()` returns. `ObjectSchema` extends it. Create it through `schemaOf()`, not with `new`.
+The class `n.of()` returns. `ObjectSchema` extends it. Create it through `n.of()`, not with `new`.
 
 | Member                                 | Returns                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
@@ -60,11 +84,11 @@ The class `schemaOf()` returns. `ObjectSchema` extends it. Create it through `sc
 
 The methods apply from left to right:
 
-| Chain                                  | Accepts                                       |
-| -------------------------------------- | --------------------------------------------- |
-| `schemaOf(Uuid).array().optional()`    | an array of UUIDs, or `undefined`             |
-| `schemaOf(Uuid).optional().array()`    | an array whose items are UUIDs or `undefined` |
-| `schemaOf(Uuid).optional().nullable()` | a UUID, `undefined` or `null`                 |
+| Chain                              | Accepts                                       |
+| ---------------------------------- | --------------------------------------------- |
+| `n.of(Uuid).array().optional()`    | an array of UUIDs, or `undefined`             |
+| `n.of(Uuid).optional().array()`    | an array whose items are UUIDs or `undefined` |
+| `n.of(Uuid).optional().nullable()` | a UUID, `undefined` or `null`                 |
 
 ### parse
 
@@ -79,9 +103,9 @@ Throws: nothing for an invalid value.
 Example:
 
 ```ts
-import { Email, schemaOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 
-const email = schemaOf(Email);
+const email = n.of(Email);
 const result = email.parse('jane@example.com');
 
 if (result.ok) {
@@ -121,12 +145,12 @@ Throws: a `TypeError` for invalid options. See [`ArrayOptions`](#arrayoptions).
 Example:
 
 ```ts
-import { schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { n, Uuid } from '@horizon-republic/nominal-types';
 
-const team = schemaOf(Uuid).array({ length: 3 });
+const team = n.of(Uuid).array({ length: 3 });
 
 team.parse([]); // { ok: false, issues: [{ message: 'must have 3 items (was 0)' }] }
-schemaOf(Uuid).array({ length: 3, max: 5 }); // throws TypeError: array(): pass either length or min and max, not both
+n.of(Uuid).array({ length: 3, max: 5 }); // throws TypeError: array(): pass either length or min and max, not both
 ```
 
 ### fromString
@@ -148,7 +172,7 @@ It reads a string through the type's [text form](glossary.md):
 
 Text it can't read goes to the rules unchanged. The rules then reject it with their usual message. For a number, that is `'two'`, `''`, `' 2'`, `'02'`, `'+2'`, `'0x10'` and `'NaN'`. For a boolean, it is `'TRUE'`, `'1'` and `'yes'`. A value that is not a string goes to the rules as it is.
 
-Its JSON Schema describes the value, not the text. `schemaOf(PositiveInteger).fromString()` is described as a number.
+Its JSON Schema describes the value, not the text. `n.of(PositiveInteger).fromString()` is described as a number.
 
 Throws: a `TypeError` in two cases. The message is the same for both:
 
@@ -156,20 +180,20 @@ Throws: a `TypeError` in two cases. The message is the same for both:
 - called for a type with no text form, such as one made with `Nominal()`.
 
 ```
-TypeError: fromString(): call it on schemaOf(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an objectOf() schema, call fromEnv()
+TypeError: fromString(): call it on n.of(Type) of a string, number, bigint or boolean type, before array(), optional() or nullable(); for an n.object() schema, call fromEnv()
 ```
 
 Example:
 
 ```ts
-import { PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const page = schemaOf(PositiveInteger).fromString();
+const page = n.of(PositiveInteger).fromString();
 
 page.parse('2'); // { ok: true, value: PositiveInteger }, value 2
 page.parse('two'); // { ok: false, issues: [{ message: 'must be a number (was "two")' }] }
 page.parse('0'); // { ok: false, issues: [{ message: 'must be a positive integer (was 0)' }] }
-schemaOf(PositiveInteger).fromString().array(); // every item read from text
+n.of(PositiveInteger).fromString().array(); // every item read from text
 ```
 
 See also: [How to read numbers and booleans from strings](../guides/core/read-text-values.md).
@@ -186,15 +210,15 @@ schema.nullable(): TypeSchema<Input | null, Output | null>
 | `optional()` | `undefined`  | checked by the schema |
 | `nullable()` | `null`       | checked by the schema |
 
-In [`objectOf()`](#objectof), a field whose schema accepts `undefined` may be missing.
+In [`n.object()`](#nobject), a field whose schema accepts `undefined` may be missing.
 
 Example:
 
 ```ts
-import { AnyString, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { AnyString, n, Uuid } from '@horizon-republic/nominal-types';
 
-const note = schemaOf(AnyString).optional();
-const manager = schemaOf(Uuid).nullable();
+const note = n.of(AnyString).optional();
+const manager = n.of(Uuid).nullable();
 
 note.parse(undefined); // { ok: true, value: undefined }
 manager.parse(null); // { ok: true, value: null }
@@ -219,19 +243,19 @@ interface ArrayOptions {
 | `max`    | at most this many items                        | no limit |
 | `unique` | `true` refuses an item equal to an earlier one | `false`  |
 
-With `unique: true`, two items are equal when [`equals()`](type-members.md#equals) says so. So two `Uuid` items that differ only in case are equal. Items without `equals()`, such as `null`, are equal when they are the same value. Objects from `objectOf()` are equal when every field is equal.
+With `unique: true`, two items are equal when [`equals()`](type-members.md#equals) says so. So two `Uuid` items that differ only in case are equal. Items without `equals()`, such as `null`, are equal when they are the same value. Objects from `n.object()` are equal when every field is equal.
 
 Each repeat is reported with its own index. The first time a value appears is not reported. A [sensitive type](errors-and-messages.md#sensitive-types) leaves the value out of the message.
 
 Example:
 
 ```ts
-import { Email, schemaOf, Uuid } from '@horizon-republic/nominal-types';
+import { Email, n, Uuid } from '@horizon-republic/nominal-types';
 
-const ids = schemaOf(Uuid).array({ unique: true });
+const ids = n.of(Uuid).array({ unique: true });
 
 ids.parse(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f', '0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F']); // { ok: false, issues: [{ message: 'must not repeat an item (was "0190F1C2-3B4A-7C5D-8E9F-0A1B2C3D4E5F")', path: [1] }] }
-schemaOf(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example.com']); // { ok: false, issues: [{ message: 'must not repeat an item (was a string of 16 characters)', path: [1] }] }
+n.of(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example.com']); // { ok: false, issues: [{ message: 'must not repeat an item (was a string of 16 characters)', path: [1] }] }
 ```
 
 `array()` throws a `TypeError` for options it can't use:
@@ -243,10 +267,10 @@ schemaOf(Email).array({ unique: true }).parse(['jane@example.com', 'jane@example
 | `min` greater than `max`              | `array(): min (5) is greater than max (1)`               |
 | `unique` that is not a boolean        | `array(): unique must be true or false (was yes)`        |
 
-## objectOf()
+## n.object()
 
 ```ts
-objectOf(fields, ...constraints): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>>
+n.object(fields, ...constraints): ObjectSchema<ObjectInput<Fields>, ObjectValue<Fields>>
 ```
 
 | Parameter     | Type                               | Description                                                       |
@@ -257,8 +281,8 @@ objectOf(fields, ...constraints): ObjectSchema<ObjectInput<Fields>, ObjectValue<
 A field can be:
 
 - a nominal type, such as `Email`;
-- a `schemaOf()` schema, such as `schemaOf(AnyString).optional()`;
-- another `objectOf()` schema, for a nested object;
+- an `n.of()` schema, such as `n.of(AnyString).optional()`;
+- another `n.object()` schema, for a nested object;
 - any [Standard Schema](glossary.md) that answers synchronously.
 
 Returns: an [`ObjectSchema`](#objectschema).
@@ -278,23 +302,23 @@ Throws a `TypeError`:
 
 | Case                                                  | Message                                                                    |
 | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| a field named `__proto__`                             | `objectOf(): a field cannot be named __proto__`                            |
-| a constraint lists a field the object doesn't declare | `objectOf: a constraint reads capacity, which the object does not declare` |
+| a field named `__proto__`                             | `n.object(): a field cannot be named __proto__`                            |
+| a constraint lists a field the object doesn't declare | `n.object: a constraint reads capacity, which the object does not declare` |
 
 The object drops undeclared keys before its constraints run. So such a constraint would reject every value.
 
 Example:
 
 ```ts
-import { AnyString, Email, objectOf, PositiveInteger, schemaOf } from '@horizon-republic/nominal-types';
+import { AnyString, Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 
-const CreateOrder = objectOf({
+const CreateOrder = n.object({
   customer: Email,
   sku: Sku,
   quantity: PositiveInteger,
-  note: schemaOf(AnyString).optional(),
+  note: n.of(AnyString).optional(),
 });
 
 CreateOrder.parse({ customer: 'jane@example.com', sku: 'ABC-1234', quantity: 2, coupon: 'X' });
@@ -307,13 +331,13 @@ CreateOrder.parse({ customer: 'jane', sku: 'abc' });
 // ] }
 ```
 
-Given to [`Nominal()`](declaring.md#nominal), the schema makes a class with a getter per field and `copyWith()`. See [Members of a type built on objectOf()](type-members.md#members-of-a-type-built-on-objectof).
+Given to [`Nominal()`](declaring.md#nominal), the schema makes a class with a getter per field and `copyWith()`. See [Members of a type built on n.object()](type-members.md#members-of-a-type-built-on-nobject).
 
-See also: [How to check a request body with objectOf()](../guides/core/check-an-object.md).
+See also: [How to check a request body with n.object()](../guides/core/check-an-object.md).
 
 ## ObjectSchema
 
-The class `objectOf()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It adds:
+The class `n.object()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It adds:
 
 | Member      | Description                                                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -323,8 +347,8 @@ The class `objectOf()` returns. It extends [`TypeSchema`](#typeschema), so `pars
 
 `fromEnv()` is for `process.env` and other records of strings, such as query parameters:
 
-- It reads a plain type field, such as `PORT: Port`, as `schemaOf(Port).fromString()` would.
-- It keeps other fields as they are, such as `schemaOf(…)` and `objectOf(…)` schemas. Give them `fromString()` yourself.
+- It reads a plain type field, such as `PORT: Port`, as `n.of(Port).fromString()` would.
+- It keeps other fields as they are, such as `n.of(…)` and `n.object(…)` schemas. Give them `fromString()` yourself.
 - It drops undeclared keys, so the whole `process.env` can be passed.
 - It keeps the constraints and the `strict()` setting.
 
@@ -333,9 +357,9 @@ The class `objectOf()` returns. It extends [`TypeSchema`](#typeschema), so `pars
 Example:
 
 ```ts
-import { Email, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const Invite = objectOf({ email: Email, seats: PositiveInteger });
+const Invite = n.object({ email: Email, seats: PositiveInteger });
 
 Invite.keys; // ['email', 'seats']
 Invite.strict().parse({ email: 'jane@example.com', seats: 2, admin: true });
@@ -345,9 +369,9 @@ Invite.strict().parse({ email: 'jane@example.com', seats: 2, admin: true });
 Example with `fromEnv()`:
 
 ```ts
-import { AnyBoolean, objectOf, Port, Url } from '@horizon-republic/nominal-types';
+import { AnyBoolean, n, Port, Url } from '@horizon-republic/nominal-types';
 
-const Config = objectOf({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv();
+const Config = n.object({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv();
 
 Config.parse({ PORT: '3000', DEBUG: 'false', DATABASE_URL: 'postgres://localhost/shop', HOME: '/root' });
 // { ok: true, value: { PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url } }
@@ -361,19 +385,19 @@ Config.parse({ PORT: 'abc', DEBUG: 'yes' });
 
 See also: [How to read configuration from environment variables](../guides/core/read-config.md).
 
-## constraint()
+## n.constraint()
 
 ```ts
-constraint(fields, check, options?): Constraint<Fields>
+n.constraint(fields, check, options?): Constraint<Fields>
 ```
 
 A rule across fields of an object, like a `CHECK` constraint over several columns in SQL.
 
-| Parameter | Type                            | Description                                                                                                              |
-| --------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `fields`  | `Record<string, field>`         | The fields the rule reads, each with its type: a nominal type, a `schemaOf()` schema or any synchronous Standard Schema. |
-| `check`   | `(values) => boolean \| string` | Gets the checked values of the listed fields: instances for nominal types.                                               |
-| `options` | `{ path?, message? }`           | Optional. `path` and `message`.                                                                                          |
+| Parameter | Type                            | Description                                                                                                           |
+| --------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `fields`  | `Record<string, field>`         | The fields the rule reads, each with its type: a nominal type, an `n.of()` schema or any synchronous Standard Schema. |
+| `check`   | `(values) => boolean \| string` | Gets the checked values of the listed fields: instances for nominal types.                                            |
+| `options` | `{ path?, message? }`           | Optional. `path` and `message`.                                                                                       |
 
 What `check` returns:
 
@@ -411,9 +435,9 @@ Throws: nothing when declared. A listed field whose schema answers asynchronousl
 Example:
 
 ```ts
-import { constraint, Nominal, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, Nominal, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -421,7 +445,7 @@ const withinCapacity = constraint(
 
 class Stay extends Nominal(
   'booking.Stay',
-  objectOf({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
+  n.object({ guests: PositiveInteger, capacity: PositiveInteger }, withinCapacity),
 ) {}
 
 new Stay({ guests: 2, capacity: 4 }).guests.value; // 2
@@ -432,7 +456,7 @@ new Stay({ guests: 0, capacity: 4 }); // throws NominalError: booking.Stay: gues
 The default messages, from a check that returns `false`:
 
 ```ts
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
 const fields = { guests: PositiveInteger, capacity: PositiveInteger };
 const fits = ({ guests, capacity }: { guests: PositiveInteger; capacity: PositiveInteger }): boolean =>
@@ -440,11 +464,11 @@ const fits = ({ guests, capacity }: { guests: PositiveInteger; capacity: Positiv
 
 const input = { guests: 5, capacity: 4 };
 
-constraint(fields, fits)['~standard'].validate(input);
+n.constraint(fields, fits)['~standard'].validate(input);
 // { issues: [{ message: 'guests, capacity must agree' }] }
-constraint(fields, fits, { path: 'guests' })['~standard'].validate(input);
+n.constraint(fields, fits, { path: 'guests' })['~standard'].validate(input);
 // { issues: [{ message: 'must agree with capacity', path: ['guests'] }] }
-constraint(fields, fits, { message: 'too many guests' })['~standard'].validate(input);
+n.constraint(fields, fits, { message: 'too many guests' })['~standard'].validate(input);
 // { issues: [{ message: 'too many guests' }] }
 ```
 
@@ -452,54 +476,54 @@ See also: [How to check one field against another](../guides/core/check-fields-t
 
 ## Constraint class
 
-The class `constraint()` returns. Create it through `constraint()`, not with `new`.
+The class `n.constraint()` returns. Create it through `n.constraint()`, not with `new`.
 
-| Member          | Description                                                                                                     |
-| --------------- | --------------------------------------------------------------------------------------------------------------- |
-| `fields`        | The `fields` object given to `constraint()`.                                                                    |
-| `['~standard']` | The Standard Schema interface. `validate` checks a whole object, as described in [`constraint()`](#constraint). |
+| Member          | Description                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `fields`        | The `fields` object given to `n.constraint()`.                                                                     |
+| `['~standard']` | The Standard Schema interface. `validate` checks a whole object, as described in [`n.constraint()`](#nconstraint). |
 
 A constraint can go to:
 
-- `objectOf(fields, constraint)`, as a rule of the object;
-- `subtype()` of a type built on `objectOf()`, as the subtype's rule;
+- `n.object(fields, constraint)`, as a rule of the object;
+- `subtype()` of a type built on `n.object()`, as the subtype's rule;
 - `Nominal(name, constraint)`, as a type's whole rule, see [`Nominal()`](declaring.md#nominal);
 - an adapter's `constrain…()` function, see [Adapters](adapters/README.md).
 
 Its JSON Schema is an object. The listed fields are in `properties`. The fields that can't be `undefined` are in `required`. `check` has no JSON Schema form.
 
-## isObjectSchema()
+## n.isObject()
 
 ```ts
-isObjectSchema(value: unknown): value is ObjectSchema
+n.isObject(value: unknown): value is ObjectSchema
 ```
 
-Returns: `true` if `value` was made by `objectOf()`, also by [another copy of the package](glossary.md). A `schemaOf()` schema gives `false`.
+Returns: `true` if `value` was made by `n.object()`, also by [another copy of the package](glossary.md). An `n.of()` schema gives `false`.
 
 Throws: nothing.
 
 ```ts
-import { Email, isObjectSchema, objectOf, schemaOf } from '@horizon-republic/nominal-types';
+import { Email, n } from '@horizon-republic/nominal-types';
 
-isObjectSchema(objectOf({ email: Email })); // true
-isObjectSchema(schemaOf(Email)); // false
+n.isObject(n.object({ email: Email })); // true
+n.isObject(n.of(Email)); // false
 ```
 
-## isConstraint()
+## n.isConstraint()
 
 ```ts
-isConstraint(value: unknown): value is AnyConstraint
+n.isConstraint(value: unknown): value is AnyConstraint
 ```
 
-Returns: `true` if `value` was made by `constraint()`, also by [another copy of the package](glossary.md).
+Returns: `true` if `value` was made by `n.constraint()`, also by [another copy of the package](glossary.md).
 
 Throws: nothing.
 
 ```ts
-import { constraint, Email, isConstraint, objectOf, PositiveInteger } from '@horizon-republic/nominal-types';
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-isConstraint(constraint({ seats: PositiveInteger }, () => true)); // true
-isConstraint(objectOf({ email: Email })); // false
+n.isConstraint(n.constraint({ seats: PositiveInteger }, () => true)); // true
+n.isConstraint(n.object({ email: Email })); // false
 ```
 
 [← Reference](README.md)

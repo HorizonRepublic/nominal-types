@@ -30,14 +30,14 @@ new Sku('ABC-1234').value; // 'ABC-1234'
 Sku.parse('abc-1234'); // { ok: false, issues: [{ message: 'must be matched by ^[A-Z]{3}-\d{4}$ (was "abc-1234")' }] }
 ```
 
-The message quotes the pattern. To describe the value in words, wrap the pattern in `matching()`:
+The message quotes the pattern. To describe the value in words, wrap the pattern in `n.matching()`:
 
 ```ts
-import { AnyString, matching } from '@horizon-republic/nominal-types';
+import { AnyString, n } from '@horizon-republic/nominal-types';
 
 export class Sku extends AnyString.subtype(
   'shop.Sku',
-  matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU such as ABC-1234'),
+  n.matching(/^[A-Z]{3}-\d{4}$/u, 'a SKU such as ABC-1234'),
 ) {}
 
 Sku.parse('abc-1234'); // { ok: false, issues: [{ message: 'must be a SKU such as ABC-1234 (was "abc-1234")' }] }
@@ -55,16 +55,16 @@ new Sku('abc-1234').value; // 'abc-1234'
 
 ## Declare a type with a type guard
 
-A type guard is a function that returns `true` for a valid value. Use it when a pattern can't say the rule. Pass it to `satisfying()` with a description:
+A type guard is a function that returns `true` for a valid value. Use it when a pattern can't say the rule. Pass it to `n.satisfying()` with a description:
 
 ```ts
-import { NonNegativeInteger, satisfying } from '@horizon-republic/nominal-types';
+import { n, NonNegativeInteger } from '@horizon-republic/nominal-types';
 
 const isAtMost100 = (value: unknown): value is number => typeof value === 'number' && value <= 100;
 
 export class Discount extends NonNegativeInteger.subtype(
   'shop.Discount',
-  satisfying(isAtMost100, 'at most 100', { maximum: 100 }),
+  n.satisfying(isAtMost100, 'at most 100', { maximum: 100 }),
 ) {}
 
 new Discount(15).value; // 15
@@ -78,14 +78,14 @@ The third argument is the JSON Schema of the same rule, used in [generated JSON 
 
 ## Declare a type for a fixed set of values
 
-Pass the values to `oneOf()`:
+Pass the values to `n.oneOf()`:
 
 ```ts
-import { AnyString, oneOf } from '@horizon-republic/nominal-types';
+import { AnyString, n } from '@horizon-republic/nominal-types';
 
 export class OrderStatus extends AnyString.subtype(
   'shop.OrderStatus',
-  oneOf('draft', 'paid', 'shipped'),
+  n.oneOf('draft', 'paid', 'shipped'),
 ) {}
 
 new OrderStatus('paid').value; // 'paid'
@@ -94,12 +94,12 @@ OrderStatus.parse('Paid'); // { ok: false, issues: [{ message: 'must be one of "
 
 The type of `value` lists the values: `'draft' | 'paid' | 'shipped'`.
 
-`oneOf()` takes strings, numbers, booleans and `null`. Start from `AnyString` for strings and from `AnyNumber` for numbers. Case counts, and `'1'` is not `1`.
+`n.oneOf()` takes strings, numbers, booleans and `null`. Start from `AnyString` for strings and from `AnyNumber` for numbers. Case counts, and `'1'` is not `1`.
 
 To use a TypeScript `enum`, pass its values. For a string enum, spread `Object.values()`. For a numeric enum, list the members, since `Object.values()` also returns their names:
 
 ```ts
-import { AnyNumber, AnyString, oneOf } from '@horizon-republic/nominal-types';
+import { AnyNumber, AnyString, n } from '@horizon-republic/nominal-types';
 
 enum Size {
   Small = 'S',
@@ -111,10 +111,10 @@ enum Priority {
   High = 1,
 }
 
-export class ShirtSize extends AnyString.subtype('shop.ShirtSize', oneOf(...Object.values(Size))) {}
+export class ShirtSize extends AnyString.subtype('shop.ShirtSize', n.oneOf(...Object.values(Size))) {}
 export class TaskPriority extends AnyNumber.subtype(
   'shop.TaskPriority',
-  oneOf(Priority.Low, Priority.High),
+  n.oneOf(Priority.Low, Priority.High),
 ) {}
 
 new ShirtSize(Size.Large).value; // 'L'
@@ -177,7 +177,7 @@ sku.next().value; // 'ABC-0042'
 
 ## See also
 
-- [Declaring types](../../reference/declaring.md): `subtype()`, `Nominal()`, `matching()`, `satisfying()`, `oneOf()` and the name rules.
+- [Declaring types](../../reference/declaring.md): `subtype()`, `Nominal()`, `n.matching()`, `n.satisfying()`, `n.oneOf()` and the name rules.
 - [How to make a stricter type or a variant](build-on-a-type.md)
 - [What a nominal type is](../../explanation/nominal-types.md)
 

@@ -15,7 +15,7 @@ import { columnKindOf } from '../../../src/adapters/orm/column.ts';
 import { readerOf } from '../../../src/adapters/orm/values.ts';
 import { toSequelize } from '../../../src/adapters/sequelize/index.ts';
 import { toTypeOrm } from '../../../src/adapters/typeorm/index.ts';
-import { NominalError, satisfying } from '../../../src/index.ts';
+import { n, NominalError } from '../../../src/index.ts';
 import { Instant, PlainDate, PlainDateTime, PlainTime } from '../../../src/temporal/index.ts';
 
 const sent = '2024-05-01T09:30:00.123Z';
@@ -25,7 +25,7 @@ const meeting = '2024-05-01T09:30:00';
 
 class Deadline extends Instant.subtype(
   'columns.Deadline',
-  satisfying(
+  n.satisfying(
     (value: unknown): value is Temporal.Instant =>
       value instanceof Temporal.Instant && value.epochMilliseconds > 0,
     'after 1970',

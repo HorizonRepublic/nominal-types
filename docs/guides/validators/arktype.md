@@ -2,7 +2,7 @@
 
 Put nominal types into [ArkType](https://arktype.io) schemas and get instances back, such as an `Email`, instead of strings.
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use this guide if you already use ArkType.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use this guide if you already use ArkType.
 
 ## Before you start
 
@@ -119,9 +119,9 @@ A [constraint](../../reference/glossary.md) checks one field against another. At
 ```ts
 import { type } from 'arktype';
 import { constrainArk, fromArk, toArk } from '@horizon-republic/nominal-types/adapters/arktype';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -140,7 +140,7 @@ CreateBooking.parse({ hotel: 'Lviv', stays: [{ guests: 4, capacity: 3 }] });
 
 For the top object, pass the constraints to `fromArk()` itself: `fromArk(type({ … }), withinCapacity)`.
 
-Constraints run only after ArkType has accepted the whole input. [How to check one field against another](../core/check-fields-together.md) explains `constraint()`.
+Constraints run only after ArkType has accepted the whole input. [How to check one field against another](../core/check-fields-together.md) explains `n.constraint()`.
 
 ## Describe the body as JSON Schema
 
@@ -220,7 +220,7 @@ order.value.customer; // Email
 order.isBulk; // true
 ```
 
-Such a class reads its fields through `value`. A class built on `objectOf()` gets a getter for each field instead: see [How to make a value object](../core/make-a-value-object.md). A body that you only take apart needs no class.
+Such a class reads its fields through `value`. A class built on `n.object()` gets a getter for each field instead: see [How to make a value object](../core/make-a-value-object.md). A body that you only take apart needs no class.
 
 ## Errors
 
@@ -239,12 +239,12 @@ Each issue has a `message` and a `path`:
 - A morph after `toArk()`, such as `toArk(Email).pipe(…)`, is not supported. `fromArk()` throws `TypeError: fromArk: a morph holds a nominal type in a form that can't be told apart at runtime; …`. Put that logic into the type instead.
 - A union of objects without a literal field can't be told apart. `fromArk()` throws a `TypeError` that starts with `fromArk: a union of objects without a literal field …`. Add a field such as `kind: "'email'"`.
 - `constrainArk()` takes only an object type. Anything else throws `TypeError: constrainArk: constraints attach to an ArkType object type`.
-- `schemaOf(Email)` also works inside ArkType without the adapter, but about 20 times slower on a large document: see [Benchmarks](../../reference/benchmarks.md#a-large-document). Use `toArk()`.
+- `n.of(Email)` also works inside ArkType without the adapter, but about 20 times slower on a large document: see [Benchmarks](../../reference/benchmarks.md#a-large-document). Use `toArk()`.
 
 ## See also
 
 - [ArkType adapter reference](../../reference/adapters/arktype.md): every export, its signature and errors.
-- [How to check a request body with objectOf()](../core/check-an-object.md)
+- [How to check a request body with n.object()](../core/check-an-object.md)
 - [How to use nominal types with NestJS](../frameworks/nestjs.md)
 - [How to get a JSON Schema for a type](../api-docs/json-schema.md)
 

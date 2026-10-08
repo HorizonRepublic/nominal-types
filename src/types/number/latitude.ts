@@ -18,6 +18,6 @@ const LatitudeBase: SubtypeOf<typeof FiniteNumber, 'nominal.Latitude'> = FiniteN
  *
  * @remarks
  * Both ends are included. The value is a number; read `'51.5'` from text with
- * `schemaOf(Latitude).fromString()`.
+ * `n.of(Latitude).fromString()`.
  */
 export class Latitude extends LatitudeBase {}

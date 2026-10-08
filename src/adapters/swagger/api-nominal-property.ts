@@ -10,19 +10,19 @@ import type { NominalTarget } from '../../core/target.ts';
  * by hand rather than through its CLI plugin.
  *
  * @remarks
- * Takes a nominal type or a `schemaOf()` schema and writes its whole OpenAPI 3.0 schema into the
+ * Takes a nominal type or a `n.of()` schema and writes its whole OpenAPI 3.0 schema into the
  * property: pattern, format, length limits, example, and for lists `items`, `minItems` and
  * `maxItems`. The property is required unless the schema accepts `undefined`, as
- * `schemaOf(Email).optional()` does. `options` are `@ApiProperty`'s own and win over the
+ * `n.of(Email).optional()` does. `options` are `@ApiProperty`'s own and win over the
  * generated ones.
  *
- * @throws TypeError when `target` is neither a nominal type nor a `schemaOf()` schema.
+ * @throws TypeError when `target` is neither a nominal type nor a `n.of()` schema.
  *
  * @example
  * ```ts
  * class CreateOrderDto {
  *   @ApiNominalProperty(Email) contact!: Email;
- *   @ApiNominalProperty(schemaOf(Uuid).array({ min: 1 })) items!: readonly Uuid[];
+ *   @ApiNominalProperty(n.of(Uuid).array({ min: 1 })) items!: readonly Uuid[];
  * }
  * ```
  */
@@ -31,7 +31,7 @@ export const ApiNominalProperty = (
   options: ApiPropertyOptions = {},
 ): PropertyDecorator => {
   if (!isTarget(target)) {
-    throw new TypeError('ApiNominalProperty() takes a nominal type or a schemaOf() schema');
+    throw new TypeError('ApiNominalProperty() takes a nominal type or an n.of() schema');
   }
 
   const schema = withoutUri(target['~standard'].jsonSchema.input({ target: 'openapi-3.0' }));

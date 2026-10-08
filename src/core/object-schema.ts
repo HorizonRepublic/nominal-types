@@ -17,7 +17,7 @@ import { instanceParserFor } from './type-functions.ts';
 import { schemaOf, TypeSchema } from './type-schema.ts';
 
 /**
- * The fields of an object schema: each key to a nominal type, a `schemaOf()` or `objectOf()`
+ * The fields of an object schema: each key to a nominal type, a `n.of()` or `n.object()`
  * schema, or any synchronous Standard Schema.
  */
 export type ObjectFields = Readonly<Record<string, ConstraintField>>;
@@ -59,12 +59,12 @@ export type ObjectInput<Fields extends ObjectFields> = Simplify<
 >;
 
 const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
-  isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, 'objectOf()');
+  isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, 'n.object()');
 
 const fieldsOf = (fields: ObjectFields): ObjectField[] =>
   Object.entries(fields).map(([key, field]) => {
     if (key === '__proto__') {
-      throw new TypeError('objectOf(): a field cannot be named __proto__');
+      throw new TypeError('n.object(): a field cannot be named __proto__');
     }
 
     const run = runnerOf(field);
@@ -78,7 +78,7 @@ const fieldsOf = (fields: ObjectFields): ObjectField[] =>
   });
 
 /**
- * An object made of fields, each checked by its own schema: what `objectOf()` returns.
+ * An object made of fields, each checked by its own schema: what `n.object()` returns.
  *
  * @remarks
  * It is a `TypeSchema`, so `array()`, `optional()` and `nullable()` build on it, and a nominal type
@@ -94,13 +94,13 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
   readonly #strict: boolean;
 
   /**
-   * Internal: built by `objectOf()`, `strict()` and `fromEnv()`.
+   * Internal: built by `n.object()`, `strict()` and `fromEnv()`.
    */
   public constructor(source: ObjectFields, constraints: readonly AnyConstraint[], strict: boolean) {
     const fields = fieldsOf(source);
 
     checkConstraintFields(
-      'objectOf',
+      'n.object',
       fields.map(({ key }) => key),
       constraints,
     );
@@ -128,7 +128,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * any other record of strings, such as query parameters.
    *
    * @remarks
-   * Fields of other kinds, such as `schemaOf()` and `objectOf()` schemas, are kept as they are;
+   * Fields of other kinds, such as `n.of()` and `n.object()` schemas, are kept as they are;
    * give them `fromString()` yourself where they read text. Undeclared keys are dropped, so the
    * whole `process.env` can be passed.
    *
@@ -136,7 +136,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
    * ```ts
    * export class Config extends Nominal(
    *   'app.Config',
-   *   objectOf({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv(),
+   *   n.object({ PORT: Port, DEBUG: AnyBoolean, DATABASE_URL: Url }).fromEnv(),
    * ) {}
    *
    * export const config = new Config(process.env);
@@ -158,7 +158,7 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
 }
 
 /**
- * Whether a value is a schema built by `objectOf()`, also by another copy of this package.
+ * Whether a value is a schema built by `n.object()`, also by another copy of this package.
  */
 export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, unknown> =>
   typeof value === 'object' && value !== null && Reflect.get(value, objectMark) === true;
@@ -170,7 +170,7 @@ export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, u
  * @remarks
  * Every field is checked and every issue collected, with the field's key in its path. Keys the
  * schema doesn't declare are dropped; call `strict()` to refuse them. A field whose schema accepts
- * `undefined`, such as `schemaOf(Type).optional()`, may be missing. The constraints run once every
+ * `undefined`, such as `n.of(Type).optional()`, may be missing. The constraints run once every
  * field is valid. The result is a new object, read-only by type; given to `Nominal()`, it is
  * frozen.
  *
@@ -180,10 +180,10 @@ export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, u
  *
  * @example
  * ```ts
- * export const CreateOrder = objectOf({
+ * export const CreateOrder = n.object({
  *   email: Email,
  *   quantity: PositiveInteger,
- *   note: schemaOf(AnyString).optional(),
+ *   note: n.of(AnyString).optional(),
  * });
  *
  * CreateOrder.parse(body); // { ok: true, value: { email: Email, quantity: PositiveInteger } }

@@ -2,7 +2,7 @@
 
 Put nominal types into [Valibot](https://valibot.dev) schemas and get instances back, such as an `Email`, instead of strings.
 
-New project? Check bodies with [objectOf()](../core/check-an-object.md). Use this guide if you already use Valibot.
+New project? Check bodies with [n.object()](../core/check-an-object.md). Use this guide if you already use Valibot.
 
 ## Before you start
 
@@ -110,9 +110,9 @@ A [constraint](../../reference/glossary.md) checks one field against another. At
 ```ts
 import * as v from 'valibot';
 import { constrainValibot, toValibot } from '@horizon-republic/nominal-types/adapters/valibot';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests <= capacity || 'must not exceed the capacity',
   { path: 'guests' },
@@ -131,7 +131,7 @@ result.issues?.map((issue) => [v.getDotPath(issue), issue.message]);
 // [['stays.0.guests', 'must not exceed the capacity']]
 ```
 
-[How to check one field against another](../core/check-fields-together.md) explains `constraint()`.
+[How to check one field against another](../core/check-fields-together.md) explains `n.constraint()`.
 
 ## Errors
 
@@ -146,14 +146,14 @@ Each issue is a Valibot issue with the type's `message`. Read its path with `v.g
 ## Limits
 
 - A constraint must read only fields the object declares. Otherwise `constrainValibot()` throws when you build the schema: `TypeError: constrainValibot: a constraint reads capacity, which the object does not declare`.
-- A type that holds an object, such as one built on `objectOf()`, reports a nested problem in one issue. The path stops at the field, and the rest goes into the message: `start: must be a positive integer (was 0)`.
+- A type that holds an object, such as one built on `n.object()`, reports a nested problem in one issue. The path stops at the field, and the rest goes into the message: `start: must be a positive integer (was 0)`.
 - Building instances takes time. On a 3 MB document, Valibot alone takes 7.1 ms and Valibot with the adapter 12 ms: see [Benchmarks](../../reference/benchmarks.md#a-large-document).
-- A `toValibot()` field carries no JSON Schema. To describe a body as JSON Schema, use [objectOf()](../core/check-an-object.md) or another adapter.
+- A `toValibot()` field carries no JSON Schema. To describe a body as JSON Schema, use [n.object()](../core/check-an-object.md) or another adapter.
 
 ## See also
 
 - [Valibot adapter reference](../../reference/adapters/valibot.md): every export, its signature and errors.
-- [How to check a request body with objectOf()](../core/check-an-object.md)
+- [How to check a request body with n.object()](../core/check-an-object.md)
 - [How to check one field against another](../core/check-fields-together.md)
 
 [← Guides](../README.md)

@@ -75,9 +75,9 @@ A constraint inside an array:
 ```ts
 import * as v from 'valibot';
 import { constrainValibot, toValibot } from '@horizon-republic/nominal-types/adapters/valibot';
-import { constraint, PositiveInteger } from '@horizon-republic/nominal-types';
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
 
-const withinCapacity = constraint(
+const withinCapacity = n.constraint(
   { guests: PositiveInteger, capacity: PositiveInteger },
   ({ guests, capacity }) => guests.value <= capacity.value || 'must not exceed the capacity',
   { path: 'guests' },
@@ -96,7 +96,7 @@ result.issues?.map((issue) => [v.getDotPath(issue), issue.message]);
 ## See also
 
 - [How to use nominal types with Valibot](../../guides/validators/valibot.md)
-- [Schemas: `constraint()`](../schemas.md)
+- [Schemas: `n.constraint()`](../schemas.md)
 - [Benchmarks](../benchmarks.md)
 
 [← Adapters](README.md) · [← Reference](../README.md)

@@ -23,6 +23,10 @@ describe('package.json', () => {
     },
   );
 
+  it('ships the docs and llms.txt, so agents read the docs of the installed version', () => {
+    expect(manifest).toHaveProperty('files', ['dist', 'docs', 'llms.txt']);
+  });
+
   it('depends only on the Standard Schema types, which no built file imports', () => {
     expect(Object.keys(recordAt('dependencies'))).toStrictEqual(['@standard-schema/spec']);
   });

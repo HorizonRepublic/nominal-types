@@ -51,6 +51,20 @@ try {
 
 The message of a `NominalError` starts with the type name. The messages in `issues` don't.
 
+## Ask only whether a value is valid
+
+When you need a yes or no and no instance, call `accepts()`. It runs the same rules, and it is faster, since it builds nothing:
+
+```ts
+import { Email } from '@horizon-republic/nominal-types';
+
+const inputs: unknown[] = ['jane@example.com', 'jane', 42];
+
+const valid = inputs.filter((input) => Email.accepts(input)); // ['jane@example.com']
+```
+
+`valid` is still `unknown[]` to TypeScript. To use a value as an `Email`, call `parse()`. See [`Type.accepts()`](../../reference/type-members.md#accepts).
+
 ## Pass an instance to parse()
 
 `parse()` takes an instance of the type too. It returns the same object without checking it again, if this copy of the package built it:

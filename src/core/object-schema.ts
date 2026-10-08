@@ -5,6 +5,7 @@ import type {
   ConstraintInput,
   ConstraintValue,
 } from './constraint-types.ts';
+import { objectPaths } from './fast-paths.ts';
 import { describeField } from './field-json.ts';
 import { foreignRunner } from './foreign-runner.ts';
 import { hideValues } from './hidden-values.ts';
@@ -126,10 +127,12 @@ export class ObjectSchema<Input, Output> extends TypeSchema<Input, Output> {
     );
 
     const shape = objectShape(fields, constraints, strict);
+    const ownShape = hidden ? hidingValues(shape) : shape;
+    const paths = objectPaths(fields, source, { strict, constraints, run: ownShape.run });
 
     // The shape returns a new object of the fields, which is what Output describes.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    super((hidden ? hidingValues(shape) : shape) as never);
+    super(ownShape as never, { paths });
     this.keys = fields.map(({ key }) => key);
     this.#source = source;
     this.#constraints = constraints;

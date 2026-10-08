@@ -151,6 +151,22 @@ export interface AnyNominalType {
   readonly rule: NominalSchema;
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
   parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
+  /**
+   * Whether `parse` would accept the input, answered without building an instance or issues: for
+   * a cheap yes or no, such as a filter or a branch on the kind of input.
+   *
+   * @remarks
+   * It runs the type's rules, and treats instances as `parse` does. A constructor of your own is
+   * not run, so a class whose constructor changes or refuses the input can disagree with `parse`.
+   * It doesn't narrow the input: a string it accepts is still a string, not an instance.
+   *
+   * @example
+   * ```ts
+   * Integer.accepts(42); // true
+   * Integer.accepts(4.2); // false
+   * ```
+   */
+  accepts(input: unknown): boolean;
 }
 
 /**

@@ -2,18 +2,19 @@
 
 The functions that build schemas from nominal types: lists, optional values, objects and rules across fields. Terms are explained in the [glossary](glossary.md).
 
-| Entry                                | What it does                                                                            |
-| ------------------------------------ | --------------------------------------------------------------------------------------- |
-| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule                 |
-| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                                   |
-| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `array()`, `fromString()`, `optional()`, `nullable()` |
-| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                           |
-| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas                    |
-| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `fromEnv()`, `keys`                              |
-| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                       |
-| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                           |
-| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                          |
-| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                                    |
+| Entry                                | What it does                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| [`n`](#n)                            | The namespace that holds every function which builds a schema or a rule         |
+| [`n.of()`](#nof)                     | A type as a plain schema object, the start of a chain                           |
+| [`TypeSchema`](#typeschema)          | What `n.of()` returns: `parse()`, `accepts()`, `toPlain()`, `array()` and more  |
+| [`ArrayOptions`](#arrayoptions)      | How many items `array()` accepts, and whether they may repeat                   |
+| [`n.object()`](#nobject)             | A schema for an object whose fields are checked by their own schemas            |
+| [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `fromEnv()`, `keys`                      |
+| [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                               |
+| [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                   |
+| [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                  |
+| [`n.isConstraint()`](#nisconstraint) | Tells a constraint from other values                                            |
+| [`n.plain()`](#nplain)               | A copy of any value with its instances replaced by plain values, for a response |
 
 Every schema here is a [Standard Schema](glossary.md) and a [Standard JSON Schema](glossary.md). Each method returns a new schema and leaves the old one as it is.
 
@@ -34,6 +35,7 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | `n.satisfying()`   | A rule from a type guard                        | [`n.satisfying()`](declaring.md#nsatisfying)           |
 | `n.oneOf()`        | A rule for a fixed set of values                | [`n.oneOf()`](declaring.md#noneof)                     |
 | `n.hideValues()`   | Issues with the values left out of the messages | [`n.hideValues()`](errors-and-messages.md#nhidevalues) |
+| `n.plain()`        | A copy of a value with plain values only        | [`n.plain()`](#nplain)                                 |
 | `n.isType()`       | Tells a nominal type class from other values    | [`n.isType()`](declaring.md#nistype)                   |
 | `n.isObject()`     | Tells an `n.object()` schema from other values  | [`n.isObject()`](#nisobject)                           |
 | `n.isConstraint()` | Tells a constraint from other values            | [`n.isConstraint()`](#nisconstraint)                   |
@@ -76,6 +78,8 @@ The class `n.of()` returns. `ObjectSchema` extends it. Create it through `n.of()
 | Member                                 | Returns                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
 | [`parse(input)`](#parse)               | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw. |
+| [`accepts(input)`](#accepts)           | `true` if `parse()` would accept `input`. Builds no value.       |
+| [`toPlain(value)`](#toplain)           | A copy of a value the schema gave, with plain values only.       |
 | [`array(options?)`](#array)            | A schema for an array of values this schema accepts.             |
 | [`fromString()`](#fromstring)          | The same schema, reading a number or boolean from text first.    |
 | [`optional()`](#optional-and-nullable) | A schema that also accepts `undefined`.                          |
@@ -113,6 +117,72 @@ if (result.ok) {
 }
 
 email.parse('jane'); // { ok: false, issues: [{ message: 'must be an email address (was a string of 4 characters)' }] }
+```
+
+### accepts
+
+```ts
+schema.accepts(input: unknown): boolean
+```
+
+Returns: `true` if [`parse()`](#parse) would accept `input`, `false` otherwise.
+
+Throws: nothing for an invalid value.
+
+It builds no value, no instances and no issues, and it stops at the first field or item that fails. So it is several times faster than `parse()`. As with [`Type.accepts()`](type-members.md#accepts), it doesn't run a constructor of your own, and it doesn't change the type of `input`.
+
+An object with constraints and an array with `unique: true` build their values to compare them. For them, `accepts()` saves only the result object.
+
+Example:
+
+```ts
+import { n, PositiveInteger, Uuid } from '@horizon-republic/nominal-types';
+
+const ids = n.of(Uuid).array({ max: 2 });
+
+ids.accepts(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // true
+ids.accepts(['nope']); // false
+n.object({ seats: PositiveInteger }).accepts({ seats: 0 }); // false
+```
+
+### toPlain
+
+```ts
+schema.toPlain(value: Output): Plain<Output>
+```
+
+| Parameter | Type                              | Description                          |
+| --------- | --------------------------------- | ------------------------------------ |
+| `value`   | what the schema's `parse()` gives | The value to turn into plain values. |
+
+Returns: a new copy of `value`. Each instance in it is replaced by what its [`toJSON()`](type-members.md#tojson-and-tostring) returns. Arrays and objects are new and can be changed. `value` stays as it was.
+
+Throws: nothing.
+
+Use it before you write a response as JSON. `JSON.stringify()` calls `toJSON()` on each instance, which is slow. On a copy from `toPlain()`, it runs at the speed of plain values. See [Benchmarks](benchmarks.md#writing-json).
+
+What it does with each part:
+
+| Part of the value                                       | Result                                   |
+| ------------------------------------------------------- | ---------------------------------------- |
+| an instance                                             | what its `toJSON()` returns              |
+| a field the object doesn't declare                      | left out, as `parse()` leaves it out     |
+| a missing optional field                                | left out                                 |
+| `undefined` or `null` from `optional()` or `nullable()` | kept                                     |
+| a field from another library, such as a Zod schema      | converted as [`n.plain()`](#nplain) does |
+
+Example:
+
+```ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Invite = n.object({ email: Email, seats: PositiveInteger });
+const result = Invite.parse({ email: 'jane@example.com', seats: 2 });
+
+if (result.ok) {
+  Invite.toPlain(result.value); // { email: 'jane@example.com', seats: 2 }
+  JSON.stringify(Invite.toPlain(result.value)); // '{"email":"jane@example.com","seats":2}'
+}
 ```
 
 ### array
@@ -526,5 +596,45 @@ import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
 n.isConstraint(n.constraint({ seats: PositiveInteger }, () => true)); // true
 n.isConstraint(n.object({ email: Email })); // false
 ```
+
+## n.plain()
+
+```ts
+n.plain(value: Value): Plain<Value>
+```
+
+| Parameter | Type | Description                          |
+| --------- | ---- | ------------------------------------ |
+| `value`   | any  | The value to turn into plain values. |
+
+Returns: a new copy of `value` with plain values only:
+
+| Part of the value                                                     | Result                                                                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| an instance, also one from [another copy of the package](glossary.md) | what its [`toJSON()`](type-members.md#tojson-and-tostring) returns, converted again if it is an object |
+| an array or a plain object                                            | a new one, with each part converted                                                                    |
+| a `Date`, a `Map`, an instance of a class of your own                 | kept as it is                                                                                          |
+| a string, a number or any other primitive                             | kept as it is                                                                                          |
+
+`value` stays as it was.
+
+Throws: a `TypeError` if `value` refers to itself, which JSON can't write either: `n.plain(): the value refers to itself, which JSON cannot write`.
+
+Use it for a response that doesn't come from one schema. For a value from a schema's `parse()`, [`toPlain()`](#toplain) is faster, since it knows where the instances are.
+
+Example:
+
+```ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const page = {
+  items: [{ email: new Email('jane@example.com'), seats: new PositiveInteger(2) }],
+  total: 1,
+};
+
+n.plain(page); // { items: [{ email: 'jane@example.com', seats: 2 }], total: 1 }
+```
+
+`Plain<Value>` is the type of the result: `Value` with each instance replaced by the type its `toJSON()` returns. For `Email` that is `string`, for `Int64` it is `string` as well.
 
 [← Reference](README.md)

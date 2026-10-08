@@ -1,3 +1,5 @@
+import { acceptors, compileAccepts } from './acceptor.ts';
+import type { Accepts } from './acceptor.ts';
 import { compileRun } from './compile.ts';
 import type { NominalSchema } from './contracts.ts';
 import { withValidExamples } from './examples.ts';
@@ -77,6 +79,28 @@ export const rulesRunnerOf = (root: object, target: TypeClass): ((input: unknown
   }
 
   return runner;
+};
+
+const typeAcceptors = new WeakMap<object, Accepts>();
+
+/**
+ * Internal: the function generated to tell whether a value passes every rule of a type, without
+ * building the value or its issues.
+ */
+export const rulesAcceptsOf = (root: object, target: TypeClass): Accepts => {
+  let accepts = typeAcceptors.get(target);
+
+  if (accepts === undefined) {
+    accepts = compileAccepts(
+      stepsOf(rulesFor(root, target), (rule) => ({
+        convert: foreignRunner(rule, target.typeName),
+        accepts: acceptors.get(rule),
+      })),
+    );
+    typeAcceptors.set(target, accepts);
+  }
+
+  return accepts;
 };
 
 /**

@@ -8,6 +8,7 @@ What every nominal type class and every instance offers. A type of your own and 
 | -------------------------------------- | ------------------------------------------------------------------- |
 | [`new Type(input)`](#new)              | Checks `input` and makes an instance. Throws if `input` is invalid. |
 | [`Type.parse(input)`](#parse)          | Checks `input`. Returns a result object and doesn't throw.          |
+| [`Type.accepts(input)`](#accepts)      | Tells whether `parse()` would accept `input`. Makes no instance.    |
 | [`value instanceof Type`](#instanceof) | Tells whether a value is an instance of the type.                   |
 | [`Type.typeName`](#typename)           | The [type name](declaring.md#type-names).                           |
 | [`Type.rule`](#rule)                   | The rule the type's own level adds.                                 |
@@ -109,6 +110,41 @@ Sku.parse(new Email('jane@example.com')); // { ok: false, issues: [{ message: 'm
 ```
 
 See also: [How to check untrusted input](../guides/core/check-input.md).
+
+### accepts
+
+```ts
+Type.accepts(input: unknown): boolean
+```
+
+| Parameter | Type      | Description         |
+| --------- | --------- | ------------------- |
+| `input`   | `unknown` | The value to check. |
+
+Returns: `true` if `parse()` would accept `input`, `false` otherwise.
+
+Throws: nothing for an invalid value. A rule that answers asynchronously throws a `TypeError`, as in `parse()`.
+
+`accepts()` runs the same rules as `parse()`, but it makes no instance and no issues. Use it when you only need a yes or no, such as to filter a list. It is several times faster than `parse()`: see [Benchmarks](benchmarks.md#one-value).
+
+It treats an instance as [`parse()`](#parse) does. It differs from `parse()` in two ways:
+
+- It doesn't run a constructor of your own. A class whose constructor changes or refuses the input can get `true` from `accepts()` and issues from `parse()`.
+- It doesn't change the type of `input`. A string it accepts is still a `string` to TypeScript, not an instance. To get an instance, call `parse()`.
+
+Example:
+
+```ts
+import { Email, Integer } from '@horizon-republic/nominal-types';
+
+Integer.accepts(42); // true
+Integer.accepts(4.2); // false
+Email.accepts(new Email('jane@example.com')); // true
+
+const inputs: unknown[] = ['jane@example.com', 'jane', 42];
+
+inputs.filter((input) => Email.accepts(input)); // ['jane@example.com']
+```
 
 ### instanceof
 
@@ -292,6 +328,8 @@ const id = new Int64(9007199254740993n);
 JSON.stringify({ email, quantity, id }); // '{"email":"jane@example.com","quantity":3,"id":"9007199254740993"}'
 email.toString(); // 'jane@example.com'
 ```
+
+`JSON.stringify()` calls `toJSON()` on each instance, which makes it several times slower than on plain values. For a large response, convert it first with [`n.plain()`](schemas.md#nplain) or a schema's [`toPlain()`](schemas.md#toplain).
 
 ### Primitive values
 

@@ -1,5 +1,14 @@
 import type { ArrayOptions } from './array-bounds.ts';
 import type { AnyNominalType, InputOf, Parsed } from './contracts.ts';
+import {
+  arrayPaths,
+  nullablePaths,
+  optionalPaths,
+  registerPaths,
+  textPaths,
+  typePaths,
+} from './fast-paths.ts';
+import type { FastPaths, Plain } from './fast-paths.ts';
 import { sensitiveSlot } from './hierarchy.ts';
 import { forTarget, withoutUri } from './json-target.ts';
 import { describeValue } from './messages.ts';
@@ -48,20 +57,27 @@ export class TypeSchema<Input, Output> {
   public readonly '~standard': StandardProps<Input, Output>;
   readonly #shape: Shape<Output>;
   readonly #textForm: TextForm | undefined;
+  readonly #paths: FastPaths;
 
   /**
-   * Internal: built by `n.of()` and the methods below.
+   * Internal: built by `n.of()` and the methods below; `paths` know the shape.
    */
   public constructor(
     shape: Shape<Output>,
-    options: { readonly textForm?: TextForm | undefined; readonly array?: boolean } = {},
+    options: {
+      readonly paths: FastPaths;
+      readonly textForm?: TextForm | undefined;
+      readonly array?: boolean;
+    },
   ) {
     this.#shape = shape;
     this.#textForm = options.textForm;
+    this.#paths = options.paths;
     this['~standard'] = standardProps(shape.run, (side, target) =>
       forTarget(target, shape.describe(side, target)),
     );
     runners.set(this, shape.run);
+    registerPaths(this, this.#paths);
 
     if (options.array === true) {
       arraySchemas.add(this);
@@ -86,6 +102,49 @@ export class TypeSchema<Input, Output> {
   }
 
   /**
+   * Whether `parse()` would accept the input, answered without building the value or issues: for a
+   * cheap yes or no.
+   *
+   * @remarks
+   * A constructor of your own is not run, so a type whose constructor changes or refuses the input
+   * can disagree with `parse()`. The answer doesn't narrow the input's type.
+   *
+   * @example
+   * ```ts
+   * n.of(Uuid).array({ max: 10 }).accepts(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // true
+   * ```
+   */
+  public accepts(input: unknown): boolean {
+    return this.#paths.accepts(input);
+  }
+
+  /**
+   * A copy of a value this schema gave, with every instance replaced by its JSON form, for a
+   * response: `JSON.stringify()` then writes it at the speed of plain values.
+   *
+   * @remarks
+   * It does what `n.plain()` does, only faster, since it knows where the instances are. An object
+   * keeps only the fields the schema declares, as `parse()` keeps them. Parts the schema doesn't
+   * describe, such as a field from another library, go through `n.plain()`. The value is not
+   * changed.
+   *
+   * @example
+   * ```ts
+   * const Order = n.object({ id: Uuid, quantity: PositiveInteger });
+   * const order = Order.parse(body);
+   *
+   * if (order.ok) {
+   *   JSON.stringify(Order.toPlain(order.value)); // '{"id":"0190f1c2-…","quantity":2}'
+   * }
+   * ```
+   */
+  public toPlain(value: Output): Plain<Output> {
+    // The writer builds exactly the shape `Plain` describes.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    return this.#paths.write(value) as Plain<Output>;
+  }
+
+  /**
    * A new array of values this schema accepts, read-only by type.
    *
    * @remarks
@@ -105,7 +164,12 @@ export class TypeSchema<Input, Output> {
    * ```
    */
   public array(options: ArrayOptions = {}): TypeSchema<readonly Input[], readonly Output[]> {
-    return new TypeSchema(arrayShape(this.#shape, options), { array: true });
+    const shape = arrayShape(this.#shape, options);
+
+    return new TypeSchema(shape, {
+      array: true,
+      paths: arrayPaths(this.#paths, options, shape.run),
+    });
   }
 
   /**
@@ -137,7 +201,9 @@ export class TypeSchema<Input, Output> {
       );
     }
 
-    return new TypeSchema<Input | string, Output>(textShape(this.#shape, form));
+    return new TypeSchema<Input | string, Output>(textShape(this.#shape, form), {
+      paths: textPaths(this.#paths, form),
+    });
   }
 
   /**
@@ -148,7 +214,10 @@ export class TypeSchema<Input, Output> {
    * expressed by leaving it out of `required` in the object around it.
    */
   public optional(): TypeSchema<Input | undefined, Output | undefined> {
-    return new TypeSchema(optionalShape(this.#shape), { array: isArraySchema(this) });
+    return new TypeSchema(optionalShape(this.#shape), {
+      array: isArraySchema(this),
+      paths: optionalPaths(this.#paths),
+    });
   }
 
   /**
@@ -159,7 +228,10 @@ export class TypeSchema<Input, Output> {
    * `null` type, the value's schema with `nullable: true`.
    */
   public nullable(): TypeSchema<Input | null, Output | null> {
-    return new TypeSchema(nullableShape(this.#shape), { array: isArraySchema(this) });
+    return new TypeSchema(nullableShape(this.#shape), {
+      array: isArraySchema(this),
+      paths: nullablePaths(this.#paths),
+    });
   }
 }
 
@@ -200,6 +272,6 @@ export const schemaOf = <Type extends AnyNominalType>(
       // A type from another copy of the package keeps whether it is sensitive to itself.
       sensitive: !ownTypes.isOwn(type) || Reflect.get(type, sensitiveSlot) === true,
     },
-    { textForm: textFormOf(type) },
+    { textForm: textFormOf(type), paths: typePaths(type) },
   );
 };

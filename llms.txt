@@ -8,7 +8,7 @@ This file describes version 3 and ships inside the package: `node_modules/@horiz
 
 - Use `Type.parse(input)` for input that may be wrong (requests, files, env, queue messages). It returns `{ ok: true, value }` or `{ ok: false, issues }` and never throws.
 - Use `new Type(value)` only where a bad value is a bug. It throws `NominalError`.
-- Build schemas, rules and checks through the namespace `n`: `import { n } from '@horizon-republic/nominal-types'`, then `n.object()`, `n.of()`, `n.constraint()`, `n.oneOf()`, `n.matching()`, `n.satisfying()`, `n.hideValues()`, `n.isType()`, `n.isObject()`, `n.isConstraint()`. These functions have no top-level exports of their own.
+- Build schemas, rules and checks through the namespace `n`: `import { n } from '@horizon-republic/nominal-types'`, then `n.object()`, `n.of()`, `n.constraint()`, `n.oneOf()`, `n.matching()`, `n.satisfying()`, `n.hideValues()`, `n.plain()`, `n.isType()`, `n.isObject()`, `n.isConstraint()`. These functions have no top-level exports of their own.
 - Check request bodies, configs and value objects with `n.object()` and `n.constraint()`. If the project already uses ArkType, Zod, Valibot or class-validator, keep it and use that library's adapter instead.
 - Declare a type as a class: `export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}`. Add behaviour as getters and methods in the class body.
 - For strings, numbers, bigints and booleans, build on a base type (`AnyString.subtype(...)`, `PositiveInteger.subtype(...)`). Only types under a base type can be read from text by `fromString()` and `fromEnv()`. Use `Nominal(name, rule)` for objects (`n.object()`) and for types with no base.
@@ -51,6 +51,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | Situation | Use |
 | --- | --- |
 | one value from outside, such as a route parameter | `Uuid.parse(input)` |
+| only a yes or no, no instance needed | `Uuid.accepts(input)`, `schema.accepts(input)` |
 | a request body or a message | `n.object({ ... }).parse(body)` |
 | a rule across fields (end after start, guests ≤ capacity) | `n.constraint()` passed to `n.object()` |
 | a value object of several fields | `class Stay extends Nominal('booking.Stay', n.object({ ... }, rule)) {}` |
@@ -62,6 +63,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | class-validator DTOs | `@NominalField(Type)` |
 | NestJS parameters and bodies | `NominalPipe` |
 | NestJS responses with class-transformer | `NominalSerializerInterceptor` in place of `ClassSerializerInterceptor` |
+| a fast JSON response from parsed values | `JSON.stringify(schema.toPlain(value))`, or `n.plain(value)` for any value |
 | an OpenAPI document from `@nestjs/swagger` | `applyNominalTypes(document)` |
 | Swagger for a body or query value checked by `NominalPipe` | `@ApiNominalBody(schema)`, `@ApiNominalQuery(name, schema)` |
 | a GraphQL scalar | `toGraphQL(Type)` |
@@ -111,6 +113,7 @@ new OrderStatus('paid').value; // 'paid', typed 'draft' | 'paid' | 'shipped'
 | --- | --- |
 | `new Type(input)` | checks `input` and returns an instance; throws `NominalError`. Takes a plain value only. |
 | `Type.parse(input)` | `{ ok: true, value }` or `{ ok: false, issues }`; never throws |
+| `Type.accepts(input)` | `true` when `parse()` would succeed, built without an instance or issues; doesn't run a constructor of your own; doesn't narrow `input` |
 | `value instanceof Type` | `true` for its instances and its subtypes' instances, also across `import` and `require` copies; reads the brand only, so a forged object passes; use `parse()` to know a value is valid |
 | `Type.typeName` | the name, such as `'shop.Sku'` |
 | `Type.rule` | the rule of the type's own level |
@@ -137,7 +140,8 @@ A field of an `n.object()` type can't be named `value`, `equals`, `copyWith`, `t
 
 ### Schemas
 
-- `n.of(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `n.of()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
+- `n.of(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `n.of()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`. `.accepts(input)` returns `true` when `parse()` would succeed, without building the value. `.toPlain(value)` copies a value the schema gave with every instance replaced by its `toJSON()`, keeping only declared fields of an object; `JSON.stringify()` then runs at plain-value speed.
+- `n.plain(value)` copies any value with every nominal instance, at any depth and from any copy of the package, replaced by its `toJSON()`; arrays and plain objects are copied, other objects (`Date`, class instances) kept; never changes the input; a value that refers to itself throws `TypeError`. Its type is `Plain<Value>`. `JSON.stringify()` calls `toJSON()` on each instance and runs several times slower than on plain values, so convert large responses first.
 - `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing; any other missing field reads `is required`. Only own keys of the input are read. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string, makes every field optional in the input type, so `new Config(process.env)` compiles, and hides the values in its messages. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
 - `n.constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
 - `n.isObject(value)`, `n.isConstraint(value)` tell those apart.
@@ -208,7 +212,7 @@ config.PORT.value; // 3000 for PORT=3000
 
 ### TypeScript types
 
-`ValueOf<Schema>` (the value a schema gives: `type CreateBookingBody = ValueOf<typeof CreateBooking>`; give the type its own name, since Bun and SWC record a schema named like the type in Nest's parameter metadata), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?>`, `Narrowed<Instance, Value>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
+`ValueOf<Schema>` (the value a schema gives: `type CreateBookingBody = ValueOf<typeof CreateBooking>`; give the type its own name, since Bun and SWC record a schema named like the type in Nest's parameter metadata), `InputOf<Schema>`, `Parsed<Instance>`, `NominalType<Name, Schema, Instance?>`, `NominalInstance<Name, Value>`, `AnyNominalType`, `NominalSchema<Input, Value>`, `NominalOptions`, `SubtypeOf<Parent, Name, Value?>`, `Narrowed<Instance, Value>`, `VariantOf<Source, Name>`, `VariantInstance<Source, Name>`, `Brand<Name>`, `Branded<Names>`, `BrandsOf<Instance>`, `Unbranded<Instance>`, `Immutable<Value>`, `ObjectInstance<Name, Input, Value>`, `ObjectCopy<Input>`, `ObjectRule<Input, Value>`, `ObjectSchema`, `ObjectFields`, `ObjectInput<Fields>`, `ObjectValue<Fields>`, `TextInput<Input>`, `TypeSchema`, `Plain<Value>`, `NominalTarget`, `TargetValue<Target>`, `ArrayOptions`, `Constraint`, `AnyConstraint`, `ConstraintField`, `ConstraintInput`, `ConstraintInputs`, `ConstraintValue`, `ConstraintValues`, `ConstraintOptions`, `ConstraintVerdict`, `StandardProps`, `StandardSchema`, `PatternSchema`, `PredicateSchema`, `OneOfSchema<Value>`, `OneOfValue`.
 
 ## Built-in types
 
@@ -377,7 +381,7 @@ export class OrdersController {
 - Declared types lose array items and `?`: `Uuid[]` is not checked without a schema, and a missing value of a declared type reaches the handler as `undefined`. To require it or check a list, give the parameter its own pipe or a `{ schema }`.
 - In a query string, a lone value for an array schema becomes a list of one, and a string for a number or boolean type is read as its value (`?page=2` gives `2`), unless `fromString: false`.
 - Options: `fromString` (default `true`), `hideValues` (default `false`), `exceptionFactory(issues, metadata)` (default: `BadRequestException` with `{ statusCode: 400, error: 'Bad Request', message: ['id: must be a UUID (was "x")'] }`). In a microservice pass an `exceptionFactory` that returns an `RpcException`.
-- Pipes never run on `@Headers()`. Without an interceptor, responses use each instance's `toJSON()`. Nest's `ClassSerializerInterceptor` writes instances as `{ "value": … }`; use `NominalSerializerInterceptor` in its place (same arguments: `app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)))`). It writes every instance, at any depth, as its `toJSON()`, then runs class-transformer as before (`@Exclude()`, `@Expose()`, groups, `@SerializeOptions()`).
+- Pipes never run on `@Headers()`. Without an interceptor, responses use each instance's `toJSON()`. A Fastify response schema (fast-json-stringify) mishandles instances: an `AnyBoolean` holding `false` is written `true`, and a nullable field or a date and time type fails with status 500. Return `schema.toPlain(value)` or `n.plain(value)` from such a route, or use `NominalSerializerInterceptor`. Nest's `ClassSerializerInterceptor` writes instances as `{ "value": … }`; use `NominalSerializerInterceptor` in its place (same arguments: `app.useGlobalInterceptors(new NominalSerializerInterceptor(app.get(Reflector)))`). It writes every instance, at any depth, as its `toJSON()`, then runs class-transformer as before (`@Exclude()`, `@Expose()`, groups, `@SerializeOptions()`).
 - Give a schema's value type its own name (`type CreateOrderBody = ValueOf<typeof CreateOrder>`). Under Bun and SWC, `order: CreateOrder` with a shared name records the schema object as the parameter type: `@nestjs/swagger` writes a broken `$ref` and a global `ValidationPipe` answers 500.
 - Nest 12 `@Body({ schema: CreateOrder })` works only together with the global `NominalPipe`.
 

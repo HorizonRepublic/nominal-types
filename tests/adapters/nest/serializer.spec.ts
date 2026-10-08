@@ -6,17 +6,18 @@ import {
   SerializeOptions,
   StreamableFile,
 } from '@nestjs/common';
-import type { INestApplication, NestInterceptor } from '@nestjs/common';
+import type { INestApplication, NestInterceptor, PlainLiteralObject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import * as classTransformer from 'class-transformer';
 import { Exclude, Expose } from 'class-transformer';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { NominalField } from '../../../src/adapters/class-validator/index.ts';
 import { NominalSerializerInterceptor } from '../../../src/adapters/nest/index.ts';
+import type * as library from '../../../src/index.ts';
 import { AnyString, Email, Nominal, n, PositiveInteger, Uuid } from '../../../src/index.ts';
 import { first, platforms } from './support.ts';
 import type { Platform } from './support.ts';
@@ -174,6 +175,25 @@ describe('ClassSerializerInterceptor without nominal instances turned into value
   });
 });
 
+// What the interceptor hands class-transformer, seen through a transformer that changes nothing.
+const jsonOf = (response: PlainLiteralObject): Record<string, unknown> => {
+  let seen: Record<string, unknown> = {};
+  const passing = new NominalSerializerInterceptor(new Reflector(), {
+    transformerPackage: {
+      classToPlain: (value: Record<string, unknown>) => {
+        seen = value;
+
+        return value;
+      },
+      plainToInstance: classTransformer.plainToInstance,
+    },
+  });
+
+  passing.serialize(response, {});
+
+  return seen;
+};
+
 describe('NominalSerializerInterceptor.serialize', () => {
   const interceptor = new NominalSerializerInterceptor(new Reflector(), {
     transformerPackage: classTransformer,
@@ -215,6 +235,52 @@ describe('NominalSerializerInterceptor.serialize', () => {
     const serialized = interceptor.serialize(looped, { enableCircularCheck: true });
 
     expect(Reflect.get(serialized, 'contact')).toBe('jane@example.com');
+  });
+
+  it('writes instances made by another copy of the package', async () => {
+    vi.resetModules();
+    const copy: typeof library = await import('../../../src/index.ts');
+
+    expect(
+      interceptor.serialize(
+        { contact: new copy.Email('jane@example.com'), ids: [new copy.Uuid(first)] },
+        {},
+      ),
+    ).toStrictEqual({ contact: 'jane@example.com', ids: [first] });
+  });
+
+  it('copies an object only when something inside it changed', () => {
+    const plain = { name: 'jane', tags: ['a'] };
+    const response = { plain, held: { contact: new Email('jane@example.com') } };
+    const json = jsonOf(response);
+
+    expect(json).not.toBe(response);
+    expect(Reflect.get(json, 'plain')).toBe(plain);
+    expect(Reflect.get(json, 'held')).toStrictEqual({ contact: 'jane@example.com' });
+  });
+
+  it('writes an object that appears twice both times', () => {
+    const shared = { contact: new Email('jane@example.com') };
+
+    expect(interceptor.serialize({ first: shared, second: [shared] }, {})).toStrictEqual({
+      first: { contact: 'jane@example.com' },
+      second: [{ contact: 'jane@example.com' }],
+    });
+  });
+
+  it('follows a list and a class instance that refer to themselves', () => {
+    const list: unknown[] = [new Email('jane@example.com')];
+    const held = user();
+
+    list.push(list);
+    Reflect.set(held, 'self', held);
+
+    const json = jsonOf({ list, held });
+
+    expect(json['list']).toStrictEqual(['jane@example.com', list]);
+    expect(json['held']).toBeInstanceOf(User);
+    expect(json['held']).toHaveProperty('id', first);
+    expect(json['held']).toHaveProperty('self', held);
   });
 
   it('leaves dates, files and values that are not objects alone', () => {

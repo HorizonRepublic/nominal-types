@@ -122,18 +122,18 @@ The checks are slower there. Parsing an order with 20 items takes 4.1 µs instea
 
 A [bundler](../reference/glossary.md), such as esbuild, Vite or webpack, keeps only the types and functions your code imports. These are the sizes of bundles minified by esbuild. Gzipped is the size sent over the network when the server compresses it.
 
-| Your code imports                                       | Minified | Gzipped |
-| ------------------------------------------------------- | -------- | ------- |
-| `Uuid`                                                  | 23 KB    | 8.2 KB  |
-| `Email`                                                 | 24 KB    | 8.4 KB  |
-| `Integer`                                               | 22 KB    | 7.9 KB  |
-| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 54 KB    | 18 KB   |
-| `PlainDate` from `/temporal`                            | 24 KB    | 8.4 KB  |
-| `Uuid` and the adapter for a validator or a framework   | 24–25 KB | 8–9 KB  |
-| `Uuid` and the adapter for a database                   | 32 KB    | 11 KB   |
-| everything                                              | 86 KB    | 30 KB   |
+| Your code imports                                       | Minified | Gzipped  |
+| ------------------------------------------------------- | -------- | -------- |
+| `Uuid`                                                  | 24 KB    | 8.6 KB   |
+| `Email`                                                 | 24 KB    | 8.6 KB   |
+| `Integer`                                               | 23 KB    | 8.1 KB   |
+| `n.object()` with `Uuid`, `Email` and `PositiveInteger` | 55 KB    | 19 KB    |
+| `PlainDate` from `/temporal`                            | 24 KB    | 8.6 KB   |
+| `Uuid` and the adapter for a validator or a framework   | 25–26 KB | 9 KB     |
+| `Uuid` and the adapter for a database                   | 33 KB    | 11–12 KB |
+| everything                                              | 87 KB    | 30 KB    |
 
-About 21 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
+About 22 KB of each bundle is the part every type shares. Each built-in type adds about 1 KB. `n.of()` and `n.object()` add the schema code, the JSON writer included.
 
 The bundler leaves parts out only when your code loads the package with `import`. With `require()`, the bundle holds the whole package.
 

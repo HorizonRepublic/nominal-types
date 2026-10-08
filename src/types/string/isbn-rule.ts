@@ -8,9 +8,9 @@ const separated = /[\s-]/u;
  * digit in its message.
  */
 export class IsbnRule extends PredicateSchema<string> {
-  public override messageFor(value: unknown): string {
+  public override messageFor(value: unknown, describe?: (value: unknown) => string): string {
     return typeof value === 'string' && separated.test(value)
-      ? mustBe('an ISBN without hyphens or spaces', value)
-      : super.messageFor(value);
+      ? mustBe('an ISBN without hyphens or spaces', value, describe)
+      : super.messageFor(value, describe);
   }
 }

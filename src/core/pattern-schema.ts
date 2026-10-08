@@ -36,12 +36,12 @@ export class PatternSchema extends NativeSchema<string> {
     this.#json = json;
   }
 
-  public messageFor(value: unknown): string {
+  public messageFor(value: unknown, describe?: (value: unknown) => string): string {
     if (typeof value !== 'string') {
-      return mustBe('a string', value);
+      return mustBe('a string', value, describe);
     }
 
-    return mustBe(this.description ?? `matched by ${this.pattern.source}`, value);
+    return mustBe(this.description ?? `matched by ${this.pattern.source}`, value, describe);
   }
 
   protected jsonBody(): Record<string, unknown> {

@@ -1,23 +1,15 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
-import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
-
-const pattern =
-  /^(?:[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[1-8][\dA-Fa-f]{3}-[89ABab][\dA-Fa-f]{3}-[\dA-Fa-f]{12}|0{8}-0{4}-0{4}-0{4}-0{12}|[Ff]{8}-[Ff]{4}-[Ff]{4}-[Ff]{4}-[Ff]{12})$/u;
+import { pattern, uuidRule } from './uuid-rule.ts';
 
 const hasUpperCase = /[A-F]/u;
 
 const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid'> = AnyString.subtype(
   'nominal.Uuid',
-  matching(pattern, 'a UUID', {
-    format: 'uuid',
-    minLength: 36,
-    maxLength: 36,
-    examples: ['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f'],
-  }),
+  uuidRule,
 );
 
 /**

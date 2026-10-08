@@ -5,14 +5,29 @@ import {
   AnyNumber,
   AnyString,
   Email,
+  IpAddress,
+  MacAddress,
   n,
   Nominal,
   NominalError,
+  PatternSchema,
   PositiveInteger,
 } from '../../src/index.ts';
+import type { Parsed } from '../../src/index.ts';
 import { issuesOf, thrownBy } from '../support/results.ts';
 
 const hidden = (message: string): string => n.hideValues([{ message }])[0]?.message ?? '';
+
+const isEven = (value: unknown): value is number => typeof value === 'number' && value % 2 === 0;
+
+// What a parse gives, with the values hidden afterwards when `hide` is set.
+const outcomeOf = (parsed: Parsed<unknown>, hide = false): unknown => {
+  if (parsed.ok) {
+    return 'accepted';
+  }
+
+  return hide ? n.hideValues(parsed.issues) : parsed.issues;
+};
 
 describe('n.hideValues', () => {
   it.each([
@@ -187,5 +202,82 @@ describe('a long value in a message', () => {
     'must be one (was a string of many characters starting "x"…)',
   ])('leaves %j, which is not a cut value, as it is', (message) => {
     expect(hidden(message)).toBe(message);
+  });
+});
+
+describe('the messages of a sensitive type', () => {
+  class Flagged extends PatternSchema {
+    public override messageFor(value: unknown): string {
+      return `is not flagged (was ${JSON.stringify(String(value))})`;
+    }
+  }
+
+  const Secret = Nominal('hidden.Secret', /^s\d{2,}$/u, { sensitive: true });
+  const sensitive = {
+    Email,
+    IpAddress,
+    MacAddress,
+    pattern: Secret,
+    'two folded patterns': Secret.subtype('hidden.SecretEven', /^.*[02468]$/u),
+    guard: Nominal('hidden.Even', n.satisfying(isEven, 'even'), { sensitive: true }),
+    'a listed value': Nominal('hidden.Level', n.oneOf('low', 'high'), { sensitive: true }),
+    'a message of its own': Nominal('hidden.Flagged', new Flagged(/^flag$/u), { sensitive: true }),
+    'a rule from another library': Nominal('hidden.Ark', toArk(Email), { sensitive: true }),
+  };
+  const inputs: unknown[] = [
+    '',
+    'x',
+    'jane@example',
+    's1',
+    's13',
+    '300.0.0.1',
+    'a"b\\c\n',
+    ' (was "x")',
+    '😀',
+    '\uD800',
+    'x'.repeat(64),
+    'x'.repeat(65),
+    `${'a'.repeat(31)}😀${'b'.repeat(40)}`,
+    'x'.repeat(30_000),
+    0,
+    -0,
+    1.5,
+    3,
+    1e21,
+    -1e-7,
+    Number.NaN,
+    Number.NEGATIVE_INFINITY,
+    12n,
+    -12n,
+    true,
+    false,
+    null,
+    undefined,
+    [],
+    ['x'],
+    {},
+    Symbol('x'),
+    () => 'x',
+  ];
+
+  it.each(Object.entries(sensitive))(
+    'are what n.hideValues makes of the shown messages: %s',
+    (_name, type) => {
+      const Shown = type.subtype(`${type.typeName}.Shown`, undefined, { sensitive: false });
+
+      expect(inputs.map((input) => outcomeOf(type.parse(input)))).toStrictEqual(
+        inputs.map((input) => outcomeOf(Shown.parse(input), true)),
+      );
+    },
+  );
+
+  it('keep a description that holds the marker whole', () => {
+    const Quoted = Nominal('hidden.Quoted', n.matching(/^q$/u, 'q (was "q")'), {
+      sensitive: true,
+    });
+
+    expect(issuesOf(Quoted.parse('secret'))).toStrictEqual([
+      { message: 'must be q (was "q") (was a string of 6 characters)' },
+    ]);
   });
 });

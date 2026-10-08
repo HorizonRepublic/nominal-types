@@ -46,24 +46,28 @@ export const onlyChecks = (root: object, target: TypeClass): boolean =>
 
 const typeRunners = new WeakMap<object, (input: unknown) => unknown>();
 
-const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
-  const run = compileRun(
-    stepsOf(rulesFor(root, target), (rule) => ({
-      convert: foreignRunner(rule, target.typeName),
-    })),
-  );
+const hidingValues =
+  (convert: (value: unknown) => unknown): ((value: unknown) => unknown) =>
+  (value) => {
+    const converted = convert(value);
 
-  if (Reflect.get(target, sensitiveSlot) !== true) {
-    return run;
-  }
-
-  return function runHidingValues(input: unknown): unknown {
-    const value = run(input);
-
-    return typeof value === 'object' && value instanceof Rejection
-      ? new Rejection(hideValues(value.issues))
-      : value;
+    return converted instanceof Rejection ? new Rejection(hideValues(converted.issues)) : converted;
   };
+
+const runnerOf = (root: object, target: TypeClass): ((input: unknown) => unknown) => {
+  const hidden = Reflect.get(target, sensitiveSlot) === true;
+
+  return compileRun(
+    stepsOf(
+      rulesFor(root, target),
+      (rule) => {
+        const convert = foreignRunner(rule, target.typeName);
+
+        return { convert: hidden ? hidingValues(convert) : convert };
+      },
+      hidden,
+    ),
+  );
 };
 
 /**

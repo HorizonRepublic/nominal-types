@@ -31,3 +31,15 @@ for (const [{ Email }, { toZod }] of [
 ]) {
   strictEqual(toZod(Email).parse('jane@example.com').value, 'jane@example.com');
 }
+
+// The CommonJS copy of the testing entry point generates for types of the ES module copy too.
+for (const [{ Email, n, Uuid }, { sampleOf }] of [
+  [await import(name), await import(`${name}/testing`)],
+  [require(name), require(`${name}/testing`)],
+  [await import(name), require(`${name}/testing`)],
+]) {
+  const Order = n.object({ id: Uuid, contact: Email, lines: n.of(Uuid).array({ min: 1, max: 3 }) });
+
+  ok(sampleOf(Email, 20, { seed: 1 }).every((text) => Email.parse(text).ok));
+  ok(sampleOf(Order, 20, { seed: 1 }).every((body) => Order.parse(body).ok));
+}

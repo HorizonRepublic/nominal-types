@@ -44,6 +44,12 @@ Exact facts about everything the package exports, for looking things up. Terms a
 | [Sequelize](adapters/sequelize.md)               | `adapters/sequelize`                                         |
 | [Database columns](adapters/database-columns.md) | The column of each type, reads and writes, for all four ORMs |
 
+## Testing
+
+| Page                  | Entry point                                                      |
+| --------------------- | ---------------------------------------------------------------- |
+| [Testing](testing.md) | `testing`: `arbitraryOf()`, `invalidArbitraryOf()`, `sampleOf()` |
+
 ## Other
 
 | Page                        | What's in it                                    |

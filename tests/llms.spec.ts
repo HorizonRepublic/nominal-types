@@ -9,6 +9,7 @@ const llms = readFileSync(join(root, 'llms.txt'), 'utf8');
 const entryPoints = [
   ['@horizon-republic/nominal-types', 'src/index.ts'],
   ['@horizon-republic/nominal-types/temporal', 'src/temporal/index.ts'],
+  ['@horizon-republic/nominal-types/testing', 'src/testing/index.ts'],
   ...readdirSync(join(root, 'src/adapters'), { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name !== 'orm')
     .map(

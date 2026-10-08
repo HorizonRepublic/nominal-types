@@ -140,5 +140,6 @@ The summary ends with:
 - [Type members](../../reference/type-members.md): `equals()`, `parse()` and `new`.
 - [Errors and messages](../../reference/errors-and-messages.md): the issue shape and every message.
 - [How to check untrusted input](check-input.md)
+- [How to generate test data](generate-test-data.md): property tests and fixtures for every type.
 
 [← Guides](../README.md)

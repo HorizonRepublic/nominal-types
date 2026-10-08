@@ -30,6 +30,7 @@ Core:
 - [How to read configuration from environment variables](guides/core/read-config.md)
 - [How to keep values out of error messages](guides/core/hide-values.md)
 - [How to test code that takes nominal types](guides/core/write-tests.md)
+- [How to generate test data](guides/core/generate-test-data.md)
 - [How to fix common problems](guides/core/fix-common-problems.md)
 - [How to move from version 2](guides/core/migrate-from-v2.md)
 
@@ -76,6 +77,7 @@ API docs:
 - [TypeScript types](reference/typescript-types.md)
 - [Built-in types](reference/types/README.md)
 - [Adapters](reference/adapters/README.md)
+- [Testing](reference/testing.md)
 - [Database columns](reference/adapters/database-columns.md)
 - [Benchmarks](reference/benchmarks.md)
 - [Glossary](reference/glossary.md)

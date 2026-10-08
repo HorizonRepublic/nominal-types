@@ -113,6 +113,12 @@ const checkedVariants = (
   });
 };
 
+// What the tag must be, completing "must be …".
+const expectedTags = (tags: readonly string[]): string =>
+  tags.length === 1
+    ? JSON.stringify(tags[0])
+    : `one of ${tags.map((tag) => JSON.stringify(tag)).join(', ')}`;
+
 /**
  * One of several object shapes told apart by a tag, such as a payment by card or by bank
  * transfer: what `n.union()` returns.
@@ -140,10 +146,7 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
       ([tag, variant]) => [tag, taggedVariant(variant, key, tag)] as const,
     );
     const tags = entries.map(([tag]) => tag);
-    const expected =
-      tags.length === 1
-        ? JSON.stringify(tags[0])
-        : `one of ${tags.map((tag) => JSON.stringify(tag)).join(', ')}`;
+    const expected = expectedTags(tags);
     const members: UnionVariant[] = tagged.map(([tag, variant]) => ({
       tag,
       run: foreignRunner(variant, 'n.union()'),
@@ -172,6 +175,11 @@ export class UnionSchema<Input, Output> extends TypeSchema<Input, Output> {
             key,
             variants: tagged.map(([tag, variant]) => ({ tag, plan: planOf(variant) })),
             write: paths.write,
+          },
+          parts: {
+            kind: 'union',
+            key,
+            variants: tagged.map(([tag, variant]) => ({ tag, variant })),
           },
         },
         name: 'n.union()',

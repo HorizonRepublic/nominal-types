@@ -115,6 +115,10 @@ API docs:
 - [@nestjs/swagger](https://docs.nestjs.com/openapi/introduction) 11 and 12: `applyNominalTypes()` from `adapters/swagger`. [Guide](docs/guides/api-docs/swagger.md)
 - JSON Schema: built into every type, with no adapter. [Guide](docs/guides/api-docs/json-schema.md)
 
+Testing:
+
+- [fast-check](https://fast-check.dev) 4.6 or later: `arbitraryOf()`, `invalidArbitraryOf()` and `sampleOf()` from `testing`, valid and invalid values for every type and schema. [Guide](docs/guides/core/generate-test-data.md)
+
 Every path starts with `@horizon-republic/nominal-types/`, such as `@horizon-republic/nominal-types/adapters/zod`.
 
 ## What else it does

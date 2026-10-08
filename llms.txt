@@ -35,6 +35,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | --- | --- | --- |
 | `@horizon-republic/nominal-types` | the core API and the built-in types | none |
 | `@horizon-republic/nominal-types/temporal` | `Instant`, `PlainDate`, `PlainTime`, `PlainDateTime` | none; needs `Temporal`: Node.js 26, or `temporal-polyfill/global` |
+| `@horizon-republic/nominal-types/testing` | `arbitraryOf`, `invalidArbitraryOf`, `sampleOf`, types `ArbitraryOptions`, `SampleOptions`, `TargetInput`, `NominalTarget`, `TargetValue` | `fast-check` ^4.6 |
 | `@horizon-republic/nominal-types/adapters/arktype` | `toArk`, `fromArk`, `constrainArk`, `ArkSchema`, types `ArkField`, `Built` | `arktype` ^2.2 |
 | `@horizon-republic/nominal-types/adapters/zod` | `toZod`, `constrainZod`, type `ZodField` | `zod` ^4 |
 | `@horizon-republic/nominal-types/adapters/valibot` | `toValibot`, `constrainValibot`, type `ValibotField` | `valibot` ^1 |
@@ -77,6 +78,7 @@ Node.js 22.12 or later. ESM (`import`) and CommonJS (`require`). Bundlers keep o
 | a database column | `toMikroOrm`, `toTypeOrm`, `toDrizzle`, `toSequelize` |
 | any other Standard Schema library | the type itself, or `n.of(Type)` where the library treats a function as its own construct |
 | messages without personal data | `{ sensitive: true }`, `hideValues` |
+| test data: property tests, fixtures, bad input | `arbitraryOf(target)`, `sampleOf(target, count, { seed })`, `invalidArbitraryOf(target)` from `/testing` |
 
 ## Core API
 
@@ -450,6 +452,26 @@ export class OrdersController {
 - Sequelize `where` takes stored values, not instances.
 - A driver's `Date` is read for `Instant` only, to the millisecond. For `PlainDate` and `PlainDateTime` make the driver return text (node-postgres: `types.setTypeParser(1082, (t) => t)`, `types.setTypeParser(1114, (t) => t.replace(' ', 'T'))`). With TypeORM store `PlainDateTime` as `{ type: 'varchar', length: 29 }`.
 
+## Testing
+
+`@horizon-republic/nominal-types/testing` makes test values with [fast-check](https://fast-check.dev), a peer dependency to install as a dev dependency. A target is a nominal type or any `n.of()`, `n.object()` or `n.union()` schema.
+
+```ts
+import fc from 'fast-check';
+import { arbitraryOf, invalidArbitraryOf, sampleOf } from '@horizon-republic/nominal-types/testing';
+
+fc.assert(fc.property(arbitraryOf(CreateOrder), (body) => CreateOrder.parse(body).ok));
+fc.assert(fc.property(arbitraryOf(CreateOrder, { as: 'instances' }), (order) => { /* test code that takes instances */ }));
+fc.assert(fc.property(invalidArbitraryOf(Email), (value) => !Email.parse(value).ok));
+sampleOf(Email, 3, { seed: 42 }); // three valid addresses, the same on every run
+```
+
+- `arbitraryOf(target, { as?, overrides? })`: values the target accepts. `as: 'inputs'` (default) gives plain input, `as: 'instances'` what `parse()` gives. Built-in types cover their whole range and edges: number bounds and `-0`, the longest email and host name, every UUID version and case, check digits, every IPv6 text form, `Money` within each currency's minor units, `TypeId` with the prefix of `withPrefix()`. Arrays keep `min`, `max`, `length` and `unique`; objects leave optional fields out and keep their constraints; unions make every tag.
+- Own types are made from, in order: `overrides`, the schema they are declared on, a built-in type above them, their pattern, `n.oneOf()` values, their JSON Schema, its `examples`. A type with only a type guard and no JSON Schema throws `TypeError`; pass `{ overrides: new Map([[Type, fc.constantFrom(...)]]) }`. The map also takes schemas and fields of other libraries.
+- `invalidArbitraryOf(target, { overrides? })`: valid values changed a little (a character, a bound, an item, a field) and values of the wrong kind, each checked to fail `accepts()`.
+- `sampleOf(target, count = 10, { seed?, as?, overrides? })`: an array of valid values for fixtures.
+- Generation throws `Error: arbitraryOf(): <target> refused 1000 generated values in a row` when a rule or constraint refuses almost everything; pass an override.
+
 ## Docs
 
 Every page ships in the package under `docs/` ([contents](docs/README.md)). Open the one you need; the paths are relative to this file.
@@ -486,6 +508,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [How to read numbers and booleans from text](docs/guides/core/read-text-values.md)
 - [How to use dates and times](docs/guides/core/use-dates-and-times.md)
 - [How to test code that takes nominal types](docs/guides/core/write-tests.md)
+- [How to generate test data](docs/guides/core/generate-test-data.md)
 - [How to store nominal types with Drizzle](docs/guides/databases/drizzle.md)
 - [How to store nominal types with MikroORM](docs/guides/databases/mikro-orm.md)
 - [How to store nominal types with Sequelize](docs/guides/databases/sequelize.md)
@@ -516,6 +539,7 @@ Every page ships in the package under `docs/` ([contents](docs/README.md)). Open
 - [JSON Schema](docs/reference/json-schema.md)
 - [Schemas](docs/reference/schemas.md)
 - [Type members](docs/reference/type-members.md)
+- [Testing](docs/reference/testing.md)
 - [TypeScript types](docs/reference/typescript-types.md)
 - [Adapters](docs/reference/adapters/README.md)
 - [arktype](docs/reference/adapters/arktype.md)

@@ -1,6 +1,7 @@
 import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { inOneLine } from '../core/same-value.ts';
+import type { StandardOf } from '../core/standard-schema.ts';
 import { asText, defineTextForm } from '../core/text-form.ts';
 import {
   dateFields,
@@ -74,6 +75,8 @@ const InstantBase: NominalType<
  * ```
  */
 export class Instant extends InstantBase {
+  declare public static readonly '~standard': StandardOf<typeof Instant>;
+
   /**
    * The whole text the type accepts.
    *

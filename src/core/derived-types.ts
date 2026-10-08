@@ -11,6 +11,7 @@ import type {
   Unbranded,
   ValueOf,
 } from './contracts.ts';
+import type { StandardProps } from './standard-schema.ts';
 
 declare const impliedBrands: unique symbol;
 
@@ -57,6 +58,16 @@ export type ImplyingType<
       Implying<keyof ImpliedBrands<Implied>>;
 
 /**
+ * An instance of a subtype: the parent's instance, with the narrower value and a brand of its own.
+ */
+export type SubtypeInstance<
+  Parent extends AnyNominalType,
+  Name extends string,
+  Value = ValueOf<Parent['rule']>,
+  Implied extends AnyNominalType = never,
+> = Narrowed<Parent['prototype'], Value> & Branded<WithImplied<Brand<Name>, Implied>>;
+
+/**
  * The class `subtype` returns: the parent's rules and behaviour, an optional rule of its own, and a
  * brand of its own on top of the parent's, with the brands of the types it implies.
  *
@@ -68,14 +79,15 @@ export type SubtypeOf<
   Name extends string,
   Value = ValueOf<Parent['rule']>,
   Implied extends AnyNominalType = never,
-> = Omit<Parent, 'prototype' | 'typeName' | typeof impliedBrands> &
+> = Omit<Parent, 'prototype' | 'typeName' | '~standard' | typeof impliedBrands> &
   Implying<OwnImplied<BrandsOf<Parent['prototype']>, Implied>> & {
-    new (
-      input: InputOf<Parent['rule']>,
-    ): Narrowed<Parent['prototype'], Value> & Branded<WithImplied<Brand<Name>, Implied>>;
-    readonly prototype: Narrowed<Parent['prototype'], Value> &
-      Branded<WithImplied<Brand<Name>, Implied>>;
+    new (input: InputOf<Parent['rule']>): SubtypeInstance<Parent, Name, Value, Implied>;
+    readonly prototype: SubtypeInstance<Parent, Name, Value, Implied>;
     readonly typeName: Name;
+    readonly '~standard': StandardProps<
+      InputOf<Parent['rule']>,
+      SubtypeInstance<Parent, Name, Value, Implied>
+    >;
   };
 
 type VariantBrands<Source extends AnyNominalType, Name extends string> = Omit<
@@ -106,9 +118,13 @@ export type VariantOf<
   Source extends AnyNominalType,
   Name extends string,
   Implied extends AnyNominalType = never,
-> = Omit<Source, 'prototype' | 'typeName' | typeof impliedBrands> &
+> = Omit<Source, 'prototype' | 'typeName' | '~standard' | typeof impliedBrands> &
   Implying<OwnImplied<VariantBrands<Source, Name>, Implied>> & {
     new (input: InputOf<Source['rule']>): VariantInstance<Source, Name, Implied>;
     readonly prototype: VariantInstance<Source, Name, Implied>;
     readonly typeName: Name;
+    readonly '~standard': StandardProps<
+      InputOf<Source['rule']>,
+      VariantInstance<Source, Name, Implied>
+    >;
   };

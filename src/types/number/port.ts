@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { integerBetween } from './number-rule.ts';
 import { PositiveInteger } from './positive-integer.ts';
 import { Uint16 } from './uint16.ts';
@@ -18,4 +19,6 @@ const PortBase: SubtypeOf<typeof Uint16, 'nominal.Port', number, typeof Positive
  * connect to. Reach for `Uint16` where 0 belongs. The value is a number; read `'8080'` from text
  * with `n.of(Port).fromString()`.
  */
-export class Port extends PortBase {}
+export class Port extends PortBase {
+  declare public static readonly '~standard': StandardOf<typeof Port>;
+}

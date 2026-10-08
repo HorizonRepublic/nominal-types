@@ -1,6 +1,7 @@
 import type { NominalSchema, NominalType } from '../core/contracts.ts';
 import { Nominal } from '../core/nominal.ts';
 import { inOneLine } from '../core/same-value.ts';
+import type { StandardOf } from '../core/standard-schema.ts';
 import { asText, defineTextForm } from '../core/text-form.ts';
 import { timeFields, wallTime, whole } from './grammar.ts';
 import { noPrimitive, temporalRule } from './temporal-rule.ts';
@@ -46,6 +47,8 @@ const PlainTimeBase: NominalType<
  * ```
  */
 export class PlainTime extends PlainTimeBase {
+  declare public static readonly '~standard': StandardOf<typeof PlainTime>;
+
   /**
    * The whole text the type accepts.
    *

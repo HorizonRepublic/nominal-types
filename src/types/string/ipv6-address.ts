@@ -1,6 +1,7 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { IpAddress } from './ip-address.ts';
 import { ipv4Inside, isMapped, textOf } from './ip-bits.ts';
@@ -37,6 +38,8 @@ const Ipv6AddressBase: SubtypeOf<typeof IpAddress, 'nominal.Ipv6Address'> = IpAd
  * ```
  */
 export class Ipv6Address extends Ipv6AddressBase {
+  declare public static readonly '~standard': StandardOf<typeof Ipv6Address>;
+
   /**
    * The address as RFC 5952 writes it: lowercase, no leading zeros, the longest run of zero groups
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`.

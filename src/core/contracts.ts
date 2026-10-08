@@ -171,6 +171,21 @@ export interface AnyNominalType {
   readonly '~standard': StandardProps<unknown, NominalInstance<string, unknown>>;
   parse<Type extends AnyNominalType>(this: Type, input: unknown): Parsed<Type['prototype']>;
   /**
+   * The instance, or a Promise rejected with a `NominalError`, for libraries that await a parser
+   * and expect it to throw, such as tRPC.
+   *
+   * @remarks
+   * tRPC calls a schema's `parseAsync()` before its `parse()`, so `.input(Email)` refuses a bad
+   * value with `BAD_REQUEST`. In your own code, read the result of `parse()`, which builds no
+   * exception.
+   *
+   * @example
+   * ```ts
+   * await Email.parseAsync('jane'); // rejects: NominalError: nominal.Email: must be an email address (was a string of 4 characters)
+   * ```
+   */
+  parseAsync<Type extends AnyNominalType>(this: Type, input: unknown): Promise<Type['prototype']>;
+  /**
    * Whether `parse` would accept the input, answered without building an instance or issues: for
    * a cheap yes or no, such as a filter or a branch on the kind of input.
    *
@@ -273,4 +288,10 @@ export type Unbranded<Instance> = Omit<Instance, typeof brand>;
  */
 export type BrandsOf<Instance extends Branded<unknown>> = Instance[typeof brand];
 
-export type { ImplyingType, SubtypeOf, VariantInstance, VariantOf } from './derived-types.ts';
+export type {
+  ImplyingType,
+  SubtypeInstance,
+  SubtypeOf,
+  VariantInstance,
+  VariantOf,
+} from './derived-types.ts';

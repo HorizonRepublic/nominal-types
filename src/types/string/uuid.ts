@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { sameType } from '../../core/same-type.ts';
 import { equalityKeySlot, inOneLine } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 import { pattern, uuidRule } from './uuid-rule.ts';
 
@@ -21,6 +22,8 @@ const UuidBase: SubtypeOf<typeof AnyString, 'nominal.Uuid'> = AnyString.subtype(
  * `canonical()` gives the lowercase form RFC 9562 recommends for output.
  */
 export class Uuid extends UuidBase {
+  declare public static readonly '~standard': StandardOf<typeof Uuid>;
+
   /**
    * Versions 1 to 8 with the RFC 9562 variant, or the nil and max values, in either case.
    *

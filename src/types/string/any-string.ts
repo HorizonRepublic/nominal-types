@@ -1,5 +1,6 @@
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringRule } from '../../core/string-rule.ts';
 import { asText, defineTextForm } from '../../core/text-form.ts';
 
@@ -20,6 +21,8 @@ const AnyStringBase: NominalType<'nominal.AnyString', NominalSchema<string, stri
  * export class Slug extends AnyString.subtype('Slug', /^[a-z0-9]+(?:-[a-z0-9]+)*$/u) {}
  * ```
  */
-export class AnyString extends AnyStringBase {}
+export class AnyString extends AnyStringBase {
+  declare public static readonly '~standard': StandardOf<typeof AnyString>;
+}
 
 defineTextForm(AnyString, asText);

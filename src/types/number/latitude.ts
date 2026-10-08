@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
@@ -20,4 +21,6 @@ const LatitudeBase: SubtypeOf<typeof FiniteNumber, 'nominal.Latitude'> = FiniteN
  * Both ends are included. The value is a number; read `'51.5'` from text with
  * `n.of(Latitude).fromString()`.
  */
-export class Latitude extends LatitudeBase {}
+export class Latitude extends LatitudeBase {
+  declare public static readonly '~standard': StandardOf<typeof Latitude>;
+}

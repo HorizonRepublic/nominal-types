@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -68,6 +69,8 @@ const CurrencyCodeBase: SubtypeOf<typeof AnyString, 'nominal.CurrencyCode'> = An
  * ```
  */
 export class CurrencyCode extends CurrencyCodeBase {
+  declare public static readonly '~standard': StandardOf<typeof CurrencyCode>;
+
   /**
    * Every code the type accepts, in alphabetical order.
    */

@@ -28,7 +28,7 @@ import {
 } from './hierarchy.ts';
 import { defineInspect } from './inspect.ts';
 import { jsonText } from './messages.ts';
-import { NominalError } from './nominal-error.ts';
+import { NominalError, settled } from './nominal-error.ts';
 import { checkObjectRule, defineObjectMembers, objectKeysOf } from './object-members.ts';
 import { asRule } from './pattern-schema.ts';
 import { nothingPending, takePending } from './pending.ts';
@@ -100,6 +100,10 @@ class NominalRoot {
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
+  }
+
+  public static parseAsync(this: typeof NominalRoot, input: unknown): Promise<NominalRoot> {
+    return settled(constructOwn(this, input), this.typeName);
   }
 
   public static accepts(this: typeof NominalRoot, input: unknown): boolean {

@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 // Decimal numbers from 0 to `limit` without leading zeros, as alternatives of a pattern: shorter
@@ -132,6 +133,8 @@ const orderLists = (
  * ```
  */
 export class SemVer extends SemVerBase {
+  declare public static readonly '~standard': StandardOf<typeof SemVer>;
+
   /**
    * The grammar of the specification with the length and number limits.
    */

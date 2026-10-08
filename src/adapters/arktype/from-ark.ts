@@ -3,6 +3,7 @@ import type { Out, Type } from 'arktype';
 
 import type { AnyConstraint } from '../../core/constraint-types.ts';
 import type { Parsed } from '../../core/contracts.ts';
+import { settled } from '../../core/nominal-error.ts';
 import { Rejection } from '../../core/rejection.ts';
 import { standardProps } from '../../core/standard-props.ts';
 import type { StandardProps } from '../../core/standard-schema.ts';
@@ -129,6 +130,14 @@ export class ArkSchema<Input, Output> {
     return result instanceof Rejection
       ? { ok: false, issues: result.issues }
       : { ok: true, value: result };
+  }
+
+  /**
+   * The value, or a Promise rejected with a `NominalError`, for libraries that await a parser and
+   * expect it to throw, such as tRPC; your own code reads the result of `parse()`.
+   */
+  public parseAsync(input: unknown): Promise<Output> {
+    return settled(this.#run(input), 'fromArk()');
   }
 }
 

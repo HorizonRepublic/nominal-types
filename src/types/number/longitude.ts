@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { FiniteNumber } from './finite-number.ts';
 import { numberRule } from './number-rule.ts';
 
@@ -20,4 +21,6 @@ const LongitudeBase: SubtypeOf<typeof FiniteNumber, 'nominal.Longitude'> = Finit
  * Both ends are included and kept apart: -180 and 180 name one meridian, yet `equals` tells them
  * apart, as it compares values.
  */
-export class Longitude extends LongitudeBase {}
+export class Longitude extends LongitudeBase {
+  declare public static readonly '~standard': StandardOf<typeof Longitude>;
+}

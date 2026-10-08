@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyBigInt } from './any-bigint.ts';
 import { bigintRule } from './bigint-rule.ts';
 import { NonPositiveBigInt } from './non-positive-bigint.ts';
@@ -24,4 +25,6 @@ const NegativeBigIntBase: SubtypeOf<
  * @remarks
  * Zero is not negative; reach for `NonPositiveBigInt` where 0 is a valid value.
  */
-export class NegativeBigInt extends NegativeBigIntBase {}
+export class NegativeBigInt extends NegativeBigIntBase {
+  declare public static readonly '~standard': StandardOf<typeof NegativeBigInt>;
+}

@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 const pattern = /^#(?:[\dA-Fa-f]{3,4}|[\dA-Fa-f]{6}|[\dA-Fa-f]{8})$/u;
@@ -31,6 +32,8 @@ const HexColorBase: SubtypeOf<typeof AnyString, 'nominal.HexColor'> = AnyString.
  * ```
  */
 export class HexColor extends HexColorBase {
+  declare public static readonly '~standard': StandardOf<typeof HexColor>;
+
   /**
    * `#` and 3, 4, 6 or 8 hex digits, in either case.
    *

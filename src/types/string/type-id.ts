@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import type { PredicateSchema } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 import { uuidV7Bytes } from './uuid-v7-bytes.ts';
 import { Uuid } from './uuid.ts';
@@ -131,6 +132,8 @@ const joined = (prefix: string, suffix: string): string =>
  * ```
  */
 export class TypeId extends TypeIdBase {
+  declare public static readonly '~standard': StandardOf<typeof TypeId>;
+
   /**
    * A TypeID with or without a prefix, in the lowercase the specification requires.
    */

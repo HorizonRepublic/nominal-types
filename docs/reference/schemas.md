@@ -81,6 +81,7 @@ The class `n.of()` returns. `ObjectSchema` extends it. Create it through `n.of()
 | Member                                 | Returns                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
 | [`parse(input)`](#parse)               | `{ ok: true, value }` or `{ ok: false, issues }`. Doesn't throw. |
+| [`parseAsync(input)`](#parseasync)     | A Promise of the value. Rejects if `input` is invalid.           |
 | [`accepts(input)`](#accepts)           | `true` if `parse()` would accept `input`. Builds no value.       |
 | [`toPlain(value)`](#toplain)           | A copy of a value the schema gave, with plain values only.       |
 | [`stringify(value)`](#stringify)       | The JSON text of a value the schema gave.                        |
@@ -121,6 +122,26 @@ if (result.ok) {
 }
 
 email.parse('jane'); // { ok: false, issues: [{ message: 'must be an email address (was a string of 4 characters)' }] }
+```
+
+### parseAsync
+
+```ts
+schema.parseAsync(input: unknown): Promise<Output>
+```
+
+Returns: a Promise of what [`parse()`](#parse) gives as `value`. It rejects with a [`NominalError`](errors-and-messages.md#nominalerror) if `input` is invalid. The error's `typeName` is the function that built the schema: `'n.of()'`, `'n.object()'` or `'n.union()'`.
+
+It is for libraries that wait for a parser and expect it to throw, such as tRPC. In your own code, use `parse()`.
+
+Example:
+
+```ts
+import { Email, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Order = n.object({ customer: Email, quantity: PositiveInteger });
+
+await Order.parseAsync({ customer: 'jane', quantity: 2 }); // rejects: NominalError: n.object(): customer: must be an email address (was a string of 4 characters)
 ```
 
 ### accepts

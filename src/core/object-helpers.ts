@@ -6,10 +6,10 @@ import { isNominalType } from './nominal.ts';
 import type { ObjectField, objectShape } from './object-shape.ts';
 import type { ObjectFields } from './object-types.ts';
 import { Rejection } from './rejection.ts';
+import { schemaOf } from './schema-of.ts';
 import type { StandardSchemaV1 } from './standard-spec.ts';
 import { textFormOf } from './text-form.ts';
 import { instanceParserFor } from './type-functions.ts';
-import { schemaOf } from './type-schema.ts';
 
 /**
  * Internal: the fields `partial()` made optional (`true`) and `required()` made required

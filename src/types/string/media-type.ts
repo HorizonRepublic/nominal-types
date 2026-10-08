@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -159,6 +160,8 @@ const MediaTypeBase: SubtypeOf<typeof AnyString, 'nominal.MediaType'> = AnyStrin
  * ```
  */
 export class MediaType extends MediaTypeBase {
+  declare public static readonly '~standard': StandardOf<typeof MediaType>;
+
   /**
    * The whole media type, parameters included.
    *

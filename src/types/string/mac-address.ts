@@ -2,6 +2,7 @@ import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
 import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 
 const pattern = /^(?:[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}|[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5})$/u;
@@ -34,6 +35,8 @@ const firstOctet = (text: string): number => Number.parseInt(text.slice(0, 2), 1
  * ```
  */
 export class MacAddress extends MacAddressBase {
+  declare public static readonly '~standard': StandardOf<typeof MacAddress>;
+
   /**
    * The six pairs of hex digits as a pattern, in either case and with either separator.
    */

@@ -68,11 +68,12 @@ The message names the case, for example `TypeError: fromArk: a morph holds a nom
 
 ## ArkSchema
 
-| Member         | Type                                 | Description                                                                     |
-| -------------- | ------------------------------------ | ------------------------------------------------------------------------------- |
-| `parse(input)` | `(input: unknown) => Parsed<Output>` | `{ ok: true, value }` or `{ ok: false, issues }`; never throws                  |
-| `ark`          | ArkType `Type`                       | the ArkType schema; called alone, it gives plain values and runs no constraints |
-| `~standard`    | Standard Schema props                | a [Standard Schema](../glossary.md) and Standard JSON Schema                    |
+| Member              | Type                                  | Description                                                                                                                  |
+| ------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `parse(input)`      | `(input: unknown) => Parsed<Output>`  | `{ ok: true, value }` or `{ ok: false, issues }`; never throws                                                               |
+| `parseAsync(input)` | `(input: unknown) => Promise<Output>` | the value, or a rejection with a `NominalError` named `fromArk()`; for libraries that expect a parser to throw, such as tRPC |
+| `ark`               | ArkType `Type`                        | the ArkType schema; called alone, it gives plain values and runs no constraints                                              |
+| `~standard`         | Standard Schema props                 | a [Standard Schema](../glossary.md) and Standard JSON Schema                                                                 |
 
 Each issue is `{ message, path? }`. The message is the type's own, as `Email.parse()` gives it.
 

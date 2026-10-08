@@ -6,5 +6,5 @@ export { oneOf } from './one-of.ts';
 export { matching } from './pattern-schema.ts';
 export { plain } from './plain.ts';
 export { satisfying } from './predicate-schema.ts';
-export { schemaOf as of } from './type-schema.ts';
+export { schemaOf as of } from './schema-of.ts';
 export { union } from './union-schema.ts';

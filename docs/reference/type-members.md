@@ -4,18 +4,19 @@ What every nominal type class and every instance offers. A type of your own and 
 
 ## Static members
 
-| Member                                 | Description                                                         |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| [`new Type(input)`](#new)              | Checks `input` and makes an instance. Throws if `input` is invalid. |
-| [`Type.parse(input)`](#parse)          | Checks `input`. Returns a result object and doesn't throw.          |
-| [`Type.accepts(input)`](#accepts)      | Tells whether `parse()` would accept `input`. Makes no instance.    |
-| [`Type.stringify(value)`](#stringify)  | The JSON text of an instance.                                       |
-| [`value instanceof Type`](#instanceof) | Tells whether a value is an instance of the type.                   |
-| [`Type.typeName`](#typename)           | The [type name](declaring.md#type-names).                           |
-| [`Type.rule`](#rule)                   | The rule the type's own level adds.                                 |
-| [`Type['~standard']`](#standard)       | The Standard Schema and Standard JSON Schema interface.             |
-| `Type.subtype(name, rule?, options?)`  | A narrower type. See [`subtype()`](declaring.md#subtype).           |
-| `Type.variant(name, rule, options?)`   | A sibling type. See [`variant()`](declaring.md#variant).            |
+| Member                                  | Description                                                           |
+| --------------------------------------- | --------------------------------------------------------------------- |
+| [`new Type(input)`](#new)               | Checks `input` and makes an instance. Throws if `input` is invalid.   |
+| [`Type.parse(input)`](#parse)           | Checks `input`. Returns a result object and doesn't throw.            |
+| [`Type.parseAsync(input)`](#parseasync) | Checks `input`. Returns a Promise that rejects if `input` is invalid. |
+| [`Type.accepts(input)`](#accepts)       | Tells whether `parse()` would accept `input`. Makes no instance.      |
+| [`Type.stringify(value)`](#stringify)   | The JSON text of an instance.                                         |
+| [`value instanceof Type`](#instanceof)  | Tells whether a value is an instance of the type.                     |
+| [`Type.typeName`](#typename)            | The [type name](declaring.md#type-names).                             |
+| [`Type.rule`](#rule)                    | The rule the type's own level adds.                                   |
+| [`Type['~standard']`](#standard)        | The Standard Schema and Standard JSON Schema interface.               |
+| `Type.subtype(name, rule?, options?)`   | A narrower type. See [`subtype()`](declaring.md#subtype).             |
+| `Type.variant(name, rule, options?)`    | A sibling type. See [`variant()`](declaring.md#variant).              |
 
 ### new
 
@@ -112,6 +113,33 @@ Sku.parse(new Email('jane@example.com')); // { ok: false, issues: [{ message: 'm
 ```
 
 See also: [How to check untrusted input](../guides/core/check-input.md).
+
+### parseAsync
+
+```ts
+Type.parseAsync(input: unknown): Promise<Type>
+```
+
+| Parameter | Type      | Description         |
+| --------- | --------- | ------------------- |
+| `input`   | `unknown` | The value to check. |
+
+Returns: a Promise of the instance. It rejects with a [`NominalError`](errors-and-messages.md#nominalerror) if `input` breaks a rule.
+
+It is for libraries that wait for a parser and expect it to throw, such as tRPC. In your own code, use [`parse()`](#parse): it builds no error, so it is faster.
+
+It treats an instance as [`parse()`](#parse) does.
+
+Example:
+
+```ts
+import { Email } from '@horizon-republic/nominal-types';
+
+const email = await Email.parseAsync('jane@example.com');
+
+email.domain; // 'example.com'
+await Email.parseAsync('jane'); // rejects: NominalError: nominal.Email: must be an email address (was a string of 4 characters)
+```
 
 ### accepts
 
@@ -244,6 +272,8 @@ Type['~standard']: StandardProps<Input, Type>
 ```
 
 Makes the class a [Standard Schema](glossary.md) and a [Standard JSON Schema](glossary.md). Libraries that accept a Standard Schema read it.
+
+Libraries take the type of their output from it. For a class that adds getters or methods of its own, declare it with [`StandardOf`](typescript-types.md), or the libraries don't see them. See [Classes with members of their own](../guides/validators/standard-schema.md#classes-with-members-of-their-own).
 
 | Member                       | Value                                                              |
 | ---------------------------- | ------------------------------------------------------------------ |

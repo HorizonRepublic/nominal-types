@@ -5,6 +5,7 @@ import { objectOf } from '../../core/object-of.ts';
 import type { ObjectInput, ObjectValue } from '../../core/object-types.ts';
 import { equalityKeySlot, inOneLine, noKey } from '../../core/same-value.ts';
 import type { EqualityKey } from '../../core/same-value.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { CurrencyCode } from '../string/currency-code.ts';
 import { DecimalString, decimalText } from '../string/decimal-string.ts';
 
@@ -64,6 +65,8 @@ const scaleOf = (currency: CurrencyCode, ...amounts: readonly DecimalString[]): 
  * ```
  */
 export class Money extends MoneyBase {
+  declare public static readonly '~standard': StandardOf<typeof Money>;
+
   /**
    * The money for a count of minor units, such as `1234n` cents for 12.34 EUR, the form payment
    * providers often send.

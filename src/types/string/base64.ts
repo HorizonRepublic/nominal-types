@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { AnyString } from './any-string.ts';
 import { decodeBase64, decodedLength } from './base64-decode.ts';
 
@@ -38,6 +39,8 @@ const Base64Base: SubtypeOf<typeof AnyString, 'nominal.Base64'> = AnyString.subt
  * ```
  */
 export class Base64 extends Base64Base {
+  declare public static readonly '~standard': StandardOf<typeof Base64>;
+
   /**
    * Groups of four alphabet characters, and a padded last group whose pad bits are zero.
    *

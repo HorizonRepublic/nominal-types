@@ -8,7 +8,7 @@ import { oneOf } from '../../src/core/one-of.ts';
 import { matching } from '../../src/core/pattern-schema.ts';
 import { plain } from '../../src/core/plain.ts';
 import { satisfying } from '../../src/core/predicate-schema.ts';
-import { schemaOf } from '../../src/core/type-schema.ts';
+import { schemaOf } from '../../src/core/schema-of.ts';
 import { union } from '../../src/core/union-schema.ts';
 import * as library from '../../src/index.ts';
 

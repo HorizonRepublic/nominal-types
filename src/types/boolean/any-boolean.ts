@@ -1,6 +1,7 @@
 import type { NominalSchema, NominalType } from '../../core/contracts.ts';
 import { Nominal } from '../../core/nominal.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import type { StandardOf } from '../../core/standard-schema.ts';
 import { defineTextForm } from '../../core/text-form.ts';
 
 const booleanFromText = (text: string): boolean | undefined => {
@@ -29,6 +30,8 @@ const AnyBooleanBase: NominalType<'nominal.AnyBoolean', NominalSchema<boolean, b
  * export class Consent extends AnyBoolean.subtype('Consent') {}
  * ```
  */
-export class AnyBoolean extends AnyBooleanBase {}
+export class AnyBoolean extends AnyBooleanBase {
+  declare public static readonly '~standard': StandardOf<typeof AnyBoolean>;
+}
 
 defineTextForm(AnyBoolean, booleanFromText);

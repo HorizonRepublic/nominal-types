@@ -22,6 +22,21 @@ export type SchemaParts =
       readonly strict: boolean;
     }
   | {
+      readonly kind: 'record';
+      readonly key: unknown;
+      readonly value: unknown;
+      readonly keys: readonly string[] | undefined;
+      readonly optional: boolean;
+      readonly min: number;
+      readonly max: number;
+    }
+  | {
+      readonly kind: 'tuple';
+      readonly items: readonly unknown[];
+      readonly rest: unknown;
+      readonly min: number;
+    }
+  | {
       readonly kind: 'union';
       readonly key: string;
       readonly variants: ReadonlyArray<{ readonly tag: string; readonly variant: object }>;

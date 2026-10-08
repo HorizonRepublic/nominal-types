@@ -9,7 +9,9 @@ import { oneOf } from '../../src/core/one-of.ts';
 import { matching } from '../../src/core/pattern-schema.ts';
 import { plain } from '../../src/core/plain.ts';
 import { satisfying } from '../../src/core/predicate-schema.ts';
+import { record } from '../../src/core/record-schema.ts';
 import { schemaOf } from '../../src/core/schema-of.ts';
+import { tuple } from '../../src/core/tuple-schema.ts';
 import { union } from '../../src/core/union-schema.ts';
 import * as library from '../../src/index.ts';
 
@@ -25,7 +27,9 @@ const members = {
   of: schemaOf,
   oneOf,
   plain,
+  record,
   satisfying,
+  tuple,
   union,
 };
 
@@ -49,8 +53,10 @@ describe('n', () => {
     'objectOf',
     'oneOf',
     'plain',
+    'record',
     'satisfying',
     'schemaOf',
+    'tuple',
     'union',
   ])('leaves %s out of the root exports', (name) => {
     expect(Object.keys(library)).not.toContain(name);
@@ -64,5 +70,7 @@ describe('n', () => {
     expect(library.PredicateSchema).toBeTypeOf('function');
     expect(library.OneOfSchema).toBeTypeOf('function');
     expect(library.UnionSchema).toBeTypeOf('function');
+    expect(library.RecordSchema).toBeTypeOf('function');
+    expect(library.TupleSchema).toBeTypeOf('function');
   });
 });

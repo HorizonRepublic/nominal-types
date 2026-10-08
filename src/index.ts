@@ -4,10 +4,10 @@ export { Nominal } from './core/nominal.ts';
  * import brings all of them.
  *
  * @remarks
- * `n.object()`, `n.of()` and `n.union()` build schemas, and `n.constraint()` checks fields
- * together. `n.oneOf()`, `n.matching()` and `n.satisfying()` make rules for `Nominal()`.
- * `n.hideValues()` masks values in issues, and `n.plain()` turns instances into plain values for
- * a response. `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a value is.
+ * `n.object()`, `n.of()`, `n.record()`, `n.tuple()` and `n.union()` build schemas, and
+ * `n.constraint()` checks fields together. `n.oneOf()`, `n.matching()` and `n.satisfying()` make
+ * rules for `Nominal()`. `n.hideValues()` masks values in issues, and `n.plain()` turns instances
+ * into plain values for a response. `n.isType()`, `n.isObject()` and `n.isConstraint()` tell what a value is.
  * `n.configure()` sets messages, values, trimming and code generation for the process.
  *
  * @example
@@ -71,6 +71,10 @@ export type {
 } from './core/constraint-types.ts';
 export { ObjectSchema } from './core/object-schema.ts';
 export type { ObjectFields, ObjectInput, ObjectValue, TextInput } from './core/object-schema.ts';
+export { RecordSchema } from './core/record-schema.ts';
+export type { RecordInput, RecordKey, RecordValue } from './core/record-schema.ts';
+export { TupleSchema } from './core/tuple-schema.ts';
+export type { TupleValue } from './core/tuple-schema.ts';
 export { TypeSchema } from './core/type-schema.ts';
 export { UnionSchema } from './core/union-schema.ts';
 export type { UnionInput, UnionValue, UnionVariants } from './core/union-schema.ts';

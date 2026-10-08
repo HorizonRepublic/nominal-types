@@ -1,6 +1,6 @@
 # Schemas
 
-The functions that build schemas from nominal types: lists, optional values, objects and rules across fields. Terms are explained in the [glossary](glossary.md).
+The functions that build schemas from nominal types: lists, optional values, objects, records, tuples and rules across fields. Terms are explained in the [glossary](glossary.md).
 
 | Entry                                | What it does                                                                       |
 | ------------------------------------ | ---------------------------------------------------------------------------------- |
@@ -12,6 +12,10 @@ The functions that build schemas from nominal types: lists, optional values, obj
 | [`ObjectSchema`](#objectschema)      | What `n.object()` returns: `strict()`, `partial()`, `pick()`, `extend()` and more  |
 | [`n.union()`](#nunion)               | A schema for an object of one of several shapes, told apart by a field             |
 | [`UnionSchema`](#unionschema)        | What `n.union()` returns: `key`, `tags`                                            |
+| [`n.record()`](#nrecord)             | A schema for an object whose keys are not known in advance                         |
+| [`RecordSchema`](#recordschema)      | What `n.record()` returns: `keys`, `min()`, `max()`, `partial()`                   |
+| [`n.tuple()`](#ntuple)               | A schema for an array whose positions hold different types                         |
+| [`TupleSchema`](#tupleschema)        | What `n.tuple()` returns                                                           |
 | [`n.constraint()`](#nconstraint)     | A rule across fields of an object                                                  |
 | [`Constraint`](#constraint-class)    | What `n.constraint()` returns                                                      |
 | [`n.isObject()`](#nisobject)         | Tells an `n.object()` schema from other values                                     |
@@ -33,6 +37,8 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | `n.of()`           | A type as a plain schema object                 | [`n.of()`](#nof)                                       |
 | `n.object()`       | A schema for an object                          | [`n.object()`](#nobject)                               |
 | `n.union()`        | A schema for an object of one of several shapes | [`n.union()`](#nunion)                                 |
+| `n.record()`       | A schema for an object with any keys            | [`n.record()`](#nrecord)                               |
+| `n.tuple()`        | A schema for an array of fixed positions        | [`n.tuple()`](#ntuple)                                 |
 | `n.constraint()`   | A rule across fields of an object               | [`n.constraint()`](#nconstraint)                       |
 | `n.matching()`     | A rule from a regular expression                | [`n.matching()`](declaring.md#nmatching)               |
 | `n.satisfying()`   | A rule from a type guard                        | [`n.satisfying()`](declaring.md#nsatisfying)           |
@@ -43,7 +49,7 @@ The [namespace](glossary.md) `n` holds the functions that build schemas, rules a
 | `n.isObject()`     | Tells an `n.object()` schema from other values  | [`n.isObject()`](#nisobject)                           |
 | `n.isConstraint()` | Tells a constraint from other values            | [`n.isConstraint()`](#nisconstraint)                   |
 
-`Nominal`, the built-in types, the classes such as `TypeSchema`, `ObjectSchema` and `UnionSchema`, and every TypeScript type are imported by their own names.
+`Nominal`, the built-in types, the classes such as `TypeSchema`, `ObjectSchema`, `UnionSchema`, `RecordSchema` and `TupleSchema`, and every TypeScript type are imported by their own names.
 
 ## n.of()
 
@@ -633,6 +639,154 @@ const Payment = n.union('method', {
 
 Payment.key; // 'method'
 Payment.tags; // ['card', 'invoice']
+```
+
+## n.record()
+
+```ts
+n.record(Key, Value): RecordSchema<RecordInput<Key, Value>, RecordValue<Key, Value>>
+```
+
+| Parameter | Type             | Description                                                                                                                                        |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Key`     | a type or schema | Checks each key: a nominal type of strings, `n.oneOf()` of strings, or another schema of strings.                                                  |
+| `Value`   | a type or schema | Checks each value: a nominal type, an `n.of()`, `n.object()`, `n.union()`, `n.record()` or `n.tuple()` schema, or any synchronous Standard Schema. |
+
+Returns: a [`RecordSchema`](#recordschema).
+
+What it does with an input:
+
+1. It refuses anything that isn't an object, arrays included: `must be an object (was array)`.
+2. It counts the input's own keys and refuses a count outside [`min()` and `max()`](#recordschema) before it reads any key.
+3. It checks every key with `Key`. A bad key gives one issue under that key: `key must be an ISO 4217 currency code (was "euro")`.
+4. It checks every value with `Value`. Issues have paths from the top of the input: `['EUR']`, `['EUR', 'amount']`.
+5. It returns a new object of the values, under the keys `Key` gave.
+
+Keys:
+
+| Key schema                                        | Which keys                                                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| a nominal type, such as `CurrencyCode`            | any key the type accepts; none is required                                                                 |
+| `n.oneOf('s', 'm', 'l')`                          | only the listed keys, and every one of them is required, as in a TypeScript `Record<'s' \| 'm' \| 'l', V>` |
+| `n.oneOf(...)` after [`partial()`](#recordschema) | only the listed keys, each one may be missing                                                              |
+
+More rules:
+
+- A key named `__proto__` is refused: `is not allowed`. `constructor` and `prototype` are plain keys.
+- A value given as `undefined` counts as a missing key. When `Value` accepts `undefined`, such as `n.of(Type).optional()`, every key may be missing.
+- When `Key` changes a key, for example with [`trimStrings`](configure.md), two keys that become one are refused: `must not repeat a key`.
+- Only the input's own string keys are read.
+
+The type of the value is `Readonly<Record<string, Value>>` for a nominal type of keys, and an object with the listed keys for `n.oneOf()`.
+
+Throws a `TypeError`:
+
+| Case                                                | Message                                                              |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| a key or value that is not a nominal type or schema | `n.record(): the key must be a nominal type or a schema (was "key")` |
+| a key schema whose values are not strings           | `n.record(): the key must be a type or schema of strings`            |
+| `__proto__` among the listed keys                   | `n.record(): a key cannot be named __proto__`                        |
+
+Example:
+
+```ts
+import { CurrencyCode, DecimalString, n } from '@horizon-republic/nominal-types';
+
+const Prices = n.record(CurrencyCode, DecimalString);
+
+Prices.parse({ EUR: '12.50', USD: '13.10' });
+// { ok: true, value: { EUR: DecimalString, USD: DecimalString } }
+Prices.parse({ euro: '12.50' });
+// { ok: false, issues: [{ message: 'key must be an ISO 4217 currency code (was "euro")', path: ['euro'] }] }
+```
+
+Its JSON Schema is `{ type: 'object', propertyNames, additionalProperties }`: the key schema and the value schema. For OpenAPI 3.0, which has no `propertyNames`, it leaves that keyword out. With listed keys it is `properties` with every key, `required` and `additionalProperties: false`. `min()` and `max()` add `minProperties` and `maxProperties`.
+
+See also: [How to check a request body with n.object()](../guides/core/check-an-object.md#check-an-object-with-any-keys).
+
+## RecordSchema
+
+The class `n.record()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `stringify()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the record, frozen, in `value`. It adds:
+
+| Member       | Description                                                                             |
+| ------------ | --------------------------------------------------------------------------------------- |
+| `keys`       | The listed keys for an `n.oneOf()` key schema, `undefined` otherwise.                   |
+| `min(count)` | A new schema that refuses fewer keys than `count`: `must have at least 1 key (was 0)`.  |
+| `max(count)` | A new schema that refuses more keys than `count`: `must have at most 50 keys (was 51)`. |
+| `partial()`  | A new schema whose listed keys may be missing.                                          |
+
+`min()` and `max()` throw a `TypeError` for a count that is not a whole number from 0 up, and when the lower limit would be above the upper one.
+
+```ts
+import { n, NonEmptyString, PositiveInteger, Url } from '@horizon-republic/nominal-types';
+
+const Links = n.record(NonEmptyString, Url).min(1).max(50);
+const Sizes = n.record(n.oneOf('s', 'm', 'l'), PositiveInteger);
+
+Sizes.keys; // ['s', 'm', 'l']
+Sizes.parse({ m: 2 }).ok; // false: s and l are required
+Sizes.partial().parse({ m: 2 }).ok; // true
+```
+
+## n.tuple()
+
+```ts
+n.tuple([A, B, ...], Rest?): TupleSchema<TupleValue<Items, Rest, 'input'>, TupleValue<Items, Rest>>
+```
+
+| Parameter | Type                         | Description                                                                 |
+| --------- | ---------------------------- | --------------------------------------------------------------------------- |
+| `items`   | an array of types or schemas | Checks the item at each position, in order.                                 |
+| `Rest`    | a type or schema             | Optional. Checks every item past the positions. Without it, there are none. |
+
+Returns: a [`TupleSchema`](#tupleschema).
+
+What it does with an input:
+
+1. It refuses anything that isn't an array: `must be an array (was object)`.
+2. It counts the items before it checks any: `must have 2 items (was 3)`, or `must have at least 1 item (was 0)` with `Rest` or optional items.
+3. It checks each item with the schema of its position, and every further item with `Rest`. Issues have the index in their path: `[1]`, `[1, 'id']`.
+4. It returns a new array of the values.
+
+Trailing positions whose schema accepts `undefined`, such as `n.of(Type).optional()`, may be left out: `n.tuple([PositiveInteger, n.of(PositiveInteger).optional()])` takes `[1]` and `[1, 2]`. An optional position before a required one must be given, as `undefined` or a value.
+
+The type of the value is a read-only TypeScript tuple: `readonly [Latitude, Longitude]`, `readonly [AnyString, ...AnyString[]]`.
+
+Throws a `TypeError`:
+
+| Case                                         | Message                                                             |
+| -------------------------------------------- | ------------------------------------------------------------------- |
+| items that are not an array                  | `n.tuple(): list the items in an array (was "x")`                   |
+| an item that is not a nominal type or schema | `n.tuple(): the item 1 must be a nominal type or a schema (was 1)`  |
+| a rest that is not a nominal type or schema  | `n.tuple(): the rest must be a nominal type or a schema (was null)` |
+
+Example:
+
+```ts
+import { AnyString, Latitude, Longitude, n } from '@horizon-republic/nominal-types';
+
+const Point = n.tuple([Latitude, Longitude]);
+const Command = n.tuple([AnyString], AnyString);
+
+Point.parse([50.45, 30.52]); // { ok: true, value: [Latitude, Longitude] }
+Point.parse([50.45]); // { ok: false, issues: [{ message: 'must have 2 items (was 1)' }] }
+Command.parse(['git', 'commit']).ok; // true
+```
+
+Its JSON Schema lists the positions as `prefixItems` in draft 2020-12 and as an `items` array in draft-07, with `items: false` (`additionalItems: false`) or the schema of `Rest`, and `minItems` and `maxItems`. OpenAPI 3.0 has no tuples, so there each item is `anyOf` the item schemas, with the same counts.
+
+See also: [How to check lists and optional values](../guides/core/lists-and-optional-values.md#check-a-list-of-fixed-positions).
+
+## TupleSchema
+
+The class `n.tuple()` returns. It extends [`TypeSchema`](#typeschema), so `parse()`, `accepts()`, `toPlain()`, `stringify()`, `array()`, `optional()`, `nullable()` and `['~standard']` work on it. It is a field of `n.object()` and a rule of [`Nominal()`](declaring.md#nominal), whose instance holds the tuple, frozen, in `value`.
+
+```ts
+import { Latitude, Longitude, n, Nominal } from '@horizon-republic/nominal-types';
+
+export class Point extends Nominal('geo.Point', n.tuple([Latitude, Longitude])) {}
+
+new Point([50.45, 30.52]).value[0]; // Latitude
 ```
 
 ## n.constraint()

@@ -62,8 +62,17 @@ export const objectParts: WeakMap<object, ObjectParts> = new WeakMap();
  */
 export const noPresence: Presence = new Map();
 
-const runnerOf = (field: ConstraintField): ((value?: unknown) => unknown) =>
-  isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, 'n.object()');
+/**
+ * How a field, an item or a value of a schema runs: a nominal type through its parser, a schema
+ * through its own run.
+ *
+ * @internal
+ */
+export const fieldRunner = (
+  field: ConstraintField,
+  owner: string = 'n.object()',
+): ((value?: unknown) => unknown) =>
+  isNominalType(field) ? instanceParserFor(field) : foreignRunner(field, owner);
 
 /**
  * The fields of an `n.object()` schema as its shape runs them.
@@ -78,7 +87,7 @@ export const fieldsOf = (fields: ObjectFields, presence: Presence): ObjectField[
       throw new TypeError('n.object(): a field cannot be named __proto__');
     }
 
-    const run = runnerOf(field);
+    const run = fieldRunner(field);
 
     return {
       key,

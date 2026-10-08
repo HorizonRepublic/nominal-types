@@ -43,6 +43,10 @@ export const describeSchema = (schema: unknown): string => {
       return `n.object({ ${parts.fields.map(({ key }) => key).join(', ')} })`;
     case 'union':
       return `n.union('${parts.key}', { ${parts.variants.map(({ tag }) => tag).join(', ')} })`;
+    case 'record':
+      return `n.record(${describeSchema(parts.key)}, ${describeSchema(parts.value)})`;
+    case 'tuple':
+      return `n.tuple([${parts.items.map((item) => describeSchema(item)).join(', ')}]${parts.rest === undefined ? '' : `, ${describeSchema(parts.rest)}`})`;
     case undefined:
       return 'a schema';
     default:
@@ -113,6 +117,61 @@ const unionArbitrary = (
   });
 
   return bounded(fc.oneof(...variants), acceptsOf(schema), refusedBy(describeSchema(schema)));
+};
+
+/**
+ * Records of the keys and values the schema accepts: any keys, or the listed ones.
+ *
+ * @throws {@link TypeError} when nothing can be generated for the keys or the values.
+ *
+ * @internal
+ */
+const recordArbitrary = (
+  schema: object,
+  parts: Extract<SchemaParts, { readonly kind: 'record' }>,
+  context: GeneratorContext,
+): Arbitrary<unknown> => {
+  const value = context.ofField(parts.value, 'value');
+  const counts = {
+    minKeys: parts.min,
+    ...(parts.max === Number.POSITIVE_INFINITY ? {} : { maxKeys: parts.max }),
+  };
+  const shaped =
+    parts.keys === undefined
+      ? fc.dictionary(context.ofField(parts.key, 'key').map(String), value, {
+          ...counts,
+          noNullPrototype: true,
+        })
+      : fc.record(Object.fromEntries(parts.keys.map((key) => [key, value])), {
+          requiredKeys: parts.optional ? [] : [...parts.keys],
+          noNullPrototype: true,
+        });
+
+  return bounded(shaped, acceptsOf(schema), refusedBy(describeSchema(schema)));
+};
+
+/**
+ * Tuples of the items the schema accepts, the optional trailing ones left out at times.
+ *
+ * @throws {@link TypeError} when nothing can be generated for an item or the rest.
+ *
+ * @internal
+ */
+const tupleArbitrary = (
+  schema: object,
+  parts: Extract<SchemaParts, { readonly kind: 'tuple' }>,
+  context: GeneratorContext,
+): Arbitrary<unknown> => {
+  const items = parts.items.map((item, index) => context.ofField(item, String(index)));
+  const rest =
+    parts.rest === undefined ? fc.constant([]) : fc.array(context.ofField(parts.rest, 'rest'));
+  const shaped = fc
+    .tuple(fc.tuple(...items), fc.integer({ min: parts.min, max: items.length }), rest)
+    .map(([values, count, tail]) =>
+      count < values.length ? values.slice(0, count) : values.concat(tail),
+    );
+
+  return bounded(shaped, acceptsOf(schema), refusedBy(describeSchema(schema)));
 };
 
 const plainBigInt = (_key: string, value: unknown): unknown =>
@@ -194,6 +253,10 @@ const fromParts = (
       return objectArbitrary(schema, parts, context);
     case 'union':
       return unionArbitrary(schema, parts, context);
+    case 'record':
+      return recordArbitrary(schema, parts, context);
+    case 'tuple':
+      return tupleArbitrary(schema, parts, context);
     default:
       return parts satisfies never;
   }
@@ -217,7 +280,7 @@ export const schemaArbitrary = (schema: object, context: GeneratorContext): Arbi
 
   if (parts === undefined) {
     throw new TypeError(
-      'arbitraryOf(): the schema was not built by n.of(), n.object() or n.union() of this package',
+      'arbitraryOf(): the schema was not built by n.of(), n.object(), n.record(), n.tuple() or n.union() of this package',
     );
   }
 

@@ -38,9 +38,17 @@ const satisfiesArray = (keyword: (name: string) => unknown, value: unknown): boo
   const items = keyword('items');
   const minItems = keyword('minItems');
   const maxItems = keyword('maxItems');
+  // Draft 2020-12 lists positions in `prefixItems`, draft-07 in an `items` array.
+  const positions = keyword('prefixItems') ?? (Array.isArray(items) ? items : []);
+  const listed: readonly unknown[] = Array.isArray(positions) ? positions : [];
+  const rest = Array.isArray(items) ? keyword('additionalItems') : items;
 
   return (
-    value.every((item: unknown) => satisfiesSchema(items, item)) &&
+    value.every((item: unknown, index) =>
+      index < listed.length
+        ? satisfiesSchema(listed[index], item)
+        : rest !== false && satisfiesSchema(rest, item),
+    ) &&
     (typeof minItems !== 'number' || value.length >= minItems) &&
     (typeof maxItems !== 'number' || value.length <= maxItems) &&
     (keyword('uniqueItems') !== true ||
@@ -65,8 +73,18 @@ const satisfiesObject = (keyword: (name: string) => unknown, value: unknown): bo
   const properties = keyword('properties');
   const declared = isRecord(properties) ? properties : {};
   const required = keyword('required');
+  const additional = keyword('additionalProperties');
+  const names = keyword('propertyNames');
+  const minProperties = keyword('minProperties');
+  const maxProperties = keyword('maxProperties');
+  const count = Object.keys(value).length;
+  const undeclared = Object.keys(value).filter((key) => !Object.hasOwn(declared, key));
 
   return (
+    (typeof minProperties !== 'number' || count >= minProperties) &&
+    (typeof maxProperties !== 'number' || count <= maxProperties) &&
+    Object.keys(value).every((key) => satisfiesSchema(names, key)) &&
+    (!isRecord(additional) || undeclared.every((key) => satisfiesSchema(additional, value[key]))) &&
     (!Array.isArray(required) ||
       required.every((key: unknown) => typeof key === 'string' && Object.hasOwn(value, key))) &&
     Object.entries(declared).every(

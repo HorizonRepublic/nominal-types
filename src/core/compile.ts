@@ -92,6 +92,35 @@ export const generateFunction = (
   return isRun(built) ? built : undefined;
 };
 
+/**
+ * A copy of `make` compiled again from its own source, so the functions it makes for one schema
+ * get call sites of their own; `make` itself where code generation is off or forbidden.
+ *
+ * @remarks
+ * One source serves both ways, where `generateFunction()` takes a source of its own. `make` must
+ * read nothing but its parameters and globals such as `Object`, since the copy is compiled outside
+ * the module.
+ *
+ * @internal
+ */
+export const freshCopy = <Make extends (...values: never[]) => unknown>(
+  make: Make,
+  generate: boolean = canGenerate(),
+): Make => {
+  if (!generate) {
+    return make;
+  }
+
+  // @throws-ignore the source is the source of a function this package compiled already
+  // oxlint-disable-next-line typescript/no-implied-eval
+  const build: unknown = new Function(`return ${make.toString()};`);
+  const built: unknown = typeof build === 'function' ? Reflect.apply(build, undefined, []) : make;
+
+  // The copy is compiled from the source of `make`, so it is a function of the same type.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return (typeof built === 'function' ? built : make) as Make;
+};
+
 const loopOver =
   (steps: readonly AnyStep[]): Run =>
   (input) => {

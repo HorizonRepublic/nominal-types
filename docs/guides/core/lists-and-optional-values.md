@@ -1,8 +1,8 @@
 # How to accept lists, missing values and null
 
-This guide shows how to check a list of values, a value that may be missing and a value that may be `null`.
+This guide shows how to check a list of values, a list of fixed positions, a value that may be missing and a value that may be `null`.
 
-All three start from `n.of(Type)`. It turns a type into a schema you can build on.
+Lists, missing values and `null` start from `n.of(Type)`. It turns a type into a schema you can build on.
 
 ## Accept a list
 
@@ -85,6 +85,29 @@ new Podium(['0190f1c2-3b4a-7c5d-8e9f-0a1b2c3d4e5f']); // throws NominalError: sh
 
 `new` turns each string into a `CustomerId`. The list inside is frozen.
 
+## Check a list of fixed positions
+
+When each position means something else, such as a point as `[latitude, longitude]`, use `n.tuple()`:
+
+```ts
+import { Latitude, Longitude, n } from '@horizon-republic/nominal-types';
+
+const Point = n.tuple([Latitude, Longitude]);
+
+Point.parse([50.45, 30.52]); // { ok: true, value: [Latitude, Longitude] }
+Point.parse([50.45]); // { ok: false, issues: [{ message: 'must have 2 items (was 1)' }] }
+Point.parse([95, 30.52]); // { ok: false, issues: [{ message: 'must be a latitude from -90 to 90 (was 95)', path: [0] }] }
+```
+
+A second argument checks any further items. A last position that is `optional()` may be left out:
+
+```ts
+import { AnyString, n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Command = n.tuple([AnyString], AnyString); // ['git'], ['git', 'commit', '-m']
+const Range = n.tuple([PositiveInteger, n.of(PositiveInteger).optional()]); // [1], [1, 5]
+```
+
 ## Allow a missing value
 
 Call `.optional()`. It lets `undefined` through and checks anything else:
@@ -146,7 +169,7 @@ To read list items from text, such as `?ids=1&ids=2`, see [How to read numbers a
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `n.of()`, `array()`, `optional()`, `nullable()` and their messages.
+- [Schemas](../../reference/schemas.md): `n.of()`, `array()`, `optional()`, `nullable()`, `n.tuple()` and their messages.
 - [How to check a request body with n.object()](check-an-object.md)
 - [Where checks belong](../../explanation/where-checks-belong.md), for body size limits on your server.
 

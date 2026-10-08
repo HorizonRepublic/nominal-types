@@ -6,26 +6,28 @@ Each guide shows how to do one task. Find your task in the "I want to…" column
 
 Your own types, and checking input with no other library.
 
-| I want to…                                     | Guide                                                                              |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
-| declare a type of my own                       | [How to declare a type](core/declare-a-type.md)                                    |
-| make a stricter type or a variant of a type    | [How to make a stricter type or a variant](core/build-on-a-type.md)                |
-| check a value I don't trust                    | [How to check untrusted input](core/check-input.md)                                |
-| check a request body                           | [How to check a request body with n.object()](core/check-an-object.md)             |
-| accept one of several object shapes            | [How to accept one of several object shapes](core/accept-one-of-several-shapes.md) |
-| accept a list, a missing value or `null`       | [How to accept lists, missing values and null](core/lists-and-optional-values.md)  |
-| check one field against another                | [How to check one field against another](core/check-fields-together.md)            |
-| make a value object of several fields          | [How to make a value object](core/make-a-value-object.md)                          |
-| read numbers and booleans from strings         | [How to read numbers and booleans from text](core/read-text-values.md)             |
-| check dates and times                          | [How to use dates and times](core/use-dates-and-times.md)                          |
-| take, compute and store amounts of money       | [How to handle money](core/handle-money.md)                                        |
-| read configuration from environment variables  | [How to read configuration from environment variables](core/read-config.md)        |
-| keep values out of error messages              | [How to keep values out of error messages](core/hide-values.md)                    |
-| translate messages, trim strings for the app   | [How to configure messages, values and trimming](core/configure.md)                |
-| test code that takes nominal types             | [How to test code that takes nominal types](core/write-tests.md)                   |
-| test with every kind of valid or invalid value | [How to generate test data](core/generate-test-data.md)                            |
-| fix an error or a surprise                     | [How to fix common problems](core/fix-common-problems.md)                          |
-| move my code from version 2                    | [How to move from version 2](core/migrate-from-v2.md)                              |
+| I want to…                                        | Guide                                                                                                             |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| declare a type of my own                          | [How to declare a type](core/declare-a-type.md)                                                                   |
+| make a stricter type or a variant of a type       | [How to make a stricter type or a variant](core/build-on-a-type.md)                                               |
+| check a value I don't trust                       | [How to check untrusted input](core/check-input.md)                                                               |
+| check a request body                              | [How to check a request body with n.object()](core/check-an-object.md)                                            |
+| check an object whose keys are data               | [How to check a request body with n.object()](core/check-an-object.md#check-an-object-with-any-keys)              |
+| accept one of several object shapes               | [How to accept one of several object shapes](core/accept-one-of-several-shapes.md)                                |
+| accept a list, a missing value or `null`          | [How to accept lists, missing values and null](core/lists-and-optional-values.md)                                 |
+| accept a list of fixed positions, such as a point | [How to accept lists, missing values and null](core/lists-and-optional-values.md#check-a-list-of-fixed-positions) |
+| check one field against another                   | [How to check one field against another](core/check-fields-together.md)                                           |
+| make a value object of several fields             | [How to make a value object](core/make-a-value-object.md)                                                         |
+| read numbers and booleans from strings            | [How to read numbers and booleans from text](core/read-text-values.md)                                            |
+| check dates and times                             | [How to use dates and times](core/use-dates-and-times.md)                                                         |
+| take, compute and store amounts of money          | [How to handle money](core/handle-money.md)                                                                       |
+| read configuration from environment variables     | [How to read configuration from environment variables](core/read-config.md)                                       |
+| keep values out of error messages                 | [How to keep values out of error messages](core/hide-values.md)                                                   |
+| translate messages, trim strings for the app      | [How to configure messages, values and trimming](core/configure.md)                                               |
+| test code that takes nominal types                | [How to test code that takes nominal types](core/write-tests.md)                                                  |
+| test with every kind of valid or invalid value    | [How to generate test data](core/generate-test-data.md)                                                           |
+| fix an error or a surprise                        | [How to fix common problems](core/fix-common-problems.md)                                                         |
+| move my code from version 2                       | [How to move from version 2](core/migrate-from-v2.md)                                                             |
 
 ## Validators
 

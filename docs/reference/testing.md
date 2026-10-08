@@ -16,7 +16,7 @@ fast-check is an optional [peer dependency](glossary.md): install it as a dev de
 
 ## Functions
 
-A target is a nominal type, or a schema built by `n.of()`, `n.object()` or `n.union()`, including the results of `array()`, `optional()`, `nullable()`, `fromString()`, `fromEnv()`, `partial()`, `required()`, `pick()`, `omit()`, `extend()` and `strict()`.
+A target is a nominal type, or a schema built by `n.of()`, `n.object()`, `n.record()`, `n.tuple()` or `n.union()`, including the results of `array()`, `optional()`, `nullable()`, `fromString()`, `fromEnv()`, `partial()`, `required()`, `pick()`, `omit()`, `extend()` and `strict()`.
 
 | Function                                 | Returns                                               |
 | ---------------------------------------- | ----------------------------------------------------- |
@@ -87,13 +87,15 @@ A pattern fast-check can't read, such as one with a lookahead, is skipped: the t
 
 ## Values of schemas
 
-| Schema                      | Values                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------- |
-| `array()`                   | from `min` to `max` items, both ends included; with `unique`, no two items equal |
-| `optional()`, `nullable()`  | `undefined` or `null` now and then                                               |
-| `fromString()`, `fromEnv()` | the values as text now and then, such as `'8080'`, and the values themselves     |
-| `n.object()`                | optional fields left out now and then; values that keep every constraint         |
-| `n.union()`                 | every variant, with its tag as the first field                                   |
+| Schema                      | Values                                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `array()`                   | from `min` to `max` items, both ends included; with `unique`, no two items equal                            |
+| `optional()`, `nullable()`  | `undefined` or `null` now and then                                                                          |
+| `fromString()`, `fromEnv()` | the values as text now and then, such as `'8080'`, and the values themselves                                |
+| `n.object()`                | optional fields left out now and then; values that keep every constraint                                    |
+| `n.union()`                 | every variant, with its tag as the first field                                                              |
+| `n.record()`                | from `min()` to `max()` keys the key schema accepts; with listed keys, every key, or some after `partial()` |
+| `n.tuple()`                 | an item for each position, optional trailing items left out now and then, and any number of rest items      |
 
 A field of another Standard Schema library is made from its JSON Schema and checked by the library.
 
@@ -113,14 +115,14 @@ Values of the wrong kind come in between: `null`, `undefined`, booleans, numbers
 
 ## Errors
 
-| When                                                          | Error                                                                                                          |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| the target is not a nominal type or a schema                  | `TypeError: arbitraryOf() takes a nominal type or a schema built by n.of(), n.object() or n.union() (was …)`   |
-| nothing to generate a type from                               | `TypeError: arbitraryOf(): no generator makes values of <name>: …`                                             |
-| a field of another library without JSON Schema                | `TypeError: arbitraryOf(): no generator makes values of the field <key>, …`                                    |
-| `unique` items can't fill `min`                               | `TypeError: arbitraryOf(): n.of(<name>).array() needs <min> distinct items, and its items come in fewer kinds` |
-| a rule or a constraint refuses 1000 generated values in a row | `Error: arbitraryOf(): <target> refused 1000 generated values in a row, …`, thrown while values are made       |
-| the target accepts 1000 changed values in a row               | `Error: invalidArbitraryOf(): <target> accepted 1000 changed values in a row, …`, thrown while values are made |
+| When                                                          | Error                                                                                                                               |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| the target is not a nominal type or a schema                  | `TypeError: arbitraryOf() takes a nominal type or a schema built by n.of(), n.object(), n.record(), n.tuple() or n.union() (was …)` |
+| nothing to generate a type from                               | `TypeError: arbitraryOf(): no generator makes values of <name>: …`                                                                  |
+| a field of another library without JSON Schema                | `TypeError: arbitraryOf(): no generator makes values of the field <key>, …`                                                         |
+| `unique` items can't fill `min`                               | `TypeError: arbitraryOf(): n.of(<name>).array() needs <min> distinct items, and its items come in fewer kinds`                      |
+| a rule or a constraint refuses 1000 generated values in a row | `Error: arbitraryOf(): <target> refused 1000 generated values in a row, …`, thrown while values are made                            |
+| the target accepts 1000 changed values in a row               | `Error: invalidArbitraryOf(): <target> accepted 1000 changed values in a row, …`, thrown while values are made                      |
 
 Each message ends with how to pass a generator of your own. Pass it in `overrides`.
 

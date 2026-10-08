@@ -167,6 +167,36 @@ PlaceOrder.parse({
 
 For lists, missing values and `null`, see [How to accept lists, missing values and null](lists-and-optional-values.md).
 
+## Check an object with any keys
+
+When the keys are data, such as prices by currency, use `n.record()`. The first type checks each key, the second each value:
+
+```ts
+import { CurrencyCode, DecimalString, n } from '@horizon-republic/nominal-types';
+
+const Prices = n.record(CurrencyCode, DecimalString).max(50);
+
+Prices.parse({ EUR: '12.50', USD: '13.10' }); // { ok: true, value: { EUR: DecimalString, USD: DecimalString } }
+Prices.parse({ euro: '12.50', USD: 'x' });
+// { ok: false, issues: [
+//   { message: 'key must be an ISO 4217 currency code (was "euro")', path: ['euro'] },
+//   { message: 'must be a decimal number as text (was "x")', path: ['USD'] },
+// ] }
+```
+
+`max()` refuses a large object before any key is checked; `min()` sets the fewest keys.
+
+With keys listed by `n.oneOf()`, every key is required, as in a TypeScript `Record`. Call `partial()` to let them be missing:
+
+```ts
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+const Stock = n.record(n.oneOf('s', 'm', 'l'), PositiveInteger);
+
+Stock.parse({ s: 1, m: 2 }); // { ok: false, issues: [{ message: 'is required', path: ['l'] }] }
+Stock.partial().parse({ s: 1, m: 2 }).ok; // true
+```
+
 ## Use a schema from another library for a field
 
 A field can be any Standard Schema that answers at once, such as Zod or ArkType:
@@ -197,7 +227,7 @@ For an object that takes one of several shapes, told apart by a field such as `m
 
 ## See also
 
-- [Schemas](../../reference/schemas.md): `n.object()`, `strict()`, `partial()`, `pick()`, `omit()`, `extend()` and `keys`.
+- [Schemas](../../reference/schemas.md): `n.object()`, `strict()`, `partial()`, `pick()`, `omit()`, `extend()`, `keys` and `n.record()`.
 - [How to check one field against another](check-fields-together.md)
 - [How to use nominal types with NestJS](../frameworks/nestjs.md), for the same schema in a controller.
 - [How to get a JSON Schema for a type](../api-docs/json-schema.md), for the same schema in API docs.

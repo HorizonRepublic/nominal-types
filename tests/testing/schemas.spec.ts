@@ -107,6 +107,16 @@ const schemas: ReadonlyArray<readonly [string, NominalTarget]> = [
   ['a union', Payment],
   ['an empty strict object', n.object({}).strict()],
   ['an array of unions', Payment.array({ max: 3 })],
+  ['a record', n.record(NonBlankString, PositiveInteger)],
+  ['a record with counts', n.record(Email, Int8).min(1).max(3)],
+  ['a record of listed keys', n.record(n.oneOf('s', 'm', 'l'), PositiveInteger)],
+  ['a partial record of listed keys', n.record(n.oneOf('s', 'm'), Port).partial()],
+  ['a record of objects', n.record(Uuid, CreateOrder)],
+  ['a tuple', n.tuple([Email, Int8])],
+  ['a tuple with a rest', n.tuple([Uuid], Port)],
+  ['a tuple with an optional item', n.tuple([Int8, n.of(Port).optional()])],
+  ['the empty tuple', n.tuple([])],
+  ['an array of tuples', n.tuple([Int8, Int8]).array({ max: 3 })],
 ];
 
 describe('arbitraryOf() for schemas', () => {

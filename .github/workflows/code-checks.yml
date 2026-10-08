@@ -127,6 +127,8 @@ jobs:
               for (const peer of [name, ...(companions[name] ?? [])]) console.log(`${peer}@${version}`);
             }
           ' > oldest-peers.txt
+          # --legacy-peer-deps skips peers, so vite, which vitest takes as a peer, is kept by name
+          node -p '"vite@" + require("./node_modules/vite/package.json").version' >> oldest-peers.txt
           cat oldest-peers.txt
           xargs npm install --no-save --no-audit --no-fund --legacy-peer-deps < oldest-peers.txt
 

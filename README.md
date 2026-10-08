@@ -31,7 +31,7 @@ Give each kind of value its own type. `new` checks the value, and the compiler k
 import { Email, Uuid } from '@horizon-republic/nominal-types';
 
 const sendInvite = (to: Email, team: Uuid): void => {
-  console.log(`inviting ${to.value} to team ${team.value}`);
+  console.log(`inviting ${to} to team ${team}`); // an instance turns into its value in a string
 };
 
 const email = new Email('jane@example.com');

@@ -65,7 +65,7 @@ describe('n.object().fromEnv()', () => {
     expect(issuesOf(Settings.parse({ PORT: 'abc', DEBUG: 'yes', LIMIT: '1.5' }))).toStrictEqual([
       { message: 'must be a number (was a string of 3 characters)', path: ['PORT'] },
       { message: 'must be a boolean (was a string of 3 characters)', path: ['DEBUG'] },
-      { message: 'must be a URL (was undefined)', path: ['DATABASE_URL'] },
+      { message: 'is required', path: ['DATABASE_URL'] },
       {
         message:
           'must be a bigint, an integer string or a safe integer (was a string of 3 characters)',

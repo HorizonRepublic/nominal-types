@@ -95,7 +95,7 @@ describe('Ulid', () => {
     const copy: typeof library = await import('../../../src/index.ts');
     const id = new copy.Ulid(sample.toLowerCase());
 
-    expect(valueOf(Ulid.parse(id))).toBe(id);
+    expect(valueOf(Ulid.parse(id))).toStrictEqual(new Ulid(sample.toLowerCase()));
     expect(new Ulid(sample).equals(id)).toBe(true);
     expect(valueOf(Ulid.parse(new copy.AnyString(sample)))).toBeInstanceOf(Ulid);
   });

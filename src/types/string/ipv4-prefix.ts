@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { ipv4PrefixSource } from './ip-patterns.ts';
 import { IpPrefix } from './ip-prefix.ts';
@@ -41,7 +42,7 @@ export class Ipv4Prefix extends Ipv4PrefixBase {
   /**
    * The same prefix; IPv4 text has one form only.
    */
-  public override canonical(): Ipv4Prefix {
-    return new Ipv4Prefix(this.value);
+  public override canonical(): this {
+    return sameType(this, this.value);
   }
 }

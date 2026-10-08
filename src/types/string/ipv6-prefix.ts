@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { canonicalPrefix } from './ip-network.ts';
 import { ipv6PrefixSource } from './ip-patterns.ts';
@@ -42,7 +43,7 @@ export class Ipv6Prefix extends Ipv6PrefixBase {
   /**
    * The prefix with its address written as RFC 5952 recommends.
    */
-  public override canonical(): Ipv6Prefix {
-    return new Ipv6Prefix(canonicalPrefix(this.value));
+  public override canonical(): this {
+    return sameType(this, canonicalPrefix(this.value));
   }
 }

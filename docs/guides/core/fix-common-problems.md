@@ -81,7 +81,10 @@ export class Sku extends AnyString.subtype('shop.Sku', /^[A-Z]{3}-\d{4}$/u) {}
 export class OtherSku extends AnyString.subtype('shop.Sku', /^\d{6}$/u) {}
 
 new OtherSku('123456') instanceof Sku; // true
+Sku.parse(new OtherSku('123456')).ok; // false, parse() checks the value
 ```
+
+The same pattern with other flags counts as different rules too.
 
 Fix: give each type its own name, such as `shop.Sku` and `warehouse.Sku`.
 
@@ -155,6 +158,30 @@ Fix: call `fromString()` first, as in `n.of(PositiveInteger).fromString().array(
 Cause: the field is wrapped in `n.of()`, for example to make it optional. `fromEnv()` reads only plain type fields from text.
 
 Fix: add `fromString()` to the field: `n.of(Port).fromString().optional()`. See [How to read configuration from environment variables](read-config.md).
+
+### is required for a field the input has
+
+Cause: one of these:
+
+- the field holds `undefined`;
+- the field is not an own key of the input. `n.object()` doesn't read keys from the prototype, such as a getter of a class.
+
+Fix: give the field a value, or pass a plain object with the field as its own key:
+
+```ts
+import { n, PositiveInteger } from '@horizon-republic/nominal-types';
+
+class Form {
+  get quantity(): number {
+    return 2;
+  }
+}
+
+const Order = n.object({ quantity: PositiveInteger });
+
+Order.parse(new Form()); // { ok: false, issues: [{ message: 'is required', path: ['quantity'] }] }
+Order.parse({ quantity: new Form().quantity }); // { ok: true, value: { quantity: PositiveInteger { value: 2 } } }
+```
 
 ### TypeError: a constraint reads a field which the object does not declare
 

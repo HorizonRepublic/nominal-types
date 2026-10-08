@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -227,7 +228,7 @@ export class MediaType extends MediaTypeBase {
    * The same media type with type, subtype and parameter names lowered, no spaces, and values
    * quoted only where a token cannot carry them.
    */
-  public canonical(): MediaType {
+  public canonical(): this {
     let text = this.essence;
 
     for (const [key, value] of parametersOf(this.value)) {
@@ -236,7 +237,7 @@ export class MediaType extends MediaTypeBase {
       text += `;${key}=${written}`;
     }
 
-    return new MediaType(text);
+    return sameType(this, text);
   }
 
   /**

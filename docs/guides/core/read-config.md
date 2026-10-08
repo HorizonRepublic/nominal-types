@@ -56,7 +56,7 @@ PORT=80a node main.ts
 ```
 
 ```
-NominalError: app.Config: PORT: must be a number (was a string of 3 characters); API_URL: must be a URL (was undefined)
+NominalError: app.Config: PORT: must be a number (was a string of 3 characters); API_URL: is required
 ```
 
 ## Keep secrets out of the error

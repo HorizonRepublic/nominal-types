@@ -12,7 +12,7 @@ export const fingerprintOf = (rule: NominalSchema | undefined): string => {
   const pattern: unknown = Reflect.get(rule, 'pattern');
 
   if (pattern instanceof RegExp) {
-    return `pattern:${pattern.source}`;
+    return `pattern:/${pattern.source}/${pattern.flags}`;
   }
 
   const description: unknown = Reflect.get(rule, 'description');

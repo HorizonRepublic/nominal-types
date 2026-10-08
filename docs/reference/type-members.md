@@ -54,7 +54,7 @@ Type.parse(input: unknown): Parsed<Type>
 
 Returns: `{ ok: true, value }` with the instance, or `{ ok: false, issues }` with the [issues](errors-and-messages.md#issues).
 
-Throws: nothing for an invalid value. A rule that answers asynchronously throws a `TypeError`, see [Rules from other libraries](declaring.md#rules-from-other-libraries).
+Throws: nothing for an invalid value. A class with a constructor of its own that changes the input before `super()` gets the issues of the changed input, not a `NominalError`. A rule that answers asynchronously throws a `TypeError`, see [Rules from other libraries](declaring.md#rules-from-other-libraries).
 
 Example:
 
@@ -81,6 +81,16 @@ What `parse()` does with an instance of a nominal type:
 | an instance of an unrelated type: no common parent                   | rejected like any other object                |
 
 All built-in string types share the parent `AnyString`. So `Sku.parse(email)` checks the text of the email against the rules of `Sku`.
+
+An instance is returned without a check only when this copy of the package built it with `new` or `parse()`, and its value is still the one it was built with. Any other object that passes `instanceof` gets its `value` checked against the type's rules, and `parse()` returns a new instance:
+
+- an instance made by [another copy of the package](glossary.md);
+- an instance of another type declared with the same [type name](declaring.md#type-names);
+- an instance of the parent of a class that extends a type, such as an `Email` given to `class StaffEmail extends Email`;
+- an instance whose `value` was changed by JavaScript code;
+- a plain object that carries the brand, or one made with `Object.create(Email.prototype)`.
+
+So `parse()` is the check to trust. `instanceof` only reads the brand.
 
 Example:
 
@@ -109,6 +119,8 @@ value instanceof Type
 `true` if `value` is an instance of `Type` or of a type under it. A parent instance is not an instance of a subtype. A variant and its source are not instances of each other.
 
 It also works for an instance made by [another copy of the package](glossary.md), such as one loaded with `import` and one with `require`.
+
+`instanceof` reads the [brand](glossary.md) only. An object can carry the brand without holding a valid value, and two types with one type name pass for each other. To know that a value is valid, use [`parse()`](#parse).
 
 Example:
 
@@ -190,6 +202,7 @@ Email['~standard'].validate('jane@example.com'); // { value: Email }
 | [`toJSON()`](#tojson-and-tostring)          | The value, for `JSON.stringify`.                                 |
 | [`toString()`](#tojson-and-tostring)        | The value as text.                                               |
 | [`[Symbol.toPrimitive]`](#primitive-values) | Makes the instance work in `>`, `Number()` and template strings. |
+| [`console.log()` form](#in-consolelog)      | `Email { value: … }`, with the value of a sensitive type hidden. |
 
 A built-in type adds its own members, such as `email.domain`. See [Built-in types](types/README.md).
 
@@ -199,9 +212,18 @@ A built-in type adds its own members, such as `email.domain`. See [Built-in type
 instance.value: Immutable<Value>
 ```
 
-The value the instance holds. It always passed every rule of the type.
+The value the instance holds. It passed every rule of the type when the instance was made.
 
-An object or array value is frozen all the way down, and typed read-only. The input stays yours: the type freezes a copy. Instances, dates and other class objects inside the value are not frozen.
+What keeps it from changing:
+
+| Part of the instance                      | Protected by                                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `value` itself                            | TypeScript: `value` is `readonly`. JavaScript code can still assign it.                          |
+| an object or array value                  | `Object.freeze`, all the way down. The input stays yours: the type freezes a copy.               |
+| instances, dates and class objects inside | nothing: they are not frozen.                                                                    |
+| fields a class of your own adds           | nothing: the instance itself is not frozen, so a class that extends a type can add fields to it. |
+
+An instance whose `value` was changed is not trusted: [`parse()`](#parse) checks it again.
 
 ### equals
 
@@ -302,6 +324,19 @@ Number(quantity) + 1; // 4
 quantity.value * 2; // 6
 ```
 
+### In console.log
+
+`console.log()` and `util.inspect()` in Node.js and Bun show the class name and the value. A [sensitive type](errors-and-messages.md#sensitive-types) shows the kind of its value instead.
+
+Example:
+
+```ts
+import { Email, PositiveInteger } from '@horizon-republic/nominal-types';
+
+console.log(new PositiveInteger(3)); // PositiveInteger { value: 3 }
+console.log(new Email('jane@example.com')); // Email { value: <hidden, a string of 16 characters> }
+```
+
 ## Members of a type built on n.object()
 
 A type whose rule is an [`n.object()`](schemas.md#nobject) schema adds two members to its instances:
@@ -311,7 +346,9 @@ A type whose rule is an [`n.object()`](schemas.md#nobject) schema adds two membe
 | a getter per field  | `stay.guests` reads `stay.value.guests`.                                              |
 | `copyWith(changes)` | A new instance with the given fields changed and the others kept. Checked like `new`. |
 
-`copyWith()` throws [`NominalError`](errors-and-messages.md#nominalerror) when the result breaks a rule. The instance it was called on stays as it was.
+`copyWith()` throws [`NominalError`](errors-and-messages.md#nominalerror) when the result breaks a rule. It also throws when `changes` has a key the object doesn't declare: `booking.Stay: rooms: is not allowed`. TypeScript refuses such a key too. The instance it was called on stays as it was.
+
+`copyWith()` builds the copy with `new` on the instance's own class, and gives it the whole changed object. A class of your own with its own constructor must take that object as its first argument.
 
 A subtype of such a type keeps the getters and `copyWith()`.
 

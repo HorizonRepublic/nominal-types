@@ -10,13 +10,13 @@ A [value object](../reference/glossary.md) is defined by its value and has no id
 
 A nominal type is a value object:
 
-| Value object      | Nominal type                                                     |
-| ----------------- | ---------------------------------------------------------------- |
-| always valid      | `new` and `parse()` check the value; an invalid one never exists |
-| immutable         | the value is read-only, and an object value is frozen            |
-| equal by value    | `equals()` compares values, within one line of types             |
-| has behaviour     | getters and methods on the class: `sku.category`                 |
-| a type of its own | a `Sku` can't be passed where a `Username` goes                  |
+| Value object      | Nominal type                                                      |
+| ----------------- | ----------------------------------------------------------------- |
+| always valid      | `new` and `parse()` check the value; an invalid one never exists  |
+| immutable         | `value` is read-only in TypeScript, and an object value is frozen |
+| equal by value    | `equals()` compares values, within one line of types              |
+| has behaviour     | getters and methods on the class: `sku.category`                  |
+| a type of its own | a `Sku` can't be passed where a `Username` goes                   |
 
 A getter puts behaviour on the type:
 

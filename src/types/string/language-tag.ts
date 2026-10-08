@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -143,10 +144,10 @@ export class LanguageTag extends LanguageTagBase {
    * @remarks
    * The aliases come from the runtime's Unicode data, so a newer runtime may replace more of them.
    */
-  public canonical(): LanguageTag {
+  public canonical(): this {
     const [canonical = this.value] = Intl.getCanonicalLocales(this.value);
 
-    return new LanguageTag(canonical);
+    return sameType(this, canonical);
   }
 
   /**

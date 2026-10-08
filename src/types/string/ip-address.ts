@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -114,8 +115,8 @@ export class IpAddress extends IpAddressBase {
    * The address as RFC 5952 writes it: lowercase, no leading zeros, the longest run of zero groups
    * as `::`, and an IPv4-mapped address as `::ffff:192.0.2.1`. IPv4 text is already canonical.
    */
-  public canonical(): IpAddress {
-    return new IpAddress(textOf(bitsOf(this.value)));
+  public canonical(): this {
+    return sameType(this, textOf(bitsOf(this.value)));
   }
 
   /**

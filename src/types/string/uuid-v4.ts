@@ -1,4 +1,5 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
+import { sameType } from '../../core/same-type.ts';
 import { uuidVersion } from './uuid-version.ts';
 import { Uuid } from './uuid.ts';
 
@@ -29,7 +30,7 @@ export class UuidV4 extends UuidV4Base {
   /**
    * The same UUID in lowercase.
    */
-  public override canonical(): UuidV4 {
-    return new UuidV4(this.value.toLowerCase());
+  public override canonical(): this {
+    return sameType(this, this.value.toLowerCase());
   }
 }

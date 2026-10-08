@@ -72,7 +72,7 @@ CreateOrder.parse(body);
 CreateOrder.parse('hello'); // { ok: false, issues: [{ message: 'must be an object (was "hello")' }] }
 ```
 
-A missing required field fails its type's first check, such as `must be a string (was undefined)`.
+A missing required field gets the issue `is required`. So does a field that holds `undefined`.
 
 ## Refuse keys you didn't declare
 
@@ -109,7 +109,7 @@ PlaceOrder.parse({
   items: [{ sku: 'ABC-1234', quantity: 1 }, { sku: 'nope', quantity: 1 }],
 });
 // { ok: false, issues: [
-//   { message: 'must be a string (was undefined)', path: ['address', 'street'] },
+//   { message: 'is required', path: ['address', 'street'] },
 //   { message: 'must be matched by ^[A-Z]{3}-\d{4}$ (was "nope")', path: ['items', 1, 'sku'] },
 // ] }
 ```

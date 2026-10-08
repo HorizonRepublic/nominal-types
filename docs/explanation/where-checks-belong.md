@@ -38,7 +38,7 @@ const body: unknown = { customer: 'jane@example.com', quantity: 0, admin: true }
 
 CreateOrder.parse(body);
 // { ok: false, issues: [
-//   { message: 'must be a string (was undefined)', path: ['sku'] },
+//   { message: 'is required', path: ['sku'] },
 //   { message: 'must be a positive integer (was 0)', path: ['quantity'] },
 // ] }
 ```

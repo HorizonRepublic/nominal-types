@@ -138,5 +138,6 @@ Declare your own type under the one you pick, so it carries its own meaning: `cl
 - Values are never converted. `AnyBigInt` and the types under it are an exception: they also take a decimal string or a safe integer. The date and time types are another: they turn text into a Temporal object. To read a number or boolean from text, use [`fromString()`](../schemas.md#fromstring).
 - A long, crafted input can't make a built-in check slow.
 - The JSON Schema has the type name as `title`, such as `nominal.Email`. See [JSON Schema](../json-schema.md).
+- A method that returns a changed copy, such as `canonical()` or `withTag()`, returns the class it was called on. A `canonical()` of a subtype of `Email` is that subtype. If the subtype's rules refuse the new value, the method throws `NominalError`.
 
 [← Reference](../README.md)

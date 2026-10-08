@@ -159,7 +159,7 @@ A `Uuid` of one version, as RFC 9562 defines it. Both have the members of `Uuid`
 - `UuidV4` is random. Use it for an id that must not tell when it was made.
 - `UuidV7` starts with the time it was made, so ids sort by time. Its `timestamp` is always a `Date`.
 - The nil and max UUIDs are not accepted.
-- `canonical()` keeps the type: `UuidV4` gives a `UuidV4`.
+- `canonical()` keeps the type: `UuidV4` gives a `UuidV4`, as every [method that returns a changed copy](README.md#common-to-every-built-in-type) does.
 
 | Property    | Value                                                                                                |
 | ----------- | ---------------------------------------------------------------------------------------------------- |

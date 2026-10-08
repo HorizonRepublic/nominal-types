@@ -121,7 +121,7 @@ New project? Check bodies with [n.object()](../core/check-an-object.md). Use [cl
      "quantity: must be a positive integer (was 0)"]}
    ```
 
-   A missing field gets a message too: `quantity: must be a number (was undefined)`. The `note` field may be missing, because its schema is `optional()`.
+   A missing field gets a message too: `quantity: is required`. The `note` field may be missing, because its schema is `optional()`.
 
 On Nest 12 you can put the schema in the decorator instead. The global pipe from [Check route parameters and query values](#check-route-parameters-and-query-values) reads it:
 

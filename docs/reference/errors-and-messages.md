@@ -10,6 +10,8 @@ class NominalError extends TypeError
 
 Thrown by `new` and by `copyWith()` when a value breaks a rule. `parse()`, `validate` and the adapters return the same issues instead of throwing.
 
+`error instanceof NominalError` is also `true` for an error thrown by [another copy of the package](glossary.md), such as one loaded with `require` next to one loaded with `import`.
+
 | Member     | Type               | Description                                                 |
 | ---------- | ------------------ | ----------------------------------------------------------- |
 | `name`     | `string`           | `'NominalError'`                                            |
@@ -108,7 +110,8 @@ Other messages:
 | a pattern with no description                   | `must be matched by <pattern> (was "x")`       |
 | a pattern given a value that is not a string    | `must be a string (was 42)`                    |
 | `n.object()` or a constraint given a non-object | `must be an object (was "x")`                  |
-| a key refused by `strict()`                     | `is not allowed`                               |
+| a required field that is missing or `undefined` | `is required`                                  |
+| a key refused by `strict()` or `copyWith()`     | `is not allowed`                               |
 | `array()` counts and repeats                    | see [`array()`](schemas.md#array)              |
 | a constraint's check returns `false`            | see [`n.constraint()`](schemas.md#nconstraint) |
 | a rule from another library                     | that library's message                         |
@@ -132,6 +135,7 @@ These facts hold for a sensitive type:
 
 - Every check hides the value: `new`, `parse()`, `validate`, a field of `n.object()`, an array item and the adapters.
 - For a type that holds an object, the values of all its fields are hidden.
+- `console.log()` shows its instances without the value: `Email { value: <hidden, a string of 16 characters> }`.
 - Its subtypes and variants are sensitive too. `{ sensitive: false }` turns it off for one of them.
 - The built-in `Email`, `IpAddress` with the types under it, and `MacAddress` are sensitive.
 - A schema made with [`fromEnv()`](schemas.md#objectschema) hides the values of all its fields in the same way.

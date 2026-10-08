@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { AnyString } from './any-string.ts';
 
@@ -70,11 +71,11 @@ export class HexColor extends HexColorBase {
   /**
    * The same color as `#` and six lowercase digits, or eight when it is not fully opaque.
    */
-  public canonical(): HexColor {
+  public canonical(): this {
     const hex = (index: number): string => this.channel(index).toString(16).padStart(2, '0');
     const opaque = !this.hasAlpha || this.channel(3) === 255;
 
-    return new HexColor(`#${hex(0)}${hex(1)}${hex(2)}${opaque ? '' : hex(3)}`);
+    return sameType(this, `#${hex(0)}${hex(1)}${hex(2)}${opaque ? '' : hex(3)}`);
   }
 
   /**

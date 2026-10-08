@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
 
@@ -85,7 +86,7 @@ export class Url extends UrlBase {
   /**
    * The URL serialised by the WHATWG parser: scheme and host lowered, default port dropped.
    */
-  public canonical(): Url {
-    return new Url(this.toURL().href);
+  public canonical(): this {
+    return sameType(this, this.toURL().href);
   }
 }

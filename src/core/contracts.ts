@@ -120,7 +120,12 @@ export interface ObjectCopy<Input> {
   /**
    * A new instance with these fields changed and the others kept, checked like `new`.
    *
-   * @throws NominalError when the changed value breaks a rule.
+   * @remarks
+   * The copy is built with `new` on the instance's own class, given the whole changed object, so
+   * a class with a constructor of its own has to take that object as its first argument.
+   *
+   * @throws NominalError when the changed value breaks a rule, or a key is not a field of the
+   * object (`is not allowed`).
    */
   copyWith(changes: Partial<Input>): this;
 }

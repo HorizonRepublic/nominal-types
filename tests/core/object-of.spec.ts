@@ -87,7 +87,7 @@ describe('n.object', () => {
 
     it('reports a missing required field', () => {
       expect(issuesOf(Order.parse({ items: valid.items, backup: null }))).toStrictEqual([
-        { message: 'must be a string (was undefined)', path: ['email'] },
+        { message: 'is required', path: ['email'] },
       ]);
     });
 

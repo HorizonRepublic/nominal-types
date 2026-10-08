@@ -5,7 +5,10 @@ const bigintText = /^-?\d+n$/u;
 // A long string, as a message cuts it: `a string of 30000 characters starting "abc"…`.
 const cutText = /^a string of (\d+) characters starting (".*")…$/su;
 
-const charactersOf = (count: number): string =>
+/**
+ * Internal: a string as a hidden value reads, by its length.
+ */
+export const charactersOf = (count: number): string =>
   count === 1 ? 'a string of 1 character' : `a string of ${String(count)} characters`;
 
 // JSON text that opens with a quote parses to a string or not at all.

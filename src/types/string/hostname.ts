@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { satisfying } from '../../core/predicate-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { inOneLine } from '../../core/same-value.ts';
 import { stringOnly } from '../../core/string-rule.ts';
 import { AnyString } from './any-string.ts';
@@ -48,8 +49,8 @@ export class Hostname extends HostnameBase {
   /**
    * The same name in lowercase, the form DNS compares names in.
    */
-  public canonical(): Hostname {
-    return new Hostname(this.value.toLowerCase());
+  public canonical(): this {
+    return sameType(this, this.value.toLowerCase());
   }
 
   /**

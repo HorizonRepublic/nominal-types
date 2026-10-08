@@ -194,7 +194,8 @@ export const isObjectSchema = (value: unknown): value is ObjectSchema<unknown, u
  * @remarks
  * Every field is checked and every issue collected, with the field's key in its path. Keys the
  * schema doesn't declare are dropped; call `strict()` to refuse them. A field whose schema accepts
- * `undefined`, such as `n.of(Type).optional()`, may be missing. The constraints run once every
+ * `undefined`, such as `n.of(Type).optional()`, may be missing; any other missing field is
+ * reported as `is required`. Only the input's own keys are read. The constraints run once every
  * field is valid. The result is a new object, read-only by type; given to `Nominal()`, it is
  * frozen.
  *

@@ -241,7 +241,7 @@ describe('SemVer', () => {
     const copy: typeof library = await import('../../../src/index.ts');
     const version = new copy.SemVer('1.2.3');
 
-    expect(valueOf(SemVer.parse(version))).toBe(version);
+    expect(valueOf(SemVer.parse(version))).toStrictEqual(new SemVer('1.2.3'));
     expect(new SemVer('1.2.4').compare(version)).toBe(1);
     expect(new SemVer('1.2.3').equals(version)).toBe(true);
   });

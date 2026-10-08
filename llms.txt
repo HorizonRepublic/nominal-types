@@ -111,31 +111,34 @@ new OrderStatus('paid').value; // 'paid', typed 'draft' | 'paid' | 'shipped'
 | --- | --- |
 | `new Type(input)` | checks `input` and returns an instance; throws `NominalError`. Takes a plain value only. |
 | `Type.parse(input)` | `{ ok: true, value }` or `{ ok: false, issues }`; never throws |
-| `value instanceof Type` | `true` for its instances and its subtypes' instances, also across `import` and `require` copies |
+| `value instanceof Type` | `true` for its instances and its subtypes' instances, also across `import` and `require` copies; reads the brand only, so a forged object passes; use `parse()` to know a value is valid |
 | `Type.typeName` | the name, such as `'shop.Sku'` |
 | `Type.rule` | the rule of the type's own level |
 | `Type['~standard']` | the Standard Schema and Standard JSON Schema interface |
 | `Type.subtype()`, `Type.variant()` | see above |
 
-What `parse()` does with an instance: an instance of the same type or a subtype comes back as it is. An instance of a parent, a variant or another type under the same base type has its value checked against the type's rules. An instance of an unrelated type is rejected.
+What `parse()` does with an instance: an instance of the same type or a subtype comes back as it is, if this copy of the package built it and its `value` is unchanged. An instance of a parent, a variant or another type under the same base type has its value checked against the type's rules. So does anything else that passes `instanceof`: an instance from another copy, one of another type with the same name, an instance whose `value` was reassigned, a forged object; `parse()` returns a new instance of the type. An instance of an unrelated type is rejected. A constructor of your own that changes the input makes `parse()` return the issues, never throw.
 
 ### Instance members
 
 | Member | Meaning |
 | --- | --- |
-| `value` | the checked value; an object value is frozen |
+| `value` | the checked value; `readonly` in TypeScript (JavaScript can still assign it, and `parse()` then checks the instance again); an object value is frozen; the instance itself is not frozen |
 | `equals(other)` | same type line and same value; deep for objects; `Uuid` ignores case |
 | `toJSON()` | the value; big integer types write a decimal string; date and time types write their RFC 3339 text |
 | `toString()` | the value as text; JSON for an object value; date and time types write their text |
 | `[Symbol.toPrimitive]` | the value, so `>`, `Number(x)` and template strings work; an object or Temporal value throws `TypeError` outside a string |
-| getters per field, `copyWith(changes)` | on types built on `n.object()`; `copyWith` returns a checked copy and throws `NominalError` |
+| getters per field, `copyWith(changes)` | on types built on `n.object()`; `copyWith` returns a checked copy and throws `NominalError`, also for a key the object doesn't declare (`is not allowed`); it calls `new` on the instance's class with the whole changed object, so a constructor of your own must take that object first |
+| `console.log()` form | `Uuid { value: '…' }` in Node.js and Bun; a sensitive type shows `Email { value: <hidden, a string of 16 characters> }` |
+
+Methods of built-in types that return a changed copy, such as `canonical()`, `withTag()` and `withoutTag()`, return the class of `this`: a subtype stays a subtype, and its rules can refuse the new value with `NominalError`.
 
 A field of an `n.object()` type can't be named `value`, `equals`, `copyWith`, `toJSON`, `toString` or `constructor`. `Nominal()` throws `TypeError` for such a field.
 
 ### Schemas
 
 - `n.of(Type)` returns a `TypeSchema`, a plain Standard Schema object. Chain: `.array(options?)` with `ArrayOptions` `{ length?, min?, max?, unique? }` (`unique: true` refuses an item that `equals()` an earlier one: `must not repeat an item (was "a")` at the repeat's index, JSON Schema `uniqueItems`), `.optional()` (accepts `undefined`), `.nullable()` (accepts `null`), `.fromString()` (reads text first; only right after `n.of()`, and only for a type with a text form, else `TypeError`). Every call returns a new schema. `.parse(input)` returns `{ ok, value | issues }`.
-- `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string, makes every field optional in the input type, so `new Config(process.env)` compiles, and hides the values in its messages. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
+- `n.object(fields, ...constraints)` returns an `ObjectSchema`. A field is a nominal type, an `n.of()` schema, another `n.object()` or any Standard Schema. A field whose schema accepts `undefined` may be missing; any other missing field reads `is required`. Only own keys of the input are read. Keys it doesn't declare are dropped silently. `.strict()` refuses them with `is not allowed`. `.fromEnv()` reads each field with a text form from a string, makes every field optional in the input type, so `new Config(process.env)` compiles, and hides the values in its messages. `.keys` lists the fields. Constraints run once every field is valid. A constraint that reads a field the object doesn't declare throws `TypeError` at declaration. The key `__proto__` is refused.
 - `n.constraint(fields, check, options?)` returns a `Constraint`, a rule across fields, like a SQL `CHECK`. `fields` lists the fields it reads with their types. `check` gets their values already checked and returns `true`, `false` or a message string. `options` is `ConstraintOptions` `{ path?, message? }`; `path` names the field the issue belongs to.
 - `n.isObject(value)`, `n.isConstraint(value)` tell those apart.
 
@@ -188,6 +191,7 @@ config.PORT.value; // 3000 for PORT=3000
 ### Errors and messages
 
 - `NominalError` extends `TypeError`. Members: `typeName`, `issues` (`{ message, path? }[]`), and `message` such as `'nominal.Uuid: must be a UUID (was "x")'`, with a path in front of each issue that has one: `'booking.Stay: guests: must not exceed the capacity'`.
+- A required `n.object()` field that is missing, `undefined` or only inherited from the prototype reads `is required` (fields are read as own keys only). This holds for `fromEnv()` and for adapters that run an `n.object()` schema.
 - Messages read `must be <description> (was <value>)`, the value as it was given. A string is quoted, a number, bigint (`42n`), boolean or `null` written as is, an array as `array`, anything else by its kind (`object`, `undefined`). A string over 64 characters is cut: `(was a string of 30000 characters starting "<first 32>"…)`.
 - A sensitive type writes the value by kind: `(was a string of 7 characters)`, `(was an empty string)`, `(was a number)`. `Email`, `IpAddress` (and the types under it) and `MacAddress` are sensitive. A `.fromEnv()` schema hides the values of all its fields the same way.
 - `n.hideValues(issues)` returns the issues with the value at the end of each message hidden the same way. It reads `(was "x")`, the cut form `(was a string of N characters starting "x"…)` and Valibot's `received "x"`.

@@ -1,5 +1,6 @@
 import type { SubtypeOf } from '../../core/contracts.ts';
 import { matching } from '../../core/pattern-schema.ts';
+import { sameType } from '../../core/same-type.ts';
 import { AnyString } from './any-string.ts';
 import { labelFragment } from './dns-name.ts';
 
@@ -113,15 +114,15 @@ export class Email extends EmailBase {
    *
    * @throws NominalError when the tag carries characters an address cannot hold.
    */
-  public withTag(tag: string): Email {
-    return new Email(`${this.mailbox}+${tag}@${this.domain}`);
+  public withTag(tag: string): this {
+    return sameType(this, `${this.mailbox}+${tag}@${this.domain}`);
   }
 
   /**
    * The same mailbox without any tag.
    */
-  public withoutTag(): Email {
-    return new Email(`${this.mailbox}@${this.domain}`);
+  public withoutTag(): this {
+    return sameType(this, `${this.mailbox}@${this.domain}`);
   }
 
   /**
@@ -131,8 +132,8 @@ export class Email extends EmailBase {
    * @remarks
    * Provider rules beyond that, such as Gmail ignoring dots, are left to the caller.
    */
-  public canonical(): Email {
-    return new Email(`${this.mailbox}@${this.domain}`.toLowerCase());
+  public canonical(): this {
+    return sameType(this, `${this.mailbox}@${this.domain}`.toLowerCase());
   }
 
   /**

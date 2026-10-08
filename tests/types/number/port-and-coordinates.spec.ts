@@ -97,8 +97,8 @@ describe('number types from another copy of the package', () => {
     const copy: typeof library = await import('../../../src/index.ts');
     const port = new copy.Port(443);
 
-    expect(valueOf(Port.parse(port))).toBe(port);
-    expect(valueOf(Uint16.parse(port))).toBe(port);
+    expect(valueOf(Port.parse(port))).toStrictEqual(new Port(443));
+    expect(valueOf(Uint16.parse(port))).toStrictEqual(new Uint16(443));
     expect(valueOf(Port.parse(new copy.Uint16(443)))).toBeInstanceOf(Port);
     expect(Port.parse(new copy.Uint16(0)).ok).toBe(false);
     expect(new Latitude(1).equals(new copy.Latitude(1))).toBe(true);
